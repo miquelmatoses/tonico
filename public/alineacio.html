@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/estil.css">
+  <title>Tonico</title>
+</head>
+<body>
+  <nav></nav>
+  <main>
+    <h1 data-i18n="alineacio.titol"></h1>
+    <p role="status" id="estat" data-i18n="comu.carregant"></p>
+  </main>
+  <script type="module">
+    import { carregaI18n, aplicaI18n, pintaNav, api, el, t } from '/comu.js';
+    await carregaI18n();
+    aplicaI18n();
+    pintaNav();
+    const main = document.querySelector('main');
+    const estat = document.getElementById('estat');
+    const state = { vetats: [], fixats: [] };
+
+    async function carrega() {
+      const d = await api('/api/alineacio', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(state) });
+      main.querySelectorAll('section, p.ctrl').forEach((n) => n.remove());
+      estat.remove?.();
+      if (d.error) { main.append(el('p', { text: t('plantilla.buit') })); return; }
+
+      // Botons de control
+      const ctrl = el('p', { class: 'ctrl' });
+      const reg = el('button', { type: 'button', text: t('alineacio.desfa') });
+      reg.addEventListener('click', () => { state.vetats = []; state.fixats = []; carrega(); });
+      ctrl.append(reg);
+      main.append(ctrl);
+
+      // Els dos onzes
+      for (const partit of Object.keys(d.onze)) {
+        const tbody = el('tbody', {}, ...d.onze[partit].map((s) => {
+          const cel = el('td', {});
+          if (s.jugador) {
+            cel.append(el('span', { text: s.jugador.nom + ' ' }));
+            const veta = el('button', { type: 'button', text: t('alineacio.veta') });
+            veta.addEventListener('click', () => { state.vetats.push(s.jugador.jugador_id); carrega(); });
+            const fixa = el('button', { type: 'button', text: t('alineacio.fixa') });
+            fixa.addEventListener('click', () => { state.fixats.push({ partit, codi: s.codi, jugador_id: s.jugador.jugador_id }); carrega(); });
+            cel.append(veta, ' ', fixa);
+          } else cel.append(t('alineacio.buit'));
+          return el('tr', {}, el('td', { text: `${s.codi}${s.entrena ? ' ·' + s.pct + '%' : ''}` }), cel);
+        }));
+        main.append(el('section', {}, el('h2', { text: t('alineacio.' + partit) }),
+          el('table', {}, el('thead', {}, el('tr', {}, el('th', { text: t('alineacio.col_slot') }), el('th', { text: t('alineacio.col_jugador') }))), tbody)));
+      }
+
+      // Comptabilitat d'entrenament
+      const cbody = el('tbody', {}, ...d.comptabilitat.map((c) => el('tr', {},
+        el('td', { text: c.nom }),
+        el('td', { text: c.partits.map((p) => `${t('alineacio.' + p.partit)} ${p.pct}%`).join(' + ') || t('alineacio.buit') }),
+        el('td', { text: c.total + '%' }))));
+      main.append(el('section', {}, el('h2', { text: t('alineacio.comptabilitat_titol') }),
+        el('table', {}, el('thead', {}, el('tr', {}, el('th', { text: t('alineacio.col_jugador') }), el('th', { text: t('alineacio.col_partit') }), el('th', { text: t('alineacio.col_total') }))), cbody)));
+
+      // Avisos de cobertura
+      const sec = el('section', {}, el('h2', { text: t('alineacio.avisos_titol') }));
+      if (!d.avisos.length) sec.append(el('p', { text: t('alineacio.tot_cobert') }));
+      else {
+        const ul = el('ul');
+        for (const v of d.avisos) {
+          let txt = '';
+          if (v.tipus === 'cobertura') txt = t('alineacio.cobertura', v);
+          else if (v.tipus === 'entrenament_perdut') txt = t('alineacio.perdut', { nom: v.nom, motiu: t('motiu.' + v.motiu) });
+          else if (v.tipus === 'incomplet') txt = t('alineacio.incomplet', { partit: t('alineacio.' + v.partit), buits: v.buits });
+          ul.append(el('li', { text: txt }));
+        }
+        sec.append(ul);
+      }
+      main.append(sec);
+    }
+    await carrega();
+  </script>
+</body>
+</html>
