@@ -5,25 +5,34 @@ import { REGLES, executaRegles } from '../lib/regles.js';
 const ctxBase = { dataInstantania: '2026-07-25', any_dies: 112, jugadors: [], juvenils: [] };
 const codis = (a) => a.map((x) => x.regla_codi);
 
-// ALR_ANIVERSARI: només venda, aniversari a la vora
+// ALR_ANIVERSARI: venda (recomanació) + entrenable (fet); dos rellotges amb el mercat
 {
-  const ctx = { ...ctxBase, jugadors: [
-    { jugador_id: 1, nom: 'Prop', categoria: 'venda', edat_dies: 100, edat_anys: 23 },   // 12 dies → sí
-    { jugador_id: 2, nom: 'Lluny', categoria: 'venda', edat_dies: 50, edat_anys: 23 },    // 62 dies → no
-    { jugador_id: 3, nom: 'Entren', categoria: 'entrenable', edat_dies: 100, edat_anys: 17 }, // no és venda
-  ] };
-  const a = REGLES.ALR_ANIVERSARI(ctx, { dies_avis: 14, categories: 'venda', urgencia: 70 });
-  assert.deepEqual(a.map((x) => x.jugador_id), [1]);
-  assert.equal(a[0].parametres.edat_nova, 24);
+  const jugadors = [
+    { jugador_id: 1, nom: 'Prop', categoria: 'venda', edat_dies: 100, edat_anys: 23 },        // 12 dies → sí (venda)
+    { jugador_id: 2, nom: 'Lluny', categoria: 'venda', edat_dies: 50, edat_anys: 23 },         // 62 dies → no
+    { jugador_id: 3, nom: 'Entren', categoria: 'entrenable', edat_dies: 105, edat_anys: 17 },  // 7 dies → FET
+  ];
+  const p = { dies_avis: 14, categories: 'venda,entrenable', urgencia: 70 };
+  // Sense mercat: venda → recomanació normal; entrenable → fet
+  const a = REGLES.ALR_ANIVERSARI({ ...ctxBase, jugadors }, p);
+  assert.deepEqual(a.map((x) => x.jugador_id), [1, 3]);
+  assert.equal(a.find((x) => x.jugador_id === 1).missatge_clau, 'alerta.aniversari');
+  assert.equal(a.find((x) => x.jugador_id === 3).missatge_clau, 'alerta.aniversari_fet');
+  // Amb mercat en depressió i recuperació a la vora: venda → esperar (dos rellotges)
+  const mercat = { depressio: true, finsRecuperacio: 1, setmanaRecuperacio: 1, esperaMax: 4 };
+  const b = REGLES.ALR_ANIVERSARI({ ...ctxBase, jugadors, mercat }, p);
+  assert.equal(b.find((x) => x.jugador_id === 1).missatge_clau, 'alerta.aniversari_espera');
+  assert.equal(b.find((x) => x.jugador_id === 1).parametres.setmana_recuperacio, 1);
 }
 
-// ALR_JUNTA_PORTER: porter en venda, nivell, sense jugar
+// ALR_JUNTA_PORTER: recordatori per a tot porter notable en venda (sense minuts)
 {
   const ctx = { ...ctxBase, jugadors: [
-    { jugador_id: 1, nom: 'Cast', categoria: 'venda', posicio: 'PO', porteria: 6, data_ultim_partit: '2026-07-10' }, // 15 dies → sí
-    { jugador_id: 2, nom: 'Jug', categoria: 'venda', posicio: 'PO', porteria: 6, data_ultim_partit: '2026-07-22' },  // 3 dies → no
+    { jugador_id: 1, nom: 'Cast', categoria: 'venda', posicio: 'PO', porteria: 6, data_ultim_partit: '2026-07-22' }, // recent, però igual dispara
+    { jugador_id: 2, nom: 'Baix', categoria: 'venda', posicio: 'PO', porteria: 4 },   // per davall del nivell → no
+    { jugador_id: 3, nom: 'Camp', categoria: 'venda', posicio: 'DC', porteria: 6 },   // no és porter → no
   ] };
-  const a = REGLES.ALR_JUNTA_PORTER(ctx, { posicio_porter: 'PO', porteria_min: 5, minuts_min: 60, dies_sense_partit: 7, urgencia: 90 });
+  const a = REGLES.ALR_JUNTA_PORTER(ctx, { posicio_porter: 'PO', porteria_min: 5, minuts_min: 60, urgencia: 90 });
   assert.deepEqual(a.map((x) => x.jugador_id), [1]);
 }
 

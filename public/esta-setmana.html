@@ -20,18 +20,36 @@
     const main = document.querySelector('main');
     const estat = document.getElementById('estat');
 
+    async function regenera() {
+      await api('/api/alertes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ accio: 'regenerar' }) });
+      pinta();
+    }
+    function botoRegenera() {
+      const b = el('button', { type: 'button', class: 'regen', text: t('esta_setmana.regenera') });
+      b.addEventListener('click', regenera);
+      return b;
+    }
+
     async function pinta() {
-      const { alertes } = await api('/api/alertes');
-      main.querySelectorAll('section, p.paco, ul').forEach((n) => n.remove());
+      const { alertes, revisat, instantania } = await api('/api/alertes');
+      main.querySelectorAll('section, p.paco, ul, button.regen').forEach((n) => n.remove());
       estat.remove?.();
 
+      // Base sempre declarada
+      if (instantania) main.append(el('p', { class: 'paco', text: t('esta_setmana.base', { data: instantania.data }) }));
+
+      // Encara no s'ha passat revista contra la instantània vigent
+      if (!revisat) {
+        main.append(el('p', { class: 'paco', text: t('esta_setmana.no_revisat') }), botoRegenera());
+        return;
+      }
       // Setmana tranquil·la: Paco sap callar
       if (!alertes.length) {
         main.append(el('p', { class: 'paco', text: t('esta_setmana.tot_be') }),
-          el('p', { class: 'paco', text: t('esta_setmana.firma') }));
+          el('p', { class: 'paco', text: t('esta_setmana.firma') }), botoRegenera());
         return;
       }
-
+      // Hi ha foc: informe ordenat per urgència
       main.append(el('p', { class: 'paco', text: t('esta_setmana.salutacio') }));
       const ul = el('ul');
       for (const a of alertes) {
@@ -46,7 +64,7 @@
         }
         ul.append(li);
       }
-      main.append(ul, el('p', { class: 'paco', text: t('esta_setmana.firma') }));
+      main.append(ul, el('p', { class: 'paco', text: t('esta_setmana.firma') }), botoRegenera());
     }
     await pinta();
   </script>

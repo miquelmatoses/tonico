@@ -27,5 +27,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/004_llavor_fabrica.sql'));
   sqlite.exec(src('../schema/005_fornada_eixida.sql'));
   sqlite.exec(src('../schema/006_regles.sql'));
+  sqlite.exec(src('../schema/007_mercat_revisions.sql'));
   return { sqlite, db: new D1(sqlite) };
 }
