@@ -1,0 +1,20 @@
+name: Desplegar a Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  desplegar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Desplegar
+        uses: cloudflare/wrangler-action@v3
+        with:
+          # El token es guarda com a secret del repo, mai al codi.
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: d6fe40b41d43108a129b5a62a864e706
+          command: pages deploy public --project-name tonico --branch main
