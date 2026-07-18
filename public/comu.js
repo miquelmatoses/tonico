@@ -57,6 +57,8 @@ export function pintaNav(activa) {
     document.createTextNode(' · '),
     el('a', { href: '/fotrem.html', text: t('nav.fotrem') }),
     document.createTextNode(' · '),
+    el('a', { href: '/personal.html', text: t('nav.personal') }),
+    document.createTextNode(' · '),
     el('a', { href: '/plantilla.html', text: t('nav.plantilla') }),
     document.createTextNode(' · '),
     el('a', { href: '/comparador.html', text: t('nav.comparador') }),
