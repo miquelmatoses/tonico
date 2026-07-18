@@ -23,5 +23,7 @@ export function nova(baseUrl) {
   sqlite.exec('PRAGMA foreign_keys = ON;');
   sqlite.exec(src('../schema/001_esquema.sql'));
   sqlite.exec(src('../schema/002_llavor.sql'));
+  sqlite.exec(src('../schema/003_classificacio.sql'));
+  sqlite.exec(src('../schema/004_llavor_fabrica.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

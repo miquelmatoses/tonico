@@ -32,15 +32,22 @@
     const form = document.getElementById('pujar');
     const estat = document.getElementById('estat');
     form.querySelector('[name=data]').value = new Date().toISOString().slice(0, 10);
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    async function envia(reemplaça) {
       estat.textContent = t('comu.carregant');
-      const r = await fetch('/api/pujar', { method: 'POST', credentials: 'same-origin', body: new FormData(form) });
+      const fd = new FormData(form);
+      if (reemplaça) fd.set('reemplaça', 'true');
+      const r = await fetch('/api/pujar', { method: 'POST', credentials: 'same-origin', body: fd });
       if (r.status === 401) { location.href = '/'; return; }
       const cos = await r.json().catch(() => ({}));
+      if (r.status === 409 && cos.error === 'instantania_existix') {
+        if (confirm(t('pujada.confirma_reemplaça'))) return envia(true);
+        estat.textContent = '';
+        return;
+      }
       if (!r.ok) { estat.textContent = t('pujada.error', { detall: cos.detall || cos.error || '' }); return; }
       estat.textContent = cos.resultats.map((x) => t('pujada.exit', x)).join('  ·  ');
-    });
+    }
+    form.addEventListener('submit', (e) => { e.preventDefault(); envia(false); });
   </script>
 </body>
 </html>

@@ -45,6 +45,10 @@ export function pintaNav(activa) {
   const nav = document.querySelector('nav');
   if (!nav) return;
   nav.append(
+    el('a', { href: '/plantilla.html', text: t('nav.plantilla') }),
+    document.createTextNode(' · '),
+    el('a', { href: '/comparador.html', text: t('nav.comparador') }),
+    document.createTextNode(' · '),
     el('a', { href: '/pujada.html', text: t('nav.pujada') }),
     document.createTextNode(' · '),
     el('a', { href: '/instantanies.html', text: t('nav.instantanies') }),

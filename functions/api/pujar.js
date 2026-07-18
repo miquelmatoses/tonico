@@ -7,6 +7,7 @@
 import { modelSenior, modelJuvenil } from '../../lib/adaptador.js';
 import { calcularSetmana } from '../../lib/calendari.js';
 import { classificar } from '../../lib/diferencia.js';
+import { classificaEquip } from '../../lib/orquestra_classificacio.js';
 
 // ponytail: split CSV ingenu (sense cometes ni comes dins de camp, com els
 // exports reals). Si algun dia un camp porta comes, ací entra PapaParse.
@@ -21,6 +22,7 @@ export async function onRequestPost(context) {
   const form = await request.formData();
   const dataInst = String(form.get('data') || '').trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataInst)) return json({ error: 'data_invalida' }, 400);
+  const reemplaça = form.get('reemplaça') === 'true';   // repuja del mateix dia: substituïx
 
   const ancora = await carregaAncora(env.DB);
   const resultats = [];
@@ -32,15 +34,24 @@ export async function onRequestPost(context) {
       const fitxer = form.get(camp);
       if (!fitxer || typeof fitxer.text !== 'function') continue;
       const model = adapta(tokenitza(await fitxer.text()), dataInst);
-      resultats.push(await desar(env.DB, usuari.id, tipus, model, ancora));
+      resultats.push(await desar(env.DB, usuari.id, tipus, model, ancora, reemplaça));
     }
   } catch (e) {
     const msg = String(e.message || e);
     if (msg === 'sense_equips') return json({ error: 'sense_equips' }, 409);
+    if (msg === 'instantania_existix') return json({ error: 'instantania_existix' }, 409);
     return json({ error: 'pujada_fallida', detall: msg }, 400);
   }
   if (resultats.length === 0) return json({ error: 'cap_fitxer' }, 400);
-  return json({ ok: true, resultats });
+
+  // Classificació automàtica del sènior (regla d'or) si s'ha pujat i hi ha pla.
+  let classificacio = null;
+  if (resultats.some((r) => r.tipus === 'senior')) {
+    const pla = await env.DB.prepare('SELECT plantilla FROM plans WHERE usuari_id = ? LIMIT 1').bind(usuari.id).first();
+    const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id = ? AND tipus = 'senior'").bind(usuari.id).first();
+    if (pla && equip) classificacio = await classificaEquip(env.DB, usuari.id, equip.id, pla.plantilla);
+  }
+  return json({ ok: true, resultats, classificacio });
 }
 
 export async function carregaAncora(db) {
@@ -56,20 +67,31 @@ export async function carregaAncora(db) {
   };
 }
 
-export async function desar(db, usuariId, tipus, model, ancora) {
+export async function desar(db, usuariId, tipus, model, ancora, reemplaça = false) {
   const equip = await db.prepare(
     `SELECT id FROM equips WHERE usuari_id = ? AND tipus = ?`
   ).bind(usuariId, tipus).first();
   if (!equip) throw new Error('sense_equips');
   const equipId = equip.id;
 
+  // Màxim un punt per dia i equip: una repuja del mateix dia substituïx (amb confirmació).
+  const existent = await db.prepare(
+    "SELECT id FROM instantanies WHERE equip_id = ? AND data = ? AND font = 'csv'"
+  ).bind(equipId, model.data).first();
+  if (existent) {
+    if (!reemplaça) throw new Error('instantania_existix');
+    await db.batch([
+      db.prepare('DELETE FROM instantanies_jugadors WHERE instantania_id = ?').bind(existent.id),
+      db.prepare('DELETE FROM instantanies_juvenils WHERE instantania_id = ?').bind(existent.id),
+      db.prepare('DELETE FROM instantanies WHERE id = ?').bind(existent.id),
+    ]);
+  }
+
   const { temporada, setmana } = calcularSetmana(model.data, ancora);
   const ins = await db.prepare(
     `INSERT INTO instantanies (equip_id, data, font, temporada, setmana_temporada)
      VALUES (?, ?, 'csv', ?, ?) RETURNING id`
-  ).bind(equipId, model.data, temporada, setmana).first().catch((e) => {
-    throw new Error(`Ja existix una instantània d'eixa data (${model.data})?  ${e.message}`);
-  });
+  ).bind(equipId, model.data, temporada, setmana).first();
   const instId = ins.id;
 
   // Estat actual dels jugadors de l'equip
