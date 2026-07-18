@@ -8,7 +8,8 @@ INSERT INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
   ('fabrica', 'valor_especialitats',  '["Potent","Ràpid","Joc aeri","Tècnic","Imprevisible"]', 'json'),
   ('fabrica', 'buckets_posicio',      '{"mc":["MC"],"extrem":["ED","EE"]}',         'json'),
   ('fabrica', 'categoria_terminal',   'alliberament',                               'text'),
-  ('fabrica', 'fornada_finestra_dies','21',                                         'int');
+  ('fabrica', 'fornada_finestra_dies','21',                                         'int'),
+  ('fabrica', 'edat_pic_venda',       '20',                                         'int');
 
 -- Categories de l'embut (ordre = prioritat). Farciment (cobertura) va ABANS
 -- de la liquidació: qui no agafa plaça de cobertura cau a venda/alliberament.
