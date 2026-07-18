@@ -8,6 +8,7 @@ import { modelSenior, modelJuvenil } from '../../lib/adaptador.js';
 import { calcularSetmana } from '../../lib/calendari.js';
 import { classificar } from '../../lib/diferencia.js';
 import { classificaEquip } from '../../lib/orquestra_classificacio.js';
+import { generaAlertes } from '../../lib/orquestra_alertes.js';
 
 // ponytail: split CSV ingenu (sense cometes ni comes dins de camp, com els
 // exports reals). Si algun dia un camp porta comes, ací entra PapaParse.
@@ -51,7 +52,9 @@ export async function onRequestPost(context) {
     const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id = ? AND tipus = 'senior'").bind(usuari.id).first();
     if (pla && equip) classificacio = await classificaEquip(env.DB, usuari.id, equip.id, pla.plantilla);
   }
-  return json({ ok: true, resultats, classificacio });
+  // Motor de regles: genera l'informe d'esta setmana (Paco Meseguer).
+  const alertes = await generaAlertes(env.DB, usuari.id);
+  return json({ ok: true, resultats, classificacio, alertes });
 }
 
 export async function carregaAncora(db) {

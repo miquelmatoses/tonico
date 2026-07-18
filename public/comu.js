@@ -45,6 +45,8 @@ export function pintaNav(activa) {
   const nav = document.querySelector('nav');
   if (!nav) return;
   nav.append(
+    el('a', { href: '/esta-setmana.html', text: t('nav.esta_setmana') }),
+    document.createTextNode(' · '),
     el('a', { href: '/plantilla.html', text: t('nav.plantilla') }),
     document.createTextNode(' · '),
     el('a', { href: '/comparador.html', text: t('nav.comparador') }),
