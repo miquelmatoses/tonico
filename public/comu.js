@@ -49,6 +49,8 @@ export function pintaNav(activa) {
     document.createTextNode(' · '),
     el('a', { href: '/alineacio.html', text: t('nav.alineacio') }),
     document.createTextNode(' · '),
+    el('a', { href: '/pla.html', text: t('nav.pla') }),
+    document.createTextNode(' · '),
     el('a', { href: '/plantilla.html', text: t('nav.plantilla') }),
     document.createTextNode(' · '),
     el('a', { href: '/comparador.html', text: t('nav.comparador') }),

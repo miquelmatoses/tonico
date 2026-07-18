@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/estil.css">
+  <title>Tonico</title>
+</head>
+<body>
+  <nav></nav>
+  <main>
+    <h1 data-i18n="pla.titol"></h1>
+    <p role="status" id="estat" data-i18n="comu.carregant"></p>
+  </main>
+  <script type="module">
+    import { carregaI18n, aplicaI18n, pintaNav, api, el, t } from '/comu.js';
+    await carregaI18n();
+    aplicaI18n();
+    pintaNav();
+    const main = document.querySelector('main');
+    const estat = document.getElementById('estat');
+
+    const d = await api('/api/pla');
+    estat.remove();
+    if (d.error) { main.append(el('p', { text: t('pla.sense_pla') })); throw 0; }
+
+    // Resum + edició de fase i paràmetres
+    const inpFase = el('input', { type: 'text', value: d.fase_actual || '', 'aria-label': t('pla.fase_actual') });
+    const inpInflex = el('input', { type: 'number', value: d.parametres.temporada_inflexio ?? '', 'aria-label': t('pla.temporada_inflexio') });
+    const inpCapital = el('input', { type: 'number', value: d.parametres.capital_objectiu ?? '', 'aria-label': t('pla.capital_objectiu') });
+    const desa = el('button', { type: 'button', text: t('pla.desa') });
+    desa.addEventListener('click', () => api('/api/pla', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ fase_actual: inpFase.value, parametres: { temporada_inflexio: Number(inpInflex.value) || null, capital_objectiu: Number(inpCapital.value) || null } }) }).catch(() => {}));
+    main.append(el('dl', {},
+      el('dt', { text: t('pla.plantilla') }), el('dd', { text: d.plantilla }),
+      el('dt', { text: t('pla.temporada_actual') }), el('dd', { text: d.temporadaActual != null ? 'T' + d.temporadaActual : '—' }),
+      el('dt', { text: t('pla.fase_actual') }), el('dd', {}, inpFase),
+      el('dt', { text: t('pla.temporada_inflexio') }), el('dd', {}, inpInflex),
+      el('dt', { text: t('pla.capital_objectiu') }), el('dd', {}, inpCapital, ' ', desa)));
+
+    // Línia de temps
+    const cols = ['col_temporada', 'col_divisio', 'col_mode', 'col_accions', 'col_estat'];
+    const thead = el('thead', {}, el('tr', {}, ...cols.map((k) => el('th', { text: t('pla.' + k) }))));
+    const tbody = el('tbody', {}, ...d.temporades.map((tp) => {
+      const inpDiv = el('input', { type: 'text', size: '6', value: tp.divisio_prevista || '', 'aria-label': t('pla.col_divisio') });
+      const inpMode = el('input', { type: 'text', size: '9', value: tp.mode || '', 'aria-label': t('pla.col_mode') });
+      const desaFila = () => api('/api/pla', { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ temporada: tp.temporada, divisio_prevista: inpDiv.value, mode: inpMode.value }) }).catch(() => {});
+      inpDiv.addEventListener('change', desaFila);
+      inpMode.addEventListener('change', desaFila);
+      const accions = [...(tp.accions.events || []), ...(tp.retard.length ? [t('pla.retard', { detall: tp.retard.join('; ') })] : [])];
+      return el('tr', {},
+        el('td', { text: 'T' + tp.temporada }),
+        el('td', {}, inpDiv),
+        el('td', {}, inpMode),
+        el('td', {}, el('ul', {}, ...accions.map((a) => el('li', { text: a })))),
+        el('td', { text: t('pla.estat_' + tp.estat) }));
+    }));
+    main.append(el('table', {}, thead, tbody));
+  </script>
+</body>
+</html>

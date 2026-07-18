@@ -54,3 +54,13 @@ RECOMANACIÓ (dos rellotges amb el mercat); per a entrenable és un FET (nota de
 sou/valor, sense mercat).
 **Alternatives:** només venda (perdria Kirsch).
 **Revertir:** pom `categories` de `ALR_ANIVERSARI` a `regles_parametres`.
+
+## 2026-07-18 · Pla mestre T83→T91 — divisions/modes per definir
+**Context:** l'especificació dóna els ESDEVENIMENTS clau (A1 ix T84, A2 T85-86,
+V veterans T86, inflexió T88 amb Salvatella→entrenador ~430k€, General→Tribuna,
+resistència), però no la divisió ni el mode competitiu de cada temporada.
+**Decisió:** carregue els esdeveniments com a dades (`plans_temporades`) i deixe
+`divisio_prevista` NULL i `mode` amb la fase (fabrica/inflexio/competitiu). Miquel
+ompli divisions/modes reals al formulari del pla.
+**Alternatives:** inventar una progressió de divisions (risc d'inventar doctrina).
+**Revertir:** editar `plans_temporades` al formulari (res al codi).
