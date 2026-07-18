@@ -53,6 +53,8 @@ export function pintaNav(activa) {
     document.createTextNode(' · '),
     el('a', { href: '/economia.html', text: t('nav.economia') }),
     document.createTextNode(' · '),
+    el('a', { href: '/mercat.html', text: t('nav.mercat') }),
+    document.createTextNode(' · '),
     el('a', { href: '/plantilla.html', text: t('nav.plantilla') }),
     document.createTextNode(' · '),
     el('a', { href: '/comparador.html', text: t('nav.comparador') }),
