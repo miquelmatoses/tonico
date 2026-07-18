@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/estil.css">
+  <title>Tonico</title>
+</head>
+<body>
+  <nav></nav>
+  <main>
+    <p role="status" id="estat" data-i18n="comu.carregant"></p>
+  </main>
+  <script type="module">
+    import { carregaI18n, aplicaI18n, pintaNav, api, el, t } from '/comu.js';
+    await carregaI18n();
+    aplicaI18n();
+    pintaNav();
+    const main = document.querySelector('main');
+    const estat = document.getElementById('estat');
+    const id = new URLSearchParams(location.search).get('id');
+    const HAB = ['porteria', 'defensa', 'creativitat', 'extrem', 'passades', 'anotacio', 'pilota_aturada'];
+    const SIGLA = { porteria: 'PO', defensa: 'DF', creativitat: 'CR', extrem: 'EX', passades: 'PA', anotacio: 'AN', pilota_aturada: 'PP' };
+
+    const { jugador, instantanies, categories, fornada } = await api('/api/jugador?id=' + encodeURIComponent(id));
+    estat.remove();
+
+    main.append(el('h1', { text: jugador.nom }));
+    const actual = categories.length ? categories[categories.length - 1] : null;
+    const dl = el('dl', {},
+      el('dt', { text: t('jugador.nacionalitat') }), el('dd', { text: jugador.nacionalitat || '—' }),
+      el('dt', { text: t('jugador.especialitat') }), el('dd', { text: jugador.especialitat || '—' }),
+      el('dt', { text: t('jugador.estat') }), el('dd', { text: jugador.estat }),
+      el('dt', { text: t('jugador.data_alta') }), el('dd', { text: jugador.data_alta_club || '—' }),
+      el('dt', { text: t('jugador.categoria_actual') }), el('dd', { text: actual ? t('categoria.' + actual.categoria) : '—' }),
+      el('dt', { text: t('jugador.fornada') }), el('dd', { text: fornada ? fornada.lletra : '—' }),
+    );
+    main.append(dl);
+
+    // Historial de categoria
+    if (categories.length) {
+      const cols = ['col_data', 'col_categoria', 'col_origen', 'col_puntuacio'];
+      const thead = el('thead', {}, el('tr', {}, ...cols.map((k) => el('th', { text: t('jugador.' + k) }))));
+      const tbody = el('tbody', {}, ...categories.map((c) => el('tr', {},
+        el('td', { text: c.data_assignacio }),
+        el('td', { text: t('categoria.' + c.categoria) }),
+        el('td', { text: c.origen }),
+        el('td', { text: c.puntuacio != null ? c.puntuacio.toFixed(1) : '' }),
+      )));
+      main.append(el('section', {}, el('h2', { text: t('jugador.historial_categories') }), el('table', {}, thead, tbody)));
+    }
+
+    // Evolució (instantànies) amb pops
+    if (instantanies.length) {
+      const cols = ['col_data', 'col_temporada', 'col_edat', 'col_tsi', 'col_sou', 'col_habilitats', 'col_pops'];
+      const thead = el('thead', {}, el('tr', {}, ...cols.map((k) => el('th', { text: t('jugador.' + k) }))));
+      const tbody = el('tbody', {}, ...instantanies.map((s) => el('tr', {},
+        el('td', { text: s.data }),
+        el('td', { text: `T${s.temporada ?? ''} s${s.setmana_temporada ?? ''}` }),
+        el('td', { text: `${s.edat_anys}a ${s.edat_dies}d` }),
+        el('td', { text: s.tsi ?? '' }),
+        el('td', { text: s.sou ?? '' }),
+        el('td', { text: HAB.filter((h) => s[h] != null).map((h) => `${SIGLA[h]}${s[h]}`).join(' ') }),
+        el('td', { text: (s.pops || []).map((h) => SIGLA[h]).join(' ') }),
+      )));
+      main.append(el('section', {}, el('h2', { text: t('jugador.historial_instantanies') }), el('table', {}, thead, tbody)));
+    }
+  </script>
+</body>
+</html>

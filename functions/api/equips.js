@@ -20,6 +20,14 @@ export async function onRequestPost({ request, env, data }) {
     posar(s.nom, 'senior', idh(s.id_hattrick)),
     posar(j.nom, 'juvenil', idh(j.id_hattrick)),
   ]);
+  // Pla de l'usuari com a DADA (no default al codi). Fins la Fase 9, plantilla
+  // 'fabrica'; l'onboarding d'intencions la triarà. No es duplica si ja existix.
+  const plantilla = cos.plantilla || 'fabrica';
+  const tePla = await env.DB.prepare('SELECT id FROM plans WHERE usuari_id = ? LIMIT 1').bind(data.usuari.id).first();
+  if (!tePla) {
+    await env.DB.prepare("INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (?, ?, 'fabrica')")
+      .bind(data.usuari.id, plantilla).run();
+  }
   return json({ ok: true }, 201);
 }
 
