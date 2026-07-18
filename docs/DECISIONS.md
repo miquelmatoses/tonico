@@ -64,3 +64,35 @@ resistència), però no la divisió ni el mode competitiu de cada temporada.
 ompli divisions/modes reals al formulari del pla.
 **Alternatives:** inventar una progressió de divisions (risc d'inventar doctrina).
 **Revertir:** editar `plans_temporades` al formulari (res al codi).
+
+## 2026-07-18 · Alineació (Fase 3) — crisi simplificada
+**Context:** la doctrina 1.1.7 defineix un orde de sacrifici fi (resultat →
+entrenament d'extrems → entrenament de MCs). L'optimitzador complet de crisi
+(reassignar extrems a un sol partit per alliberar cossos) és complex.
+**Decisió:** v1 assigna els entrenables a les seues places (maximitza
+entrenament), ompli amb farciment/venda i genera avisos de cobertura («X/8
+entrenen», motiu) + slots buits. No reorganitza automàticament en crisi.
+**Alternatives:** optimitzador de crisi complet (solucionador de restriccions).
+**Revertir:** el motor és pur i testejat; ampliar `alinea()` amb la reorganització.
+
+## 2026-07-18 · ALR_FINESTRA_MERCAT — missatge sense fornada concreta
+**Context:** l'exemple deia «prepara Y€ per a la fornada B», però «B» és una
+compra futura que encara no existix com a dada.
+**Decisió:** el missatge parla de «la fornada següent» en genèric; el filtre de
+cerca (pàgina Mercat) ja concreta el perfil i el pressupost.
+**Revertir:** enriquir el missatge amb la fornada quan el pla la modele.
+
+## 2026-07-18 · Fotrem (Fase 7) — potencial i compost
+**Context:** l'avaluador de crides usa «potencial» i «compost» sense definició
+numèrica exacta.
+**Decisió:** `potencial_max` = màxim dels potencials coneguts; `compost_max` =
+màxim dels actuals coneguts. Els «desconegut» (?) i buits s'ignoren en el màxim.
+**Alternatives:** suma/mitjana ponderada d'habilitats.
+**Revertir:** ajustar `vistaJuvenil` (pur, testejat) i els poms `crida_llindars`.
+
+## 2026-07-18 · Personal (Fase 8) — no declarat = 0
+**Context:** un usuari nou no ha declarat el seu personal.
+**Decisió:** un element no declarat compta com a 0; això dispara l'alerta de
+desquadre (recordatori de muntar el personal de la fase). No és soroll: és
+la configuració que falta.
+**Revertir:** pom o condició de «no avisar fins que declare alguna cosa».
