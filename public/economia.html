@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/estil.css">
+  <title>Tonico</title>
+</head>
+<body>
+  <nav></nav>
+  <main>
+    <h1 data-i18n="economia.titol"></h1>
+    <p role="status" id="estat" data-i18n="comu.carregant"></p>
+  </main>
+  <script type="module">
+    import { carregaI18n, aplicaI18n, pintaNav, api, el, t } from '/comu.js';
+    await carregaI18n();
+    aplicaI18n();
+    pintaNav();
+    const main = document.querySelector('main');
+    const estat = document.getElementById('estat');
+    const TIPUS = ['venda', 'compra', 'sou_setmanal', 'ingres_patrocini', 'taquilla', 'personal', 'estadi', 'altres'];
+
+    async function pinta() {
+      const { transaccions, economia } = await api('/api/transaccions');
+      main.querySelectorAll('section, p.resum, form').forEach((n) => n.remove());
+      estat.remove?.();
+
+      // Resum: caixa + projecció
+      main.append(el('p', { class: 'resum', text: t('economia.caixa', { caixa: economia.caixa }) }));
+      main.append(el('p', { class: 'resum', text: economia.projeccio
+        ? t('economia.projeccio', economia.projeccio) : t('economia.sense_objectiu') }));
+
+      // Marges per fornada
+      if (economia.margesFornada.length) {
+        const cols = ['col_fornada', 'col_compres', 'col_vendes', 'col_marge'];
+        main.append(el('section', {}, el('h2', { text: t('economia.marges_titol') }),
+          el('table', {}, el('thead', {}, el('tr', {}, ...cols.map((k) => el('th', { text: t('economia.' + k) })))),
+            el('tbody', {}, ...economia.margesFornada.map((m) => el('tr', {},
+              el('td', { text: m.fornada }), el('td', { text: m.compres }), el('td', { text: m.vendes }), el('td', { text: m.marge })))))));
+      }
+
+      // Formulari d'apunt
+      const form = el('form', {});
+      const sel = el('select', { name: 'tipus' }, ...TIPUS.map((x) => el('option', { value: x, text: t('tipus.' + x) })));
+      const imp = el('input', { type: 'number', name: 'import', required: 'true', 'aria-label': t('economia.import') });
+      const jug = el('input', { type: 'number', name: 'jugador_id', 'aria-label': t('economia.jugador_id') });
+      const dat = el('input', { type: 'date', name: 'data', 'aria-label': t('economia.data') });
+      const nota = el('input', { type: 'text', name: 'nota', 'aria-label': t('economia.nota') });
+      dat.value = new Date().toISOString().slice(0, 10);
+      form.append(el('h2', { text: t('economia.nou_titol') }), sel, ' ', imp, ' ', jug, ' ', dat, ' ', nota, ' ',
+        el('button', { type: 'submit', text: t('economia.afig') }));
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await api('/api/transaccions', { method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ tipus: sel.value, import: Number(imp.value), jugador_id: jug.value ? Number(jug.value) : null, data: dat.value, nota: nota.value }) });
+        pinta();
+      });
+      main.append(form);
+
+      // Moviments
+      const sec = el('section', {}, el('h2', { text: t('economia.moviments_titol') }));
+      if (!transaccions.length) sec.append(el('p', { text: t('economia.buit') }));
+      else {
+        const cols = ['col_data', 'col_tipus', 'col_import', 'col_jugador', 'col_nota'];
+        sec.append(el('table', {}, el('thead', {}, el('tr', {}, ...cols.map((k) => el('th', { text: t('economia.' + k) })), el('th', {}))),
+          el('tbody', {}, ...transaccions.map((tr) => {
+            const esb = el('button', { type: 'button', text: t('economia.esborra') });
+            esb.addEventListener('click', async () => { await api('/api/transaccions', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: tr.id }) }); pinta(); });
+            return el('tr', {}, el('td', { text: tr.data }), el('td', { text: t('tipus.' + tr.tipus) }),
+              el('td', { text: tr.import }), el('td', { text: tr.jugador || '' }), el('td', { text: tr.nota || '' }), el('td', {}, esb));
+          }))));
+      }
+      main.append(sec);
+    }
+    await pinta();
+  </script>
+</body>
+</html>
