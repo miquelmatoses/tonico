@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/estil.css">
+  <title>Tonico</title>
+</head>
+<body>
+  <nav></nav>
+  <main>
+    <h1 data-i18n="esta_setmana.titol"></h1>
+    <p role="status" id="estat" data-i18n="comu.carregant"></p>
+  </main>
+  <script type="module">
+    import { carregaI18n, aplicaI18n, pintaNav, api, el, t } from '/comu.js';
+    await carregaI18n();
+    aplicaI18n();
+    pintaNav();
+    const main = document.querySelector('main');
+    const estat = document.getElementById('estat');
+
+    async function pinta() {
+      const { alertes } = await api('/api/alertes');
+      main.querySelectorAll('section, p.paco, ul').forEach((n) => n.remove());
+      estat.remove?.();
+
+      // Setmana tranquil·la: Paco sap callar
+      if (!alertes.length) {
+        main.append(el('p', { class: 'paco', text: t('esta_setmana.tot_be') }),
+          el('p', { class: 'paco', text: t('esta_setmana.firma') }));
+        return;
+      }
+
+      main.append(el('p', { class: 'paco', text: t('esta_setmana.salutacio') }));
+      const ul = el('ul');
+      for (const a of alertes) {
+        const li = el('li', {}, el('span', { text: t(a.missatge_clau, a.parametres) + ' ' }));
+        for (const [estatNou, clau] of [['vista', 'esta_setmana.vista'], ['ignorada', 'esta_setmana.ignora']]) {
+          const b = el('button', { type: 'button', text: t(clau) });
+          b.addEventListener('click', async () => {
+            await api('/api/alertes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: a.id, estat: estatNou }) });
+            pinta();
+          });
+          li.append(' ', b);
+        }
+        ul.append(li);
+      }
+      main.append(ul, el('p', { class: 'paco', text: t('esta_setmana.firma') }));
+    }
+    await pinta();
+  </script>
+</body>
+</html>

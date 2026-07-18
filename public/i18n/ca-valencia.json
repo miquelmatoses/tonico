@@ -2,11 +2,27 @@
   "app.nom": "Tonico",
   "app.descriptor": "el planter de Puchades",
 
+  "nav.esta_setmana": "Esta setmana",
   "nav.plantilla": "Plantilla",
   "nav.comparador": "Què ha canviat",
   "nav.pujada": "Pujar dades",
   "nav.instantanies": "Instantànies",
   "nav.eixir": "Eixir",
+
+  "esta_setmana.titol": "Esta setmana",
+  "esta_setmana.salutacio": "Bon dia, cap. Ací tens el que no pot esperar esta setmana, de més urgent a menys.",
+  "esta_setmana.tot_be": "Tot en orde, cap. Els entrenables entrenen, ningú fa anys i no hi ha cap foc. Ja et diré alguna cosa la setmana que ve.",
+  "esta_setmana.vista": "Vist",
+  "esta_setmana.ignora": "Ignora-ho",
+  "esta_setmana.firma": "— Paco Meseguer, secretari tècnic",
+
+  "alerta.aniversari": "Che, {nom} fa anys en {dies} dies: se'n va a {edat_nova}. Si penses vendre'l, esta és l'última finestra abans que li puge el sou i li baixe el cartell. Tu diràs.",
+  "alerta.junta_porter": "Ep, {nom} està en venda i no ha jugat. És porter i té nivell: la Junta ens el pot retindre. Fes-lo jugar {minuts} minuts esta setmana o ja pots oblidar-te de traure'l.",
+  "alerta.nucli_incomplet": "Anem justos, míster: {actuals} entrenables actius i en volem {objectiu}. Ens en falten {falten}. Mira't el mercat abans de dissabte.",
+  "alerta.entrenable_sense_minuts": "{nom} no ha jugat esta jornada. Un entrenable sense minuts és una setmana d'entrenament tirada. Fica'l a l'onze o a l'amistós.",
+  "alerta.promocio_juvenil": "{nom} es pot promocionar en {dies} dies. Si el vols al primer equip, deixa-li el buit fet; si no, decidix què fem amb ell. No el deixes en terra de ningú.",
+  "alerta.plantilla_juvenil_minima": "El juvenil va curt: {actuals} jugadors i en volem {minim} com a mínim. Programa una crida esta setmana.",
+  "alerta.sense_categoria": "{nom} s'ha quedat sense categoria. Mira'l i digues-me què fem amb ell.",
 
   "comparador.titol": "Què ha canviat",
   "comparador.parella": "Comparant {b} amb {a} · fa {dies} dies",
