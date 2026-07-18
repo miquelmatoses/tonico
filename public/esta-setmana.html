@@ -30,13 +30,37 @@
       return b;
     }
 
+    const opc = async (p) => { try { return await p; } catch { return null; } };
+
     async function pinta() {
       const { alertes, revisat, instantania } = await api('/api/alertes');
-      main.querySelectorAll('section, p.paco, ul, button.regen').forEach((n) => n.remove());
+      main.querySelectorAll('section, p.paco, ul, button.regen, p.enllac').forEach((n) => n.remove());
       estat.remove?.();
 
+      // Sense instantània: encara no hi ha dades
+      if (!instantania) {
+        main.append(el('p', { class: 'paco', text: t('esta_setmana.sense_dades') }),
+          el('p', { class: 'enllac' }, el('a', { href: '/pujada.html', text: t('esta_setmana.a_pujar') })));
+        return;
+      }
+
+      // Estat del pla (integració transversal)
+      const pla = await opc(api('/api/pla'));
+      if (pla && !pla.error && pla.temporadaActual != null) {
+        main.append(el('p', { class: 'paco', text: t('esta_setmana.estat_pla', { temporada: pla.temporadaActual, fase: pla.fase_actual }) }));
+      }
       // Base sempre declarada
-      if (instantania) main.append(el('p', { class: 'paco', text: t('esta_setmana.base', { data: instantania.data }) }));
+      main.append(el('p', { class: 'paco', text: t('esta_setmana.base', { data: instantania.data }) }));
+
+      // Resum d'alineació (integració transversal)
+      const ali = await opc(api('/api/alineacio', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }));
+      const resumAli = () => {
+        if (!ali || ali.error || !ali.comptabilitat) return [];
+        const ent = ali.comptabilitat.filter((c) => c.categoria === 'entrenable');
+        const entrenen = ent.filter((c) => c.total >= 100).length;
+        return [el('p', { class: 'paco', text: t('esta_setmana.alineacio_resum', { entrenen, total: ent.length }) }),
+          el('p', { class: 'enllac' }, el('a', { href: '/alineacio.html', text: t('esta_setmana.veure_alineacio') }))];
+      };
 
       // Encara no s'ha passat revista contra la instantània vigent
       if (!revisat) {
@@ -45,7 +69,7 @@
       }
       // Setmana tranquil·la: Paco sap callar
       if (!alertes.length) {
-        main.append(el('p', { class: 'paco', text: t('esta_setmana.tot_be') }),
+        main.append(el('p', { class: 'paco', text: t('esta_setmana.tot_be') }), ...resumAli(),
           el('p', { class: 'paco', text: t('esta_setmana.firma') }), botoRegenera());
         return;
       }
@@ -64,7 +88,7 @@
         }
         ul.append(li);
       }
-      main.append(ul, el('p', { class: 'paco', text: t('esta_setmana.firma') }), botoRegenera());
+      main.append(ul, ...resumAli(), el('p', { class: 'paco', text: t('esta_setmana.firma') }), botoRegenera());
     }
     await pinta();
   </script>
