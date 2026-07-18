@@ -29,6 +29,11 @@ assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM categories_jugador WHERE cat
 assert.equal(r1.autos, 25, 'primera pujada: els 25 jugadors reben categoria auto');
 assert.equal(r1.intercanvis, 0, 'primera pujada: ZERO intercanvis pendents');
 assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM intercanvis WHERE estat='pendent'").get().n, 0);
+// Fornades auto per horitzó d'eixida: A1 (19-21 → T84) = 2, A2 (17 → T86) = 6
+assert.equal(r1.fornades, 8, 'els 8 entrenables reben fornada auto');
+assert.deepEqual(
+  sqlite.prepare('SELECT f.lletra, COUNT(*) n FROM fornades_jugadors fj JOIN fornades f ON f.id=fj.fornada_id GROUP BY f.lletra ORDER BY f.lletra').all().map((x) => [x.lletra, x.n]),
+  [['A1', 2], ['A2', 6]]);
 
 // ── Pujada 2: un extrem de venda (ED, crea6) creix i supera un entrenable extrem ──
 const files2 = files.map((c) => c.slice());

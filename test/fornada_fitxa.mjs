@@ -31,6 +31,12 @@ assert.equal(fj.origen, 'manual');
 r = await fornada.onRequestPost(ctx({ jugador_id: unVenda, lletra: 'A2' }));
 assert.equal(r.status, 409, 'un no-entrenable no pot tindre fornada');
 
+// La fornada manual es preserva quan es torna a classificar (l'auto no la toca)
+await classificaEquip(db, 1, 1, 'fabrica');
+const fm = sqlite.prepare('SELECT f.lletra, fj.origen FROM fornades_jugadors fj JOIN fornades f ON f.id=fj.fornada_id WHERE fj.jugador_id=?').get(unEntrenable);
+assert.equal(fm.origen, 'manual', 'la fornada manual sobreviu a la re-classificació');
+assert.equal(fm.lletra, 'A2');
+
 // ── Fitxa amb pop d'habilitat entre dos setmanes ──
 const snap2 = base.map((c) => c.slice());
 const mc = snap2.find((c) => c[29] === 'MC' && c[22] === '7');   // un entrenable MC
