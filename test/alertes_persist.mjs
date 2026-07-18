@@ -7,7 +7,7 @@ import { nova } from './_d1shim.mjs';
 import { modelSenior, modelJuvenil } from '../lib/adaptador.js';
 import { desar, carregaAncora } from '../functions/api/pujar.js';
 import { classificaEquip } from '../lib/orquestra_classificacio.js';
-import { generaAlertes } from '../lib/orquestra_alertes.js';
+import { generaAlertes, estatRevisio } from '../lib/orquestra_alertes.js';
 
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
@@ -24,11 +24,24 @@ await desar(db, 1, 'senior', modelSenior(senior, '2026-07-18'), ancora);
 await classificaEquip(db, 1, 1, 'fabrica');
 await desar(db, 1, 'juvenil', modelJuvenil(youth, '2026-07-18'), ancora);
 
+// Abans de generar: el parte no està revisat
+assert.equal((await estatRevisio(db, 1)).revisat, false, 'sense revisió → no revisat');
+
 // Creació: hi ha alertes (com a mínim la del juvenil per davall del mínim, 10 < 11)
 const r1 = await generaAlertes(db, 1);
 assert.ok(r1.alertes >= 1, 'genera alertes');
 assert.equal(actives(), r1.alertes);
 assert.equal(teMinima(), 1, 'el juvenil va curt → alerta');
+
+// Després de generar: revisat contra la instantània vigent
+assert.equal((await estatRevisio(db, 1)).revisat, true, 'generat → revisat');
+
+// Cas real (18-07): Junta del porter, aniversari-recomanació (mercat en depressió →
+// esperar) i aniversari-fet d'un entrenable; tot en la mateixa instantània.
+const clau = (k) => sqlite.prepare('SELECT COUNT(*) n FROM alertes WHERE missatge_clau=?').get(k).n;
+assert.ok(sqlite.prepare("SELECT COUNT(*) n FROM alertes a JOIN regles r ON r.id=a.regla_id WHERE r.codi='ALR_JUNTA_PORTER'").get().n >= 1, 'Junta del porter');
+assert.ok(clau('alerta.aniversari_espera') >= 1, 'aniversari en depressió → espera (dos rellotges)');
+assert.ok(clau('alerta.aniversari_fet') >= 1, 'aniversari d\'entrenable → fet');
 
 // Idempotència: re-executar amb les mateixes dades no duplica
 const abans = actives();

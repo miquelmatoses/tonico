@@ -1,6 +1,6 @@
 // Tonico — alertes d'esta setmana. GET les actives (ordenades per urgència);
 // POST per marcar estat (vista/ignorada) o regenerar sota demanda.
-import { generaAlertes } from '../../lib/orquestra_alertes.js';
+import { generaAlertes, estatRevisio } from '../../lib/orquestra_alertes.js';
 
 export async function onRequestGet({ env, data }) {
   const { results } = await env.DB.prepare(
@@ -9,7 +9,11 @@ export async function onRequestGet({ env, data }) {
       WHERE a.usuari_id = ? AND a.estat IN ('nova','vista')
       ORDER BY a.urgencia DESC, a.id`
   ).bind(data.usuari.id).all();
-  return json({ alertes: results.map((a) => ({ ...a, parametres: a.parametres ? JSON.parse(a.parametres) : {} })) });
+  const { revisat, instantania } = await estatRevisio(env.DB, data.usuari.id);
+  return json({
+    alertes: results.map((a) => ({ ...a, parametres: a.parametres ? JSON.parse(a.parametres) : {} })),
+    revisat, instantania,
+  });
 }
 
 export async function onRequestPost({ request, env, data }) {
