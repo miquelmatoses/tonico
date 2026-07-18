@@ -43,6 +43,11 @@
   "esta_setmana.base": "Parte sobre la instantània del {data}.",
   "esta_setmana.no_revisat": "Encara no he passat revista esta setmana, cap. Dis-me i li fique una ullada.",
   "esta_setmana.regenera": "Passa revista",
+  "esta_setmana.estat_pla": "Temporada T{temporada} · fase {fase}.",
+  "esta_setmana.alineacio_resum": "Alineació d'esta setmana: {entrenen}/{total} entrenables al 100%.",
+  "esta_setmana.veure_alineacio": "Vore l'alineació",
+  "esta_setmana.sense_dades": "Encara no tinc dades d'esta setmana, cap. Puja el CSV i te'n passe el parte.",
+  "esta_setmana.a_pujar": "Pujar dades",
 
   "alerta.aniversari": "Che, {nom} fa anys en {dies} dies: se'n va a {edat_nova}. Si penses vendre'l, esta és l'última finestra abans que li puge el sou i li baixe el cartell. Tu diràs.",
   "alerta.aniversari_espera": "Che, {nom} fa anys en {dies} dies (se'n va a {edat_nova}), però estem en depressió de mercat: jo esperaria a la setmana {setmana_recuperacio} per a traure'l. Tu diràs.",

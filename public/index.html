@@ -39,7 +39,7 @@
         method: 'POST', credentials: 'same-origin',
         headers: { 'content-type': 'application/json' }, body: JSON.stringify(cos),
       });
-      if (r.ok) { location.href = '/pujada.html'; return; }
+      if (r.ok) { location.href = '/esta-setmana.html'; return; }
       err.textContent = t('login.error');
       err.hidden = false;
     });

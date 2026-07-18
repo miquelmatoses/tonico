@@ -46,7 +46,7 @@
       if (r.ok && dades.verificacio_pendent) {
         form.hidden = true; pendent.textContent = t('registre.pendent'); pendent.hidden = false; return;
       }
-      if (r.ok) { location.href = '/pujada.html'; return; }
+      if (r.ok) { location.href = '/esta-setmana.html'; return; }
       err.textContent = t(errKey[dades.error] || 'registre.error');
       err.hidden = false;
     });
