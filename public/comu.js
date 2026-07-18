@@ -47,6 +47,8 @@ export function pintaNav(activa) {
   nav.append(
     el('a', { href: '/esta-setmana.html', text: t('nav.esta_setmana') }),
     document.createTextNode(' · '),
+    el('a', { href: '/alineacio.html', text: t('nav.alineacio') }),
+    document.createTextNode(' · '),
     el('a', { href: '/plantilla.html', text: t('nav.plantilla') }),
     document.createTextNode(' · '),
     el('a', { href: '/comparador.html', text: t('nav.comparador') }),
