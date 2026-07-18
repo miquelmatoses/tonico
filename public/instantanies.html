@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/estil.css">
+  <title>Tonico</title>
+</head>
+<body>
+  <nav></nav>
+  <main>
+    <h1 data-i18n="instantanies.titol"></h1>
+    <p role="status" id="estat" data-i18n="comu.carregant"></p>
+  </main>
+  <script type="module">
+    import { carregaI18n, aplicaI18n, pintaNav, api, el, t } from '/comu.js';
+    await carregaI18n();
+    aplicaI18n();
+    pintaNav();
+    const main = document.querySelector('main');
+    const estat = document.getElementById('estat');
+    try {
+      const { instantanies } = await api('/api/instantanies');
+      estat.remove();
+      if (instantanies.length === 0) {
+        main.append(el('p', { text: t('instantanies.buit') }));
+      } else {
+        const cols = ['col_data', 'col_equip', 'col_temporada', 'col_setmana', 'col_jugadors'];
+        const thead = el('thead', {}, el('tr', {}, ...cols.map((c) => el('th', { text: t(`instantanies.${c}`) }))));
+        const tbody = el('tbody', {}, ...instantanies.map((i) => el('tr', {},
+          el('td', { text: i.data }),
+          el('td', { text: i.equip }),
+          el('td', { text: i.temporada ?? '' }),
+          el('td', { text: i.setmana_temporada ?? '' }),
+          el('td', { text: i.jugadors }),
+        )));
+        main.append(el('table', {}, thead, tbody));
+      }
+    } catch {
+      estat.textContent = t('comu.error');
+    }
+  </script>
+</body>
+</html>

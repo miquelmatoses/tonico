@@ -1,0 +1,14 @@
+# Dades reals de jugadors: MAI al repo (és públic). Viuen només a D1.
+*.csv
+!data/fixtures/*.csv
+# L'especificació conté noms reals de jugadors i estratègia: es queda en local.
+especificacio_app_hattrick.md
+# Secrets: mai al repo. Van a wrangler secret / variables d'entorn de Cloudflare.
+.dev.vars
+.env
+*.local
+
+node_modules/
+.wrangler/
+dist/
+.DS_Store

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/estil.css">
+  <title>Tonico</title>
+</head>
+<body>
+  <main>
+    <header>
+      <h1 data-i18n="app.nom"></h1>
+      <p data-i18n="app.descriptor"></p>
+    </header>
+    <section>
+      <h2 data-i18n="registre.titol"></h2>
+      <form id="registre">
+        <p><label><span data-i18n="registre.correu"></span><br>
+          <input type="email" name="correu" autocomplete="username" required></label></p>
+        <p><label><span data-i18n="registre.contrasenya"></span><br>
+          <input type="password" name="contrasenya" autocomplete="new-password" required></label></p>
+        <p><button type="submit" data-i18n="registre.enviar"></button></p>
+        <p role="alert" id="error" hidden></p>
+        <p role="status" id="pendent" hidden></p>
+      </form>
+      <p><a href="/" data-i18n="registre.cap_login"></a></p>
+    </section>
+  </main>
+  <script type="module">
+    import { carregaI18n, aplicaI18n, t } from '/comu.js';
+    await carregaI18n();
+    aplicaI18n();
+    const form = document.getElementById('registre');
+    const err = document.getElementById('error');
+    const pendent = document.getElementById('pendent');
+    const errKey = { correu_ja_registrat: 'registre.error_duplicat', correu_invalid: 'registre.error_correu' };
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      err.hidden = true;
+      const cos = Object.fromEntries(new FormData(form));
+      const r = await fetch('/api/registre', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' }, body: JSON.stringify(cos),
+      });
+      const dades = await r.json().catch(() => ({}));
+      if (r.ok && dades.verificacio_pendent) {
+        form.hidden = true; pendent.textContent = t('registre.pendent'); pendent.hidden = false; return;
+      }
+      if (r.ok) { location.href = '/pujada.html'; return; }
+      err.textContent = t(errKey[dades.error] || 'registre.error');
+      err.hidden = false;
+    });
+  </script>
+</body>
+</html>

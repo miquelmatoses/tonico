@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/estil.css">
+  <title>Tonico</title>
+</head>
+<body>
+  <main>
+    <h1 data-i18n="onboarding.titol"></h1>
+    <p data-i18n="onboarding.explicacio"></p>
+    <form id="onboarding">
+      <fieldset>
+        <legend data-i18n="onboarding.senior_nom"></legend>
+        <p><input name="senior_nom" required></p>
+        <p><label><span data-i18n="onboarding.id_hattrick"></span><br>
+          <input name="senior_id" type="number" inputmode="numeric"></label></p>
+      </fieldset>
+      <fieldset>
+        <legend data-i18n="onboarding.juvenil_nom"></legend>
+        <p><input name="juvenil_nom" required></p>
+        <p><label><span data-i18n="onboarding.id_hattrick"></span><br>
+          <input name="juvenil_id" type="number" inputmode="numeric"></label></p>
+      </fieldset>
+      <p><button type="submit" data-i18n="onboarding.crear"></button></p>
+      <p role="alert" id="error" hidden></p>
+    </form>
+  </main>
+  <script type="module">
+    import { carregaI18n, aplicaI18n, api, t } from '/comu.js';
+    await carregaI18n();
+    aplicaI18n();
+    // Si ja té equips, salta l'onboarding.
+    const { equips } = await api('/api/equips');
+    if (equips.length >= 2) { location.href = '/pujada.html'; }
+    const form = document.getElementById('onboarding');
+    const err = document.getElementById('error');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      err.hidden = true;
+      const f = new FormData(form);
+      try {
+        await api('/api/equips', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            senior: { nom: f.get('senior_nom'), id_hattrick: f.get('senior_id') },
+            juvenil: { nom: f.get('juvenil_nom'), id_hattrick: f.get('juvenil_id') },
+          }),
+        });
+        location.href = '/pujada.html';
+      } catch {
+        err.textContent = t('comu.error'); err.hidden = false;
+      }
+    });
+  </script>
+</body>
+</html>

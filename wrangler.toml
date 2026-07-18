@@ -1,0 +1,11 @@
+# Tonico — Cloudflare Pages + Functions + D1.
+# El binding D1 (database_id) l'ompli el Bloc E quan es cree la base a Cloudflare.
+# Cap secret ací: van per `wrangler secret` / variables d'entorn del panell.
+name = "tonico"
+pages_build_output_dir = "public"
+compatibility_date = "2026-07-18"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tonico"
+database_id = "0a889232-b728-49ed-bd56-a3d11c29417b"

@@ -1,0 +1,14 @@
+{
+  "name": "tonico",
+  "version": "0.0.0",
+  "description": "Tonico — el planter de Puchades. Sistema expert de gestió estratègica per a Hattrick.",
+  "type": "module",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "wrangler pages dev public --d1=DB",
+    "deploy": "wrangler pages deploy public",
+    "db:local": "wrangler d1 execute tonico --local --file",
+    "db:remote": "wrangler d1 execute tonico --remote --file"
+  }
+}

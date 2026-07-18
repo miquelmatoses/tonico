@@ -1,0 +1,10 @@
+/* Tonico — fitxer de disseny central.
+   Principi 2: sense disseny fins al final. Ací només un reset mínim.
+   A la Fase 11 este fitxer es substituïx per la plantilla i vestix tota
+   l'app de colp, sense tocar l'HTML semàntic. Si una pantalla no s'entén
+   sense CSS, la pantalla està mal feta. */
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body { max-width: 70rem; margin: 0 auto; padding: 1rem; font-family: system-ui, sans-serif; line-height: 1.5; }
+table { border-collapse: collapse; }
+th, td { border: 1px solid; padding: 0.25rem 0.5rem; text-align: left; }

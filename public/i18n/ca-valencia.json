@@ -1,0 +1,51 @@
+{
+  "app.nom": "Tonico",
+  "app.descriptor": "el planter de Puchades",
+
+  "nav.pujada": "Pujar dades",
+  "nav.instantanies": "Instantànies",
+  "nav.eixir": "Eixir",
+
+  "login.titol": "Entrada",
+  "login.correu": "Correu",
+  "login.contrasenya": "Contrasenya",
+  "login.entrar": "Entrar",
+  "login.error": "Correu o contrasenya incorrectes.",
+  "login.cap_registre": "Encara no tens compte? Registra't",
+
+  "registre.titol": "Registre",
+  "registre.correu": "Correu",
+  "registre.contrasenya": "Contrasenya",
+  "registre.enviar": "Registrar-me",
+  "registre.cap_login": "Ja tens compte? Entra",
+  "registre.error_duplicat": "Eixe correu ja està registrat.",
+  "registre.error_correu": "El correu no és vàlid.",
+  "registre.error": "No s'ha pogut completar el registre.",
+  "registre.pendent": "T'hem enviat un correu per a verificar el compte.",
+
+  "onboarding.titol": "Crea els teus equips",
+  "onboarding.explicacio": "Abans de pujar dades, dóna nom al primer equip i al juvenil.",
+  "onboarding.senior_nom": "Nom del primer equip (sènior)",
+  "onboarding.juvenil_nom": "Nom del juvenil",
+  "onboarding.id_hattrick": "ID de Hattrick (opcional)",
+  "onboarding.crear": "Crear i continuar",
+
+  "pujada.titol": "Pujar dades de la setmana",
+  "pujada.data": "Data de la instantània",
+  "pujada.fitxer_senior": "CSV del primer equip (sènior)",
+  "pujada.fitxer_juvenil": "CSV del juvenil",
+  "pujada.enviar": "Pujar",
+  "pujada.exit": "Pujat: {total} jugadors (T{temporada} s{setmana}). Nous: {nous}, desapareguts: {desapareguts}.",
+  "pujada.error": "No s'ha pogut pujar: {detall}",
+
+  "instantanies.titol": "Instantànies",
+  "instantanies.col_data": "Data",
+  "instantanies.col_equip": "Equip",
+  "instantanies.col_temporada": "Temporada",
+  "instantanies.col_setmana": "Setmana",
+  "instantanies.col_jugadors": "Jugadors",
+  "instantanies.buit": "Encara no hi ha cap instantània. Comença per pujar les dades de la setmana.",
+
+  "comu.carregant": "Carregant…",
+  "comu.error": "Hi ha hagut un error."
+}
