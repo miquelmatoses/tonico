@@ -17,10 +17,10 @@ const base = readFileSync(new URL('../data/fixtures/players.csv', import.meta.ur
   .replace(/\r/g, '').split('\n').filter((l) => l !== '').map((l) => l.split(','));
 
 const pendents = () => sqlite.prepare("SELECT COUNT(*) n FROM intercanvis WHERE estat='pendent'").get().n;
-// còpia del CSV amb la creativitat del reptador (ED, crea 6) fixada a `cr`
+// còpia del CSV amb la creativitat del reptador (Balagueró, 9é) fixada a `cr`
 const ambCrea = (cr) => base.map((c) => {
   const d = c.slice();
-  if (d[29] === 'ED' && c[22] === '6') d[22] = String(cr);
+  if (d[2] === 'Lluís Estruch') d[22] = String(cr);
   return d;
 });
 

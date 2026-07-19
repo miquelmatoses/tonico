@@ -1,5 +1,23 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-19 · POLIT #1 · El bucket no és categoria (correcció de la regla d'or)
+**Context:** amb buckets MC/extrem dins la categoria `entrenable`, un jugador que
+jugava d'una altra posició a l'últim partit canviava de bucket i desestabilitzava
+la classificació (cas Maglio: Kirsch juga d'ED → proposta de desclassificar Maglio).
+La posició jugada és EFECTE, no causa.
+**Decisió:** `entrenable` passa a **aforament pla de 8** (els 8 millors per
+puntuació creativitat+edat, migració 014); el repartiment MC/extrem el fa
+l'ALINEADOR (tria 2 entrenables per entrenar d'extrem i la resta d'MC). La
+classificació és ara estable davant la posició. Test protegit: `regla_or_bucket.mjs`.
+**Conseqüència:** amb aforament pla, Cătuneanu (20a, crea6 → 6.0) desplaça
+Balagueró (21a, crea6 → 5.5) com a 8é entrenable (factor edat). Maglio (7.5) dins.
+Si es vol Balagueró, cal recalibrar la puntuació (pom).
+**Causa del contracte:** la reconciliació per-bucket proposava el desplaçament
+intern com a eixent sense entrant → desclassificació. En llevar els buckets,
+`entrenable` usa el camí d'aforament pla (ja testejat), sense instabilitat de posició.
+**Revertir:** tornar `places`/`buckets` a la config d'entrenable (no recomanat).
+
+
 Defectes raonables presos sense consultar (regla 1 del mode). A repassar en el polit.
 Format: data · context · decisió · alternatives · com revertir.
 

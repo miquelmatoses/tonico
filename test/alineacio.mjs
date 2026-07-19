@@ -56,7 +56,9 @@ assert.equal(a.avisos.filter((v) => v.tipus === 'entrenament_perdut').length, 0,
 const unExtrem = exts[0].jugador_id;
 const a2 = await proposaAlineacio(db, 1, { vetats: [unExtrem] });
 assert.ok(a2.avisos.some((v) => v.tipus === 'cobertura' && v.entrenen === 7 && v.total === 8), 'avís 7/8 entrenen');
-assert.ok(a2.avisos.some((v) => v.tipus === 'entrenament_perdut' && v.jugador_id === unExtrem && v.motiu === 'vetat'), 'extrem vetat perd entrenament');
-assert.equal(a2.comptabilitat.filter((c) => c.categoria === 'entrenable' && c.partits.length === 1 && c.partits[0].pct === 100).length, 6, 'els 6 MC segueixen al 100%');
+assert.ok(a2.avisos.some((v) => v.tipus === 'entrenament_perdut' && v.jugador_id === unExtrem && v.motiu === 'vetat'), 'vetat perd entrenament');
+const compE2 = a2.comptabilitat.filter((c) => c.categoria === 'entrenable');
+assert.equal(compE2.length, 7, '7 entrenables disponibles');
+assert.ok(compE2.every((c) => c.total === 100), 'els 7 disponibles entrenen al 100%');
 
 console.log('OK — alineació: 8 entrenables al 100%, MC 3/3, extrems dobles, coach davanter, Junta i cobertura');

@@ -35,16 +35,18 @@ assert.deepEqual(
   sqlite.prepare('SELECT f.lletra, COUNT(*) n FROM fornades_jugadors fj JOIN fornades f ON f.id=fj.fornada_id GROUP BY f.lletra ORDER BY f.lletra').all().map((x) => [x.lletra, x.n]),
   [['A1', 2], ['A2', 6]]);
 
-// ── Pujada 2: un extrem de venda (ED, crea6) creix i supera un entrenable extrem ──
+// ── Pujada 2: un candidat fora dels 8 creix i supera el pitjor entrenable ──
 const files2 = files.map((c) => c.slice());
-const reptador = files2.find((c) => c[29] === 'ED' && c[22] === '6');   // Cătuneanu (ED, creativitat 6)
-reptador[22] = '9';                                                     // ara crea 9 → supera Maglio (7.5)
+const reptador = files2.find((c) => c[2] === 'Lluís Estruch');          // Balagueró (9é, fora dels 8)
+reptador[22] = '8';                                                     // creativitat 6 → 8: supera el 8é (Tormo, 6.0)
 const nomReptador = reptador[2];
+const catAbans = cat(idDe(nomReptador));
 await desar(db, 1, 'senior', modelSenior(files2, '2026-07-25'), ancora);
 const r2 = await classificaEquip(db, 1, 1, 'fabrica');
 assert.equal(r2.intercanvis, 1, 'un desplaçament proposat');
 assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM intercanvis WHERE estat='pendent'").get().n, 1);
-assert.equal(cat(idDe(nomReptador)), 'venda', 'el rival NO s\'ha promogut sol');       // regla d'or
+assert.notEqual(catAbans, 'entrenable');
+assert.equal(cat(idDe(nomReptador)), catAbans, 'el rival NO s\'ha promogut sol');       // regla d'or
 
 // ── Acceptar l'intercanvi ──
 const x = sqlite.prepare("SELECT id, eixent_id FROM intercanvis WHERE estat='pendent'").get();

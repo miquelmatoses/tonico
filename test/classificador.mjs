@@ -32,15 +32,14 @@ const config = await carregaConfigPla(db, 'fabrica');
 const res = classifica(jugadors, config);
 
 const per = (cat) => res.filter((r) => r.categoria === cat);
-const idPos = new Map(jugadors.map((j) => [j.id_hattrick, j.posicio]));
 const entren = per('entrenable');
-const mc = entren.filter((r) => config.params.buckets_posicio.mc.includes(idPos.get(r.id_hattrick)));
-const extr = entren.filter((r) => config.params.buckets_posicio.extrem.includes(idPos.get(r.id_hattrick)));
+const noms = entren.map((r) => r.nom);
 
 assert.equal(res.every((r) => !!r.categoria), true, 'tot jugador té veredicte');
-assert.equal(entren.length, 8, 'aforament entrenable = 8');
-assert.equal(mc.length, 6, '6 entrenables MC');
-assert.equal(extr.length, 2, '2 entrenables extrem');
+assert.equal(entren.length, 8, 'aforament entrenable PLA = 8 (sense buckets)');
+// El bucket no és categoria: els 8 millors per puntuació, estable davant la posició.
+assert.ok(noms.includes('Vicent Camarasa'), 'Maglio (extrem) dins per puntuació');
+assert.ok(!noms.includes('Lluís Estruch'), 'Balagueró fora: el desplaça un de més jove i igual creatiu');
 assert.equal(per('futur_entrenador').length, 1, 'aforament futur_entrenador = 1');
 // El futur_entrenador ha de ser el de més experiència
 const maxExp = Math.max(...jugadors.map((j) => j.experiencia));
