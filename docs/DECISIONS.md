@@ -15,6 +15,27 @@ segueix vigent.
 llindar 1.0 (silenciava desafiaments reals del 8é lloc).
 **Revertir:** pujar `llindar_intercanvi`; el versionat és additiu.
 
+## 2026-07-19 · POLIT #2 · Punts 3-8
+- **P3** `/api/falten`: Paco demana les dades manuals que coixegen (caixa, personal,
+  capital objectiu) amb àncora directa; desapareixen soles quan entren.
+- **P4b** `/api/motius`: motiu de baixa; venda amb import crea la transacció d'un colp.
+  Simplificació: el vincle de promoció (`jugador_origen_juvenil_id`) s'ompli des del
+  jugador pendent; els candidats es suggerixen per coincidència de nom.
+- **P4d** `/api/oferta`: avaluador de crides per a OFERTES NOVES (no per als de casa).
+- **P5** l'ompliment de l'alineació prefereix adequació posicional; un porter mai a
+  posició de camp (Castelló a porteria, no a MC). La Junta és restricció de l'alineador.
+- **P6** guardià i18n (`test/i18n_guardia.mjs`): cap clau d'alerta/categoria/motiu pot
+  quedar sense entrada (va caçar `motiu.fluix`/`sense_dades` que faltaven).
+- **P7a** nòmina automàtica des del SOU de la instantània (fora l'apunt manual).
+- **P7b** velocitat de TSI al comparador (dies reals). *Segon ús DIFERIT: entrar a la
+  puntuació de places i a l'horitzó d'eixida quan hi haja historial (millora ja registrada).*
+- **P7c** FORMA com a tercer rellotge de venda (`forma_minima_venda`, defecte 6).
+- **P7d** LIDERATGE a la puntuació de futur_entrenador (experiència + lideratge).
+- **P7e** FIDELITAT i QUALIFICACIÓ amb pesos xicotets al valor de mercat (pot demanar
+  recalibrar el llindar de venda 12.5 amb dades reals).
+- **P8** «Entrenable entrenable» i «pressupost 0» corregits; totes les seccions usen
+  la temporada operativa.
+
 ## 2026-07-19 · POLIT #1 · El bucket no és categoria (correcció de la regla d'or)
 **Context:** amb buckets MC/extrem dins la categoria `entrenable`, un jugador que
 jugava d'una altra posició a l'últim partit canviava de bucket i desestabilitzava
