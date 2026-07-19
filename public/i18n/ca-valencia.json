@@ -52,7 +52,8 @@
   "alerta.aniversari": "Che, {nom} fa anys en {dies} dies: se'n va a {edat_nova}. Si penses vendre'l, esta és l'última finestra abans que li puge el sou i li baixe el cartell. Tu diràs.",
   "alerta.aniversari_espera": "Che, {nom} fa anys en {dies} dies (se'n va a {edat_nova}), però estem en depressió de mercat: jo esperaria a la setmana {setmana_recuperacio} per a traure'l. Tu diràs.",
   "alerta.aniversari_fet": "Apunta: {nom} fa anys en {dies} dies, passa a {edat_nova}. Li pujarà el sou; tin-ho present.",
-  "alerta.junta_porter": "Ep, {nom} està en venda i no ha jugat. És porter i té nivell: la Junta ens el pot retindre. Fes-lo jugar {minuts} minuts esta setmana o ja pots oblidar-te de traure'l.",
+  "alerta.junta_porter_urgent": "Ep, {nom} està LLISTAT i no ha jugat. És porter i té nivell: la Junta ens el retindrà. Fes-lo jugar {minuts} minuts esta setmana o oblida't de traure'l.",
+  "alerta.junta_porter_suau": "Apunta per al dia que llistes {nom}: és porter amb nivell, així que li caldran {minuts} minuts a la setmana o la Junta el retindrà. De moment no cal res.",
   "alerta.nucli_incomplet": "Anem justos, míster: {actuals} entrenables actius i en volem {objectiu}. Ens en falten {falten}. Mira't el mercat abans de dissabte.",
   "alerta.entrenable_sense_minuts": "{nom} no ha jugat esta jornada. Un entrenable sense minuts és una setmana d'entrenament tirada. Fica'l a l'onze o a l'amistós.",
   "alerta.promocio_juvenil": "{nom} es pot promocionar en {dies} dies. Si el vols al primer equip, deixa-li el buit fet; si no, decidix què fem amb ell. No el deixes en terra de ningú.",
@@ -107,6 +108,8 @@
   "motiu.potencial": "potencial",
   "motiu.compost": "compost",
   "motiu.per_davall": "per davall del llindar",
+  "alerta.compra_entrenable": "Falta {falten} entrenable. Filtre: posició {posicions}, edat ≤ {edat_max}, creativitat ≥ {creativitat_min}. Pressupost màxim: {pressupost}. Au, a buscar.",
+  "alerta.compra_entrenable_sense_caixa": "Falta {falten} entrenable. Filtre: posició {posicions}, edat ≤ {edat_max}, creativitat ≥ {creativitat_min}. Apunta'm la caixa a Economia i et pose xifra de pressupost.",
   "alerta.finestra_mercat_ara": "Estem en depressió de mercat, cap: preus baixos. Bona finestra per a comprar la fornada següent.",
   "alerta.finestra_mercat_prop": "Depressió de mercat en {setmanes} setmanes: ves fent caixa per a la fornada següent.",
 

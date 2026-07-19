@@ -30,7 +30,8 @@
     const hab = (j) => j.habilitats.filter((h) => h.actual != null || h.potencial != null)
       .map((h) => `${SIGLA[h.habilitat]} ${val(h.actual)}/${val(h.potencial)}`).join('  ');
 
-    const cols = ['col_jugador', 'col_edat', 'col_habilitats', 'col_potencial', 'col_promocio', 'col_aterratge', 'col_crida', 'col_estat'];
+    // Sense columna «crida»: l'avaluador de crides és per a OFERTES NOVES, no per als de casa.
+    const cols = ['col_jugador', 'col_edat', 'col_habilitats', 'col_potencial', 'col_promocio', 'col_aterratge', 'col_estat'];
     const thead = el('thead', {}, el('tr', {}, ...cols.map((k) => el('th', { text: t('fotrem.' + k) }))));
     const tbody = el('tbody', {}, ...juvenils.map((j) => {
       const sel = el('select', {}, ...ESTATS.map((e) => {
@@ -39,7 +40,6 @@
         return o;
       }));
       sel.addEventListener('change', () => api('/api/fotrem', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.jugador_id, estat: sel.value }) }).catch(() => {}));
-      const crida = j.crida ? (j.crida.accepta ? t('fotrem.crida_accepta', { motiu: t('motiu.' + j.crida.motiu) }) : t('fotrem.crida_rebutja', { motiu: t('motiu.' + j.crida.motiu) })) : '—';
       return el('tr', {},
         el('td', { text: j.nom }),
         el('td', { text: `${j.edat_anys}a ${j.edat_dies}d` }),
@@ -47,7 +47,6 @@
         el('td', { text: j.potencial_max ?? '—' }),
         el('td', { text: j.dies_restants_promocio != null ? t('fotrem.dies', { dies: j.dies_restants_promocio }) : '—' }),
         el('td', { text: j.aterratge ? t('fotrem.aterratge_val', j.aterratge) : '—' }),
-        el('td', { text: crida }),
         el('td', {}, sel));
     }));
     main.append(el('table', {}, thead, tbody));

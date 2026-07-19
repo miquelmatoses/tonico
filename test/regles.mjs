@@ -25,15 +25,19 @@ const codis = (a) => a.map((x) => x.regla_codi);
   assert.equal(b.find((x) => x.jugador_id === 1).parametres.setmana_recuperacio, 1);
 }
 
-// ALR_JUNTA_PORTER: recordatori per a tot porter notable en venda (sense minuts)
+// ALR_JUNTA_PORTER: venda-pla vs llistat-fet (columna Transferible)
 {
-  const ctx = { ...ctxBase, jugadors: [
-    { jugador_id: 1, nom: 'Cast', categoria: 'venda', posicio: 'PO', porteria: 6, data_ultim_partit: '2026-07-22' }, // recent, però igual dispara
-    { jugador_id: 2, nom: 'Baix', categoria: 'venda', posicio: 'PO', porteria: 4 },   // per davall del nivell → no
-    { jugador_id: 3, nom: 'Camp', categoria: 'venda', posicio: 'DC', porteria: 6 },   // no és porter → no
-  ] };
-  const a = REGLES.ALR_JUNTA_PORTER(ctx, { posicio_porter: 'PO', porteria_min: 5, minuts_min: 60, urgencia: 90 });
-  assert.deepEqual(a.map((x) => x.jugador_id), [1]);
+  const p = { posicio_porter: 'PO', porteria_min: 5, minuts_min: 60, dies_sense_partit: 7, urgencia: 90, urgencia_suau: 45 };
+  // No llistat (venda-pla) → recordatori suau
+  const suau = REGLES.ALR_JUNTA_PORTER({ ...ctxBase, jugadors: [{ jugador_id: 1, categoria: 'venda', posicio: 'PO', porteria: 6, data_ultim_partit: '2026-07-22' }] }, p);
+  assert.equal(suau[0].missatge_clau, 'alerta.junta_porter_suau');
+  // Llistat i sense jugar → urgent
+  const urgent = REGLES.ALR_JUNTA_PORTER({ ...ctxBase, jugadors: [{ jugador_id: 1, categoria: 'venda', posicio: 'PO', porteria: 6, transferible: 1, data_ultim_partit: '2026-07-05' }] }, p);
+  assert.equal(urgent[0].missatge_clau, 'alerta.junta_porter_urgent');
+  // Llistat i jugant recentment → cap alerta
+  assert.equal(REGLES.ALR_JUNTA_PORTER({ ...ctxBase, jugadors: [{ jugador_id: 1, categoria: 'venda', posicio: 'PO', porteria: 6, transferible: 1, data_ultim_partit: '2026-07-23' }] }, p).length, 0);
+  // Porter fluix o de camp → mai
+  assert.equal(REGLES.ALR_JUNTA_PORTER({ ...ctxBase, jugadors: [{ jugador_id: 2, categoria: 'venda', posicio: 'PO', porteria: 4 }, { jugador_id: 3, categoria: 'venda', posicio: 'DC', porteria: 6 }] }, p).length, 0);
 }
 
 // ALR_NUCLI_INCOMPLET: menys d'objectiu
@@ -62,6 +66,17 @@ const codis = (a) => a.map((x) => x.regla_codi);
   assert.equal(REGLES.ALR_PLANTILLA_JUVENIL_MINIMA(ctx, { minim: 11, urgencia: 50 }).length, 1);  // 2 < 11
 }
 
+// ALR_COMPRA_ENTRENABLE: filtre concret + pressupost màxim derivat
+{
+  const filtres = [{ rol: 'entrenable', posicions: ['MC'], edat_max: 18, creativitat_min: 6, falten: 1 }];
+  const amb = REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres, caixa: 200000, reserva: 50000 } }, { urgencia: 72 });
+  assert.equal(amb[0].missatge_clau, 'alerta.compra_entrenable');
+  assert.equal(amb[0].parametres.pressupost, 150000);           // (200000 − 50000) / 1
+  const sense = REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres, caixa: 0, reserva: 50000 } }, { urgencia: 72 });
+  assert.equal(sense[0].missatge_clau, 'alerta.compra_entrenable_sense_caixa');
+  assert.equal(REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres: [{ rol: 'entrenable', falten: 0 }], caixa: 1 } }, { urgencia: 72 }).length, 0);
+}
+
 // ALR_SENSE_CATEGORIA
 {
   const ctx = { ...ctxBase, jugadors: [{ jugador_id: 1, nom: 'Z', categoria: null }, { jugador_id: 2, categoria: 'venda' }] };
@@ -71,7 +86,7 @@ const codis = (a) => a.map((x) => x.regla_codi);
 // executaRegles: ordenat per urgència; setmana tranquil·la → cap alerta
 {
   const ctx = { ...ctxBase, jugadors: [
-    { jugador_id: 1, nom: 'P', categoria: 'venda', posicio: 'PO', porteria: 6, data_ultim_partit: '2026-07-10', edat_dies: 100, edat_anys: 23 },
+    { jugador_id: 1, nom: 'P', categoria: 'venda', posicio: 'PO', porteria: 6, transferible: 1, data_ultim_partit: '2026-07-10', edat_dies: 100, edat_anys: 23 },
     ...Array.from({ length: 8 }, (_, i) => ({ jugador_id: 10 + i, categoria: 'entrenable', data_ultim_partit: '2026-07-23' })),
   ] };
   const actives = [
