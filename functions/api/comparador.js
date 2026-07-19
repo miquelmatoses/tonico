@@ -39,7 +39,9 @@ export async function onRequestGet({ request, env, data }) {
     if (!a) continue;
     const habs = HABILITATS.filter((h) => Number(b[h]) > Number(a[h]));
     if (habs.length) pops.push({ jugador_id: jid, nom: b.nom, habilitats: habs });
-    tsi_sou.push({ jugador_id: jid, nom: b.nom, tsi_a: a.tsi, tsi_b: b.tsi, delta_tsi: (b.tsi ?? 0) - (a.tsi ?? 0),
+    const deltaTsi = (b.tsi ?? 0) - (a.tsi ?? 0);
+    tsi_sou.push({ jugador_id: jid, nom: b.nom, tsi_a: a.tsi, tsi_b: b.tsi, delta_tsi: deltaTsi,
+      velocitat_tsi: setmanes > 0 ? Math.round(deltaTsi / setmanes) : null,   // TSI/setmana (dies reals)
       sou_a: a.sou, sou_b: b.sou, delta_sou: (b.sou ?? 0) - (a.sou ?? 0) });
   }
   const nous = [...fb.values()].filter((b) => !fa.has(b.jugador_id)).map((b) => b.nom);

@@ -34,6 +34,7 @@ await tx.onRequestPost(ctx({ tipus: 'compra', import: 50000, data: '2026-07-19' 
 
 const e = await economia(db, 1);
 assert.equal(e.caixa, 150000, 'caixa = 200000 venda − 50000 compra');
+assert.ok(e.nomina > 0, 'nòmina setmanal automàtica des dels sous');   // 7a
 const a1 = e.margesFornada.find((m) => m.fornada === 'A1');
 assert.equal(a1.vendes, 200000);
 assert.equal(a1.marge, 200000);

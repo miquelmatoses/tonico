@@ -61,4 +61,21 @@ const compE2 = a2.comptabilitat.filter((c) => c.categoria === 'entrenable');
 assert.equal(compE2.length, 7, '7 entrenables disponibles');
 assert.ok(compE2.every((c) => c.total === 100), 'els 7 disponibles entrenen al 100%');
 
-console.log('OK — alineació: 8 entrenables al 100%, MC 3/3, extrems dobles, coach davanter, Junta i cobertura');
+// 7f: lesió i sanció exclouen de l'alineació + avís de cobertura
+const unEnt = entrenables[0];
+sqlite.prepare('UPDATE instantanies_jugadors SET lesio=? WHERE jugador_id=? AND instantania_id=(SELECT MAX(id) FROM instantanies WHERE equip_id=1)').run('Cama', unEnt);
+const a3 = await proposaAlineacio(db, 1);
+const juga = Object.values(a3.onze).flat().some((s) => s.jugador?.jugador_id === unEnt);
+assert.equal(juga, false, 'el lesionat no juga cap partit');
+assert.ok(a3.avisos.some((v) => v.tipus === 'entrenament_perdut' && v.jugador_id === unEnt && v.motiu === 'lesionat'), 'avís de lesionat');
+
+// Punt 5: ompliment amb cos compatible — cap porter en posició de camp
+{
+  const config = { partits: ['lliga', 'amistos'], buckets: { porter: ['PO'], mc: ['MC'] },
+    slots: [{ codi: 'POR', bucket: 'porter', entrena: false }, { codi: 'MC1', bucket: 'mc', entrena: true, pct: 100 }] };
+  const squad = [{ jugador_id: 1, nom: 'Porter', posicio: 'PO', categoria: 'venda' }, { jugador_id: 2, nom: 'Migcampista', posicio: 'MC', categoria: 'venda' }];
+  const r = alinea(squad, config);
+  assert.notEqual(r.onze.lliga.find((s) => s.bucket === 'mc').jugador?.jugador_id, 1, 'un porter no ompli una posició de camp');
+}
+
+console.log('OK — alineació: 8 al 100%, MC 3/3, extrems dobles, Junta, cobertura, lesionat exclòs i cos compatible');

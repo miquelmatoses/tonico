@@ -166,9 +166,10 @@ export async function fotrem(main) {
 // ── 6. Mercat ──
 export async function mercat(main) {
   const { filtres, preus } = await api('/api/mercat');
+  const pres = (v) => (v > 0 ? v : t('mercat.sense_pressupost'));
   const textFiltre = (f) => f.rol === 'entrenable'
-    ? t('mercat.filtre_entrenable', { posicions: (f.posicions || []).join('/'), edat_max: f.edat_max, creativitat_min: f.creativitat_min, pressupost: f.pressupost, falten: f.falten })
-    : t('mercat.filtre_farciment', { bucket: f.bucket, posicions: (f.posicions || []).join('/'), habilitat: f.habilitat ? `${f.habilitat.camp} ${f.habilitat.op} ${f.habilitat.valor}` : '', pressupost: f.pressupost, falten: f.falten });
+    ? t('mercat.filtre_entrenable', { posicions: (f.posicions || []).join('/'), edat_max: f.edat_max, creativitat_min: f.creativitat_min, pressupost: pres(f.pressupost), falten: f.falten })
+    : t('mercat.filtre_farciment', { bucket: f.bucket, posicions: (f.posicions || []).join('/'), habilitat: f.habilitat ? `${f.habilitat.camp} ${f.habilitat.op} ${f.habilitat.valor}` : '', pressupost: pres(f.pressupost), falten: f.falten });
   const utils = filtres.filter((f) => f.falten > 0);
   main.append(el('h3', { text: t('mercat.filtres_titol') }), utils.length ? el('ul', {}, ...utils.map((f) => el('li', { text: textFiltre(f) }))) : el('p', { text: t('mercat.sense_filtres') }));
   if (!preus.length) main.append(el('p', { text: t('mercat.buit') }));
