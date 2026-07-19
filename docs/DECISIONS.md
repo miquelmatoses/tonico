@@ -17,6 +17,23 @@ intern com a eixent sense entrant → desclassificació. En llevar els buckets,
 `entrenable` usa el camí d'aforament pla (ja testejat), sense instabilitat de posició.
 **Revertir:** tornar `places`/`buckets` a la config d'entrenable (no recomanat).
 
+## 2026-07-19 · POLIT #1 · Ajustos 2-8 (migració 015)
+- **P2 Venda-pla vs llistat-fet:** la columna `Transferible` del CSV és l'estat REAL
+  al mercat; «venda» és intent del pla. ALR_JUNTA_PORTER: urgent si llistat i sense
+  jugar (la Junta el retindrà), suau (recordatori) si encara no està llistat. Millora
+  el proxy de minuts anterior: ara la base és el llistat, no una data de partit fràgil.
+- **P4 Mínim juvenil = 10** (abans 11): menys jugadors = revelacions i minuts menys
+  diluïts = descobriment més ràpid. L'alerta operativa és la predictiva (ALR_CRIDA_JUVENIL).
+- **P5 Alertes accionables:** ALR_COMPRA_ENTRENABLE porta el filtre concret + pressupost
+  màxim = (caixa − `reserva_operativa`) / places. Amb caixa 0, demana apuntar-la.
+- **P6 Crides només per a ofertes noves:** l'avaluador ix de la taula de Fotrem (no
+  jutja els de casa). 15 anys: «acceptar llevat que siga clarament fluix» → `desconegut`
+  NO és fluix (motiu 'sense_dades'), només es rebutja amb compost conegut per davall.
+- **P7 Capital d'inflexió:** és un pom que posa Miquel; els 430k eren el cost de
+  Salvatella (una partida). Sense pom, la projecció diu «objectiu per definir».
+- **P8 Temporada operativa:** una sola font (`temporadaOperativa`): la setmana final
+  és pretemporada de la següent. Parte, plantilla i pla mostren la mateixa temporada.
+
 
 Defectes raonables presos sense consultar (regla 1 del mode). A repassar en el polit.
 Format: data · context · decisió · alternatives · com revertir.

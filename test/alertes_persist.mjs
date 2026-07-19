@@ -22,12 +22,13 @@ const teMinima = () => sqlite.prepare("SELECT COUNT(*) n FROM alertes a JOIN reg
 
 await desar(db, 1, 'senior', modelSenior(senior, '2026-07-18'), ancora);
 await classificaEquip(db, 1, 1, 'fabrica');
-await desar(db, 1, 'juvenil', modelJuvenil(youth, '2026-07-18'), ancora);
+const youth9 = [youth[0], ...youth.slice(1, 10)];   // capçalera + 9 juvenils (mínim = 10)
+await desar(db, 1, 'juvenil', modelJuvenil(youth9, '2026-07-18'), ancora);
 
 // Abans de generar: el parte no està revisat
 assert.equal((await estatRevisio(db, 1)).revisat, false, 'sense revisió → no revisat');
 
-// Creació: hi ha alertes (com a mínim la del juvenil per davall del mínim, 10 < 11)
+// Creació: hi ha alertes (com a mínim la del juvenil per davall del mínim, 9 < 10)
 const r1 = await generaAlertes(db, 1);
 assert.ok(r1.alertes >= 1, 'genera alertes');
 assert.equal(actives(), r1.alertes);
@@ -56,12 +57,9 @@ const r3 = await generaAlertes(db, 1);
 assert.equal(r3.alertes, 0, 'una ignorada no es torna a crear');
 assert.equal(sqlite.prepare('SELECT estat FROM alertes WHERE id=?').get(unaId).estat, 'ignorada');
 
-// Resolució automàtica: si el juvenil arriba al mínim, l'alerta es resol sola
-const youth11 = youth.map((c) => c.slice());
-const extra = youth[1].slice(); extra[2] = 'Extra Jove'; extra[3] = '959999999';
-youth11.push(extra);
-await desar(db, 1, 'juvenil', modelJuvenil(youth11, '2026-07-18'), ancora, true);   // repuja substituïx
+// Resolució automàtica: si el juvenil arriba al mínim (10), l'alerta es resol sola
+await desar(db, 1, 'juvenil', modelJuvenil(youth, '2026-07-18'), ancora, true);   // repuja amb els 10
 await generaAlertes(db, 1);
-assert.equal(teMinima(), 0, 'amb 11 juvenils, l\'alerta del mínim es resol sola');
+assert.equal(teMinima(), 0, 'amb 10 juvenils, l\'alerta del mínim es resol sola');
 
 console.log('OK — alertes: creació, idempotència, ignora preservada i resolució automàtica');

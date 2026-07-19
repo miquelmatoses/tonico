@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { modelSenior, modelJuvenil } from '../lib/adaptador.js';
-import { calcularSetmana } from '../lib/calendari.js';
+import { calcularSetmana, temporadaOperativa } from '../lib/calendari.js';
 import { classificar } from '../lib/diferencia.js';
 
 const files = (p) => readFileSync(new URL(p, import.meta.url), 'utf8')
@@ -38,6 +38,10 @@ const anc = { data: '2026-07-25', temporada: 83, anyDies: 112 };
 assert.deepEqual(calcularSetmana('2026-07-25', anc), { temporada: 83, setmana: 1 });
 assert.deepEqual(calcularSetmana('2026-08-01', anc), { temporada: 83, setmana: 2 });
 assert.deepEqual(calcularSetmana('2026-07-18', anc), { temporada: 82, setmana: 16 }); // pretemporada
+
+// Temporada operativa (punt 8): la setmana final és pretemporada de la següent
+assert.deepEqual(temporadaOperativa(82, 16, 16), { temporada: 83, setmana: 0 });   // T82 s16 → T83
+assert.deepEqual(temporadaOperativa(83, 5, 16), { temporada: 83, setmana: 5 });    // mig de temporada, igual
 
 // ── Diferència: nous / recompra / desapareguts ──
 const existents = [

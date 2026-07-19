@@ -1,5 +1,7 @@
 // Tonico — vista de plantilla sènior: jugadors de l'última instantània amb la
 // seua categoria vigent (puntuació + justificació + origen) i la fornada.
+import { temporadaOperativa } from '../../lib/calendari.js';
+
 export async function onRequestGet({ env, data }) {
   const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id = ? AND tipus = 'senior'")
     .bind(data.usuari.id).first();
@@ -9,6 +11,11 @@ export async function onRequestGet({ env, data }) {
     'SELECT id, data, temporada, setmana_temporada FROM instantanies WHERE equip_id = ? ORDER BY data DESC, id DESC LIMIT 1'
   ).bind(equip.id).first();
   if (!inst) return json({ instantania: null, jugadors: [], intercanvis: [] });
+  // Temporada operativa (mateix criteri que el parte i el pla)
+  const tempSetmanes = parseInt((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='temporada_setmanes'").first())?.valor || '16', 10);
+  const op = temporadaOperativa(inst.temporada, inst.setmana_temporada, tempSetmanes);
+  inst.temporada = op.temporada;
+  inst.setmana_temporada = op.setmana;
 
   const { results: jugadors } = await env.DB.prepare(
     `SELECT j.id, j.nom, j.especialitat, ij.posicio_ultim_partit AS posicio,

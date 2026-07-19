@@ -10,7 +10,7 @@ import { REGLES } from '../lib/regles.js';
 import * as fotrem from '../functions/api/fotrem.js';
 
 const ancora = { data: '2026-07-25', temporada: 83, anyDies: 112 };
-const llindars = { '15': { compost_min: 3 }, '16': { potencial_min: 7, compost_min: 6 }, '17': { mai: true } };
+const llindars = { '15': { compost_min: 3, per_defecte: 'accepta' }, '16': { potencial_min: 7, compost_min: 6 }, '17': { mai: true } };
 
 // Aterratge: 125 dies des del 18-07 → T84 (cas Moyano)
 assert.equal(projeccioAterratge(125, '2026-07-18', ancora).temporada, 84);
@@ -19,8 +19,9 @@ assert.equal(projeccioAterratge(125, '2026-07-18', ancora).temporada, 84);
 assert.deepEqual(avaluaCrida(17, 8, 8, llindars), { accepta: false, motiu: 'mai' });
 assert.equal(avaluaCrida(16, 7, 3, llindars).motiu, 'potencial');
 assert.equal(avaluaCrida(16, 5, 6, llindars).motiu, 'compost');
-assert.equal(avaluaCrida(15, 2, 2, llindars).accepta, false);
-assert.equal(avaluaCrida(15, null, 4, llindars).accepta, true);
+assert.equal(avaluaCrida(15, null, 2, llindars).accepta, false);       // compost conegut i fluix → rebutja
+assert.equal(avaluaCrida(15, null, 4, llindars).accepta, true);        // compost conegut i suficient → accepta
+assert.deepEqual(avaluaCrida(15, null, null, llindars), { accepta: true, motiu: 'sense_dades' });  // desconegut ≠ fluix
 
 // Alerta predictiva de crida
 const jv = (n, dies) => Array.from({ length: n }, () => ({ dies_restants_promocio: dies }));
