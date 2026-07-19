@@ -36,5 +36,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/013_personal.sql'));
   sqlite.exec(src('../schema/014_entrenable_pla.sql'));
   sqlite.exec(src('../schema/015_polit.sql'));
+  sqlite.exec(src('../schema/016_polit2.sql'));
   return { sqlite, db: new D1(sqlite) };
 }
