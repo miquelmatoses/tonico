@@ -24,6 +24,7 @@ export async function onRequestGet({ env, data }) {
     const compra = {
       edat_max: parseInt((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='compra_edat_max'").bind(pla.plantilla).first())?.valor || '18', 10),
       creativitat_min: parseInt((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='compra_creativitat_min'").bind(pla.plantilla).first())?.valor || '6', 10),
+      posicions: JSON.parse((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='compra_posicions'").bind(pla.plantilla).first())?.valor || '["MC"]'),
     };
     const { caixa } = await economia(env.DB, data.usuari.id);
     filtres = filtresCompra(config, squad, caixa, compra);
