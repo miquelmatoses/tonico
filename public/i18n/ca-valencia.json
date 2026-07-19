@@ -41,7 +41,7 @@
   "esta_setmana.ignora": "Ignora-ho",
   "esta_setmana.firma": "— Paco Meseguer, secretari tècnic",
   "esta_setmana.base": "Parte sobre la instantània del {data}.",
-  "esta_setmana.no_revisat": "Encara no he passat revista esta setmana, cap. Dis-me i li fique una ullada.",
+  "esta_setmana.no_revisat": "Ei cap, açò pot estar calculat amb dades o configuració d'abans. Passa revista i t'ho deixe al dia.",
   "esta_setmana.regenera": "Passa revista",
   "esta_setmana.estat_pla": "Temporada T{temporada} · fase {fase}.",
   "esta_setmana.alineacio_resum": "Alineació d'esta setmana: {entrenen}/{total} entrenables al 100%.",

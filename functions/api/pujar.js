@@ -7,8 +7,7 @@
 import { modelSenior, modelJuvenil } from '../../lib/adaptador.js';
 import { calcularSetmana } from '../../lib/calendari.js';
 import { classificar } from '../../lib/diferencia.js';
-import { classificaEquip } from '../../lib/orquestra_classificacio.js';
-import { generaAlertes } from '../../lib/orquestra_alertes.js';
+import { regeneraPipeline } from '../../lib/pipeline.js';
 
 // ponytail: split CSV ingenu (sense cometes ni comes dins de camp, com els
 // exports reals). Si algun dia un camp porta comes, ací entra PapaParse.
@@ -45,15 +44,8 @@ export async function onRequestPost(context) {
   }
   if (resultats.length === 0) return json({ error: 'cap_fitxer' }, 400);
 
-  // Classificació automàtica del sènior (regla d'or) si s'ha pujat i hi ha pla.
-  let classificacio = null;
-  if (resultats.some((r) => r.tipus === 'senior')) {
-    const pla = await env.DB.prepare('SELECT plantilla FROM plans WHERE usuari_id = ? LIMIT 1').bind(usuari.id).first();
-    const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id = ? AND tipus = 'senior'").bind(usuari.id).first();
-    if (pla && equip) classificacio = await classificaEquip(env.DB, usuari.id, equip.id, pla.plantilla);
-  }
-  // Motor de regles: genera l'informe d'esta setmana (Paco Meseguer).
-  const alertes = await generaAlertes(env.DB, usuari.id);
+  // Pipeline derivat sencer (classificació → fornades → alertes), regla d'or inclosa.
+  const { classificacio, alertes } = await regeneraPipeline(env.DB, usuari.id);
   return json({ ok: true, resultats, classificacio, alertes });
 }
 

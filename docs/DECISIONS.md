@@ -1,5 +1,20 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-19 · POLIT #2.1 · Versionat de config + llindar d'intercanvi 0.25
+**Context:** tot l'estat derivat (categories, fornades, alertes) es calculava
+només en pujar; en desplegar codi o canviar poms, prod mostrava derivats vells
+sense avisar (Maglio a venda). A més, el desafiament del 8é lloc
+(Cătuneanu 6.0 vs Balagueró 5.5, diff 0.5) quedava per davall del llindar 1.0.
+**Decisió:** (a) hash de config COMPLET (classificació+fornades+regles,
+`lib/config_hash.js`); si el hash vigent ≠ el del derivat, el parte ho declara i
+«Passa revista» regenera el pipeline sencer (`lib/pipeline.js`), idempotent i amb
+la regla d'or. (b) `llindar_intercanvi` baixa a **0.25** (migració 016) perquè els
+desafiaments reals del lloc límit (0.5) es proposen; el fre anti-soroll de rebuig
+segueix vigent.
+**Alternatives:** hash només de regles (no detectava canvis de classificació);
+llindar 1.0 (silenciava desafiaments reals del 8é lloc).
+**Revertir:** pujar `llindar_intercanvi`; el versionat és additiu.
+
 ## 2026-07-19 · POLIT #1 · El bucket no és categoria (correcció de la regla d'or)
 **Context:** amb buckets MC/extrem dins la categoria `entrenable`, un jugador que
 jugava d'una altra posició a l'últim partit canviava de bucket i desestabilitzava
