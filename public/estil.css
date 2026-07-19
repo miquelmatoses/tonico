@@ -8,3 +8,6 @@
 body { max-width: 70rem; margin: 0 auto; padding: 1rem; font-family: system-ui, sans-serif; line-height: 1.5; }
 table { border-collapse: collapse; }
 th, td { border: 1px solid; padding: 0.25rem 0.5rem; text-align: left; }
+/* Barra d'àncores fixa de la pàgina única (estructural, no decoratiu) */
+nav#ancores { position: sticky; top: 0; background: Canvas; padding: 0.25rem 0; border-bottom: 1px solid; z-index: 1; }
+section { scroll-margin-top: 3rem; }

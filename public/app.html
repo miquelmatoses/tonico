@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/estil.css">
+  <title>Tonico</title>
+</head>
+<body>
+  <nav id="ancores"></nav>
+  <main>
+    <section id="esta-setmana"><h2 data-i18n="esta_setmana.titol"></h2><div class="cos" data-i18n="comu.carregant"></div></section>
+    <section id="decisions"><h2 data-i18n="decisions.titol"></h2><div class="cos"></div></section>
+    <section id="alineacio"><h2 data-i18n="alineacio.titol"></h2><div class="cos"></div></section>
+    <section id="plantilla"><h2 data-i18n="plantilla.titol"></h2><div class="cos"></div></section>
+    <section id="fotrem"><h2 data-i18n="fotrem.titol"></h2><div class="cos"></div></section>
+    <section id="mercat"><h2 data-i18n="mercat.titol"></h2><div class="cos"></div></section>
+    <section id="economia"><h2 data-i18n="economia.titol"></h2><div class="cos"></div></section>
+    <section id="pla"><h2 data-i18n="pla.titol"></h2><div class="cos"></div></section>
+    <section id="personal"><h2 data-i18n="personal.titol"></h2><div class="cos"></div></section>
+    <section id="pujada"><h2 data-i18n="comparador.titol"></h2><div class="cos"></div></section>
+  </main>
+  <script type="module">
+    import { carregaI18n, aplicaI18n, api, el, t } from '/comu.js';
+    import * as S from '/seccions.js';
+    await carregaI18n();
+    aplicaI18n();
+
+    // Gate: cal sessió, equips i pla (si no, cap a l'alta)
+    let equips;
+    try { equips = (await api('/api/equips')).equips; } catch { location.href = '/'; throw 0; }
+    if (equips.length < 2) { location.href = '/onboarding.html'; throw 0; }
+
+    const SECCIONS = [
+      ['esta-setmana', 'esta_setmana', S.esta_setmana], ['decisions', 'decisions', S.decisions],
+      ['alineacio', 'alineacio', S.alineacio], ['plantilla', 'plantilla', S.plantilla],
+      ['fotrem', 'fotrem', S.fotrem], ['mercat', 'mercat', S.mercat],
+      ['economia', 'economia', S.economia], ['pla', 'pla', S.pla], ['personal', 'personal', S.personal],
+    ];
+
+    // Barra d'àncores
+    const nav = document.getElementById('ancores');
+    for (const [id, clau] of [...SECCIONS, ['pujada', 'comparador']]) {
+      nav.append(el('a', { href: '#' + id, text: t(clau + '.titol') }));
+      nav.append(document.createTextNode(' · '));
+    }
+    const eixir = el('a', { href: '#', text: t('nav.eixir') });
+    eixir.addEventListener('click', async (e) => { e.preventDefault(); await api('/api/eixir', { method: 'POST' }); location.href = '/'; });
+    nav.append(eixir);
+
+    // Render aïllat per secció: una que falla no tomba la resta
+    const pinta = async (id, fn) => {
+      const cos = document.querySelector('#' + id + ' .cos');
+      cos.textContent = '';
+      try { await fn(cos); } catch (err) { cos.append(el('p', { text: t('comu.error') })); }
+    };
+    for (const [id, , fn] of SECCIONS) pinta(id, fn);
+    // Secció 10: pujada + comparador
+    (async () => {
+      const cos = document.querySelector('#pujada .cos'); cos.textContent = '';
+      try { S.pujada(cos); } catch { /* aïllat */ }
+      try { await S.comparador(cos); } catch { cos.append(el('p', { text: t('comu.error') })); }
+    })();
+  </script>
+</body>
+</html>
