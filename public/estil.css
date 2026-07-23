@@ -1,13 +1,138 @@
-/* Tonico — fitxer de disseny central.
-   Principi 2: sense disseny fins al final. Ací només un reset mínim.
-   A la Fase 11 este fitxer es substituïx per la plantilla i vestix tota
-   l'app de colp, sense tocar l'HTML semàntic. Si una pantalla no s'entén
-   sense CSS, la pantalla està mal feta. */
-:root { color-scheme: light dark; }
+/* Tonico — fitxer de disseny central (ÚNIC).
+   CAPA de disseny sobre l'HTML semàntic existent: tokens + un bloc d'estil per
+   PATRÓ de docs/PATRONS_UI.md. Cap regla ací assumix estructura nova: si el DOM
+   no canvia, això vestix; si una pantalla no s'entén sense CSS, està mal feta.
+   Origen dels tokens: projecte de Claude Design «Redisseny complet Tonico»
+   (Tonico.dc.html) — se n'extrauen paleta, tipografies, escala, radis i ombres;
+   cap maqueta ni marcatge del disseny s'ha copiat. */
+
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+/* ══ TOKENS ══ */
+:root {
+  /* Paleta (del disseny) */
+  --tinta: #14231a;          /* text principal i vores */
+  --paper: #f4f0e2;          /* fons de pàgina */
+  --paper-alt: #fbf8ee;      /* superfície elevada (seccions, taules) */
+  --paper-3: #f0ede1;        /* zebra / capçaleres suaus */
+  --verd-fosc: #0c3a1e;      /* panells foscos */
+  --verd: #12633a;
+  --llima: #c6f24e;          /* accent */
+  --verd-clar: #eafff0;      /* text sobre fosc */
+  --verd-suau: #9fd0af;      /* text secundari sobre fosc */
+  --gris: #5a6b60;           /* text apagat (AA sobre paper: ~5:1) */
+  --vora-suau: #cdd6cf;
+  --roig: #e5484d;
+  --roig-fosc: #a8262a;      /* variant AA per a text sobre paper */
+  --groc: #f2b705;
+  --blau: #4aa8e0;
+  --ok: #1a7d3d;
+
+  /* Tipografia */
+  --font-titol: 'Anton', system-ui, sans-serif;
+  --font: 'Manrope', system-ui, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --t-10: 10px; --t-11: 11px; --t-12: 12px; --t-13: 13px; --t-14: 14px;
+  --t-15: 15px; --t-18: 18px; --t-20: 20px; --t-26: 26px; --t-30: 30px;
+
+  /* Escala d'espaiat */
+  --e-1: 4px;  --e-2: 6px;  --e-3: 8px;  --e-4: 10px; --e-5: 12px;
+  --e-6: 14px; --e-7: 16px; --e-8: 18px; --e-9: 22px; --e-10: 28px;
+
+  /* Radis i ombres dures (segell del disseny) */
+  --r-1: 6px; --r-2: 9px; --r-3: 12px; --r-4: 16px; --r-pill: 999px;
+  --ombra: 3px 3px 0 var(--tinta);
+  --ombra-alta: 4px 4px 0 var(--tinta);
+
+  color-scheme: light;       /* el disseny és una paleta clara; res d'inversió del navegador */
+}
+
+/* ══ BASE ══ */
 * { box-sizing: border-box; }
-body { max-width: 70rem; margin: 0 auto; padding: 1rem; font-family: system-ui, sans-serif; line-height: 1.5; }
-table { border-collapse: collapse; }
-th, td { border: 1px solid; padding: 0.25rem 0.5rem; text-align: left; }
-/* Barra d'àncores fixa de la pàgina única (estructural, no decoratiu) */
-nav#ancores { position: sticky; top: 0; background: Canvas; padding: 0.25rem 0; border-bottom: 1px solid; z-index: 1; }
-section { scroll-margin-top: 3rem; }
+
+body {
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: var(--e-5) var(--e-7) var(--e-10);
+  background: var(--paper);
+  color: var(--tinta);
+  font-family: var(--font);
+  font-size: var(--t-14);
+  line-height: 1.5;
+  /* Densitat alta: les taules són l'ànima. Xifres sempre tabulars. */
+  font-variant-numeric: tabular-nums;
+}
+
+a { color: var(--verd); text-decoration: none; font-weight: 600; }
+a:hover { color: var(--ok); text-decoration: underline; }
+::selection { background: var(--llima); color: var(--verd-fosc); }
+
+:where(a, button, input, select, summary):focus-visible {
+  outline: 3px solid var(--verd-fosc);
+  outline-offset: 2px;
+}
+
+/* ══ PATRÓ 1 · SECCIÓ ══ */
+main { display: flex; flex-direction: column; gap: var(--e-7); }
+
+section {
+  scroll-margin-top: 4.5rem;
+  background: var(--paper-alt);
+  border: 2px solid var(--tinta);
+  border-radius: var(--r-3);
+  box-shadow: var(--ombra-alta);
+  padding: var(--e-6) var(--e-7);
+}
+/* Subsecció: mateixa família, sense doble marc ni doble ombra. */
+section section {
+  box-shadow: none;
+  border-width: 0 0 0 3px;
+  border-radius: 0;
+  border-color: var(--llima);
+  background: none;
+  padding: 0 0 0 var(--e-5);
+  margin: var(--e-7) 0 0;
+}
+
+h2, h3 {
+  font-family: var(--font-titol);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  line-height: 1.1;
+  margin: 0 0 var(--e-5);
+}
+h2 { font-size: var(--t-26); }
+h2::after {                                   /* subratllat de marca */
+  content: ''; display: block;
+  width: 3.5rem; height: 5px; margin-top: var(--e-2);
+  background: var(--llima); border-radius: var(--r-pill);
+}
+h3 { font-size: var(--t-15); letter-spacing: .5px; color: var(--verd-fosc); }
+
+p { margin: 0 0 var(--e-4); }
+.cos { display: block; }
+
+/* ══ NAVEGACIÓ (barra d'àncores) ══ */
+nav#ancores {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-3);
+  margin: 0 0 var(--e-7);
+  padding: var(--e-3) var(--e-5);
+  background: var(--verd-fosc);
+  border: 2px solid var(--tinta);
+  border-radius: var(--r-3);
+  box-shadow: var(--ombra);
+  font-size: var(--t-12);
+}
+nav#ancores a {
+  color: var(--verd-clar);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  font-weight: 800;
+  font-size: var(--t-11);
+  padding: var(--e-1) var(--e-3);
+  border-radius: var(--r-pill);
+}
+nav#ancores a:hover { background: var(--llima); color: var(--verd-fosc); text-decoration: none; }
+nav#ancores select { margin-left: auto; }
