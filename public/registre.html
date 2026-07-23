@@ -8,13 +8,26 @@
 </head>
 <body>
   <main>
-    <header>
-      <h1 data-i18n="app.nom"></h1>
-      <p data-i18n="app.descriptor"></p>
-    </header>
-    <section>
+  <div class="auth">
+    <aside class="auth-pitch">
+      <div class="auth-marca"><div class="hdr-logo">T</div><span class="hdr-nom">TONICO</span></div>
+      <div>
+        <span class="kicker" data-i18n="auth.kicker"></span>
+        <h1><span data-i18n="auth.hero1"></span><br><em data-i18n="auth.hero2"></em></h1>
+        <p class="auth-sub" data-i18n="auth.sub"></p>
+      </div>
+      <dl class="auth-stats">
+        <div><dt data-i18n="auth.stat1"></dt><dd data-i18n="auth.stat1_v"></dd></div>
+        <div><dt data-i18n="auth.stat2"></dt><dd data-i18n="auth.stat2_v"></dd></div>
+        <div><dt data-i18n="auth.stat3"></dt><dd data-i18n="auth.stat3_v"></dd></div>
+      </dl>
+    </aside>
+    <div class="auth-form"><div class="auth-caixa">
+<section>
       <h2 data-i18n="registre.titol"></h2>
       <form id="registre">
+        <p><label><span data-i18n="comu.idioma"></span><br>
+          <span id="tria-idioma"></span></label></p>
         <p><label><span data-i18n="registre.correu"></span><br>
           <input type="email" name="correu" autocomplete="username" required></label></p>
         <p><label><span data-i18n="registre.contrasenya"></span><br>
@@ -25,11 +38,16 @@
       </form>
       <p><a href="/" data-i18n="registre.cap_login"></a></p>
     </section>
+    </div></div>
+  </div>
   </main>
   <script type="module">
-    import { carregaI18n, aplicaI18n, t } from '/comu.js';
+    import { carregaI18n, aplicaI18n, t, selectorIdioma, idiomaActual } from '/comu.js';
     await carregaI18n();
     aplicaI18n();
+    const sel = selectorIdioma();                 // canvi → recarrega en l'idioma triat
+    sel.name = 'idioma';
+    document.getElementById('tria-idioma').append(sel);
     const form = document.getElementById('registre');
     const err = document.getElementById('error');
     const pendent = document.getElementById('pendent');

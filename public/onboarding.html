@@ -8,7 +8,22 @@
 </head>
 <body>
   <main>
-    <h1 data-i18n="onboarding.titol"></h1>
+  <div class="auth">
+    <aside class="auth-pitch">
+      <div class="auth-marca"><div class="hdr-logo">T</div><span class="hdr-nom">TONICO</span></div>
+      <div>
+        <span class="kicker" data-i18n="auth.kicker"></span>
+        <h1><span data-i18n="auth.hero1"></span><br><em data-i18n="auth.hero2"></em></h1>
+        <p class="auth-sub" data-i18n="auth.sub"></p>
+      </div>
+      <dl class="auth-stats">
+        <div><dt data-i18n="auth.stat1"></dt><dd data-i18n="auth.stat1_v"></dd></div>
+        <div><dt data-i18n="auth.stat2"></dt><dd data-i18n="auth.stat2_v"></dd></div>
+        <div><dt data-i18n="auth.stat3"></dt><dd data-i18n="auth.stat3_v"></dd></div>
+      </dl>
+    </aside>
+    <div class="auth-form"><div class="auth-caixa">
+<h1 data-i18n="onboarding.titol"></h1>
     <p data-i18n="onboarding.explicacio"></p>
     <form id="onboarding">
       <fieldset>
@@ -17,37 +32,42 @@
         <p><label><span data-i18n="onboarding.id_hattrick"></span><br>
           <input name="senior_id" type="number" inputmode="numeric"></label></p>
       </fieldset>
-      <fieldset>
+      <p><label><input type="checkbox" id="te_academia" name="te_academia" checked>
+        <span data-i18n="onboarding.te_academia"></span></label></p>
+      <fieldset id="fs_juvenil">
         <legend data-i18n="onboarding.juvenil_nom"></legend>
-        <p><input name="juvenil_nom" required></p>
+        <p><input name="juvenil_nom"></p>
         <p><label><span data-i18n="onboarding.id_hattrick"></span><br>
           <input name="juvenil_id" type="number" inputmode="numeric"></label></p>
       </fieldset>
       <p><button type="submit" data-i18n="onboarding.crear"></button></p>
       <p role="alert" id="error" hidden></p>
     </form>
+    </div></div>
+  </div>
   </main>
   <script type="module">
     import { carregaI18n, aplicaI18n, api, t } from '/comu.js';
     await carregaI18n();
     aplicaI18n();
-    // Si ja té equips, salta l'onboarding.
+    // Si ja té el sènior, ja ha fet l'onboarding.
     const { equips } = await api('/api/equips');
-    if (equips.length >= 2) { location.href = '/pujada.html'; }
+    if (equips.some((e) => e.tipus === 'senior')) { location.href = '/pujada.html'; }
     const form = document.getElementById('onboarding');
     const err = document.getElementById('error');
+    // L'acadèmia és opcional: el checkbox mostra/amaga el bloc juvenil.
+    const teAcad = document.getElementById('te_academia');
+    const fsJuv = document.getElementById('fs_juvenil');
+    const sync = () => { fsJuv.hidden = !teAcad.checked; };
+    teAcad.addEventListener('change', sync); sync();
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       err.hidden = true;
       const f = new FormData(form);
+      const cos = { senior: { nom: f.get('senior_nom'), id_hattrick: f.get('senior_id') } };
+      if (teAcad.checked && f.get('juvenil_nom')) cos.juvenil = { nom: f.get('juvenil_nom'), id_hattrick: f.get('juvenil_id') };
       try {
-        await api('/api/equips', {
-          method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            senior: { nom: f.get('senior_nom'), id_hattrick: f.get('senior_id') },
-            juvenil: { nom: f.get('juvenil_nom'), id_hattrick: f.get('juvenil_id') },
-          }),
-        });
+        await api('/api/equips', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(cos) });
         location.href = '/pujada.html';
       } catch {
         err.textContent = t('comu.error'); err.hidden = false;

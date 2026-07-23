@@ -289,3 +289,30 @@ ul { margin: 0 0 12px; padding-left: 18px; }
   .card { border-radius: 12px; }
   .taula-scroll { overflow-x: auto; }
 }
+
+/* ══ AUTENTICACIÓ: panell il·lustrat + formulari (disseny) ══ */
+.auth-pitch::before { content: ''; position: absolute; inset: 0; opacity: .5;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 60px, transparent 60px 120px); }
+.auth-pitch::after { content: ''; position: absolute; right: -140px; top: 50%; transform: translateY(-50%);
+  width: 520px; height: 520px; border: 3px solid rgba(255,255,255,.14); border-radius: 50%; }
+.auth-pitch > * { position: relative; z-index: 1; }
+.auth-marca { display: flex; align-items: center; gap: 12px; }
+.auth-marca .hdr-logo { width: 46px; height: 46px; border-radius: 12px; font-size: 26px; }
+.auth-marca .hdr-nom { font-size: 26px; }
+.auth-pitch h1 em { color: var(--llima); font-style: normal; }
+.auth-sub { font-size: 17px; line-height: 1.5; max-width: 30ch; color: var(--verd-pal); margin: 0; }
+.auth-stats { display: flex; gap: 26px; margin: 0; }
+.auth-stats dd { font-family: var(--font-titol); font-size: 30px; color: var(--llima); margin: 0; }
+.auth-stats dt { font-size: 12px; color: var(--verd-suau); text-transform: uppercase; letter-spacing: 1px; order: 2; }
+.auth-stats > div { display: flex; flex-direction: column; }
+.auth-caixa h2 { font-size: 30px; margin-bottom: 6px; }
+.auth-caixa form { display: block; }
+.auth-caixa p { margin: 0 0 14px; }
+.auth-caixa label { text-transform: none; font-size: 12px; color: var(--gris); }
+.auth-caixa input, .auth-caixa select { width: 100%; padding: 12px 14px; border-radius: 10px; font-size: 14px; }
+.auth-caixa button[type=submit] { width: 100%; padding: 14px; border: 2px solid var(--tinta); border-radius: 12px;
+  background: var(--llima); color: var(--verd-fosc); font-family: var(--font-titol); font-size: 17px;
+  letter-spacing: 1px; text-transform: uppercase; box-shadow: var(--o4); }
+.auth-caixa button[type=submit]:hover { transform: translate(-1px,-1px); box-shadow: var(--o5); }
+/* Les pantalles d'autenticació són a sang: el <main> de l'app no les ha de capar. */
+main:has(.auth) { max-width: none; padding: 0; }

@@ -507,5 +507,15 @@
   "economia.sub": "Caixa, nòmina, marges per fornada i trajectòria fins a la inflexió.",
   "pla.sub": "El pla mestre temporada a temporada: fites, fases i eixides previstes.",
   "personal.sub": "Entrenador i especialistes: contractes, nivells i desquadres amb la fase.",
-  "comparador.sub": "Puja el CSV de Hattrick i mira què ha canviat des de l'última instantània."
+  "comparador.sub": "Puja el CSV de Hattrick i mira què ha canviat des de l'última instantània.",
+  "auth.kicker": "El planter de Puchades",
+  "auth.hero1": "El teu planter,",
+  "auth.hero2": "sense endevinar",
+  "auth.sub": "Tonico llig les teues dades de Hattrick i et diu què toca fer esta setmana. Res d'endevinalles: regles, no opinions.",
+  "auth.stat1": "Temporada",
+  "auth.stat1_v": "T83",
+  "auth.stat2": "Seccions",
+  "auth.stat2_v": "10",
+  "auth.stat3": "Regles vives",
+  "auth.stat3_v": "24"
 }

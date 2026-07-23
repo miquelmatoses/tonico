@@ -4,14 +4,61 @@
 // pàgina crida el seu init.
 let CATALEG = {};
 
-export async function carregaI18n(idioma = 'ca-valencia') {
-  CATALEG = await (await fetch(`/i18n/${idioma}.json`)).json();
+export const IDIOMES = { 'ca-valencia': 'Valencià', en: 'English' };
+
+// Idioma vigent al client: la tria guardada localment (ràpid, sense round-trip);
+// per defecte ca-valencia. La font de veritat del compte és usuaris.idioma, que
+// es sincronitza a localStorage en entrar.
+export function idiomaActual() {
+  try { return localStorage.getItem('idioma') || 'ca-valencia'; } catch { return 'ca-valencia'; }
+}
+
+export async function carregaI18n(idioma) {
+  const id = IDIOMES[idioma] ? idioma : idiomaActual();
+  CATALEG = await (await fetch(`/i18n/${id}.json`)).json();
+}
+
+// Selector d'idioma reutilitzable. onCanvi(codi) opcional (p.ex. persistir al
+// servidor); si no, recarrega la pàgina amb el nou idioma.
+export function selectorIdioma(onCanvi) {
+  const sel = el('select', { 'aria-label': t('comu.idioma') });
+  for (const [codi, nom] of Object.entries(IDIOMES)) {
+    const o = el('option', { value: codi, text: nom });
+    if (codi === idiomaActual()) o.setAttribute('selected', '');
+    sel.append(o);
+  }
+  sel.addEventListener('change', async () => {
+    try { localStorage.setItem('idioma', sel.value); } catch { /* sense emmagatzematge */ }
+    if (onCanvi) await onCanvi(sel.value);
+    location.reload();
+  });
+  return sel;
 }
 
 export function t(clau, params = {}) {
-  let s = CATALEG[clau] ?? clau;
-  for (const [k, v] of Object.entries(params)) s = s.replaceAll(`{${k}}`, v);
+  const brut = CATALEG[clau];
+  if (brut == null) {                              // guard: clau que no resol (p.ex. alerta desada amb clau vella)
+    console.error(`[i18n] clau sense traducció: ${clau}`);
+    return CATALEG['comu.text_indisponible'] ?? '—';
+  }
+  let s = brut;
+  for (const [k, v] of Object.entries(params)) {
+    if (v == null || v === '') console.error(`[i18n] valor buit per «${k}» a «${clau}» (marcador buit)`);  // no sols {param}
+    s = s.replaceAll(`{${k}}`, v);
+  }
+  // Guard d'interpolació AMPLIAT (v3 · 2a): cap text renderitzat pot dur un {parametre}
+  // sense resoldre NI acabar en el·lipsi per un paràmetre no passat.
+  if (/\{[a-zA-Z_][\w]*\}/.test(s)) {
+    console.error(`[i18n] paràmetre sense resoldre a «${clau}»: ${s}`);
+    s = s.replace(/\{[a-zA-Z_][\w]*\}/g, '…');
+  }
   return s;
+}
+
+// Text amb PLURAL (punt 4): tria la clau `base_1` (n===1) o `base_n` segons el comptador.
+// Evita «1 places»/«1 entrenables». El guardià exigix les dues formes per a cada base.
+export function tp(base, n, params = {}) {
+  return t(`${base}_${n === 1 ? '1' : 'n'}`, { ...params, n });
 }
 
 // Ompli els textos declaratius: <element data-i18n="clau">
@@ -29,6 +76,16 @@ export function el(tag, attrs = {}, ...fills) {
   }
   for (const f of fills) n.append(f);
   return n;
+}
+
+// Guarda de FILA (doctrina de degradació): construïx la fila o, si peta, una fila
+// d'error ACOTADA (colspan) amb el detall al registre — mai tomba la taula sencera.
+export function filaSegura(fn, ncols) {
+  try { return fn(); }
+  catch (err) {
+    console.error('[fila] error acotat a la fila:', err);
+    return el('tr', {}, el('td', { colspan: String(ncols || 1), text: t('comu.error_fila') }));
+  }
 }
 
 // Client API únic: JSON, cookies incloses, redirecció a l'entrada si 401.

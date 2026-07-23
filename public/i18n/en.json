@@ -507,5 +507,15 @@
   "economia.sub": "Cash, wages, margins per batch and trajectory to the inflection.",
   "pla.sub": "The master plan season by season: milestones, phases and planned exits.",
   "personal.sub": "Coach and specialists: contracts, levels and mismatches with the phase.",
-  "comparador.sub": "Upload the Hattrick CSV and see what changed since the last snapshot."
+  "comparador.sub": "Upload the Hattrick CSV and see what changed since the last snapshot.",
+  "auth.kicker": "The Puchades academy",
+  "auth.hero1": "Your academy,",
+  "auth.hero2": "no guesswork",
+  "auth.sub": "Tonico reads your Hattrick data and tells you what to do this week. No guessing: rules, not opinions.",
+  "auth.stat1": "Season",
+  "auth.stat1_v": "S83",
+  "auth.stat2": "Sections",
+  "auth.stat2_v": "10",
+  "auth.stat3": "Live rules",
+  "auth.stat3_v": "24"
 }
