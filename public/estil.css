@@ -200,3 +200,115 @@ td, th { font-variant-numeric: tabular-nums; }
 }
 .despatxar { background: var(--roig); color: #fff; }
 .cobertura { background: var(--paper-3); color: var(--gris); border: 1px solid var(--vora-suau); }
+
+/* ══ PATRÓ 4 · LLISTA ══
+   Dos variants del mateix marcatge: INFORMATIVA (només text) i ACCIONABLE
+   (text + botons). Es distingixen amb :has(), sense tocar el DOM. */
+ul { list-style: none; margin: 0 0 var(--e-5); padding: 0; }
+li { padding: var(--e-2) 0 var(--e-2) var(--e-6); position: relative; }
+li::before {                                  /* pic de marca */
+  content: ''; position: absolute; left: 0; top: .85em;
+  width: 6px; height: 6px; border-radius: 2px; background: var(--llima);
+  border: 1px solid var(--tinta);
+}
+
+/* ── Alerta amb accions (l'informe de Paco) ── */
+li:has(> button) {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-3);
+  padding: var(--e-4) var(--e-5);
+  margin-bottom: var(--e-3);
+  background: var(--paper-alt);
+  border: 2px solid var(--tinta);
+  border-left-width: 6px;
+  border-radius: var(--r-2);
+  box-shadow: var(--ombra);
+}
+li:has(> button)::before { display: none; }   /* el marc ja és la marca */
+li:has(> button) > span { flex: 1 1 22rem; }
+
+/* ── Línia d'agenda (llista informativa dins d'una subsecció) ── */
+li:not(:has(> button)) { font-size: var(--t-13); }
+
+/* ══ PATRÓ 6 · MISSATGE DE PACO ══
+   Veu, no dada: panell fosc amb l'accent, com al disseny. */
+.paco {
+  background: var(--verd-fosc);
+  color: var(--verd-clar);
+  border: 2px solid var(--tinta);
+  border-radius: var(--r-2);
+  box-shadow: var(--ombra);
+  padding: var(--e-4) var(--e-5);
+  margin: 0 0 var(--e-4);
+  font-size: var(--t-13);
+  font-weight: 500;
+}
+.paco a { color: var(--llima); }
+.paco a:hover { color: #fff; }
+
+/* ══ PATRÓ 3b · FORMULARI I CONTROLS ══ */
+form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--e-4); margin: 0 0 var(--e-5); }
+label {
+  display: flex; flex-direction: column; gap: var(--e-1);
+  font-size: var(--t-11); font-weight: 800;
+  text-transform: uppercase; letter-spacing: .5px; color: var(--gris);
+}
+input, select, textarea {
+  font-family: inherit;
+  font-size: var(--t-13);
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta);
+  background: #fff;
+  padding: var(--e-2) var(--e-3);
+  border: 2px solid var(--tinta);
+  border-radius: var(--r-1);
+}
+input[type="number"] { text-align: right; }   /* les xifres, a la dreta */
+
+button {
+  font-family: var(--font-titol);
+  font-size: var(--t-12);
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--verd-fosc);
+  background: var(--llima);
+  padding: var(--e-2) var(--e-5);
+  border: 2px solid var(--tinta);
+  border-radius: var(--r-1);
+  box-shadow: 2px 2px 0 var(--tinta);
+  cursor: pointer;
+}
+button:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--tinta); }
+button:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--tinta); }
+/* Els botons dins d'una cel·la densa no han de fer créixer la fila. */
+td button { font-size: var(--t-10); padding: 2px var(--e-3); box-shadow: 1px 1px 0 var(--tinta); }
+td input, td select { padding: 2px var(--e-2); font-size: var(--t-12); }
+
+/* ══ PATRÓ 5 · DETALL DESPLEGABLE ══ */
+details {
+  border: 2px solid var(--vora-suau);
+  border-radius: var(--r-1);
+  padding: var(--e-3) var(--e-4);
+  margin: 0 0 var(--e-4);
+  background: var(--paper-3);
+}
+details[open] { border-color: var(--tinta); }
+summary {
+  cursor: pointer;
+  font-size: var(--t-11); font-weight: 800;
+  text-transform: uppercase; letter-spacing: .5px;
+  color: var(--verd-fosc);
+}
+
+/* ══ PATRÓ 7 · NOTA AL PEU / ESTAT ══ */
+.nota-peu { font-size: var(--t-11); color: var(--gris); margin: var(--e-1) 0 var(--e-4); }
+[role="status"] { font-size: var(--t-12); font-weight: 700; color: var(--ok); }
+[role="alert"] { font-size: var(--t-12); font-weight: 700; color: var(--roig-fosc); }
+[hidden] { display: none !important; }
+
+/* ══ RESPONSIU ══ */
+@media (max-width: 40rem) {
+  body { padding: var(--e-3); }
+  section { padding: var(--e-5); }
+  table { display: block; overflow-x: auto; }   /* la taula densa fa scroll, no s'esclafa */
+  h2 { font-size: var(--t-20); }
+}
