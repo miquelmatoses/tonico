@@ -151,7 +151,7 @@
   "mercat.filtre_previsio": " (forecast: for when {noms} is sold)",
   "mercat.sense_filtres": "No squad gaps to fill right now.",
   "mercat.sense_pressupost": "no cash logged",
-  "mercat.preus_titol": "Observed prices (comparables)",
+  "mercat.preus_titol": "Noted comparables",
   "mercat.nou_titol": "Log a comparable",
   "mercat.posicio": "Position",
   "mercat.edat": "Age",
@@ -517,5 +517,13 @@
   "auth.stat2": "Sections",
   "auth.stat2_v": "10",
   "auth.stat3": "Live rules",
-  "auth.stat3_v": "24"
+  "auth.stat3_v": "24",
+  "economia.caixa_et": "Cash",
+  "economia.objectiu_et": "Inflection target",
+  "economia.balanc_et": "Weekly balance",
+  "economia.caixa_derivada": "derived from movements",
+  "economia.falta_nota": "{falta} short ({pct}%)",
+  "pujada.descripcio": "Upload the Hattrick CSV (squad and, if you have one, academy) with the snapshot date.",
+  "comparador.canvis_titol": "What changed",
+  "fotrem.rellotges_titol": "Academy clocks"
 }

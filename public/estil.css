@@ -316,3 +316,74 @@ ul { margin: 0 0 12px; padding-left: 18px; }
 .auth-caixa button[type=submit]:hover { transform: translate(-1px,-1px); box-shadow: var(--o5); }
 /* Les pantalles d'autenticació són a sang: el <main> de l'app no les ha de capar. */
 main:has(.auth) { max-width: none; padding: 0; }
+
+/* ══ GRAELLA DE DUES COLUMNES (Moviments, Fotrem, Economia, Personal) ══ */
+.duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; align-items: start; }
+
+/* ══ BANNER DE CONSELL ══ */
+.tip { background: var(--llima); border: 2px solid var(--tinta); border-radius: 12px; padding: 10px 14px;
+  font-weight: 700; font-size: 13px; color: var(--verd-fosc); box-shadow: var(--o2); margin: 0 0 16px; }
+
+/* ══ MOVIMENTS ══ */
+.mov-fila { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--vora-suau); font-size: 13px; }
+.mov-fila:first-child { border-top: 0; }
+.mov-punt { width: 8px; height: 8px; border-radius: 50%; background: var(--llima); border: 1px solid var(--tinta); flex-shrink: 0; }
+.mov-text { flex: 1; }
+
+/* ══ RÀNQUING JUVENIL ══ */
+.rank-fila { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 10px;
+  padding: 9px 16px; border-top: 1px solid var(--vora-suau); }
+.rank-fila:first-child { border-top: 0; }
+.rank-fila:nth-child(even) { background: #fbf9f0; }
+.nivell { min-width: 40px; padding: 4px 8px; border-radius: 8px; background: var(--verd-fosc); color: var(--llima);
+  font-family: var(--font-titol); font-size: 15px; text-align: center; }
+.nivell.top { background: var(--llima); color: var(--verd-fosc); }
+.rank-dreta { text-align: right; font-size: 11px; color: var(--gris); white-space: nowrap; }
+.rank-dreta b { display: block; font-size: 12px; color: var(--tinta); }
+
+/* ══ FILES DE DADES AMB CAPÇALERA (Mercat, Pla, Personal) ══ */
+.graella-cap { display: grid; gap: 10px; padding: 9px 16px; background: var(--verd-fosc); color: var(--llima);
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
+.graella-fila-d { display: grid; gap: 10px; padding: 9px 16px; align-items: center;
+  border-top: 1px solid var(--vora-suau); font-size: 13px; }
+.graella-fila-d:nth-child(even) { background: #fbf9f0; }
+.c-venda { grid-template-columns: minmax(0,2fr) 1fr 1fr 1fr 1fr auto; }
+.c-pla { grid-template-columns: auto auto minmax(0,1fr) auto; }
+.c-staff { grid-template-columns: minmax(0,1.6fr) auto auto auto; }
+
+/* ══ ECONOMIA ══ */
+.eco-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 14px; margin-bottom: 16px; }
+.eco-card { background: var(--blanc); border: 2px solid var(--tinta); border-radius: 16px; padding: 16px 18px; box-shadow: var(--o4); }
+.eco-card.fosc { background: var(--verd-fosc); color: var(--verd-clar); }
+.eco-et { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--gris); }
+.eco-card.fosc .eco-et { color: var(--verd-suau); }
+.eco-xifra { font-family: var(--font-titol); font-size: 30px; line-height: 1.1; margin: 4px 0; }
+.eco-card.fosc .eco-xifra { color: var(--llima); }
+.eco-xifra.neg { color: var(--roig); }
+.eco-nota { font-size: 12px; color: var(--gris); }
+.eco-card.fosc .eco-nota { color: var(--verd-suau); }
+.barra { height: 10px; border-radius: 999px; background: var(--paper-3, #f0ede1); border: 2px solid var(--tinta); overflow: hidden; margin: 8px 0 6px; }
+.barra > i { display: block; height: 100%; background: var(--llima); }
+
+/* ══ FORMULARI EN GRAELLA ══ */
+.form-graella { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 10px; margin-bottom: 12px; }
+.form-graella label { text-transform: uppercase; }
+.form-graella input, .form-graella select { width: 100%; }
+
+/* ══ PUJADA ══ */
+.pujada-cap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.pujada-tit { font-weight: 800; font-size: 15px; }
+.pujada-desc { font-size: 12px; color: var(--gris); }
+.pujada-data { text-align: right; }
+
+/* ══ PEU ══ */
+.peu { max-width: 1180px; margin: 0 auto; padding: 24px 20px 40px; border-top: 2px solid var(--vora-suau);
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--gris); }
+
+@media (max-width: 60rem) {
+  .c-venda, .c-pla, .c-staff { grid-template-columns: 1fr auto; }
+  .graella-cap { display: none; }
+}
+/* Un formulari dins d'una targeta és un bloc: la graella de camps ha d'ocupar tot l'ample. */
+form.card-cos { display: block; }
+.form-graella { width: 100%; }

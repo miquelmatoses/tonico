@@ -135,55 +135,66 @@ function pintaAgenda(main, agenda) {
 // ── 2. Moviments (fets automàticament amb Desfés + preguntes d'overrides + motius) ──
 export async function decisions(main) {
   capcalera(main, 2, 'decisions');
-  const boto = (id, accio, text) => { const b = el('button', { type: 'button', text }); b.addEventListener('click', async () => { await api('/api/intercanvis', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, accio }) }); location.reload(); }); return b; };
+  const boto = (id, accio, text) => { const b = el('button', { type: 'button', class: 'b-xic neutre', text }); b.addEventListener('click', async () => { await api('/api/intercanvis', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, accio }) }); location.reload(); }); return b; };
   const { moviments, historial = [], preguntes } = await api('/api/intercanvis');
   const liniaMov = (x) => {
     const dif = decimal(x.diferencia);
     const txt = x.entrant ? t('moviments.mov', { entrant: x.entrant, eixent: x.eixent, desti: t('categoria.' + x.desti_eixent), diferencia: dif })
       : t('moviments.mov_solo', { eixent: x.eixent, categoria: t('categoria.' + x.categoria), desti: t('categoria.' + x.desti_eixent) });
-    return el('p', {}, el('span', { text: txt + ' ' }), boto(x.id, 'desfer', t('moviments.desfes')));
+    return el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
+      el('span', { class: 'mov-text', text: txt }), boto(x.id, 'desfer', t('moviments.desfes')));
   };
 
+  const duo = el('div', { class: 'duo' });
   // Fets automàticament (informa + Desfés) — només els RECENTS.
-  const subF = el('section', {}, el('h3', { text: t('moviments.fets_titol') }));
-  if (!moviments.length) subF.append(el('p', { text: t('moviments.cap_fet') }));
-  for (const x of moviments) subF.append(liniaMov(x));
+  const subF = card(t('moviments.fets_titol'), moviments.length, 'llima');
+  const cosF = el('div', { class: 'card-cos' });
+  if (!moviments.length) cosF.append(el('p', { class: 'nota-peu', text: t('moviments.cap_fet') }));
+  for (const x of moviments) cosF.append(liniaMov(x));
+  subF.append(cosF);
   // Historial plegable: caducats per temps o per la pujada següent; el Desfés hi és mentres siga reversible.
   if (historial.length) {
     const det = el('details', {}, el('summary', { text: t('moviments.historial', { n: historial.length }) }));
     for (const x of historial) det.append(liniaMov(x));
-    subF.append(det);
+    cosF.append(det);
   }
-  main.append(subF);
+  duo.append(subF);
 
   // Preguntes prèvies (només overrides manuals)
-  const subP = el('section', {}, el('h3', { text: t('moviments.preguntes_titol') }));
-  if (!preguntes.length) subP.append(el('p', { text: t('moviments.cap_pregunta') }));
+  const subP = card(t('moviments.preguntes_titol'), preguntes.length);
+  const cosP = el('div', { class: 'card-cos' });
+  if (!preguntes.length) cosP.append(el('p', { class: 'nota-peu', text: t('moviments.cap_pregunta') }));
   for (const x of preguntes) {
     const dif = decimal(x.diferencia);
-    const p = el('p', {}, el('span', { text: t('moviments.pregunta', { entrant: x.entrant, eixent: x.eixent, categoria: t('categoria.' + x.categoria), desti: t('categoria.' + x.desti_eixent), diferencia: dif }) + ' ' }));
-    p.append(boto(x.id, 'acceptar', t('plantilla.acceptar')), ' ', boto(x.id, 'rebutjar', t('plantilla.rebutjar')));
-    subP.append(p);
+    const p = el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
+      el('span', { class: 'mov-text', text: t('moviments.pregunta', { entrant: x.entrant, eixent: x.eixent, categoria: t('categoria.' + x.categoria), desti: t('categoria.' + x.desti_eixent), diferencia: dif }) }));
+    p.append(boto(x.id, 'acceptar', t('plantilla.acceptar')), boto(x.id, 'rebutjar', t('plantilla.rebutjar')));
+    cosP.append(p);
   }
-  main.append(subP);
+  subP.append(cosP);
+  duo.append(subP);
 
   // Motius de baixa (punt 4b)
   const motius = await opc(api('/api/motius'));
   const pendents = motius?.pendents || [];
-  const subM = el('section', {}, el('h3', { text: t('decisions.motius_titol') }));
-  if (!pendents.length) subM.append(el('p', { text: t('decisions.sense_motius') }));
+  const subM = card(t('decisions.motius_titol'), pendents.length);
+  const cosM = el('div', { class: 'card-cos' });
+  if (!pendents.length) cosM.append(el('p', { class: 'nota-peu', text: t('decisions.sense_motius') }));
   for (const j of pendents) {
     const sel = el('select', {}, ...['venda', 'alliberament', 'promocio', 'altres'].map((m) => el('option', { value: m, text: t('motiu_baixa.' + m) })));
     const imp = el('input', { type: 'number', size: '8', 'aria-label': t('decisions.import') });
     const origenSel = el('select', {}, el('option', { value: '', text: '—' }), ...(j.candidats_juvenils || []).map((c) => el('option', { value: c.id, text: c.nom })));
-    const b = el('button', { type: 'button', text: t('decisions.desa') });
+    const b = el('button', { type: 'button', class: 'b-xic', text: t('decisions.desa') });
     b.addEventListener('click', async () => {
       await api('/api/motius', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.id, motiu: sel.value, import: imp.value ? Number(imp.value) : null, origen_juvenil_id: origenSel.value ? Number(origenSel.value) : null }) });
       location.reload();
     });
-    subM.append(el('p', {}, el('span', { text: t('decisions.motiu_jugador', { nom: j.nom }) + ' ' }), sel, ' ', imp, ' ', origenSel, ' ', b));
+    cosM.append(el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
+      el('span', { class: 'mov-text', text: t('decisions.motiu_jugador', { nom: j.nom }) }), sel, imp, origenSel, b));
   }
-  main.append(subM);
+  subM.append(cosM);
+  duo.append(subM);
+  main.append(duo);
 }
 
 // ── 3. Alineació ──
@@ -313,16 +324,21 @@ export async function fotrem(main) {
   const d = await api('/api/fotrem');
   const juvenils = d.juvenils;
   // Recordatori permanent de tàctica (punt 15) + entrenament juvenil (punt 12)
-  main.append(el('p', { text: t('fotrem.tactica_reminder') }));
-  if (d.crida) cridaSetmanal(main, d.crida);
+  main.append(el('div', { class: 'tip', text: '⚡ ' + t('fotrem.tactica_reminder') }));
+  const rell = card(t('fotrem.rellotges_titol'));
+  const rc = el('div', { class: 'card-cos' });
+  if (d.crida) cridaSetmanal(rc, d.crida);
   // 4a: proposta de promoció setmanal (millor nivell elegible); cua → despatx/vendre.
   if (d.promocio) {
     const p = d.promocio.proposta;
-    main.append(el('p', { class: 'paco', text: !p ? t('fotrem.promocio_cap')
+    rc.append(el('p', { text: !p ? t('fotrem.promocio_cap')
       : p.cua ? t('fotrem.promocio_cua', { nom: p.nom, nivell: decimal(p.nivell) })
         : t('fotrem.promocio_proposta', { nom: p.nom, nivell: decimal(p.nivell) }) }));
   }
-  formEntrenamentJuvenil(main, d);
+  rell.append(rc);
+  const duoDalt = el('div', { class: 'duo' }, rell);
+  formEntrenamentJuvenil(duoDalt, d);
+  main.append(duoDalt);
   if (!juvenils.length) { main.append(el('p', { text: t('fotrem.buit') })); return; }
   const hab = (j) => j.habilitats.filter((h) => h.actual != null || h.potencial != null).map((h) => `${SIGLA[h.habilitat]} ${val(h.actual)}/${val(h.potencial)}`).join('  ');
   // Pipeline en llenguatge pla (punt 2). Desconegut ≠ dolent: destí «per determinar».
@@ -338,58 +354,73 @@ export async function fotrem(main) {
   };
   // Taules netes: NIVELL numèric (una dada per columna); el PERQUÈ (raonament) viu al
   // títol de la cel·la (detall per fila), no a la graella. Aterratge = només la data (5b).
-  const cols = ['col_jugador', 'col_nivell', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_potencial', 'col_promocio', 'col_aterratge', 'col_estat'];
-  const tbody = el('tbody', {}, ...juvenils.map((j) => filaSegura(() => {
-    const sel = el('select', {}, ...ESTATS.map((e) => { const o = el('option', { value: e, text: t('fotrem.estat_' + e) }); if (e === j.estat) o.setAttribute('selected', ''); return o; }));
+  // Rànquing per NIVELL: insígnia de nivell, qui és, i el rellotge de promoció.
+  // El PERQUÈ (pipeline) viu al títol de la fila, no dins la graella.
+  const duo = el('div', { class: 'duo' });
+  const rank = card(t('fotrem.titol'), juvenils.length, 'llima');
+  juvenils.forEach((j, i) => rank.append(filaSegura(() => {
+    const sel = el('select', { 'aria-label': t('fotrem.col_estat') }, ...ESTATS.map((e) => { const o = el('option', { value: e, text: t('fotrem.estat_' + e) }); if (e === j.estat) o.setAttribute('selected', ''); return o; }));
     sel.addEventListener('change', () => api('/api/fotrem', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.jugador_id, estat: sel.value }) }).catch(() => {}));
-    const nivellCel = el('td', { text: j.nivell != null ? decimal(j.nivell) : '—' });
-    const perque = pipeTxt(j); if (perque) nivellCel.setAttribute('title', perque);   // detall per fila
-    return el('tr', {}, el('td', { text: j.nom }), nivellCel, el('td', { text: edat(j.edat_anys, j.edat_dies) }), el('td', { text: j.especialitat || '—' }), el('td', { text: hab(j) }),
-      el('td', { text: j.potencial_max ?? '—' }),
-      el('td', { text: j.dies_restants_promocio != null ? t('fotrem.dies', { dies: j.dies_restants_promocio }) : '—' }),
-      el('td', { text: j.aterratge?.data || (typeof j.aterratge === 'string' ? j.aterratge : '—') }), el('td', {}, sel));
-  }, cols.length)));
-  main.append(el('table', {}, el('thead', {}, el('tr', {}, ...cols.map((k) => el('th', { text: t('fotrem.' + k) })))), tbody));
-  if (d.onze_juvenil) onzeJuvenil(main, d.onze_juvenil);
+    const fila = el('div', { class: 'rank-fila' },
+      el('div', { class: 'nivell' + (i === 0 ? ' top' : ''), text: j.nivell != null ? decimal(j.nivell) : '—' }),
+      el('div', {}, el('div', { class: 'fila-nom', text: j.nom }),
+        el('div', { class: 'fila-meta' },
+          el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` }),
+          el('span', { class: 'skills', text: hab(j) }))),
+      el('div', { class: 'rank-dreta' },
+        el('b', { text: j.dies_restants_promocio != null ? t('fotrem.dies', { dies: j.dies_restants_promocio }) : '—' }),
+        el('span', { text: j.aterratge?.data || (typeof j.aterratge === 'string' ? j.aterratge : '—') }), ' ', sel));
+    const perque = pipeTxt(j); if (perque) fila.setAttribute('title', perque);   // detall per fila
+    return fila;
+  }, 1)));
+  duo.append(rank);
+  if (d.onze_juvenil) onzeJuvenil(duo, d.onze_juvenil);
+  main.append(duo);
 
   // Avaluador d'ofertes noves (punt 4d)
-  const form = el('form', {}, el('h3', { text: t('fotrem.oferta_titol') }));
+  const cOf = card(t('fotrem.oferta_titol'));
+  const form = el('form', { class: 'card-cos' });
   const edatInp = el('input', { type: 'number', size: '3', 'aria-label': t('fotrem.edat') });   // NO ombrejar el formatador edat()
   const pot = el('input', { type: 'number', size: '3', 'aria-label': t('fotrem.col_potencial') });
   const comp = el('input', { type: 'number', size: '3', 'aria-label': t('fotrem.compost') });
   const res = el('span', {});
-  const b = el('button', { type: 'button', text: t('fotrem.avalua') });
+  const b = el('button', { type: 'button', class: 'b-prim', text: t('fotrem.avalua') });
   b.addEventListener('click', async () => {
     const r = await opc(api('/api/oferta?' + new URLSearchParams({ edat: edatInp.value, potencial: pot.value, compost: comp.value })));
     res.textContent = r && r.veredicte ? (r.veredicte.accepta ? t('fotrem.crida_accepta', { motiu: t('motiu.' + r.veredicte.motiu) }) : t('fotrem.crida_rebutja', { motiu: t('motiu.' + r.veredicte.motiu) })) : '—';
   });
-  form.append(t('fotrem.edat') + ' ', edatInp, ' ' + t('fotrem.col_potencial') + ' ', pot, ' ' + t('fotrem.compost') + ' ', comp, ' ', b, ' ', res);
-  main.append(form);
+  form.append(el('div', { class: 'form-graella' },
+    el('label', {}, t('fotrem.edat'), edatInp), el('label', {}, t('fotrem.col_potencial'), pot),
+    el('label', {}, t('fotrem.compost'), comp)), b, ' ', res);
+  cOf.append(form); main.append(cOf);
 }
 
 // Rellotge de crida (reinici setmanal global): disponible → acció «he fet la crida»
 // (data + resultat); gastada o tancada → línia informativa amb la pròxima.
 function cridaSetmanal(main, c) {
-  if (!c.disponible) { main.append(el('p', { text: t('fotrem.crida_proxima', { proxima: c.proxima }) })); return; }
+  if (!c.disponible) { main.append(el('p', { class: 'nota-peu', text: t('fotrem.crida_proxima', { proxima: c.proxima }) })); return; }
   const fer = (resultat) => api('/api/crides', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ resultat }) }).then(() => location.reload());
-  const acc = el('button', { type: 'button', text: t('fotrem.crida_feta_accepta') });
+  const acc = el('button', { type: 'button', class: 'b-xic', text: t('fotrem.crida_feta_accepta') });
   acc.addEventListener('click', () => fer('acceptat'));
-  const reb = el('button', { type: 'button', text: t('fotrem.crida_feta_rebutja') });
+  const reb = el('button', { type: 'button', class: 'b-xic neutre', text: t('fotrem.crida_feta_rebutja') });
   reb.addEventListener('click', () => fer('rebutjat'));
-  main.append(el('p', {}, el('span', { text: t('fotrem.crida_disponible', { caduca: c.caducitat }) + ' ' }), acc, ' ', reb));
+  main.append(el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
+    el('span', { class: 'mov-text', text: t('fotrem.crida_disponible', { caduca: c.caducitat }) }), acc, reb));
 }
 
 // Onze juvenil proposat (2b): descobriment probabilístic + fre de suplents.
 const BUCKET_SIGLA = { porter: 'POR', defensa: 'DC', mc: 'MC', extrem: 'EX', davanter: 'DV' };
 function onzeJuvenil(main, o) {
-  const sec = el('section', {}, el('h3', { text: t('fotrem.onze_titol') }));
-  if (o.no_viable) sec.append(el('p', { text: t('fotrem.onze_no_viable', { en_camp: o.en_camp, minim: o.minim }) }));
+  const sec = card(t('fotrem.onze_titol'), o.en_camp);
+  const info = el('div', { class: 'card-cos' });
+  if (o.no_viable) info.append(el('p', { text: t('fotrem.onze_no_viable', { en_camp: o.en_camp, minim: o.minim }) }));
   // 2c: capçalera derivada del repartiment REAL; si no hi ha descobriment, en positiu.
-  sec.append(el('p', { text: o.descobriments > 0
+  info.append(el('p', { text: o.descobriments > 0
     ? t('fotrem.onze_repartiment', { descobriments: o.descobriments, entrenen: o.entrenen, estructura: o.estructura })
     : tp('fotrem.onze_tot_entrena', o.entrenen) }));
-  if (o.descobriments > 0) sec.append(el('p', { text: t('fotrem.onze_mecanica', { minuts: o.revelacio_minuts }) }));
-  if (o.sense_marge) sec.append(el('p', { text: t('fotrem.onze_sense_marge') }));
+  if (o.descobriments > 0) info.append(el('p', { class: 'nota-peu', text: t('fotrem.onze_mecanica', { minuts: o.revelacio_minuts }) }));
+  if (o.sense_marge) info.append(el('p', { class: 'nota-peu', text: t('fotrem.onze_sense_marge') }));
+  sec.append(info);
   // El descobriment porta el seu propi text (amb plural i dies); el MIXT els encadena:
   // «entrena X · descobriment de Y» — les dues coses passen a la mateixa plaça.
   const txtDescobriment = (s, hab) => tp('fotrem.onze_m_descobriment', (hab || '').split(' i ').length, { principal: hab, dies: s.dies_restants_promocio ?? '?' });
@@ -400,12 +431,29 @@ function onzeJuvenil(main, o) {
       : s.motiu === 'entrena'
         ? t('fotrem.onze_m_entrena', { principal: s.habilitat })
         : t('fotrem.onze_m_' + s.motiu);
-  // Taula amb POSICIONS com la sènior + motiu per fila.
-  const filaOnze = (s) => el('tr', {}, el('td', { text: BUCKET_SIGLA[s.bucket] || s.bucket }), el('td', { text: s.nom }), el('td', { text: motiuSlot(s) }));
-  sec.append(el('table', {}, el('thead', {}, el('tr', {}, el('th', { text: t('fotrem.onze_col_pos') }), el('th', { text: t('fotrem.onze_col_jugador') }), el('th', { text: t('fotrem.onze_col_motiu') }))),
-    el('tbody', {}, ...o.onze.map(filaOnze))));
-  if (o.banqueta.length) sec.append(el('h3', { text: t('fotrem.onze_banqueta') }),
-    el('table', {}, el('tbody', {}, ...o.banqueta.map((s) => el('tr', {}, el('td', { text: s.nom }), el('td', { text: t('fotrem.onze_m_' + s.motiu) }))))));
+  // El mateix camp que la sènior: xip per plaça, i el motiu al títol (detall per fila).
+  const LINIA = { porter: 90, defensa: 73, mc: 54, extrem: 36, davanter: 17 };
+  const camp = el('div', { class: 'camp' });
+  const perBucket = new Map();
+  for (const s of o.onze) { if (!perBucket.has(s.bucket)) perBucket.set(s.bucket, []); perBucket.get(s.bucket).push(s); }
+  for (const [bucket, ss] of perBucket) {
+    const y = LINIA[bucket] ?? 50;
+    ss.forEach((s, i) => {
+      const cls = s.motiu === 'estructura' ? 'cos' : 'entrena';
+      const xip = el('div', { class: 'jug' },
+        el('div', { class: 'jug-chip ' + cls, text: BUCKET_SIGLA[bucket] || bucket }),
+        el('div', { class: 'jug-nom', text: (s.nom || '').split(' ')[0] }));
+      xip.style.left = ((i + 1) / (ss.length + 1)) * 100 + '%'; xip.style.top = y + '%';
+      xip.title = `${s.nom} · ${motiuSlot(s)}`;
+      camp.append(xip);
+    });
+  }
+  sec.append(camp);
+  if (o.banqueta.length) {
+    sec.append(el('div', { class: 'graella-fila' },
+      el('b', { text: t('fotrem.onze_banqueta') }),
+      el('span', { text: o.banqueta.map((s) => s.nom).join(', ') })));
+  }
   main.append(sec);
 }
 
@@ -413,17 +461,20 @@ function onzeJuvenil(main, o) {
 function formEntrenamentJuvenil(main, d) {
   const ej = d.entrenament_juvenil || {};
   const pipe = d.pipeline ? `${d.pipeline.principal}/${d.pipeline.secundari}` : '—';
-  const sec = el('section', {}, el('h3', { text: t('fotrem.entrenament_titol') }));
-  if (ej.principal) sec.append(el('p', { text: t('fotrem.entrenament_actual', { principal: ej.principal, secundari: ej.secundari || '?', pipeline: pipe }) }));
+  const sec = card(t('fotrem.entrenament_titol'), null, 'llima');
+  const sc = el('div', { class: 'card-cos' });
+  if (ej.principal) sc.append(el('p', { class: 'nota-peu', text: t('fotrem.entrenament_actual', { principal: ej.principal, secundari: ej.secundari || '?', pipeline: pipe }) }));
+  sec.append(sc);
   // Punt 4: si no hi ha res declarat, preselecciona el pipeline de la fase (no alfabètic).
   const defPrin = ej.principal ?? d.pipeline?.principal ?? null;
   const defSec = ej.secundari ?? d.pipeline?.secundari ?? null;
   const opcs = (sel) => HABS_ENTREN.map((h) => { const o = el('option', { value: h, text: h }); if (sel === h) o.setAttribute('selected', ''); return o; });
   const principal = el('select', { 'aria-label': t('fotrem.entrenament_principal') }, ...opcs(defPrin));
   const secundari = el('select', { 'aria-label': t('fotrem.entrenament_secundari') }, el('option', { value: '', text: '—' }), ...opcs(defSec));
-  const b = el('button', { type: 'submit', text: t('fotrem.entrenament_desa') });
-  const f = el('form', {}, el('label', {}, t('fotrem.entrenament_principal') + ' ', principal), ' ',
-    el('label', {}, t('fotrem.entrenament_secundari') + ' ', secundari), ' ', b);
+  const b = el('button', { type: 'submit', class: 'b-prim', text: t('fotrem.entrenament_desa') });
+  const f = el('form', { class: 'card-cos' }, el('div', { class: 'form-graella' },
+    el('label', {}, t('fotrem.entrenament_principal'), principal),
+    el('label', {}, t('fotrem.entrenament_secundari'), secundari)), b);
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     await api('/api/pla', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ entrenament_juvenil: { principal: principal.value, secundari: secundari.value || null } }) });
@@ -443,10 +494,22 @@ export async function mercat(main) {
     : t('mercat.filtre_farciment', { bucket: f.bucket, posicions: (f.posicions || []).join('/'), habilitat: f.habilitat ? `${f.habilitat.camp} ${f.habilitat.op} ${f.habilitat.valor}` : '', pressupost: pres(f.pressupost), falten: f.falten })
       + (f.previsio_venda ? t('mercat.filtre_previsio', { noms: f.previsio_venda.join(', ') }) : '');
   const utils = filtres.filter((f) => f.falten > 0);
-  main.append(el('h3', { text: t('mercat.filtres_titol') }), utils.length ? el('ul', {}, ...utils.map((f) => el('li', { text: textFiltre(f) }))) : el('p', { text: t('mercat.sense_filtres') }));
-  if (!preus.length) main.append(el('p', { text: t('mercat.buit') }));
-  else main.append(el('table', {}, el('thead', {}, el('tr', {}, ...['col_posicio', 'col_edat', 'col_habilitat', 'col_preu', 'col_data'].map((k) => el('th', { text: t('mercat.' + k) })))),
-    el('tbody', {}, ...preus.map((p) => el('tr', {}, el('td', { text: p.posicio || '' }), el('td', { text: p.edat ?? '' }), el('td', { text: p.habilitat ?? '' }), el('td', { text: diners(p.preu) }), el('td', { text: p.data }))))));
+  const cf = card(t('mercat.filtres_titol'), utils.length, 'llima');
+  const cfc = el('div', { class: 'card-cos' });
+  if (utils.length) for (const f of utils) cfc.append(el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }), el('span', { class: 'mov-text', text: textFiltre(f) })));
+  else cfc.append(el('p', { class: 'nota-peu', text: t('mercat.sense_filtres') }));
+  cf.append(cfc); main.append(cf);
+  const cp = card(t('mercat.preus_titol'), preus.length);
+  if (!preus.length) cp.append(cos(el('p', { class: 'nota-peu', text: t('mercat.buit') })));
+  else {
+    const g = el('div', { class: 'graella' });
+    for (const p of preus) g.append(el('div', { class: 'graella-fila' },
+      el('b', { text: `${p.posicio || '—'} · ${p.edat ?? '—'}` }),
+      el('span', { text: `${p.habilitat ?? '—'} · ${p.data}` }),
+      el('span', { class: 'graella-val', text: diners(p.preu) })));
+    cp.append(cos(g));
+  }
+  main.append(cp);
   await fitxesVenda(main);
 }
 
@@ -454,11 +517,12 @@ export async function mercat(main) {
 const ESTATS_VENDA = ['pendent', 'llistat', 'venut', 'desert', 'despatxat'];
 async function fitxesVenda(main) {
   const { jugadors, cobertura: cobMin } = await api('/api/vendes');
-  const sec = el('section', {}, el('h3', { text: t('vendes.titol') }));
-  if (!jugadors.length) { sec.append(el('p', { text: t('vendes.buit') })); main.append(sec); return; }
-  const cols = ['col_jugador', 'col_posicio', 'col_especialitat', 'col_proposat', 'col_preu', 'col_data', 'col_tancament', 'col_estat', 'col_venut'];
+  const sec = card(t('vendes.titol'), jugadors.length);
+  if (!jugadors.length) { sec.append(cos(el('p', { text: t('vendes.buit') }))); main.append(sec); return; }
   const nota = notes();   // qualificadors repetits (estimació…) → asterisc + llegenda única
-  const tbody = el('tbody', {}, ...jugadors.map((j) => filaSegura(() => {
+  sec.append(el('div', { class: 'graella-cap c-venda' },
+    ...['col_jugador', 'col_proposat', 'col_preu', 'col_data', 'col_tancament', 'col_estat'].map((k) => el('span', { text: t('vendes.' + k) }))));
+  for (const j of jugadors) sec.append(filaSegura(() => {
     const preu = el('input', { type: 'number', size: '8', 'aria-label': t('vendes.col_preu') }); if (j.preu_eixida != null) preu.value = j.preu_eixida;
     const dataL = el('input', { type: 'date', 'aria-label': t('vendes.col_data') }); if (j.data_llistada) dataL.value = j.data_llistada;
     const estat = el('select', { 'aria-label': t('vendes.col_estat') }, ...ESTATS_VENDA.map((e) => { const o = el('option', { value: e, text: t('vendes.estat_' + e) }); if (e === j.estat) o.setAttribute('selected', ''); return o; }));
@@ -470,7 +534,7 @@ async function fitxesVenda(main) {
       ? diners(j.preu_proposat) + (j.preu_estimacio_grossa ? nota.marca(t('vendes.estimacio_grossa')) : '')
       : '—';
     // 6: valor net < llindar → llistar és tirar diners → despatxar, amb el càlcul visible.
-    const propCell = el('td', {}, el('span', { text: propTxt }));
+    const propCell = el('div', {}, el('span', { text: propTxt }));
     if (j.despatxar) propCell.append(el('div', { class: 'despatxar', text: t('vendes.despatxar', { net: diners(j.valor_net) }) }));
     // La porta de calibratge bloqueja el càlcul econòmic → la fila HO DIU, mai cel·la buida.
     else if (!j.calibrat) propCell.append(el('div', { class: 'nota-peu', text: t('vendes.pendent_calibratge') }));
@@ -482,11 +546,17 @@ async function fitxesVenda(main) {
     propCell.append(el('div', { class: 'cobertura', text: j.estat_liquidacio === 'retingut'
       ? t('vendes.retingut_cobertura', { n: cobMin?.camp_minim ?? '?' })
       : t('vendes.estat_liq_' + (j.estat_liquidacio || 'llistable')) }));
-    return el('tr', {}, el('td', { text: j.nom + (j.lesionat ? ` ${t('comu.lesionat_durada', { n: duradaLesio(j.lesio) ?? '?' })}` : '') }), el('td', { text: j.posicio || '' }), el('td', { text: j.especialitat || '—' }),
-      propCell, el('td', {}, preu), el('td', {}, dataL), el('td', { text: j.tancament_previst || '—' }), el('td', {}, estat), el('td', {}, venut));
-  }, cols.length)));
-  sec.append(el('table', {}, el('thead', {}, el('tr', {}, ...cols.map((k) => el('th', { text: t('vendes.' + k) })))), tbody));
-  for (const ll of nota.llegendes()) sec.append(el('p', { class: 'nota-peu', text: ll }));
+    return el('div', { class: 'graella-fila-d c-venda' },
+      el('div', { class: 'fila-qui' },
+        el('div', { class: posCls(j.posicio), text: j.posicio || '—' }),
+        el('div', {}, el('div', { class: 'fila-nom', text: j.nom }),
+          el('div', { class: 'fila-meta' }, el('span', { text: j.especialitat || '—' }),
+            ...(j.lesionat ? [el('span', { class: 'pill perill', text: t('comu.lesionat_durada', { n: duradaLesio(j.lesio) ?? '?' }) })] : [])))),
+      propCell, preu, dataL,
+      el('span', { text: j.tancament_previst || '—' }),
+      el('div', {}, estat, ' ', venut));
+  }, 1));
+  for (const ll of nota.llegendes()) sec.append(cos(el('p', { class: 'nota-peu', text: ll })));
   main.append(sec);
 }
 
@@ -498,51 +568,81 @@ const eur = (obj, ...keys) => { const o = { ...obj }; for (const k of keys) if (
 export async function economia(main) {
   capcalera(main, 7, 'economia');
   const { transaccions, economia: e } = await api('/api/transaccions');
-  main.append(el('p', { text: t('economia.caixa', { caixa: diners(e.caixa) }) + (e.caixaReal && e.caixa_data ? ` (${e.caixa_data})` : '') }));
-  if (e.projeccio && e.projeccio.estimat) capitalEstimat(main, e.projeccio);
-  else main.append(el('p', { text: e.projeccio ? t('economia.projeccio', eur(e.projeccio, 'objectiu', 'caixa', 'falta')) : t('economia.sense_objectiu') }));
-  if (e.nomina != null) main.append(el('p', { text: t('economia.nomina', { nomina: diners(e.nomina) }) }));
-
-  // Balanç operatiu setmanal + projecció de trajectòria a la inflexió
-  if (e.balanc_setmanal != null) {
-    main.append(el('section', {}, el('h3', { text: t('economia.balanc_titol') }),
-      el('p', { text: t('economia.balanc', { balanc: diners(e.balanc_setmanal) }) }),
-      el('p', { text: t('economia.despeses_detall', eur({ ...e.despeses, ingres: e.ingres_setmanal }, 'nomina', 'planter', 'estadi', 'personal', 'ingres')) })));
-    const pr = e.projeccio;
-    if (pr && pr.sense_dades_venda) main.append(el('p', { text: t('economia.trajectoria_informativa', eur(pr, 'objectiu')) }));
-    else if (pr && pr.arriba != null) main.append(el('p', { text: t(pr.arriba ? 'economia.trajectoria_arriba' : 'economia.trajectoria_no', eur(pr, 'caixa_projectada', 'ingres_estimat')) }));
+  // Tres xifres grans (el disseny): caixa, objectiu amb barra de progrés, i balanç.
+  const kpis = el('div', { class: 'eco-kpis' });
+  kpis.append(el('div', { class: 'eco-card fosc' },
+    el('div', { class: 'eco-et', text: t('economia.caixa_et') }),
+    el('div', { class: 'eco-xifra', text: diners(e.caixa) }),
+    el('div', { class: 'eco-nota', text: e.caixaReal && e.caixa_data ? e.caixa_data : t('economia.caixa_derivada') })));
+  const pr = e.projeccio;
+  if (pr) {
+    const pct = Math.max(0, Math.min(100, pr.percentatge ?? 0));
+    const barra = el('div', { class: 'barra' }, el('i'));
+    barra.firstChild.style.width = pct + '%';
+    kpis.append(el('div', { class: 'eco-card' },
+      el('div', { class: 'eco-et', text: t('economia.objectiu_et') }),
+      el('div', { class: 'eco-xifra', text: diners(pr.objectiu) }), barra,
+      el('div', { class: 'eco-nota', text: t('economia.falta_nota', { falta: diners(pr.falta), pct }) })));
   }
+  if (e.balanc_setmanal != null) {
+    kpis.append(el('div', { class: 'eco-card' },
+      el('div', { class: 'eco-et', text: t('economia.balanc_et') }),
+      el('div', { class: 'eco-xifra' + (e.balanc_setmanal < 0 ? ' neg' : ''), text: diners(e.balanc_setmanal) }),
+      el('div', { class: 'eco-nota', text: t('economia.despeses_detall', eur({ ...e.despeses, ingres: e.ingres_setmanal }, 'nomina', 'planter', 'estadi', 'personal', 'ingres')) })));
+  }
+  main.append(kpis);
+  if (pr && pr.estimat) capitalEstimat(main, pr);
+  else if (!pr) main.append(el('p', { class: 'nota-peu', text: t('economia.sense_objectiu') }));
+  if (pr && pr.sense_dades_venda) main.append(el('p', { class: 'nota-peu', text: t('economia.trajectoria_informativa', eur(pr, 'objectiu')) }));
+  else if (pr && pr.arriba != null) main.append(el('p', { class: 'nota-peu', text: t(pr.arriba ? 'economia.trajectoria_arriba' : 'economia.trajectoria_no', eur(pr, 'caixa_projectada', 'ingres_estimat')) }));
 
-  // Formulari de caixa i despeses reals (informe de HT)
-  formFinances(main, e);
+  // Dues targetes de treball: declarar les xifres reals i apuntar moviments.
+  const duo = el('div', { class: 'duo' });
+  const cFin = card(t('economia.finances_titol'));
+  formFinances(cFin, e);
+  duo.append(cFin);
 
-  if (e.margesFornada.length) main.append(el('section', {}, el('h3', { text: t('economia.marges_titol') }),
-    el('table', {}, el('thead', {}, el('tr', {}, ...['col_fornada', 'col_compres', 'col_vendes', 'col_marge'].map((k) => el('th', { text: t('economia.' + k) })))),
-    el('tbody', {}, ...e.margesFornada.map((m) => el('tr', {}, el('td', { text: m.fornada }), el('td', { text: diners(m.compres) }), el('td', { text: diners(m.vendes) }), el('td', { text: diners(m.marge) })))))));
-
-  // Moviments: taula amb esborra + formulari d'apunt
-  const sub = el('section', {}, el('h3', { text: t('economia.moviments_titol') }));
-  if (transaccions.length) sub.append(el('table', {}, el('thead', {}, el('tr', {}, ...['col_data', 'col_tipus', 'col_import', 'col_jugador'].map((k) => el('th', { text: t('economia.' + k) })), el('th', {}))),
-    el('tbody', {}, ...transaccions.slice(0, 30).map((tr) => {
-      const b = el('button', { type: 'button', text: t('economia.esborra') });
+  const cMov = card(t('economia.moviments_titol'), transaccions.length);
+  const llista = el('div', { class: 'card-cos' });
+  if (transaccions.length) {
+    for (const tr of transaccions.slice(0, 30)) {
+      const b = el('button', { type: 'button', class: 'b-xic neutre', text: t('economia.esborra') });
       b.addEventListener('click', () => api('/api/transaccions', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: tr.id }) }).then(() => location.reload()));
-      return el('tr', {}, el('td', { text: tr.data }), el('td', { text: t('tipus.' + tr.tipus) }), el('td', { text: diners(tr.import) }), el('td', { text: tr.jugador || '' }), el('td', {}, b));
-    }))));
-  else sub.append(el('p', { text: t('economia.buit') }));
-  formMoviment(sub);
-  main.append(sub);
+      llista.append(el('div', { class: 'mov-fila' },
+        el('span', { class: 'mov-punt' }),
+        el('span', { class: 'mov-text', text: `${tr.data} · ${t('tipus.' + tr.tipus)}${tr.jugador ? ' · ' + tr.jugador : ''}` }),
+        el('b', { text: diners(tr.import) }), b));
+    }
+  } else llista.append(el('p', { class: 'nota-peu', text: t('economia.buit') }));
+  cMov.append(llista);
+  formMoviment(cMov);
+  duo.append(cMov);
+  main.append(duo);
+
+  if (e.margesFornada.length) {
+    const cM = card(t('economia.marges_titol'), e.margesFornada.length);
+    const g = el('div', { class: 'graella' });
+    for (const m of e.margesFornada) {
+      g.append(el('div', { class: 'graella-fila' }, el('b', { text: m.fornada }),
+        el('span', { text: `${diners(m.compres)} / ${diners(m.vendes)}` }),
+        el('span', { class: 'graella-val', text: diners(m.marge) })));
+    }
+    cM.append(cos(g));
+    main.append(cM);
+  }
 }
 
 function formFinances(main, e) {
-  const f = el('form', {}, el('h3', { text: t('economia.finances_titol') }));
-  const camp = (clau, val, type = 'number') => { const i = el('input', { type, 'aria-label': t('economia.' + clau) }); if (val != null) i.value = val; return el('label', {}, t('economia.' + clau) + ' ', i); };
+  const f = el('form', { class: 'card-cos' });
+  const graella = el('div', { class: 'form-graella' });
+  const camp = (clau, val, type = 'number') => { const i = el('input', { type, 'aria-label': t('economia.' + clau) }); if (val != null) i.value = val; return el('label', {}, t('economia.' + clau), i); };
   const caixa = camp('caixa_real', e.caixaReal ? e.caixa : null);
   const caixaData = camp('caixa_data', e.caixa_data, 'date');
   const planter = camp('despesa_planter', e.despeses?.planter || null);
   const estadi = camp('despesa_estadi', e.despeses?.estadi || null);
   const ingres = camp('ingres_setmanal', e.ingres_setmanal);
-  const b = el('button', { type: 'submit', text: t('economia.finances_desa') });
-  f.append(caixa, ' ', caixaData, ' ', planter, ' ', estadi, ' ', ingres, ' ', b);
+  graella.append(caixa, caixaData, planter, estadi, ingres);
+  f.append(graella, el('button', { type: 'submit', class: 'b-prim', text: t('economia.finances_desa') }));
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const v = (l) => { const x = l.querySelector('input').value; return x === '' ? null : x; };
@@ -554,16 +654,18 @@ function formFinances(main, e) {
 }
 
 function formMoviment(main) {
-  const f = el('form', {}, el('h3', { text: t('economia.nou_titol') }));
+  const f = el('form', { class: 'card-cos' });
+  const graella = el('div', { class: 'form-graella' });
   const tipus = el('select', { 'aria-label': t('economia.tipus') }, ...TIPUS_MOV.map((x) => el('option', { value: x, text: t('tipus.' + x) })));
   const imp = el('input', { type: 'number', 'aria-label': t('economia.import') });
   const jug = el('input', { type: 'number', 'aria-label': t('economia.jugador_id') });
   const data = el('input', { type: 'date', 'aria-label': t('economia.data') });
   const nota = el('input', { type: 'text', 'aria-label': t('economia.nota') });
-  const b = el('button', { type: 'submit', text: t('economia.afig') });
-  f.append(el('label', {}, t('economia.tipus') + ' ', tipus), ' ', el('label', {}, t('economia.import') + ' ', imp), ' ',
-    el('label', {}, t('economia.jugador_id') + ' ', jug), ' ', el('label', {}, t('economia.data') + ' ', data), ' ',
-    el('label', {}, t('economia.nota') + ' ', nota), ' ', b);
+  const b = el('button', { type: 'submit', class: 'b-prim', text: t('economia.afig') });
+  graella.append(el('label', {}, t('economia.tipus'), tipus), el('label', {}, t('economia.import'), imp),
+    el('label', {}, t('economia.jugador_id'), jug), el('label', {}, t('economia.data'), data),
+    el('label', {}, t('economia.nota'), nota));
+  f.append(graella, b);
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     if (imp.value === '') return;
@@ -600,14 +702,20 @@ export async function pla(main) {
   capcalera(main, 8, 'pla');
   const d = await api('/api/pla');
   if (d.error) { main.append(el('p', { text: t('pla.sense_pla') })); return; }
-  main.append(el('p', { text: t('pla.fase_actual') + ': ' + (d.fase_actual || '—') + ' · ' + t('pla.temporada_actual') + ': ' + (d.temporadaActual != null ? 'T' + d.temporadaActual : '—') }));
-  const cols = ['col_temporada', 'col_divisio', 'col_mode', 'col_accions', 'col_estat'];
-  const tbody = el('tbody', {}, ...d.temporades.map((tp) => {
+  main.append(el('p', { class: 'nota-peu', text: `${t('pla.fase_actual')}: ${d.fase_actual ? t('fase.' + d.fase_actual) : '—'} · ${t('pla.temporada_actual')}: ${d.temporadaActual != null ? 'T' + d.temporadaActual : '—'}` }));
+  const c = card(t('pla.titol'), d.temporades.length);
+  c.append(el('div', { class: 'graella-cap c-pla' },
+    ...['col_temporada', 'col_mode', 'col_accions', 'col_estat'].map((k) => el('span', { text: t('pla.' + k) }))));
+  for (const tp of d.temporades) {
     const accions = [...(tp.accions.events || []), ...(tp.retard.length ? [t('pla.retard', { detall: tp.retard.join('; ') })] : [])];
-    return el('tr', {}, el('td', { text: 'T' + tp.temporada }), el('td', { text: tp.divisio_prevista || '' }), el('td', { text: tp.mode || '' }),
-      el('td', {}, el('ul', {}, ...accions.map((a) => el('li', { text: a })))), el('td', { text: t('pla.estat_' + tp.estat) }));
-  }));
-  main.append(el('table', {}, el('thead', {}, el('tr', {}, ...cols.map((k) => el('th', { text: t('pla.' + k) })))), tbody));
+    c.append(el('div', { class: 'graella-fila-d c-pla' },
+      el('div', { class: 'nivell' + (tp.estat === 'actual' ? ' top' : ''), text: 'T' + tp.temporada }),
+      el('span', { class: 'pill', text: tp.divisio_prevista || '—' }),
+      el('div', {}, el('div', { class: 'fila-nom', text: tp.mode || '—' }),
+        el('div', { class: 'fila-meta' }, el('span', { text: accions.join(' · ') || '—' }))),
+      el('span', { class: 'pill ' + (tp.estat === 'actual' ? 'ok' : tp.estat === 'passada' ? '' : 'info'), text: t('pla.estat_' + tp.estat) })));
+  }
+  main.append(c);
   formEstructura(main, d.parametres || {});
   // Punt 3a: activar l'acadèmia després si no en tens.
   const eq = await opc(api('/api/equips'));
@@ -616,37 +724,40 @@ export async function pla(main) {
 
 function formActivaAcademia(main) {
   const nom = el('input', { type: 'text', 'aria-label': t('pla.academia_nom') });
-  const b = el('button', { type: 'submit', text: t('pla.academia_desa') });
-  const f = el('form', {}, el('h3', { text: t('pla.activa_academia') }), el('label', {}, t('pla.academia_nom') + ' ', nom), ' ', b);
+  const b = el('button', { type: 'submit', class: 'b-prim', text: t('pla.academia_desa') });
+  const c = card(t('pla.activa_academia'));
+  const f = el('form', { class: 'card-cos' }, el('label', {}, t('pla.academia_nom'), nom), b);
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     if (!nom.value.trim()) return;
     await api('/api/equips', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ juvenil: { nom: nom.value.trim() } }) });
     location.reload();
   });
-  main.append(f);
+  c.append(f); main.append(c);
 }
 
 // Estructura i calendari: divisió actual, tipus de setmana de partits, Supporter.
 function formEstructura(main, params) {
-  if (params.divisio_actual) main.append(el('p', { text: t('pla.divisio_actual') + ': ' + params.divisio_actual }));
-  const f = el('form', {}, el('h3', { text: t('pla.estructura_titol') }));
+  const c = card(t('pla.estructura_titol'));
+  const f = el('form', { class: 'card-cos' });
+  const graella = el('div', { class: 'form-graella' });
   const divisio = el('input', { type: 'text', 'aria-label': t('pla.divisio_actual') });
   if (params.divisio_actual) divisio.value = params.divisio_actual;
   const setmana = el('select', { 'aria-label': t('pla.tipus_setmana') }, ...['ab', 'un', 'copa'].map((x) => {
     const o = el('option', { value: x, text: t('pla.setmana_' + x) }); if ((params.tipus_setmana || 'ab') === x) o.setAttribute('selected', ''); return o; }));
   const supporter = el('input', { type: 'date', 'aria-label': t('pla.supporter_caducitat') });
   if (params.supporter_caducitat) supporter.value = params.supporter_caducitat;
-  const b = el('button', { type: 'submit', text: t('pla.desa') });
-  f.append(el('label', {}, t('pla.divisio_actual') + ' ', divisio), ' ', el('label', {}, t('pla.tipus_setmana') + ' ', setmana), ' ',
-    el('label', {}, t('pla.supporter_caducitat') + ' ', supporter), ' ', b);
+  const b = el('button', { type: 'submit', class: 'b-prim', text: t('pla.desa') });
+  graella.append(el('label', {}, t('pla.divisio_actual'), divisio), el('label', {}, t('pla.tipus_setmana'), setmana),
+    el('label', {}, t('pla.supporter_caducitat'), supporter));
+  f.append(graella, b);
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     await api('/api/pla', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
       divisio_actual: divisio.value || '', tipus_setmana: setmana.value, supporter_caducitat: supporter.value || '' }) });
     location.reload();
   });
-  main.append(f);
+  c.append(f); main.append(c);
 }
 
 // ── 9. Personal ──
@@ -656,41 +767,49 @@ export async function personal(main) {
   capcalera(main, 9, 'personal');
   const d = await api('/api/personal');
   if (d.error) { main.append(el('p', { text: t('pla.sense_pla') })); return; }
-  main.append(el('p', { text: t('personal.fase_actual', { fase: d.fase_actual }) }));
+  main.append(el('p', { class: 'nota-peu', text: t('personal.fase_actual', { fase: t('fase.' + d.fase_actual) }) }));
 
+  const duo = el('div', { class: 'duo' });
   // Entrenament sènior: prescrit per la fase + confirmació del que hi ha a HT
-  if (d.entrenament?.prescrit) formEntrenament(main, d.entrenament);
-
-  const secD = el('section', {}, el('h3', { text: t('personal.desquadres_titol') }));
-  if (!d.desquadres.length) secD.append(el('p', { text: t('personal.tot_quadra') }));
-  else secD.append(el('ul', {}, ...d.desquadres.map((x) => el('li', { text: t('personal.desquadre', { clau: lblElement(x.clau), declarat: x.declarat, esperat: x.esperat }) }))));
-  main.append(secD);
+  if (d.entrenament?.prescrit) formEntrenament(duo, d.entrenament);
 
   // Membres declarats (rol, tipus, nivell, sou, setmanes de contracte)
-  const secM = el('section', {}, el('h3', { text: t('personal.membres_titol') }));
-  if (d.membres.length) secM.append(el('table', {}, el('thead', {}, el('tr', {}, ...['rol', 'tipus', 'nivell', 'sou', 'setmanes_contracte'].map((k) => el('th', { text: t('personal.' + k) })), el('th', {}))),
-    el('tbody', {}, ...d.membres.map((m) => {
-      const b = el('button', { type: 'button', text: t('personal.esborra') });
+  const secM = card(t('personal.membres_titol'), d.membres.length);
+  if (d.desquadres.length) {
+    const av = el('div', { class: 'card-cos' });
+    for (const x of d.desquadres) av.append(el('p', { class: 'nota-peu', text: t('personal.desquadre', { clau: lblElement(x.clau), declarat: x.declarat, esperat: x.esperat }) }));
+    secM.append(av);
+  }
+  if (d.membres.length) {
+    for (const m of d.membres) {
+      const b = el('button', { type: 'button', class: 'b-xic neutre', text: t('personal.esborra') });
       b.addEventListener('click', () => api('/api/personal', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: m.id }) }).then(() => location.reload()));
-      return el('tr', {}, el('td', { text: t('personal.rol_' + m.rol) }), el('td', { text: m.tipus ? lblElement(m.tipus) : '—' }),
-        el('td', { text: m.nivell ?? '' }), el('td', { text: m.sou != null ? diners(m.sou) : '' }), el('td', { text: m.setmanes_contracte ?? '' }), el('td', {}, b));
-    }))));
-  else secM.append(el('p', { text: t('personal.cap_membre') }));
+      secM.append(el('div', { class: 'graella-fila-d c-staff' },
+        el('div', {}, el('span', { class: 'tag', text: t('personal.rol_' + m.rol) }), ' ',
+          el('b', { text: m.tipus ? lblElement(m.tipus) : '—' })),
+        el('span', { class: 'pill', text: t('personal.nivell') + ' ' + (m.nivell ?? '—') }),
+        el('b', { text: m.sou != null ? diners(m.sou) : '—' }), b));
+    }
+  } else secM.append(cos(el('p', { class: 'nota-peu', text: t('personal.cap_membre') })));
   formMembre(secM);
-  main.append(secM);
+  duo.append(secM);
+  main.append(duo);
 }
 
 function formEntrenament(main, ent) {
   const pr = ent.prescrit, co = ent.confirmat || {};
-  const sec = el('section', {}, el('h3', { text: t('personal.entrenament_titol') }),
-    el('p', { text: t('personal.entrenament_prescrit', pr) }));
-  const f = el('form', {}, el('p', { text: t('personal.entrenament_confirma') }));
+  const sec = card(t('personal.entrenament_titol'), null, 'llima');
+  const f = el('form', { class: 'card-cos' },
+    el('p', { class: 'nota-peu', text: t('personal.entrenament_prescrit', pr) }),
+    el('p', { class: 'nota-peu', text: t('personal.entrenament_confirma') }));
+  const graella = el('div', { class: 'form-graella' });
   const tipus = el('input', { type: 'text', 'aria-label': t('personal.ent_tipus'), value: co.tipus ?? '' });
   const inten = el('input', { type: 'number', 'aria-label': t('personal.ent_intensitat') }); if (co.intensitat != null) inten.value = co.intensitat;
   const resis = el('input', { type: 'number', 'aria-label': t('personal.ent_resistencia') }); if (co.resistencia != null) resis.value = co.resistencia;
-  const b = el('button', { type: 'submit', text: t('personal.entrenament_desa') });
-  f.append(el('label', {}, t('personal.ent_tipus') + ' ', tipus), ' ', el('label', {}, t('personal.ent_intensitat') + ' ', inten), ' ',
-    el('label', {}, t('personal.ent_resistencia') + ' ', resis), ' ', b);
+  const b = el('button', { type: 'submit', class: 'b-prim', text: t('personal.entrenament_desa') });
+  graella.append(el('label', {}, t('personal.ent_tipus'), tipus), el('label', {}, t('personal.ent_intensitat'), inten),
+    el('label', {}, t('personal.ent_resistencia'), resis));
+  f.append(graella, b);
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     await api('/api/pla', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
@@ -702,16 +821,18 @@ function formEntrenament(main, ent) {
 }
 
 function formMembre(main) {
-  const f = el('form', {}, el('h3', { text: t('personal.afig') }));
+  const f = el('form', { class: 'card-cos' });
+  const graella = el('div', { class: 'form-graella' });
   const rol = el('select', { 'aria-label': t('personal.rol') }, ...['entrenador', 'especialista'].map((r) => el('option', { value: r, text: t('personal.rol_' + r) })));
   const tipus = el('select', { 'aria-label': t('personal.tipus') }, ...ESPECIALISTES.map((x) => el('option', { value: x, text: lblElement(x) })));
   const nivell = el('input', { type: 'number', 'aria-label': t('personal.nivell') });
   const sou = el('input', { type: 'number', 'aria-label': t('personal.sou') });
   const setm = el('input', { type: 'number', 'aria-label': t('personal.setmanes_contracte') });
-  const b = el('button', { type: 'submit', text: t('personal.afig') });
-  f.append(el('label', {}, t('personal.rol') + ' ', rol), ' ', el('label', {}, t('personal.tipus') + ' ', tipus), ' ',
-    el('label', {}, t('personal.nivell') + ' ', nivell), ' ', el('label', {}, t('personal.sou') + ' ', sou), ' ',
-    el('label', {}, t('personal.setmanes_contracte') + ' ', setm), ' ', b);
+  const b = el('button', { type: 'submit', class: 'b-prim', text: t('personal.afig') });
+  graella.append(el('label', {}, t('personal.rol'), rol), el('label', {}, t('personal.tipus'), tipus),
+    el('label', {}, t('personal.nivell'), nivell), el('label', {}, t('personal.sou'), sou),
+    el('label', {}, t('personal.setmanes_contracte'), setm));
+  f.append(graella, b);
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     await api('/api/personal', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
@@ -725,17 +846,20 @@ function formMembre(main) {
 // ── 10a. Pujada de dades ──
 export function pujada(main, teAcademia = true) {
   capcalera(main, 10, 'comparador');
-  const form = el('form', {}, el('h3', { text: t('pujada.titol') }));
+  const c = card(t('pujada.titol'), null, 'llima');
+  const form = el('form', { class: 'card-cos' });
+  const graella = el('div', { class: 'form-graella' });
   const data = el('input', { type: 'date', name: 'data', required: 'true', 'aria-label': t('pujada.data') });
   data.value = new Date().toISOString().slice(0, 10);
   const senior = el('input', { type: 'file', name: 'senior', accept: '.csv', 'aria-label': t('pujada.fitxer_senior') });
   const estat = el('p', { role: 'status' });
-  form.append(el('label', {}, t('pujada.data') + ' ', data), ' ', el('label', {}, t('pujada.fitxer_senior') + ' ', senior), ' ');
+  graella.append(el('label', {}, t('pujada.data'), data), el('label', {}, t('pujada.fitxer_senior'), senior));
   if (teAcademia) {   // punt 3b: sense acadèmia, només CSV sènior
     const juvenil = el('input', { type: 'file', name: 'juvenil', accept: '.csv', 'aria-label': t('pujada.fitxer_juvenil') });
-    form.append(el('label', {}, t('pujada.fitxer_juvenil') + ' ', juvenil), ' ');
+    graella.append(el('label', {}, t('pujada.fitxer_juvenil'), juvenil));
   }
-  form.append(el('button', { type: 'submit', text: t('pujada.enviar') }), estat);
+  form.append(el('p', { class: 'nota-peu', text: t('pujada.descripcio') }), graella,
+    el('button', { type: 'submit', class: 'b-prim', text: t('pujada.enviar') }), estat);
   const envia = async (reemplaça) => {
     estat.textContent = t('comu.carregant');
     const fd = new FormData(form);
@@ -747,24 +871,29 @@ export function pujada(main, teAcademia = true) {
     location.reload();
   };
   form.addEventListener('submit', (e) => { e.preventDefault(); envia(false); });
-  main.append(form);
+  c.append(form); main.append(c);
 }
 
 // ── 10b. Què ha canviat ──
 export async function comparador(main) {
   const d = await api('/api/comparador');
-  main.append(el('p', {}, el('a', { href: '#pujada', text: t('esta_setmana.a_pujar') })));
-  if (!d.comparable) { main.append(el('p', { text: t('comparador.sense') })); return; }
-  main.append(el('p', { text: t('comparador.parella', { b: d.b.data, a: d.a.data, dies: d.dies }) + (d.canvi_temporada ? ` (${t('comparador.canvi_temporada')})` : '') }));
-  if (d.pops.length) main.append(el('section', {}, el('h3', { text: t('comparador.pops_titol') }),
-    el('ul', {}, ...d.pops.map((p) => el('li', { text: `${p.nom}: ${p.habilitats.map((h) => SIGLA[h]).join(' ')}` })))));
-  else main.append(el('p', { text: t('comparador.cap_pop') }));
+  const c = card(t('comparador.canvis_titol'));
+  const cs = el('div', { class: 'card-cos' });
+  if (!d.comparable) { cs.append(el('p', { class: 'nota-peu', text: t('comparador.sense') })); c.append(cs); main.append(c); return; }
+  cs.append(el('p', { class: 'nota-peu', text: t('comparador.parella', { b: d.b.data, a: d.a.data, dies: d.dies }) + (d.canvi_temporada ? ` (${t('comparador.canvi_temporada')})` : '') }));
+  if (d.pops.length) {
+    for (const p of d.pops) cs.append(el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
+      el('span', { class: 'mov-text', text: p.nom }), el('span', { class: 'skills', text: p.habilitats.map((h) => SIGLA[h]).join(' ') })));
+  } else cs.append(el('p', { class: 'nota-peu', text: t('comparador.cap_pop') }));
+  c.append(cs);
   // Altes i baixes (punt #10.4): declarades en una línia. Les baixes tenen el flux de
   // motiu a «Moviments»; les altes només es declaren.
   const decl = (clau, fitxa) => t(clau, { nom: fitxa.nom, edat: edat(fitxa.edat_anys, fitxa.edat_dies), categoria: fitxa.categoria ? t('categoria.' + fitxa.categoria) : '—' });
   if ((d.nous && d.nous.length) || (d.desapareguts && d.desapareguts.length)) {
-    main.append(el('section', {}, el('h3', { text: t('comparador.altes_baixes_titol') }),
-      el('ul', {}, ...(d.nous || []).map((f) => el('li', { text: decl('comparador.alta', f) })),
-        ...(d.desapareguts || []).map((f) => el('li', { text: decl('comparador.baixa', f) })))));
+    const ab = el('div', { class: 'card-cos' }, el('h3', { text: t('comparador.altes_baixes_titol') }));
+    for (const f of d.nous || []) ab.append(el('div', { class: 'mov-fila' }, el('span', { class: 'pill ok', text: '+' }), el('span', { class: 'mov-text', text: decl('comparador.alta', f) })));
+    for (const f of d.desapareguts || []) ab.append(el('div', { class: 'mov-fila' }, el('span', { class: 'pill perill', text: '−' }), el('span', { class: 'mov-text', text: decl('comparador.baixa', f) })));
+    c.append(ab);
   }
+  main.append(c);
 }

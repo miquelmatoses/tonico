@@ -151,7 +151,7 @@
   "mercat.filtre_previsio": " (previsió: per a quan es venga {noms})",
   "mercat.sense_filtres": "Ara mateix no hi ha buits de plantilla per cobrir.",
   "mercat.sense_pressupost": "sense caixa apuntada",
-  "mercat.preus_titol": "Preus observats (comparables)",
+  "mercat.preus_titol": "Comparables apuntats",
   "mercat.nou_titol": "Apunta un comparable",
   "mercat.posicio": "Posició",
   "mercat.edat": "Edat",
@@ -517,5 +517,13 @@
   "auth.stat2": "Seccions",
   "auth.stat2_v": "10",
   "auth.stat3": "Regles vives",
-  "auth.stat3_v": "24"
+  "auth.stat3_v": "24",
+  "economia.caixa_et": "Caixa",
+  "economia.objectiu_et": "Objectiu d'inflexió",
+  "economia.balanc_et": "Balanç setmanal",
+  "economia.caixa_derivada": "derivada dels moviments",
+  "economia.falta_nota": "Falten {falta} ({pct}%)",
+  "pujada.descripcio": "Puja el CSV de Hattrick (plantilla i, si en tens, acadèmia) amb la data de la instantània.",
+  "comparador.canvis_titol": "Què ha canviat",
+  "fotrem.rellotges_titol": "Rellotges de l'acadèmia"
 }

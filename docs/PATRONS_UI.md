@@ -31,13 +31,22 @@ Anton (títols) + Manrope (text) · paleta crema `#f4f0e2` / tinta `#14231a` / v
 
 ## Estat per secció
 
-**Amb maqueta pròpia del disseny:** autenticació, Esta setmana, Alineació (camp de joc),
-Plantilla (targetes per categoria amb files denses).
+**Totes les seccions tenen la maqueta del disseny.** Cap taula HTML queda a l'app: el
+disseny no en fa servir, i les dades viuen en targetes, files denses i graelles.
 
-**Amb capçalera numerada + taules vestides** (dades correctes i estil del sistema, però
-encara sense la maqueta bespoke del disseny): Moviments, Fotrem, Mercat, Economia, Pla,
-Personal, Comparador. **Pendent declarat** — cap secció queda amb estil per defecte del
-navegador, però estes encara no tenen el layout específic del `.dc.html`.
+| Secció | Maqueta |
+|---|---|
+| Autenticació | doble panell (pitch il·lustrat + formulari) |
+| 01 Esta setmana | hero + KPIs + banner de Paco + targetes d'acció + agenda |
+| 02 Moviments | dues columnes: fets / preguntes / motius, amb files de punt |
+| 03 Alineació | dos camps de joc amb xips + graella de comptabilitat |
+| 04 Plantilla | targeta per categoria amb files denses i xip de posició |
+| 05 Fotrem | banner de consell, rellotges, entrenament, rànquing i camp juvenil |
+| 06 Mercat | targetes de filtres, comparables i fitxes de venda en graella |
+| 07 Economia | tres xifres grans (amb barra de progrés) + targetes de treball |
+| 08 Pla mestre | files amb insígnia de temporada, píndoles de divisió i estat |
+| 09 Personal | dues columnes: entrenament configurat / personal declarat |
+| 10 Comparador | targeta de pujada + targeta «què ha canviat» |
 
 ## Ganxos semàntics (classes existents)
 
