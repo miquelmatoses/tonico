@@ -136,3 +136,67 @@ nav#ancores a {
 }
 nav#ancores a:hover { background: var(--llima); color: var(--verd-fosc); text-decoration: none; }
 nav#ancores select { margin-left: auto; }
+
+/* ══ PATRÓ 2 · TAULA DENSA ══
+   L'ànima de l'app. Densitat alta (files curtes), capçalera fosca amb l'accent,
+   xifres tabulars i separadors fins. `border-collapse: separate` amb spacing 0
+   perquè el radi del marc no es trenque. */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 2px solid var(--tinta);
+  border-radius: var(--r-2);
+  overflow: hidden;                 /* el radi retalla la capçalera fosca */
+  background: var(--paper-alt);
+  margin: 0 0 var(--e-5);
+  font-size: var(--t-13);
+}
+
+thead th {
+  background: var(--verd-fosc);
+  color: var(--llima);
+  font-size: var(--t-11);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  text-align: left;
+  white-space: nowrap;
+  padding: var(--e-3) var(--e-4);
+  border: 0;
+}
+
+tbody td {
+  padding: var(--e-3) var(--e-4);   /* 8px 10px: dens, llegible */
+  border: 0;
+  border-top: 1px solid var(--vora-suau);
+  vertical-align: top;
+}
+tbody tr:first-child td { border-top: 0; }
+tbody tr:nth-child(even) { background: var(--paper-3); }
+tbody tr:hover { background: color-mix(in srgb, var(--llima) 30%, transparent); }
+
+/* Primera columna = qui/què: és l'ancoratge de lectura de cada fila. */
+tbody td:first-child { font-weight: 700; }
+
+/* ══ PATRÓ 9 · XIFRA ECONÒMICA ══
+   Tabulars a tot arreu (heretat del body) perquè les columnes quadren visualment;
+   el monospace queda per a les cadenes d'habilitats. */
+td, th { font-variant-numeric: tabular-nums; }
+
+/* ══ PATRÓ 3 · INSÍGNIA ══
+   Marques curtes dins d'una cel·la (estat de liquidació, despatxar, cobertura):
+   píndola compacta, mai una frase dins la graella. */
+.despatxar, .cobertura {
+  display: inline-block;
+  margin-top: var(--e-1);
+  padding: 2px var(--e-3);
+  border-radius: var(--r-pill);
+  font-size: var(--t-10);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  line-height: 1.6;
+}
+.despatxar { background: var(--roig); color: #fff; }
+.cobertura { background: var(--paper-3); color: var(--gris); border: 1px solid var(--vora-suau); }
