@@ -1,314 +1,291 @@
-/* Tonico — fitxer de disseny central (ÚNIC).
-   CAPA de disseny sobre l'HTML semàntic existent: tokens + un bloc d'estil per
-   PATRÓ de docs/PATRONS_UI.md. Cap regla ací assumix estructura nova: si el DOM
-   no canvia, això vestix; si una pantalla no s'entén sense CSS, està mal feta.
-   Origen dels tokens: projecte de Claude Design «Redisseny complet Tonico»
-   (Tonico.dc.html) — se n'extrauen paleta, tipografies, escala, radis i ombres;
-   cap maqueta ni marcatge del disseny s'ha copiat. */
+/* Tonico — sistema de disseny complet.
+   Implementació del projecte de Claude Design «Redisseny complet Tonico»
+   (Tonico.dc.html). El disseny mana: tokens, components i layout ixen d'allí.
+   Ací no hi ha estils en línia — cada component té la seua classe. */
 
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&display=swap');
 
-/* ══ TOKENS ══ */
 :root {
-  /* Paleta (del disseny) */
-  --tinta: #14231a;          /* text principal i vores */
-  --paper: #f4f0e2;          /* fons de pàgina */
-  --paper-alt: #fbf8ee;      /* superfície elevada (seccions, taules) */
-  --paper-3: #f0ede1;        /* zebra / capçaleres suaus */
-  --verd-fosc: #0c3a1e;      /* panells foscos */
+  --tinta: #14231a;
+  --paper: #f4f0e2;
+  --blanc: #fff;
+  --verd-fosc: #0c3a1e;
+  --verd-nav: #0a2f18;
   --verd: #12633a;
-  --llima: #c6f24e;          /* accent */
-  --verd-clar: #eafff0;      /* text sobre fosc */
-  --verd-suau: #9fd0af;      /* text secundari sobre fosc */
-  --gris: #5a6b60;           /* text apagat (AA sobre paper: ~5:1) */
+  --verd-camp-a: #1f8a44;
+  --verd-camp-b: #1a7d3d;
+  --llima: #c6f24e;
+  --verd-clar: #eafff0;
+  --verd-suau: #9fd0af;
+  --verd-pal: #bfe6cc;
+  --gris: #5a6b60;
+  --gris-clar: #8a978d;
+  --text-2: #3a4a40;
   --vora-suau: #cdd6cf;
   --roig: #e5484d;
-  --roig-fosc: #a8262a;      /* variant AA per a text sobre paper */
   --groc: #f2b705;
   --blau: #4aa8e0;
-  --ok: #1a7d3d;
+  --lila: #b45cf2;
+  --ok: #1a9c4a;
 
-  /* Tipografia */
   --font-titol: 'Anton', system-ui, sans-serif;
   --font: 'Manrope', system-ui, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-  --t-10: 10px; --t-11: 11px; --t-12: 12px; --t-13: 13px; --t-14: 14px;
-  --t-15: 15px; --t-18: 18px; --t-20: 20px; --t-26: 26px; --t-30: 30px;
 
-  /* Escala d'espaiat */
-  --e-1: 4px;  --e-2: 6px;  --e-3: 8px;  --e-4: 10px; --e-5: 12px;
-  --e-6: 14px; --e-7: 16px; --e-8: 18px; --e-9: 22px; --e-10: 28px;
-
-  /* Radis i ombres dures (segell del disseny) */
-  --r-1: 6px; --r-2: 9px; --r-3: 12px; --r-4: 16px; --r-pill: 999px;
-  --ombra: 3px 3px 0 var(--tinta);
-  --ombra-alta: 4px 4px 0 var(--tinta);
-
-  color-scheme: light;       /* el disseny és una paleta clara; res d'inversió del navegador */
+  --o2: 2px 2px 0 var(--tinta);
+  --o3: 3px 3px 0 var(--tinta);
+  --o4: 4px 4px 0 var(--tinta);
+  --o5: 5px 5px 0 var(--tinta);
+  color-scheme: light;
 }
 
-/* ══ BASE ══ */
 * { box-sizing: border-box; }
-
+html { scroll-behavior: smooth; scroll-padding-top: 116px; }
 body {
-  max-width: 78rem;
-  margin: 0 auto;
-  padding: var(--e-5) var(--e-7) var(--e-10);
-  background: var(--paper);
-  color: var(--tinta);
-  font-family: var(--font);
-  font-size: var(--t-14);
-  line-height: 1.5;
-  /* Densitat alta: les taules són l'ànima. Xifres sempre tabulars. */
+  margin: 0; background: var(--paper); color: var(--tinta);
+  font-family: var(--font); font-size: 14px; line-height: 1.5;
   font-variant-numeric: tabular-nums;
 }
+a { color: var(--verd); text-decoration: none; }
+a:hover { color: var(--ok); }
+::selection { background: var(--llima); }
+:where(a,button,input,select,summary):focus-visible { outline: 3px solid var(--llima); outline-offset: 2px; }
 
-a { color: var(--verd); text-decoration: none; font-weight: 600; }
-a:hover { color: var(--ok); text-decoration: underline; }
-::selection { background: var(--llima); color: var(--verd-fosc); }
+/* ══ CAPÇALERA FIXA ══ */
+.hdr { position: sticky; top: 0; z-index: 50; background: var(--verd-fosc); border-bottom: 3px solid var(--tinta); }
+.hdr-fila { max-width: 1180px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 16px; }
+.hdr-marca { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.hdr-logo { width: 38px; height: 38px; border-radius: 10px; background: var(--llima); color: var(--verd-fosc);
+  display: grid; place-items: center; font-family: var(--font-titol); font-size: 22px; box-shadow: 2px 2px 0 rgba(0,0,0,.35); }
+.hdr-nom { font-family: var(--font-titol); font-size: 22px; color: #fff; letter-spacing: 1px; }
+.hdr-fase { background: var(--llima); color: var(--verd-fosc); font-weight: 800; font-size: 11px; padding: 3px 8px; border-radius: 6px; }
+.hdr-buit { flex: 1; }
+.hdr-caixa { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.08); padding: 7px 12px; border-radius: 10px; }
+.hdr-caixa dt { font-size: 11px; color: var(--verd-suau); text-transform: uppercase; letter-spacing: .5px; font-weight: 700; margin: 0; }
+.hdr-caixa dd { font-family: var(--font-titol); font-size: 17px; color: var(--llima); margin: 0; }
+.hdr-idioma { background: transparent; border: 2px solid rgba(255,255,255,.25); color: #fff; font-family: var(--font);
+  font-weight: 700; font-size: 13px; padding: 6px 10px; border-radius: 10px; }
+.hdr-idioma option { color: var(--tinta); }
+.hdr-eixir { background: transparent; border: 2px solid rgba(255,255,255,.25); color: #fff; font-family: var(--font);
+  font-weight: 700; font-size: 13px; padding: 7px 12px; border-radius: 10px; cursor: pointer; }
+.hdr-eixir:hover { border-color: var(--llima); color: var(--llima); }
 
-:where(a, button, input, select, summary):focus-visible {
-  outline: 3px solid var(--verd-fosc);
-  outline-offset: 2px;
-}
+/* ══ PÍNDOLES DE NAVEGACIÓ ══ */
+.pills { background: var(--verd-nav); border-top: 1px solid rgba(255,255,255,.08); }
+.pills-int { max-width: 1180px; margin: 0 auto; padding: 0 16px; display: flex; gap: 6px; overflow-x: auto; }
+.pills a { flex-shrink: 0; padding: 12px 14px; font-weight: 700; font-size: 13px; color: var(--verd-pal);
+  border-bottom: 3px solid transparent; white-space: nowrap; }
+.pills a:hover, .pills a.actiu { color: var(--llima); border-bottom-color: var(--llima); }
 
-/* ══ PATRÓ 1 · SECCIÓ ══ */
-main { display: flex; flex-direction: column; gap: var(--e-7); }
+/* ══ ESTRUCTURA ══ */
+main { max-width: 1180px; margin: 0 auto; padding: 0 20px 80px; }
+section { padding: 44px 0 8px; }
+section#esta-setmana { padding-top: 36px; }
+.sec-cap { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.sec-num { font-family: var(--font-titol); font-size: 13px; color: var(--llima); background: var(--verd-fosc);
+  padding: 4px 10px; border-radius: 8px; }
+h1, h2 { font-family: var(--font-titol); font-weight: 400; text-transform: uppercase; margin: 0; line-height: 1; }
+h2 { font-size: clamp(26px, 3vw, 38px); }
+h1 { font-size: clamp(30px, 4vw, 48px); }
+.sub { color: var(--gris); margin: 0 0 20px; font-size: 15px; }
+h3 { font-family: var(--font); font-weight: 800; font-size: 15px; margin: 0 0 12px; }
+p { margin: 0 0 10px; }
 
-section {
-  scroll-margin-top: 4.5rem;
-  background: var(--paper-alt);
-  border: 2px solid var(--tinta);
-  border-radius: var(--r-3);
-  box-shadow: var(--ombra-alta);
-  padding: var(--e-6) var(--e-7);
-}
-/* Subsecció: mateixa família, sense doble marc ni doble ombra. */
-section section {
-  box-shadow: none;
-  border-width: 0 0 0 3px;
-  border-radius: 0;
-  border-color: var(--llima);
-  background: none;
-  padding: 0 0 0 var(--e-5);
-  margin: var(--e-7) 0 0;
-}
+/* ══ HERO «ESTA SETMANA» ══ */
+.hero { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; margin-bottom: 20px; }
+.kicker { display: inline-flex; align-items: center; gap: 8px; background: var(--verd-fosc); color: var(--llima);
+  font-weight: 800; font-size: 12px; padding: 5px 12px; border-radius: 999px; margin-bottom: 10px;
+  text-transform: uppercase; letter-spacing: 1px; }
+.hero-meta { color: var(--gris); margin: 8px 0 0; font-size: 15px; }
+.kpis { display: flex; gap: 10px; flex-wrap: wrap; }
+.kpi { background: var(--blanc); border: 2px solid var(--tinta); border-radius: 14px; padding: 12px 16px;
+  box-shadow: var(--o3); min-width: 120px; }
+.kpi-xifra { font-family: var(--font-titol); font-size: 26px; line-height: 1; color: var(--verd-fosc); }
+.kpi.alerta .kpi-xifra { color: var(--roig); }
+.kpi-etiqueta { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--gris); letter-spacing: .5px; }
 
-h2, h3 {
-  font-family: var(--font-titol);
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  line-height: 1.1;
-  margin: 0 0 var(--e-5);
-}
-h2 { font-size: var(--t-26); }
-h2::after {                                   /* subratllat de marca */
-  content: ''; display: block;
-  width: 3.5rem; height: 5px; margin-top: var(--e-2);
-  background: var(--llima); border-radius: var(--r-pill);
-}
-h3 { font-size: var(--t-15); letter-spacing: .5px; color: var(--verd-fosc); }
+/* ══ BANNER DE PACO ══ */
+.briefing { background: var(--verd-fosc); border: 3px solid var(--tinta); border-radius: 18px; padding: 20px 22px;
+  color: var(--verd-clar); box-shadow: var(--o5); margin-bottom: 22px; }
+.briefing-cap { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--llima); color: var(--verd-fosc);
+  display: grid; place-items: center; font-family: var(--font-titol); font-size: 20px; flex-shrink: 0; }
+.briefing-nom { font-weight: 800; font-size: 15px; }
+.briefing-rol { font-size: 13px; color: var(--verd-suau); }
+.briefing p { margin: 12px 0 0; font-size: 13.5px; line-height: 1.5; }
+.briefing a { color: var(--llima); text-decoration: underline; }
 
-p { margin: 0 0 var(--e-4); }
-.cos { display: block; }
+/* ══ TARGETES D'ACCIÓ ══ */
+.targetes { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; list-style: none; margin: 0 0 18px; padding: 0; }
+.targeta { background: var(--blanc); border: 2px solid var(--tinta); border-radius: 14px; padding: 14px 16px; box-shadow: var(--o3); }
+.targeta.urgent { border-left: 8px solid var(--roig); }
+.targeta.mitja { border-left: 8px solid var(--groc); }
+.targeta.baixa { border-left: 8px solid var(--verd-suau); }
+.targeta-cap { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.tag { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px;
+  padding: 3px 8px; border-radius: 6px; background: var(--verd-fosc); color: var(--llima); white-space: nowrap; }
+.targeta.urgent .tag { background: var(--roig); color: #fff; }
+.targeta.mitja .tag { background: var(--groc); color: var(--tinta); }
+.targeta-nom { font-weight: 800; font-size: 15px; flex: 1; }
+.targeta p { margin: 0 0 12px; font-size: 13.5px; line-height: 1.45; color: var(--text-2); }
+.targeta-accions { display: flex; gap: 8px; }
 
-/* ══ NAVEGACIÓ (barra d'àncores) ══ */
-nav#ancores {
-  position: sticky; top: 0; z-index: 10;
-  display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-3);
-  margin: 0 0 var(--e-7);
-  padding: var(--e-3) var(--e-5);
-  background: var(--verd-fosc);
-  border: 2px solid var(--tinta);
-  border-radius: var(--r-3);
-  box-shadow: var(--ombra);
-  font-size: var(--t-12);
-}
-nav#ancores a {
-  color: var(--verd-clar);
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  font-weight: 800;
-  font-size: var(--t-11);
-  padding: var(--e-1) var(--e-3);
-  border-radius: var(--r-pill);
-}
-nav#ancores a:hover { background: var(--llima); color: var(--verd-fosc); text-decoration: none; }
-nav#ancores select { margin-left: auto; }
+/* ══ BOTONS ══ */
+button { font-family: var(--font); cursor: pointer; }
+.b-prim { flex: 1; padding: 9px; border: 2px solid var(--tinta); border-radius: 10px; background: var(--llima);
+  color: var(--verd-fosc); font-weight: 800; font-size: 13px; box-shadow: var(--o2); }
+.b-prim:hover { transform: translate(-1px,-1px); box-shadow: var(--o3); }
+.b-sec { flex: 1; padding: 9px; border: 2px solid var(--vora-suau); border-radius: 10px; background: var(--blanc);
+  font-weight: 700; font-size: 13px; color: var(--gris); }
+.b-sec:hover { border-color: var(--tinta); color: var(--tinta); }
+.b-gran { width: 100%; padding: 16px; border: 2px solid var(--tinta); border-radius: 12px; background: var(--llima);
+  color: var(--verd-fosc); font-family: var(--font-titol); font-size: 18px; letter-spacing: 1px;
+  text-transform: uppercase; box-shadow: var(--o4); }
+.b-gran:hover { transform: translate(-1px,-1px); box-shadow: var(--o5); }
+.b-xic { padding: 4px 10px; border: 2px solid var(--tinta); border-radius: 8px; background: var(--llima);
+  color: var(--verd-fosc); font-weight: 800; font-size: 11px; box-shadow: 1px 1px 0 var(--tinta); }
+.b-xic.neutre { background: var(--blanc); border-color: var(--vora-suau); color: var(--gris); box-shadow: none; }
 
-/* ══ PATRÓ 2 · TAULA DENSA ══
-   L'ànima de l'app. Densitat alta (files curtes), capçalera fosca amb l'accent,
-   xifres tabulars i separadors fins. `border-collapse: separate` amb spacing 0
-   perquè el radi del marc no es trenque. */
-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  border: 2px solid var(--tinta);
-  border-radius: var(--r-2);
-  overflow: hidden;                 /* el radi retalla la capçalera fosca */
-  background: var(--paper-alt);
-  margin: 0 0 var(--e-5);
-  font-size: var(--t-13);
-}
+/* ══ TARGETA GENÈRICA ══ */
+.card { background: var(--blanc); border: 2px solid var(--tinta); border-radius: 16px; overflow: hidden;
+  box-shadow: var(--o4); margin-bottom: 16px; padding: 0; }   /* és un <section>: anul·la el padding de secció */
+.card-cap { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 16px; background: var(--verd-fosc); color: var(--verd-clar); }
+.card-cap.llima { background: var(--llima); color: var(--verd-fosc); }
+.card-cap.roig { background: var(--roig); color: #fff; }
+.card-titol { font-family: var(--font-titol); font-size: 16px; text-transform: uppercase; }
+.card-compte { background: rgba(0,0,0,.18); padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 13px; }
+.card-cos { padding: 16px; }
 
-thead th {
-  background: var(--verd-fosc);
-  color: var(--llima);
-  font-size: var(--t-11);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  text-align: left;
-  white-space: nowrap;
-  padding: var(--e-3) var(--e-4);
-  border: 0;
-}
+/* ══ FILA DE JUGADOR (plantilla, fotrem, vendes) ══ */
+.fila { display: grid; grid-template-columns: minmax(0,2.4fr) auto auto minmax(0,1.6fr) auto;
+  align-items: center; gap: 12px; padding: 9px 16px; border-top: 1px solid var(--vora-suau); }
+.fila:first-child { border-top: 0; }
+.fila:nth-child(even) { background: #fbf9f0; }
+.fila-qui { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.pos { width: 34px; height: 26px; flex-shrink: 0; display: grid; place-items: center; border-radius: 7px;
+  background: var(--verd-fosc); color: var(--llima); font-weight: 800; font-size: 11px; }
+.pos.po { background: var(--groc); color: var(--tinta); }
+.pos.dc, .pos.df { background: var(--blau); color: #fff; }
+.pos.mc { background: var(--verd); color: #fff; }
+.pos.ed, .pos.ee, .pos.ex { background: var(--lila); color: #fff; }
+.pos.dv { background: var(--roig); color: #fff; }
+.fila-nom { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fila-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px; font-size: 11px; color: var(--gris-clar); }
+.punts { font-family: var(--font-titol); font-size: 15px; color: var(--verd-fosc); }
+.punts.alt { color: var(--ok); } .punts.baix { color: var(--roig); }
+.tsi { font-size: 11px; color: var(--gris); white-space: nowrap; }
+.skills { font-family: var(--mono); font-size: 11px; color: var(--gris); letter-spacing: -.3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fornada { font-size: 11px; }
 
-tbody td {
-  padding: var(--e-3) var(--e-4);   /* 8px 10px: dens, llegible */
-  border: 0;
-  border-top: 1px solid var(--vora-suau);
-  vertical-align: top;
-}
-tbody tr:first-child td { border-top: 0; }
-tbody tr:nth-child(even) { background: var(--paper-3); }
-tbody tr:hover { background: color-mix(in srgb, var(--llima) 30%, transparent); }
+/* ══ PÍNDOLES D'ESTAT ══ */
+.pill { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px;
+  padding: 2px 8px; border-radius: 999px; background: var(--paper); color: var(--gris); border: 1px solid var(--vora-suau); }
+.pill.ok { background: #eef7ee; color: var(--ok); border-color: #bfe6cc; }
+.pill.avis { background: #fdf3d6; color: #8a6400; border-color: #f0d99a; }
+.pill.perill { background: #fdecec; color: #a8262a; border-color: #f3c2c3; }
+.pill.info { background: #e8f2fb; color: #1c5f8f; border-color: #bcd9ef; }
 
-/* Primera columna = qui/què: és l'ancoratge de lectura de cada fila. */
+/* ══ TAULA (dins de card) ══ */
+/* Una taula solta és una targeta per ella mateixa (les seccions que encara no tenen
+   maqueta pròpia queden vestides igualment, mai amb l'estil per defecte del navegador). */
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px;
+  background: var(--blanc); border: 2px solid var(--tinta); border-radius: 16px;
+  overflow: hidden; box-shadow: var(--o4); margin: 0 0 16px; }
+.card table { border: 0; border-radius: 0; box-shadow: none; margin: 0; }
+thead th { background: var(--verd-fosc); color: var(--llima); font-size: 11px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .5px; text-align: left; white-space: nowrap; padding: 9px 12px; }
+tbody td { padding: 8px 12px; border-top: 1px solid var(--vora-suau); vertical-align: middle; }
+tbody tr:nth-child(even) { background: #fbf9f0; }
+tbody tr:hover { background: #f2f7ec; }
 tbody td:first-child { font-weight: 700; }
+td.num, th.num { text-align: right; }
 
-/* ══ PATRÓ 9 · XIFRA ECONÒMICA ══
-   Tabulars a tot arreu (heretat del body) perquè les columnes quadren visualment;
-   el monospace queda per a les cadenes d'habilitats. */
-td, th { font-variant-numeric: tabular-nums; }
+/* ══ CAMP DE JOC ══ */
+.onzes { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap: 18px; }
+.onze { background: var(--blanc); border: 3px solid var(--tinta); border-radius: 18px; overflow: hidden; box-shadow: var(--o5); }
+.onze-cap { padding: 12px 16px; background: var(--verd-fosc); color: var(--verd-clar); }
+.onze-cap.b { background: var(--llima); color: var(--verd-fosc); }
+.onze-titol { font-family: var(--font-titol); font-size: 20px; text-transform: uppercase; }
+.onze-sub { font-size: 12px; opacity: .9; }
+.camp { position: relative; aspect-ratio: 3/4; border-bottom: 3px solid var(--tinta);
+  background: repeating-linear-gradient(0deg, var(--verd-camp-a) 0 34px, var(--verd-camp-b) 34px 68px); }
+.camp::before { content: ''; position: absolute; inset: 10px; border: 2px solid rgba(255,255,255,.5); border-radius: 6px; }
+.camp::after { content: ''; position: absolute; left: 50%; top: 50%; width: 96px; height: 96px;
+  transform: translate(-50%,-50%); border: 2px solid rgba(255,255,255,.5); border-radius: 50%; }
+.jug { position: absolute; transform: translate(-50%,-50%); display: flex; flex-direction: column; align-items: center; }
+.jug-chip { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 800; font-size: 11px; border: 2px solid var(--tinta); background: var(--llima); color: var(--verd-fosc); }
+.jug-chip.entrena { background: var(--llima); }
+.jug-chip.cos { background: var(--blanc); color: var(--gris); }
+.jug-chip.buit { background: rgba(255,255,255,.25); color: #fff; border-style: dashed; }
+.jug-nom { font-size: 10.5px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  white-space: nowrap; margin-top: 2px; }
 
-/* ══ PATRÓ 3 · INSÍGNIA ══
-   Marques curtes dins d'una cel·la (estat de liquidació, despatxar, cobertura):
-   píndola compacta, mai una frase dins la graella. */
-.despatxar, .cobertura {
-  display: inline-block;
-  margin-top: var(--e-1);
-  padding: 2px var(--e-3);
-  border-radius: var(--r-pill);
-  font-size: var(--t-10);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  line-height: 1.6;
-}
-.despatxar { background: var(--roig); color: #fff; }
-.cobertura { background: var(--paper-3); color: var(--gris); border: 1px solid var(--vora-suau); }
+/* ══ GRAELLA DE COMPTABILITAT / DADES CURTES ══ */
+.graella { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 8px; }
+.graella-fila { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 12px; background: var(--paper); border-radius: 10px; font-size: 13px; }
+.graella-fila b { font-weight: 700; }
+.graella-val { font-family: var(--font-titol); font-size: 14px; color: var(--verd-fosc); }
 
-/* ══ PATRÓ 4 · LLISTA ══
-   Dos variants del mateix marcatge: INFORMATIVA (només text) i ACCIONABLE
-   (text + botons). Es distingixen amb :has(), sense tocar el DOM. */
-ul { list-style: none; margin: 0 0 var(--e-5); padding: 0; }
-li { padding: var(--e-2) 0 var(--e-2) var(--e-6); position: relative; }
-li::before {                                  /* pic de marca */
-  content: ''; position: absolute; left: 0; top: .85em;
-  width: 6px; height: 6px; border-radius: 2px; background: var(--llima);
-  border: 1px solid var(--tinta);
-}
+/* ══ FORMULARIS ══ */
+form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin: 0 0 16px; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .5px; color: var(--gris); }
+input, select, textarea { font-family: inherit; font-size: 13px; font-variant-numeric: tabular-nums;
+  color: var(--tinta); background: var(--blanc); padding: 8px 10px; border: 2px solid var(--tinta); border-radius: 8px; }
+input[type=number] { text-align: right; }
+.fila input, .fila select, td input, td select { padding: 3px 6px; font-size: 12px; border-radius: 6px; }
 
-/* ── Alerta amb accions (l'informe de Paco) ── */
-li:has(> button) {
-  display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-3);
-  padding: var(--e-4) var(--e-5);
-  margin-bottom: var(--e-3);
-  background: var(--paper-alt);
-  border: 2px solid var(--tinta);
-  border-left-width: 6px;
-  border-radius: var(--r-2);
-  box-shadow: var(--ombra);
-}
-li:has(> button)::before { display: none; }   /* el marc ja és la marca */
-li:has(> button) > span { flex: 1 1 22rem; }
-
-/* ── Línia d'agenda (llista informativa dins d'una subsecció) ── */
-li:not(:has(> button)) { font-size: var(--t-13); }
-
-/* ══ PATRÓ 6 · MISSATGE DE PACO ══
-   Veu, no dada: panell fosc amb l'accent, com al disseny. */
-.paco {
-  background: var(--verd-fosc);
-  color: var(--verd-clar);
-  border: 2px solid var(--tinta);
-  border-radius: var(--r-2);
-  box-shadow: var(--ombra);
-  padding: var(--e-4) var(--e-5);
-  margin: 0 0 var(--e-4);
-  font-size: var(--t-13);
-  font-weight: 500;
-}
-.paco a { color: var(--llima); }
-.paco a:hover { color: #fff; }
-
-/* ══ PATRÓ 3b · FORMULARI I CONTROLS ══ */
-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--e-4); margin: 0 0 var(--e-5); }
-label {
-  display: flex; flex-direction: column; gap: var(--e-1);
-  font-size: var(--t-11); font-weight: 800;
-  text-transform: uppercase; letter-spacing: .5px; color: var(--gris);
-}
-input, select, textarea {
-  font-family: inherit;
-  font-size: var(--t-13);
-  font-variant-numeric: tabular-nums;
-  color: var(--tinta);
-  background: #fff;
-  padding: var(--e-2) var(--e-3);
-  border: 2px solid var(--tinta);
-  border-radius: var(--r-1);
-}
-input[type="number"] { text-align: right; }   /* les xifres, a la dreta */
-
-button {
-  font-family: var(--font-titol);
-  font-size: var(--t-12);
-  letter-spacing: .5px;
-  text-transform: uppercase;
-  color: var(--verd-fosc);
-  background: var(--llima);
-  padding: var(--e-2) var(--e-5);
-  border: 2px solid var(--tinta);
-  border-radius: var(--r-1);
-  box-shadow: 2px 2px 0 var(--tinta);
-  cursor: pointer;
-}
-button:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--tinta); }
-button:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--tinta); }
-/* Els botons dins d'una cel·la densa no han de fer créixer la fila. */
-td button { font-size: var(--t-10); padding: 2px var(--e-3); box-shadow: 1px 1px 0 var(--tinta); }
-td input, td select { padding: 2px var(--e-2); font-size: var(--t-12); }
-
-/* ══ PATRÓ 5 · DETALL DESPLEGABLE ══ */
-details {
-  border: 2px solid var(--vora-suau);
-  border-radius: var(--r-1);
-  padding: var(--e-3) var(--e-4);
-  margin: 0 0 var(--e-4);
-  background: var(--paper-3);
-}
+/* ══ DETALL, NOTES, ESTATS ══ */
+details { border: 2px solid var(--vora-suau); border-radius: 10px; padding: 10px 14px; margin: 0 0 14px; background: var(--blanc); }
 details[open] { border-color: var(--tinta); }
-summary {
-  cursor: pointer;
-  font-size: var(--t-11); font-weight: 800;
-  text-transform: uppercase; letter-spacing: .5px;
-  color: var(--verd-fosc);
-}
-
-/* ══ PATRÓ 7 · NOTA AL PEU / ESTAT ══ */
-.nota-peu { font-size: var(--t-11); color: var(--gris); margin: var(--e-1) 0 var(--e-4); }
-[role="status"] { font-size: var(--t-12); font-weight: 700; color: var(--ok); }
-[role="alert"] { font-size: var(--t-12); font-weight: 700; color: var(--roig-fosc); }
+summary { cursor: pointer; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: var(--verd-fosc); }
+.nota-peu { font-size: 11px; color: var(--gris); margin: 6px 0 10px; }
+.despatxar { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px;
+  padding: 2px 8px; border-radius: 999px; background: var(--roig); color: #fff; display: inline-block; }
+.cobertura { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px;
+  padding: 2px 8px; border-radius: 999px; background: var(--paper); color: var(--gris);
+  border: 1px solid var(--vora-suau); display: inline-block; }
+[role=status] { font-size: 12px; font-weight: 700; color: var(--ok); }
+[role=alert] { font-size: 12px; font-weight: 700; color: #a8262a; }
 [hidden] { display: none !important; }
 
+/* ══ AGENDA ══ */
+.agenda { list-style: none; margin: 0; padding: 0; }
+.agenda li { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--vora-suau); font-size: 13px; }
+.agenda li:first-child { border-top: 0; }
+.agenda-dia { font-family: var(--font-titol); font-size: 13px; color: var(--verd-fosc); white-space: nowrap; }
+
+/* ══ LLISTES SIMPLES ══ */
+ul { margin: 0 0 12px; padding-left: 18px; }
+.net { list-style: none; padding: 0; }
+.net li { padding: 6px 0; border-top: 1px solid var(--vora-suau); font-size: 13px; }
+.net li:first-child { border-top: 0; }
+
+/* ══ AUTENTICACIÓ ══ */
+.auth { min-height: 100vh; display: grid; grid-template-columns: 1.05fr 1fr; background: var(--verd-fosc); }
+.auth-pitch { position: relative; overflow: hidden; padding: 48px 52px; color: var(--verd-clar);
+  background: linear-gradient(160deg, var(--verd-fosc) 0%, var(--verd) 100%);
+  display: flex; flex-direction: column; justify-content: space-between; }
+.auth-pitch h1 { font-size: clamp(38px,4.4vw,60px); line-height: .98; margin: 0 0 18px; }
+.auth-form { display: flex; align-items: center; justify-content: center; padding: 40px; background: var(--paper); }
+.auth-caixa { width: 100%; max-width: 400px; }
+.auth-caixa form { flex-direction: column; align-items: stretch; }
+.auth-caixa label { text-transform: none; font-size: 12px; }
+.auth-caixa input { width: 100%; }
+@media (max-width: 60rem) { .auth { grid-template-columns: 1fr; } .auth-pitch { display: none; } }
+
 /* ══ RESPONSIU ══ */
+@media (max-width: 60rem) {
+  .fila { grid-template-columns: 1fr auto; gap: 8px; }
+  .fila .skills, .fila .tsi { display: none; }
+  .hdr-caixa { display: none; }
+}
 @media (max-width: 40rem) {
-  body { padding: var(--e-3); }
-  section { padding: var(--e-5); }
-  table { display: block; overflow-x: auto; }   /* la taula densa fa scroll, no s'esclafa */
-  h2 { font-size: var(--t-20); }
+  main { padding: 0 12px 60px; }
+  .card { border-radius: 12px; }
+  .taula-scroll { overflow-x: auto; }
 }

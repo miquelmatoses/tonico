@@ -7,60 +7,98 @@
   <title>Tonico</title>
 </head>
 <body>
-  <nav id="ancores"></nav>
+  <header class="hdr">
+    <div class="hdr-fila">
+      <div class="hdr-marca">
+        <div class="hdr-logo" aria-hidden="true">T</div>
+        <span class="hdr-nom">TONICO</span>
+        <span class="hdr-fase" id="hdr-fase"></span>
+      </div>
+      <div class="hdr-buit"></div>
+      <dl class="hdr-caixa"><dt data-i18n="hdr.caixa"></dt><dd id="hdr-caixa">—</dd></dl>
+      <span id="hdr-idioma"></span>
+      <button type="button" class="hdr-eixir" id="hdr-eixir" data-i18n="nav.eixir"></button>
+    </div>
+    <nav class="pills" aria-label="Seccions"><div class="pills-int" id="ancores"></div></nav>
+  </header>
   <main>
-    <section id="esta-setmana"><h2 data-i18n="esta_setmana.titol"></h2><div class="cos" data-i18n="comu.carregant"></div></section>
-    <section id="decisions"><h2 data-i18n="decisions.titol"></h2><div class="cos"></div></section>
-    <section id="alineacio"><h2 data-i18n="alineacio.titol"></h2><div class="cos"></div></section>
-    <section id="plantilla"><h2 data-i18n="plantilla.titol"></h2><div class="cos"></div></section>
-    <section id="fotrem"><h2 data-i18n="fotrem.titol"></h2><div class="cos"></div></section>
-    <section id="mercat"><h2 data-i18n="mercat.titol"></h2><div class="cos"></div></section>
-    <section id="economia"><h2 data-i18n="economia.titol"></h2><div class="cos"></div></section>
-    <section id="pla"><h2 data-i18n="pla.titol"></h2><div class="cos"></div></section>
-    <section id="personal"><h2 data-i18n="personal.titol"></h2><div class="cos"></div></section>
-    <section id="pujada"><h2 data-i18n="comparador.titol"></h2><div class="cos"></div></section>
+    <section id="esta-setmana"><div class="cos" data-i18n="comu.carregant"></div></section>
+    <section id="decisions"><div class="cos"></div></section>
+    <section id="alineacio"><div class="cos"></div></section>
+    <section id="plantilla"><div class="cos"></div></section>
+    <section id="fotrem"><div class="cos"></div></section>
+    <section id="mercat"><div class="cos"></div></section>
+    <section id="economia"><div class="cos"></div></section>
+    <section id="pla"><div class="cos"></div></section>
+    <section id="personal"><div class="cos"></div></section>
+    <section id="pujada"><div class="cos"></div></section>
   </main>
   <script type="module">
-    import { carregaI18n, aplicaI18n, api, el, t } from '/comu.js';
+    import { carregaI18n, aplicaI18n, api, el, t, selectorIdioma } from '/comu.js';
     import * as S from '/seccions.js';
+    import { diners } from '/format.js';
     await carregaI18n();
     aplicaI18n();
 
-    // Gate: cal sessió, equips i pla (si no, cap a l'alta)
+    // Gate: cal sessió i almenys l'equip sènior (l'acadèmia és opcional)
     let equips;
     try { equips = (await api('/api/equips')).equips; } catch { location.href = '/'; throw 0; }
-    if (equips.length < 2) { location.href = '/onboarding.html'; throw 0; }
+    if (!equips.some((e) => e.tipus === 'senior')) { location.href = '/onboarding.html'; throw 0; }
+    const teAcademia = equips.some((e) => e.tipus === 'juvenil');
 
     const SECCIONS = [
       ['esta-setmana', 'esta_setmana', S.esta_setmana], ['decisions', 'decisions', S.decisions],
       ['alineacio', 'alineacio', S.alineacio], ['plantilla', 'plantilla', S.plantilla],
       ['fotrem', 'fotrem', S.fotrem], ['mercat', 'mercat', S.mercat],
       ['economia', 'economia', S.economia], ['pla', 'pla', S.pla], ['personal', 'personal', S.personal],
-    ];
+    ].filter(([id]) => teAcademia || id !== 'fotrem');   // punt 3c: sense acadèmia, res de Fotrem
+    if (!teAcademia) document.getElementById('fotrem')?.remove();
 
-    // Barra d'àncores
+    // Píndoles de navegació
     const nav = document.getElementById('ancores');
     for (const [id, clau] of [...SECCIONS, ['pujada', 'comparador']]) {
       nav.append(el('a', { href: '#' + id, text: t(clau + '.titol') }));
-      nav.append(document.createTextNode(' · '));
     }
-    const eixir = el('a', { href: '#', text: t('nav.eixir') });
-    eixir.addEventListener('click', async (e) => { e.preventDefault(); await api('/api/eixir', { method: 'POST' }); location.href = '/'; });
-    nav.append(eixir);
+    document.getElementById('hdr-eixir').addEventListener('click', async () => {
+      await api('/api/eixir', { method: 'POST' }); location.href = '/';
+    });
+    // Selector d'idioma: persistix a usuaris.idioma i recarrega
+    const sel = selectorIdioma((codi) => api('/api/idioma', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ idioma: codi }) }).catch(() => {}));
+    sel.className = 'hdr-idioma';
+    document.getElementById('hdr-idioma').append(sel);
+
+    // Capçalera viva: caixa i fase del pla (dades reals, no decoració)
+    (async () => {
+      const [eco, pla] = await Promise.all([
+        api('/api/economia').catch(() => null), api('/api/pla').catch(() => null),
+      ]);
+      if (eco && eco.caixa != null) document.getElementById('hdr-caixa').textContent = diners(eco.caixa);
+      if (pla && !pla.error && pla.temporadaActual != null) {
+        document.getElementById('hdr-fase').textContent = `T${pla.temporadaActual} · ${t('fase.' + pla.fase_actual)}`;
+      }
+    })();
 
     // Render aïllat per secció: una que falla no tomba la resta
     const pinta = async (id, fn) => {
       const cos = document.querySelector('#' + id + ' .cos');
       cos.textContent = '';
-      try { await fn(cos); } catch (err) { cos.append(el('p', { text: t('comu.error') })); }
+      try { await fn(cos); } catch (err) { console.error(`[secció ${id}]`, err); cos.append(el('p', { text: t('comu.error') })); }
     };
     for (const [id, , fn] of SECCIONS) pinta(id, fn);
     // Secció 10: pujada + comparador
     (async () => {
       const cos = document.querySelector('#pujada .cos'); cos.textContent = '';
-      try { S.pujada(cos); } catch { /* aïllat */ }
+      try { S.pujada(cos, teAcademia); } catch { /* aïllat */ }
       try { await S.comparador(cos); } catch { cos.append(el('p', { text: t('comu.error') })); }
     })();
+
+    // Píndola activa segons la secció visible
+    const obs = new IntersectionObserver((ents) => {
+      for (const e of ents) if (e.isIntersecting) {
+        for (const a of nav.querySelectorAll('a')) a.classList.toggle('actiu', a.getAttribute('href') === '#' + e.target.id);
+      }
+    }, { rootMargin: '-120px 0px -70% 0px' });
+    for (const s of document.querySelectorAll('main section')) obs.observe(s);
   </script>
 </body>
 </html>
