@@ -35,4 +35,17 @@ await assert.rejects(desar(db, 1, 'senior', modelSenior(snap2, '2026-07-25'), an
 await desar(db, 1, 'senior', modelSenior(snap2, '2026-07-25'), ancora, true);
 assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM instantanies WHERE equip_id=1').get().n, 2, 'màxim un punt per dia i equip');
 
-console.log('OK — comparador: parella per defecte, pops, frontera de temporada i repuja-substituïx');
+// Punt #10.4: altes i baixes al comparador. snap3 (26-07): treu un jugador (baixa) i
+// n'afig un de nou (alta), amb edat i categoria a la fitxa.
+const baixa = snap2[5][2];                              // nom d'un jugador existent
+const snap3 = snap2.filter((c) => c[2] !== baixa);
+const altaRow = snap2[3].slice(); altaRow[2] = 'Alta Test'; altaRow[3] = '999999999'; altaRow[10] = '17';  // nom, id nou, edat_anys
+snap3.push(altaRow);
+await desar(db, 1, 'senior', modelSenior(snap3, '2026-07-26'), ancora);
+const d2 = await (await comparador.onRequestGet({ request: new Request('http://t/api/comparador'), env: { DB: db }, data: { usuari: { id: 1 } } })).json();
+const alta = d2.nous.find((f) => f.nom === 'Alta Test');
+assert.ok(alta && alta.edat_anys === 17, 'alta declarada amb edat');
+assert.ok('categoria' in alta, 'l\'alta porta la categoria (pot ser null sense classificar)');
+assert.ok(d2.desapareguts.some((f) => f.nom === baixa), 'baixa declarada');
+
+console.log('OK — comparador: parella per defecte, pops, frontera de temporada, repuja i altes/baixes');

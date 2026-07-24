@@ -38,8 +38,8 @@ const noms = entren.map((r) => r.nom);
 assert.equal(res.every((r) => !!r.categoria), true, 'tot jugador té veredicte');
 assert.equal(entren.length, 8, 'aforament entrenable PLA = 8 (sense buckets)');
 // El bucket no és categoria: els 8 millors per puntuació, estable davant la posició.
-assert.ok(noms.includes('Vicent Camarasa'), 'el juvenil C (extrem) dins per puntuació');
-assert.ok(!noms.includes('Lluís Estruch'), 'el juvenil A fora: el desplaça un de més jove i igual creatiu');
+assert.ok(noms.includes('Vicent Camarasa'), 'CasBucket (extrem) dins per puntuació');
+assert.ok(!noms.includes('Lluís Estruch'), 'el reptador fora: el desplaça un de més jove i igual creatiu');
 assert.equal(per('futur_entrenador').length, 1, 'aforament futur_entrenador = 1');
 // El futur_entrenador ha de ser el de més experiència
 const maxExp = Math.max(...jugadors.map((j) => j.experiencia));
@@ -66,7 +66,7 @@ assert.deepEqual(resC.filter((r) => r.categoria === 'entrenable').map((r) => r.i
 
 // ── Cobertura mínima dura: mai liquidar l'últim ocupant d'una quota ──
 // Un únic porter amb porteria per davall de l'adequació: es reté igual (farciment),
-// no cau a venda encara que tinga valor (cas Soldevilla).
+// no cau a venda encara que tinga valor (cas PorterC).
 const squad = [
   { id_hattrick: 1, nom: 'Porter feble', posicio: 'PO', porteria: 3, especialitat: 'Potent', edat_anys: 19, sou: 500, defensa: 1, creativitat: 1, extrem: 1, passades: 1, anotacio: 1, pilota_aturada: 1 },
   { id_hattrick: 2, nom: 'Central', posicio: 'DC', porteria: 1, especialitat: null, edat_anys: 26, sou: 300, defensa: 6, creativitat: 2, extrem: 1, passades: 2, anotacio: 1, pilota_aturada: 3 },

@@ -822,6 +822,21 @@ export async function personal(main) {
 function formEntrenament(main, ent) {
   const pr = ent.prescrit, co = ent.confirmat || {};
   const sec = card(t('personal.entrenament_titol'), null, 'llima');
+
+  // ENTRENAMENT SÈNIOR TRIABLE: en canviar-lo, es deriven de nou les places que
+  // entrenen, els %, la cobertura, les alineacions i els anells del camp (guia §6).
+  if (ent.opcions && ent.opcions.length) {
+    const selT = el('select', { 'aria-label': t('personal.entrenament_senior') },
+      ...ent.opcions.map((h) => { const o = el('option', { value: h, text: t('habilitat.' + h) }); if (h === ent.senior) o.setAttribute('selected', ''); return o; }));
+    selT.addEventListener('change', async () => {
+      await api('/api/pla', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ entrenament_senior: selT.value }) });
+      location.reload();   // recalcula alineació, cobertura i anells amb el nou entrenament
+    });
+    sec.append(el('div', { class: 'card-cos' },
+      el('label', {}, t('personal.entrenament_senior'), selT),
+      el('p', { class: 'nota-peu', text: t('personal.entrenament_senior_nota') })));
+  }
+
   const f = el('form', { class: 'card-cos' },
     el('p', { class: 'nota-peu', text: t('personal.entrenament_prescrit', pr) }),
     el('p', { class: 'nota-peu', text: t('personal.entrenament_confirma') }));

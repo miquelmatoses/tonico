@@ -11,7 +11,7 @@ assert.deepEqual(comparaPersonal({ assistents: 2, metge: 1, psicoleg: 0 }, {}),
 assert.deepEqual(comparaPersonal({ assistents: 2, metge: 1, psicoleg: 0 }, { assistents: 2, metge: 1 }), []);
 
 // Checklist amb costos
-const cl = checklistCanviFase({ personal: { psicoleg: 1 }, canvis: [{ nom: 'Salvatella → entrenador', cost: 430000 }] }, {});
+const cl = checklistCanviFase({ personal: { psicoleg: 1 }, canvis: [{ nom: 'FuturCoach → entrenador', cost: 430000 }] }, {});
 assert.equal(cl.cost_total, 430000);
 assert.equal(cl.personal.length, 1);
 
@@ -28,11 +28,17 @@ const ctx = (body) => ({ request: new Request('http://t', { method: 'POST', head
 let d = await (await personal.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 assert.equal(d.fase_actual, 'fabrica');
 assert.equal(d.desquadres.length, 2, 'sense declarar: falten assistents i metge');
-assert.ok(d.checklists.find((c) => c.fase === 'inflexio').cost_total === 430000, 'checklist d\'inflexió amb el cost de Salvatella');
+assert.ok(d.checklists.find((c) => c.fase === 'inflexio').cost_total === 430000, 'checklist d\'inflexió amb el cost de FuturCoach');
 
-await personal.onRequestPost(ctx({ clau: 'assistents', valor: 2 }));
-await personal.onRequestPost(ctx({ clau: 'metge', valor: 1 }));
+// Model ric: cada especialista és un membre; el desquadre compara COMPTES per tipus.
+await personal.onRequestPost(ctx({ rol: 'especialista', tipus: 'assistents', nivell: 7, sou: 2000, setmanes_contracte: 10 }));
+await personal.onRequestPost(ctx({ rol: 'especialista', tipus: 'assistents', nivell: 6, sou: 1800, setmanes_contracte: 10 }));
+await personal.onRequestPost(ctx({ rol: 'especialista', tipus: 'metge', nivell: 5, sou: 1000, setmanes_contracte: 2 }));
 d = await (await personal.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
+assert.equal(d.membres.length, 3, 'tres membres declarats');
 assert.equal(d.desquadres.length, 0, 'declarat el personal → tot quadra');
 
-console.log('OK — personal: comparació, checklist amb costos, regla i declaració');
+// Alerta de contracte: el metge té 2 setmanes (≤ llindar) → dispara; els assistents no.
+assert.equal(REGLES.ALR_CONTRACTE_PERSONAL({ personal: { membres: d.membres } }, { setmanes_avis: 2, urgencia: 58 }).length, 1);
+
+console.log('OK — personal: comparació, checklist, model ric de membres i alerta de contracte');

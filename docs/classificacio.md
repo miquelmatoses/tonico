@@ -32,18 +32,25 @@ les de plaça limitada s'omplin amb els millors puntuats:
 de mercat va **abans** de farciment: farciment és per als que **no** són vendibles-valuosos
 (vells barats que òmplin). Pequerul (17a, extrem 5-6, Potent) → sense plaça → valor → **venda**.
 
-## La regla d'or
+## La regla d'or — «ACTUA, INFORMA, DESFÉS»
 
 - **Classificar és automàtic**: assignar categoria a un jugador nou o sense plaça es
   fa sol, en silenci, amb la regla i la puntuació registrades i visibles.
-- **Desclassificar demana vistiplau**: qualsevol moviment que **desplace** un titular
-  de plaça no s'executa mai sol. Es desa com a **intercanvi pendent** amb els números
-  dels dos candidats i una recomanació. Jo accepte o rebutge.
-- **Fre anti-soroll**: només es planteja l'intercanvi si la diferència de puntuació
-  supera `llindar_intercanvi`. Un rebuig el silencia fins que la diferència creix
-  substancialment per damunt del llindar (es recorda `diferencia_al_rebutjar`).
-- **Override manual**: una categoria posada a mà queda fixada (`origen='manual'`); el
-  classificador no la toca, però sí pot plantejar intercanvis que l'afecten.
+- **Desplaçar també és automàtic (ACTUA + INFORMA)**: qualsevol moviment que **desplace**
+  un titular de plaça per damunt de `llindar_intercanvi` **s'executa** (l'entrant ocupa
+  la plaça, el desplaçat baixa per l'embut) i **s'informa** al parte amb botó **Desfés**.
+  El secretari actua; no fa cua de preguntes.
+- **Desfés**: restaura l'estat previ complet (l'entrant torna a `categoria_previa_entrant`,
+  el desplaçat recupera la plaça). Un **desfés equival al rebuig antic**: activa el fre
+  anti-soroll (es recorda `diferencia_al_rebutjar`; no es re-executa fins que la diferència
+  cresca substancialment per damunt del llindar).
+- **Sota el llindar**: silenci total, ni pregunta.
+- **Override manual (ÚNICA pregunta que resta)**: una categoria posada a mà queda fixada
+  (`origen='manual'`); el classificador no la toca. Si un no-manual de l'embut supera un
+  ocupant **manual**, no s'executa res: es planteja una **pregunta prèvia** (mai
+  sobreescrivim en silenci una decisió humana). Jo accepte o rebutge.
+- **Sense efectes irreversibles**: els auto-moviments només reclassifiquen categories;
+  mai encadenen una transacció ni una baixa.
 - **Revisió fina**: en cada pujada es reavaluen **totes** les places, no sols quan
   entra algú nou. Un titular pot ser desafiat per qualsevol (un farciment que ha crescut).
 
@@ -51,6 +58,12 @@ de mercat va **abans** de farciment: farciment és per als que **no** són vendi
 
 Automàtiques per **cohort** = temporada d'entrada al club (`data_alta_club`) + edat.
 Override manual persistent.
+
+**La fornada és unitat de VENDA, no sols d'entrenament** (esmena de doctrina,
+polit #4). Un membre desplaçat de `entrenable` a `venda` **conserva la lletra**:
+es ven amb la finestra de la seua fornada (p.ex. el juvenil A es ven amb A1). Per
+això l'assignació automàtica no toca els no-entrenables: no els reassigna ni els
+lleva la lletra.
 
 ## Paràmetres proposats (plantilla `fabrica`) — PER CONFIRMAR/AJUSTAR
 
@@ -70,11 +83,32 @@ Override manual persistent.
 
 | clau | valor | què |
 |---|---|---|
-| `llindar_intercanvi` | 1.0 | diferència mínima de puntuació per plantejar un intercanvi |
+| `llindar_intercanvi` | 0.25 | diferència mínima de puntuació per executar un moviment (per davall: silenci) |
 | `valor_edat_max` | 21 | fins a esta edat, un jugador es considera potencialment vendible |
 | `valor_habilitat_min` | 5 | habilitat màxima ≥ este valor → té valor de mercat |
 | `valor_especialitats` | Potent,Ràpid,Joc aeri,Tècnic,Imprevisible | especialitats que donen valor |
 | `fornada_finestra_dies` | 21 | marge per agrupar entrades en la mateixa cohort |
+
+## Doctrina de venda en fàbrica (fase NO competitiva)
+
+> En fase no competitiva, **cap jugador que no entrena té valor de retenció per
+> qualitat**: es ven tot el que tinga valor de mercat. L'**estructura** (cobertura
+> mínima dura) la cobrixen els cossos de **MENYS valor** — els cars es venen per fer
+> caixa. L'únic límit és la cobertura mínima.
+
+Manifestació a la secció Vendes (polit #10.5): dins cada línia de posició, el cos de
+**menys valor** porta la marca «cobrix {pos} — ven-lo l'últim de la seua línia»
+(buffer mentre no arriba el relleu); la resta, «lliure per vendre ja». L'ordre de
+venda dins la llista el fixen els rellotges (aniversari, mercat, forma) + esta marca.
+
+**En fase COMPETITIVA el criteri s'invertix** (la qualitat sí que reté): per això és
+**contingut de `fases_config`**, no codi. Quan existisca la fase competitiva, la
+marca i el llindar viuran com a paràmetres d'eixa fase.
+
+Categoria **«despatxar»** (polit #10.6, redefinix `alliberament`): `valor_net =
+preu_esperat − cost_llistat (pom) − sous fins a la venda estimada`. Si `valor_net <
+llindar` (pom), llistar és tirar diners → despatxar, amb el càlcul visible a la fila.
+El llistat a 1 € és un override manual, no el defecte.
 
 ## Punts a confirmar (forks de doctrina)
 

@@ -531,5 +531,14 @@
   "camp.principal": "principal (100%)",
   "camp.secundari": "secundari (66%)",
   "camp.els_dos": "els dos",
-  "camp.descobrix": "descobriment"
+  "camp.descobrix": "descobriment",
+  "habilitat.porteria": "Porteria",
+  "habilitat.defensa": "Defensa",
+  "habilitat.creativitat": "Creativitat",
+  "habilitat.extrem": "Joc de banda",
+  "habilitat.passades": "Passades",
+  "habilitat.anotacio": "Definició",
+  "habilitat.pilota_aturada": "Pilota aturada",
+  "personal.entrenament_senior": "Entrenament sènior",
+  "personal.entrenament_senior_nota": "En canviar-lo, es recalculen les places que entrenen, els %, la cobertura i les alineacions."
 }

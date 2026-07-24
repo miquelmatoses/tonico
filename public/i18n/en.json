@@ -531,5 +531,14 @@
   "camp.principal": "primary (100%)",
   "camp.secundari": "secondary (66%)",
   "camp.els_dos": "both",
-  "camp.descobrix": "discovery"
+  "camp.descobrix": "discovery",
+  "habilitat.porteria": "Goalkeeping",
+  "habilitat.defensa": "Defending",
+  "habilitat.creativitat": "Playmaking",
+  "habilitat.extrem": "Winger",
+  "habilitat.passades": "Passing",
+  "habilitat.anotacio": "Scoring",
+  "habilitat.pilota_aturada": "Set pieces",
+  "personal.entrenament_senior": "Senior training",
+  "personal.entrenament_senior_nota": "Changing it recalculates the training positions, the percentages, the cover and the line-ups."
 }

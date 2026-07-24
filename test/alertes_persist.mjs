@@ -40,9 +40,27 @@ assert.equal((await estatRevisio(db, 1)).revisat, true, 'generat → revisat');
 // Cas real (18-07): Junta del porter, aniversari-recomanació (mercat en depressió →
 // esperar) i aniversari-fet d'un entrenable; tot en la mateixa instantània.
 const clau = (k) => sqlite.prepare('SELECT COUNT(*) n FROM alertes WHERE missatge_clau=?').get(k).n;
-assert.ok(sqlite.prepare("SELECT COUNT(*) n FROM alertes a JOIN regles r ON r.id=a.regla_id WHERE r.codi='ALR_JUNTA_PORTER'").get().n >= 1, 'Junta del porter');
-assert.ok(clau('alerta.aniversari_espera') >= 1, 'aniversari en depressió → espera (dos rellotges)');
+// Doctrina de liquidació: tota venda no llistada genera acció (llistar ja / agenda si
+// depressió profunda / ajornar si lesionat).
+assert.ok(sqlite.prepare("SELECT COUNT(*) n FROM alertes WHERE missatge_clau IN ('alerta.llistar_ja','alerta.llistar_lesionat','alerta.llistar_agregat_1','alerta.llistar_agregat_n') OR (estat='agenda' AND missatge_clau='agenda.llistar')").get().n >= 1, 'venda no llistada → acció de liquidació (agregada o individual)');
 assert.ok(clau('alerta.aniversari_fet') >= 1, 'aniversari d\'entrenable → fet');
+// Punt #10.2: els porters del fixture són PO6/PO6/PO5 (< 7 = Notable+) → la Junta
+// NO els reté → cap alerta de Junta (abans, amb el llindar 5, eren falses).
+assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM alertes a JOIN regles r ON r.id=a.regla_id WHERE r.codi='ALR_JUNTA_PORTER'").get().n, 0, 'porters < 7 → cap alerta de Junta');
+
+// REFRESC de clau i18n: una alerta desada amb una clau vella (per un canvi de
+// codi/config) ha de recuperar la clau viva en regenerar, preservant NOMÉS
+// l'estat (vista/ignorada). Sense això quedava morta per sempre.
+{
+  const alerta = sqlite.prepare("SELECT id, missatge_clau FROM alertes WHERE estat='nova' LIMIT 1").get();
+  const clauViva = alerta.missatge_clau;
+  sqlite.prepare("UPDATE alertes SET missatge_clau='alerta.clau_morta', parametres='{}', estat='vista' WHERE id=?").run(alerta.id);
+  await generaAlertes(db, 1);
+  const desp = sqlite.prepare('SELECT missatge_clau, parametres, estat FROM alertes WHERE id=?').get(alerta.id);
+  assert.equal(desp.missatge_clau, clauViva, 'regeneració refresca la clau i18n morta');
+  assert.notEqual(desp.parametres, '{}', 'els paràmetres també es refresquen');
+  assert.equal(desp.estat, 'vista', 'l\'estat (vista) es preserva');
+}
 
 // Idempotència: re-executar amb les mateixes dades no duplica
 const abans = actives();
@@ -50,12 +68,34 @@ const r2 = await generaAlertes(db, 1);
 assert.equal(r2.alertes, 0, 'cap alerta nova amb les mateixes dades');
 assert.equal(actives(), abans);
 
-// Ignora preservada: una ignorada no reapareix
-const unaId = sqlite.prepare("SELECT id FROM alertes WHERE estat='nova' LIMIT 1").get().id;
-sqlite.prepare("UPDATE alertes SET estat='ignorada' WHERE id=?").run(unaId);
-const r3 = await generaAlertes(db, 1);
-assert.equal(r3.alertes, 0, 'una ignorada no es torna a crear');
-assert.equal(sqlite.prepare('SELECT estat FROM alertes WHERE id=?').get(unaId).estat, 'ignorada');
+// L'INFORME MOSTRA NOMÉS 'nova' (contracte del GET /api/alertes): marcar vist O
+// ignorat amaga l'alerta, i la regeneració preserva ELS DOS estats (no torna).
+const visible = () => sqlite.prepare("SELECT COUNT(*) n FROM alertes WHERE usuari_id=1 AND estat='nova'").get().n;
+for (const marca of ['vista', 'ignorada']) {
+  const id = sqlite.prepare("SELECT id FROM alertes WHERE estat='nova' LIMIT 1").get().id;
+  const abansV = visible();
+  sqlite.prepare('UPDATE alertes SET estat=? WHERE id=?').run(marca, id);
+  assert.equal(visible(), abansV - 1, `marcar ${marca} amaga l'alerta de l'informe`);
+  const r = await generaAlertes(db, 1);                       // regenerar
+  assert.equal(sqlite.prepare('SELECT estat FROM alertes WHERE id=?').get(id).estat, marca, `la regeneració preserva ${marca}`);
+  assert.equal(r.alertes, 0, `${marca}: no es torna a crear`);
+  assert.equal(visible(), abansV - 1, `${marca}: segueix amagada després de regenerar (no torna)`);
+}
+
+// 0b — VIST vs DIA D: una alerta anticipada VISTA no silencia la del dia d'acció.
+// La data d'acció entra a la clau d'idempotència → clau distinta → instància nova.
+{
+  const jug = sqlite.prepare("SELECT cj.jugador_id FROM categories_jugador cj JOIN (SELECT jugador_id, MAX(id) mid FROM categories_jugador GROUP BY jugador_id) m ON cj.id=m.mid WHERE cj.categoria='venda' LIMIT 1").get().jugador_id;
+  const reglaId = sqlite.prepare("SELECT id FROM regles WHERE codi='ALR_SUBHASTA_TANCA'").get().id;
+  // Anticipada, ja VISTA, per a una data d'acció ANTIGA (mateix jugador i regla)
+  sqlite.prepare("INSERT INTO alertes (usuari_id, regla_id, jugador_id, data, missatge_clau, parametres, estat, urgencia, data_accio) VALUES (1,?,?,?,?,?,?,?,?)")
+    .run(reglaId, jug, '2026-07-10', 'alerta.subhasta_tanca', '{}', 'vista', 85, '2026-07-10');
+  // Es llista: la subhasta tanca el 18-07 (dia d'acció = snapshot) → ha de disparar de nou
+  sqlite.prepare("INSERT INTO vendes (jugador_id, usuari_id, estat, data_llistada) VALUES (?, 1, 'llistat', '2026-07-15')").run(jug);
+  await generaAlertes(db, 1);
+  assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM alertes a JOIN regles r ON r.id=a.regla_id WHERE r.codi='ALR_SUBHASTA_TANCA' AND a.jugador_id=? AND a.estat='nova' AND a.data_accio='2026-07-18'").get(jug).n, 1, 'el dia d\'acció crea una alerta NOVA malgrat l\'anticipada vista');
+  assert.notEqual(sqlite.prepare("SELECT estat FROM alertes WHERE jugador_id=? AND data_accio='2026-07-10'").get(jug).estat, 'nova', 'l\'anticipada vista no reapareix com a nova');
+}
 
 // Resolució automàtica: si el juvenil arriba al mínim (10), l'alerta es resol sola
 await desar(db, 1, 'juvenil', modelJuvenil(youth, '2026-07-18'), ancora, true);   // repuja amb els 10

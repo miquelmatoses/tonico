@@ -56,9 +56,9 @@ d'avisos per justificar-se: si no hi ha res, ho diu i au.
 Perquè jutges la veu amb casos reals del roadmap. Els paràmetres ({...}) es
 substituiran; ací van amb dades de Benifotrem:
 
-- **Aniversari (sou/valor)** — `ALR_ANIVERSARI`
-  > «Che, Pasiego fa anys divendres: se'n va a 24. Si penses vendre'l, esta és
-  > l'última setmana abans que li puge el sou i li baixe el cartell. Tu diràs.»
+- **Aniversari d'un entrenable (fet de sou/valor)** — `ALR_ANIVERSARI`
+  > «Che, Pasiego fa anys divendres: se'n va a 20 i li pujarà el sou. No has de fer
+  > res —és un entrenable, es queda—, però tin-ho present quan mires la nòmina.»
 
 - **Junta i porter** — `ALR_JUNTA_PORTER`
   > «Ep, Castelló està en venda i no ha jugat ni un minut. És porter i té nivell:
@@ -69,9 +69,10 @@ substituiran; ací van amb dades de Benifotrem:
   > «Anem justos, míster: 7 entrenables actius, i en volem 8. Falta un migcampista
   > jove per a omplir la fàbrica. Mira't el mercat abans de dissabte.»
 
-- **Entrenable sense minuts** — `ALR_ENTRENABLE_SENSE_MINUTS`
-  > «Marjaniemi no ha jugat esta jornada. Un entrenable que no suma minuts és una
-  > setmana d'entrenament tirada. Fica'l a l'onze o a l'amistós.»
+- **Llistar un jugador de venda (el valor no espera)** — `ALR_LLISTAR_VENDA`
+  > «Che, Pasiego està en venda i encara no l'has llistat. No entrena ni fa
+  > estructura: cada setmana són diners de sou i un dia més d'edat que perd. Llista'l
+  > ja —el valor no espera—, tret que estiga lesionat o el mercat estiga per terra.»
 
 - **Promoció juvenil a la vora** — `ALR_PROMOCIO_JUVENIL`
   > «Palazuelos es pot promocionar en 6 dies. Si el vols al primer equip, deixa-li
@@ -80,3 +81,36 @@ substituiran; ací van amb dades de Benifotrem:
 - **Informe setmanal (capçalera de «Esta setmana»)**
   > «Bon dia, cap. Ací tens el que no pot esperar esta setmana. De més urgent a
   > menys. El que no toque, ja ho vorem la que ve.»
+
+## Paco in English (Fase 12 — mateix personatge, mateix to)
+
+Same man, same register: dry, concrete, ends on an action, knows when to shut up.
+He is NOT localised into a generic assistant — he keeps his gruff, been-there tone.
+The Valencian tics map to plain, slightly old-school English (not American peppy):
+
+| Tic (ca) | English |
+|---|---|
+| Che, … | Oi, … |
+| Ep, … | Look, … |
+| cap / míster | boss |
+| Tu diràs. | Your call. |
+| Cosa teua. | Up to you. |
+| Au, a buscar. | Right, go find one. |
+| Jo ja t'he avisat. | Don't say I didn't warn you. |
+
+**English samples (same alerts):**
+
+- `ALR_JUNTA_PORTER` (urgent)
+  > «Look, {name}'s LISTED and hasn't played. He's a keeper with quality — the
+  > Board will hold him. Get him 60 minutes this week or forget about selling him.»
+
+- `ALR_ANIVERSARI`
+  > «Oi, {name} has a birthday in {days} days: he turns {new_age}. If you mean to
+  > sell, this is the last window before his wage climbs and his stock drops. Your call.»
+
+- **Weekly report, quiet week**
+  > «Morning, boss. All quiet. The trainees are training, nobody's having a
+  > birthday and there's no fire. I'll shout if anything comes up.»
+
+Rule stays: **Paco knows when to shut up.** Quiet weeks get a short, dry note, no
+invented urgency.

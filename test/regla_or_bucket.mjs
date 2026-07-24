@@ -1,6 +1,6 @@
 // Tonico — CONTRACTE PROTEGIT: la classificació és ESTABLE davant la posició de
 // l'últim partit. El bucket (MC/extrem) és decisió d'alineació, no de categoria.
-// Cas el juvenil C: si Kirsch juga d'extrem, NO pot expulsar el juvenil C (ni silenciosament
+// Cas CasBucket: si Entrenable1 juga d'extrem, NO pot expulsar CasBucket (ni silenciosament
 // ni com a intercanvi). node test/regla_or_bucket.mjs
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -20,25 +20,26 @@ const catDe = (nom) => sqlite.prepare(`SELECT c.categoria FROM categories_jugado
 const nEntrenables = () => sqlite.prepare(`SELECT COUNT(*) n FROM categories_jugador c
   JOIN (SELECT jugador_id,MAX(id) mid FROM categories_jugador GROUP BY jugador_id) m ON c.id=m.mid WHERE c.categoria='entrenable'`).get().n;
 
-// Pujada 1: Kirsch (Marc Montaner) d'MC, el juvenil C (Vicent Camarasa) d'EE → tots dos entrenables
+// Pujada 1: Entrenable1 (Marc Montaner) d'MC, CasBucket (Vicent Camarasa) d'EE → tots dos entrenables
 await desar(db, 1, 'senior', modelSenior(base, '2026-07-18'), anc);
 await classificaEquip(db, 1, 1, 'fabrica');
 assert.equal(catDe('Marc Montaner'), 'entrenable');
 assert.equal(catDe('Vicent Camarasa'), 'entrenable');
 assert.equal(nEntrenables(), 8);
 
-// Pujada 2: Kirsch juga d'ED (canvi de posició a l'últim partit)
+// Pujada 2: Entrenable1 juga d'ED (canvi de posició a l'últim partit)
 const s19 = base.map((c) => c.slice());
 s19.find((c) => c[2] === 'Marc Montaner')[29] = 'ED';
 await desar(db, 1, 'senior', modelSenior(s19, '2026-07-19'), anc);
 const r = await classificaEquip(db, 1, 1, 'fabrica');
 
-// La posició jugada és efecte, no causa: cap canvi, cap intercanvi, el juvenil C dins.
+// La posició jugada és efecte, no causa: cap canvi, cap moviment, CasBucket dins.
 assert.equal(r.autos, 0, 'cap reassignació automàtica');
-assert.equal(r.intercanvis, 0, 'cap intercanvi proposat');
-assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM intercanvis WHERE estat='pendent'").get().n, 0, 'cap desclassificació pendent');
-assert.equal(catDe('Vicent Camarasa'), 'entrenable', 'el juvenil C segueix entrenable');
-assert.equal(catDe('Marc Montaner'), 'entrenable', 'Kirsch segueix entrenable');
+assert.equal(r.moviments, 0, 'cap moviment executat');
+assert.equal(r.preguntes, 0, 'cap pregunta');
+assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM intercanvis").get().n, 0, 'cap moviment registrat');
+assert.equal(catDe('Vicent Camarasa'), 'entrenable', 'CasBucket segueix entrenable');
+assert.equal(catDe('Marc Montaner'), 'entrenable', 'Entrenable1 segueix entrenable');
 assert.equal(nEntrenables(), 8, '8/8 entrenables estables');
 
-console.log('OK — contracte: la classificació és estable davant la posició de l\'últim partit (cas el juvenil C)');
+console.log('OK — contracte: la classificació és estable davant la posició de l\'últim partit (cas CasBucket)');

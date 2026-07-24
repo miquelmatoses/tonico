@@ -1,6 +1,7 @@
-// Tonico — persistència de la classificació + regla d'or via BD.
-// Pujada 1 → categories auto; pujada 2 amb un rival que creix → intercanvi
-// pendent (res auto); acceptar-lo aplica el moviment. node test/classif_persist.mjs
+// Tonico — persistència de la classificació + regla d'or via BD (doctrina
+// «ACTUA, INFORMA, DESFÉS»). Pujada 1 → categories auto; pujada 2 amb un rival
+// que creix i supera el llindar → moviment EXECUTAT (informat); desfer-lo
+// restaura l'estat previ. node test/classif_persist.mjs
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { nova } from './_d1shim.mjs';
@@ -27,8 +28,9 @@ const r1 = await classificaEquip(db, 1, 1, 'fabrica');
 assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM categories_jugador WHERE categoria='entrenable'").get().n, 8);
 // CONTRACTE CENTRAL: equip verge → tot és assignació inicial (auto), mai desplaçament.
 assert.equal(r1.autos, 25, 'primera pujada: els 25 jugadors reben categoria auto');
-assert.equal(r1.intercanvis, 0, 'primera pujada: ZERO intercanvis pendents');
-assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM intercanvis WHERE estat='pendent'").get().n, 0);
+assert.equal(r1.moviments, 0, 'primera pujada: ZERO moviments');
+assert.equal(r1.preguntes, 0, 'primera pujada: ZERO preguntes');
+assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM intercanvis").get().n, 0);
 // Fornades auto per horitzó d'eixida: A1 (19-21 → T84) = 2, A2 (17 → T86) = 6
 assert.equal(r1.fornades, 8, 'els 8 entrenables reben fornada auto');
 assert.deepEqual(
@@ -37,25 +39,31 @@ assert.deepEqual(
 
 // ── Pujada 2: un candidat fora dels 8 creix i supera el pitjor entrenable ──
 const files2 = files.map((c) => c.slice());
-const reptador = files2.find((c) => c[2] === 'Lluís Estruch');          // el juvenil A (9é, fora dels 8)
+const reptador = files2.find((c) => c[2] === 'Lluís Estruch');          // el reptador (9é, fora dels 8)
 reptador[22] = '8';                                                     // creativitat 6 → 8: supera el 8é (Tormo, 6.0)
 const nomReptador = reptador[2];
 const catAbans = cat(idDe(nomReptador));
 await desar(db, 1, 'senior', modelSenior(files2, '2026-07-25'), ancora);
 const r2 = await classificaEquip(db, 1, 1, 'fabrica');
-assert.equal(r2.intercanvis, 1, 'un desplaçament proposat');
-assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM intercanvis WHERE estat='pendent'").get().n, 1);
+// ACTUA: supera el llindar → el moviment s'EXECUTA i s'informa (no pregunta)
+assert.equal(r2.moviments, 1, 'un moviment executat');
+assert.equal(r2.preguntes, 0, 'cap pregunta: s\'ha actuat');
+assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM intercanvis WHERE estat='executat'").get().n, 1);
 assert.notEqual(catAbans, 'entrenable');
-assert.equal(cat(idDe(nomReptador)), catAbans, 'el rival NO s\'ha promogut sol');       // regla d'or
+assert.equal(cat(idDe(nomReptador)), 'entrenable', 'el rival ENTRA sol (actua)');       // regla d'or nova
+const x = sqlite.prepare("SELECT id, eixent_id, categoria_previa_entrant FROM intercanvis WHERE estat='executat'").get();
+assert.equal(x.categoria_previa_entrant, catAbans, 'guarda la categoria prèvia per desfer');
+assert.notEqual(cat(x.eixent_id), 'entrenable', 'el desplaçat ha eixit de la plaça');
+// Doctrina #4.1c: la fornada és unitat de VENDA → el desplaçat a venda CONSERVA la lletra.
+const fornDe = (jid) => sqlite.prepare('SELECT f.lletra FROM fornades_jugadors fj JOIN fornades f ON f.id=fj.fornada_id WHERE fj.jugador_id=?').get(jid)?.lletra;
+assert.ok(fornDe(x.eixent_id), 'el desplaçat a venda manté la seua lletra de fornada');
 
-// ── Acceptar l'intercanvi ──
-const x = sqlite.prepare("SELECT id, eixent_id FROM intercanvis WHERE estat='pendent'").get();
-const eixentAbans = cat(x.eixent_id);
-assert.equal(eixentAbans, 'entrenable', 'el titular encara ho és fins que accepte');
-const ctx = { request: new Request('http://t/api/intercanvis', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: x.id, accio: 'acceptar' }) }), env: { DB: db }, data: { usuari: { id: 1 } } };
+// ── DESFÉS: restaura l'estat previ complet ──
+const ctx = { request: new Request('http://t/api/intercanvis', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: x.id, accio: 'desfer' }) }), env: { DB: db }, data: { usuari: { id: 1 } } };
 const resp = await intercanvis.onRequestPost(ctx);
 assert.equal(resp.status, 200);
-assert.equal(cat(idDe(nomReptador)), 'entrenable', 'acceptat: el rival entra');
-assert.notEqual(cat(x.eixent_id), 'entrenable', 'acceptat: el titular ix de la plaça');
+assert.equal(cat(idDe(nomReptador)), catAbans, 'desfet: el rival torna on estava');
+assert.equal(cat(x.eixent_id), 'entrenable', 'desfet: el desplaçat recupera la plaça');
+assert.equal(sqlite.prepare("SELECT estat FROM intercanvis WHERE id=?").get(x.id).estat, 'desfet');
 
-console.log('OK — persistència: classificació auto, regla d\'or i acceptació d\'intercanvi');
+console.log('OK — persistència: classificació auto, regla d\'or (actua+informa) i DESFÉS');

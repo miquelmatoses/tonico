@@ -12,7 +12,7 @@ import * as fotrem from '../functions/api/fotrem.js';
 const ancora = { data: '2026-07-25', temporada: 83, anyDies: 112 };
 const llindars = { '15': { compost_min: 3, per_defecte: 'accepta' }, '16': { potencial_min: 7, compost_min: 6 }, '17': { mai: true } };
 
-// Aterratge: 125 dies des del 18-07 → T84 (cas Moyano)
+// Aterratge: 125 dies des del 18-07 → T84 (cas Revelable)
 assert.equal(projeccioAterratge(125, '2026-07-18', ancora).temporada, 84);
 
 // Crides (doctrina per edat)
@@ -40,8 +40,8 @@ await desar(db, 1, 'juvenil', modelJuvenil(youth, '2026-07-18'), anc);
 const resp = await fotrem.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } });
 const { juvenils } = await resp.json();
 assert.equal(juvenils.length, 10);
-const moyano = juvenils.find((j) => j.dies_restants_promocio === 125);
-assert.equal(moyano.aterratge.temporada, 84, 'aterratge de Moyano a T84');
+const revelable = juvenils.find((j) => j.dies_restants_promocio === 125);
+assert.equal(revelable.aterratge.temporada, 84, 'aterratge de Revelable a T84');
 assert.ok(juvenils.every((j) => j.crida !== undefined), 'cada juvenil té avaluació de crida');
 
-console.log('OK — Fotrem: aterratge (Moyano→T84), crides per edat i alerta predictiva');
+console.log('OK — Fotrem: aterratge (Revelable→T84), crides per edat i alerta predictiva');

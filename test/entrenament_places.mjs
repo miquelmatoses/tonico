@@ -1,0 +1,76 @@
+// Tonico — MOTOR D'ENTRENAMENT SÈNIOR GENERAL. Canviar l'entrenament triat ha de
+// canviar quines posicions entrenen, a quin %, la cobertura i l'alineació —tot derivat,
+// res cablejat. node test/entrenament_places.mjs
+import assert from 'node:assert/strict';
+import { placesEntrenament, aplicaEntrenament } from '../lib/entrenament_places.js';
+import { alinea } from '../lib/alineacio.js';
+import { cobertura } from '../lib/cobertura.js';
+
+const TAULA = { porteria: ['porter'], defensa: ['defensa'], creativitat: ['mc'], passades: ['mc', 'extrem', 'davanter'], extrem: ['extrem'], anotacio: ['davanter'], pilota_aturada: ['porter'] };
+const BAIX = { creativitat: ['extrem'], extrem: ['defensa'] };            // guia §6
+
+// ── 1. placesEntrenament: 100% de la taula, 50% de la taula baixa (el 100% mana) ──
+assert.deepEqual(placesEntrenament('creativitat', TAULA, BAIX), { mc: 100, extrem: 50 }, 'creativitat: MC 100, extrem 50');
+assert.deepEqual(placesEntrenament('defensa', TAULA, BAIX), { defensa: 100 }, 'defensa: només defensa 100');
+assert.deepEqual(placesEntrenament('extrem', TAULA, BAIX), { extrem: 100, defensa: 50 }, 'extrem: extrem 100, defensa 50');
+assert.deepEqual(placesEntrenament('anotacio', TAULA, BAIX), { davanter: 100 }, 'anotació: davanter 100');
+assert.deepEqual(placesEntrenament('passades', TAULA, BAIX), { mc: 100, extrem: 100, davanter: 100 }, 'passades: tres buckets al 100');
+
+// Formació fàbrica (1 POR, 3 DC, 3 MC, 2 EXT, 2 DAV).
+const FORMACIO = [
+  { codi: 'POR', bucket: 'porter' }, { codi: 'DC1', bucket: 'defensa' }, { codi: 'DC2', bucket: 'defensa' }, { codi: 'DC3', bucket: 'defensa' },
+  { codi: 'MC1', bucket: 'mc' }, { codi: 'MC2', bucket: 'mc' }, { codi: 'MC3', bucket: 'mc' },
+  { codi: 'EX1', bucket: 'extrem' }, { codi: 'EX2', bucket: 'extrem' }, { codi: 'DV1', bucket: 'davanter' }, { codi: 'DV2', bucket: 'davanter' },
+];
+const rols = [{ id: 'A', competitiu: 1 }, { id: 'B', competitiu: 0 }];
+
+// ── 2. aplicaEntrenament posa entrena/pct a cada slot segons el bucket ──
+const slotsCrea = aplicaEntrenament(FORMACIO, placesEntrenament('creativitat', TAULA, BAIX));
+assert.equal(slotsCrea.filter((s) => s.bucket === 'mc' && s.entrena && s.pct === 100).length, 3, 'creativitat → 3 MC al 100%');
+assert.equal(slotsCrea.filter((s) => s.bucket === 'extrem' && s.entrena && s.pct === 50).length, 2, 'creativitat → 2 extrems al 50%');
+assert.ok(slotsCrea.filter((s) => s.bucket === 'defensa').every((s) => !s.entrena), 'creativitat → els defenses no entrenen');
+
+const slotsDef = aplicaEntrenament(FORMACIO, placesEntrenament('defensa', TAULA, BAIX));
+assert.equal(slotsDef.filter((s) => s.bucket === 'defensa' && s.entrena && s.pct === 100).length, 3, 'defensa → 3 DC al 100%');
+assert.ok(slotsDef.filter((s) => s.bucket === 'mc').every((s) => !s.entrena), 'defensa → els MC ja NO entrenen');
+
+// ── 3. LA COBERTURA es deriva: entrenaments distints → objectius distints ──
+const cobCrea = cobertura({ slots: slotsCrea, rols }, { futur_entrenador: 1 });
+assert.equal(cobCrea.entrenables_objectiu, 8, 'creativitat: (3×100 + 2×50) × 2 = 8');
+const cobDef = cobertura({ slots: slotsDef, rols }, { futur_entrenador: 1 });
+assert.equal(cobDef.entrenables_objectiu, 6, 'defensa: 3×100 × 2 = 6');
+assert.notEqual(cobCrea.entrenables_objectiu, cobDef.entrenables_objectiu, 'canviar l\'entrenament mou l\'objectiu d\'entrenables');
+
+// ── 4. L'ALINEACIÓ es deriva: amb defensa, entrenen els DEFENSES, no els MC ──
+const squad = Array.from({ length: 8 }, (_, i) => ({ jugador_id: i + 1, nom: 'E' + i, posicio: 'DC', categoria: 'entrenable' }));
+const rCrea = alinea(squad, { slots: slotsCrea, buckets: { porter: ['PO'], defensa: ['DC'], mc: ['MC'], extrem: ['ED'], davanter: ['DV'] }, rols });
+const entrenaEn = (r, bucket) => ['A', 'B'].reduce((n, k) => n + r.onze[k].filter((s) => s.bucket === bucket && s.jugador && s.entrena).length, 0);
+assert.ok(entrenaEn(rCrea, 'mc') > 0, 'creativitat: hi ha entrenables entrenant d\'MC');
+assert.equal(entrenaEn(rCrea, 'defensa'), 0, 'creativitat: cap entrenable entrena de defensa');
+
+const rDef = alinea(squad, { slots: slotsDef, buckets: { porter: ['PO'], defensa: ['DC'], mc: ['MC'], extrem: ['ED'], davanter: ['DV'] }, rols });
+assert.ok(entrenaEn(rDef, 'defensa') > 0, 'defensa: ara els entrenables entrenen de DEFENSA');
+assert.equal(entrenaEn(rDef, 'mc'), 0, 'defensa: ja NINGÚ entrena d\'MC');
+// I la comptabilitat reflectix el 100% en un sol partit (buckets al 100%, no doblen).
+assert.ok(rDef.comptabilitat.some((c) => c.total === 100), 'defensa: els entrenables arriben al 100%');
+
+console.log('OK — motor d\'entrenament sènior general: places, %, cobertura i alineació es deriven del que es tria');
+
+// ── 5. END-TO-END per BD: l'override entrenament_senior del pla mana sobre la fase ──
+{
+  const { nova } = await import('./_d1shim.mjs');
+  const { entrenamentEfectiu } = await import('../lib/entrenament_places.js');
+  const { sqlite, db } = nova(import.meta.url);
+  sqlite.exec(`INSERT INTO usuaris (id,correu,contrasenya) VALUES (1,'z','x');
+               INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'fabrica','fabrica');`);
+  // Per defecte: el que prescriu la fase (creativitat) → MC 100 / extrem 50.
+  const def = await entrenamentEfectiu(db, 1);
+  assert.equal(def.skill, 'creativitat', 'per defecte, l\'entrenament de la fase');
+  assert.deepEqual(def.places, { mc: 100, extrem: 50 });
+  // L'usuari canvia a defensa → la derivació canvia sola.
+  sqlite.prepare("UPDATE plans SET parametres=? WHERE usuari_id=1").run(JSON.stringify({ entrenament_senior: 'defensa' }));
+  const ov = await entrenamentEfectiu(db, 1);
+  assert.equal(ov.skill, 'defensa', 'l\'override del pla mana');
+  assert.deepEqual(ov.places, { defensa: 100 }, 'defensa → només defensa 100 (cap 50)');
+}
+console.log('OK — l\'override entrenament_senior canvia la derivació per BD');
