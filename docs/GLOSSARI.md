@@ -52,3 +52,18 @@ tenen equivalent anglés, apuntat a `docs/veu-paco-meseguer.md` i a `DECISIONS.m
 | Tu diràs. | Your call. |
 | Cosa teua. | Up to you. |
 | Au, a buscar. | Right, go find one. |
+
+## Formes vetades (valencià de la casa)
+
+El catàleg ca (`public/i18n/ca-valencia.json`) NO pot contindre estes formes; un guardià
+lingüístic (`test/i18n_guardia.mjs`) les rebutja perquè no tornen a colar-se:
+
+| Vetat | Correcte | Motiu |
+|---|---|---|
+| `d'hui` | `de hui` | «hui» NO s'apostrofa en valencià |
+| `avui` | `hui` | forma valenciana |
+| `parte` | `informe` | castellanisme |
+| `Fotrem` | `Acadèmia` / `Juvenils` / `Planter` | nom propi d'un usuari, no genèric |
+| `aquest/-a` | `este/esta` | demostratiu valencià |
+| `sortir` | `eixir` | verb valencià |
+| `meva/teva/seva` | `meua/teua/seua` | possessiu valencià |

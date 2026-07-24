@@ -23,9 +23,9 @@ const cfgCreativitat = {
 const c1 = cobertura(cfgCreativitat, { futur_entrenador: 1 });
 assert.equal(c1.entrenables_objectiu, 8, '(3×100% + 2×50%) × 2 rols = 8 — el «8» EMERGIX, no es cabla');
 assert.equal(c1.detall.llocs_restants, 5, '11 places − 5 que entrenen − 1 porteria = 5 de camp');
-assert.equal(c1.camp_minim, 6, '5 restants − 1 futur entrenador + 2 de marge = 6');
+assert.equal(c1.camp_minim, 4, 'LEAN: 5 restants − 1 futur entrenador, sense marge = 4');
 assert.equal(c1.porters_minims, 2);
-assert.equal(c1.total, 17, '8 entrenables + 1 futur entrenador + 2 porters + 6 de camp');
+assert.equal(c1.total, 15, 'LEAN: 8 entrenables + 1 futur + 2 porters + 4 de camp = 15');
 
 // ── ENTRENAMENT 2: defensa (5 DC al 100%), sense extrems entrenant i sense futur entrenador ──
 // Places i mínims DIFERENTS, derivats de la mateixa fórmula.
@@ -41,8 +41,8 @@ const cfgDefensa = {
 };
 const c2 = cobertura(cfgDefensa, { futur_entrenador: 0 });
 assert.equal(c2.entrenables_objectiu, 10, '5 places × 100% × 2 rols = 10');
-assert.equal(c2.camp_minim, 7, '11 − 5 − 1 = 5 restants − 0 futur entrenador + 2 = 7');
-assert.equal(c2.total, 19, '10 + 0 + 2 + 7');
+assert.equal(c2.camp_minim, 5, 'LEAN: 11 − 5 − 1 = 5 restants − 0 futur entrenador = 5');
+assert.equal(c2.total, 17, '10 + 0 + 2 + 5');
 assert.notEqual(c1.entrenables_objectiu, c2.entrenables_objectiu, 'entrenaments distints → objectius distints');
 assert.notEqual(c1.total, c2.total, 'entrenaments distints → plantilles mínimes distintes');
 
@@ -50,8 +50,8 @@ assert.notEqual(c1.total, c2.total, 'entrenaments distints → plantilles mínim
 assert.equal(entrenablesObjectiu(cfgCreativitat.slots, 1), 4, 'un sol partit → 4 (sense rotació)');
 assert.equal(entrenablesObjectiu(cfgDefensa.slots, 1), 5);
 
-// Poms: porters i marge d'absències mouen el mínim (política, no codi).
-assert.equal(cobertura(cfgCreativitat, { futur_entrenador: 1, porters_minims: 3, marge_absencies: 0 }).total, 8 + 1 + 3 + 4);
+// El pom porters_minims mou el mínim (política); ja no hi ha marge d'absències.
+assert.equal(cobertura(cfgCreativitat, { futur_entrenador: 1, porters_minims: 3 }).total, 8 + 1 + 3 + 4);
 
 // ── 2c · LA LIQUIDACIÓ RESPECTA LA COBERTURA ──
 {
@@ -69,6 +69,52 @@ assert.equal(cobertura(cfgCreativitat, { futur_entrenador: 1, porters_minims: 3,
   assert.equal(retingutsPerCobertura(cand, { camp_minim: 3, cos_camp: 20, posicio_porter: 'PO' }).size, 0, 'amb marge, es venen tots');
   // Sense cobertura calculada, no reté ningú (no inventa retencions).
   assert.equal(retingutsPerCobertura(cand, {}).size, 0, 'sense cobertura → cap retenció');
+}
+
+// ── 1b · LA LIQUIDACIÓ PROTEGIX ELS PORTERS (el forat trobat: es podien vendre tots) ──
+{
+  const { retencioCobertura } = await import('../lib/cobertura.js');
+  // 3 porters, tots de venda; el mínim en demana 2 i no hi ha cap porter no-venda.
+  const porters = [
+    { jugador_id: 1, posicio: 'PO', categoria: 'venda', sou: 500, valor: 800 },
+    { jugador_id: 2, posicio: 'PO', categoria: 'venda', sou: 900, valor: 6000 },
+    { jugador_id: 3, posicio: 'PO', categoria: 'venda', sou: 700, valor: 300 },
+  ];
+  const r = retencioCobertura(porters, { porters_minims: 2, cos_porter: 3, posicio_porter: 'PO' });
+  assert.equal(r.porters, 2, 'reté 2 porters per a no baixar del mínim de porteria');
+  assert.ok(r.ids.has(3) && r.ids.has(1), 'reté els 2 porters de MENYS valor (deixa vendre el bo)');
+  assert.ok(!r.ids.has(2), 'el porter de més valor és llistable');
+  // Camp i porteria alhora: cada classe honra el seu mínim de manera independent.
+  const barreja = [...porters, { jugador_id: 9, posicio: 'DC', categoria: 'venda', sou: 400, valor: 100 }];
+  const r2 = retencioCobertura(barreja, { porters_minims: 2, cos_porter: 3, camp_minim: 1, cos_camp: 1, posicio_porter: 'PO' });
+  assert.equal(r2.porters, 2, 'porteria protegida');
+  assert.equal(r2.camp, 1, 'camp protegit');
+}
+
+// ── 1b(bis) · CAP SEQÜÈNCIA DE LLISTATS BAIXA DEL MÍNIM ──
+// Es venen els llistables un a un; cada pas re-deriva la cobertura amb els cossos que
+// QUEDEN (com fa el sistema a cada instantània). En cap moment es baixa del mínim.
+{
+  let restants = [
+    { jugador_id: 1, posicio: 'PO', categoria: 'venda', sou: 500, valor: 300 },
+    { jugador_id: 2, posicio: 'PO', categoria: 'venda', sou: 500, valor: 9000 },
+    { jugador_id: 3, posicio: 'DC', categoria: 'venda', sou: 500, valor: 200 },
+    { jugador_id: 4, posicio: 'DC', categoria: 'venda', sou: 500, valor: 8000 },
+    { jugador_id: 5, posicio: 'DC', categoria: 'venda', sou: 500, valor: 7000 },
+  ];
+  const PORTERS_MIN = 1, CAMP_MIN = 1;
+  const nP = (arr) => arr.filter((j) => j.posicio === 'PO').length;
+  const nC = (arr) => arr.filter((j) => j.posicio !== 'PO').length;
+  for (let pas = 0; pas < 10; pas++) {
+    // cos = els que QUEDEN disponibles ara mateix (ací tots són venda).
+    const conj = conjuntLiquidacio(restants, { porters_minims: PORTERS_MIN, cos_porter: nP(restants), camp_minim: CAMP_MIN, cos_camp: nC(restants), posicio_porter: 'PO' });
+    if (!conj.llistables.length) break;
+    restants = restants.filter((j) => j.jugador_id !== conj.llistables[0].jugador_id);   // «venem» el primer llistable
+    assert.ok(nP(restants) >= PORTERS_MIN, `pas ${pas}: mai per davall del mínim de porters`);
+    assert.ok(nC(restants) >= CAMP_MIN, `pas ${pas}: mai per davall del mínim de camp`);
+  }
+  assert.equal(nP(restants), 1, 'al final queda exactament el mínim de porters');
+  assert.equal(nC(restants), 1, 'al final queda exactament el mínim de camp');
 }
 
 // ── 1 · LA RETENCIÓ MINIMITZA VALOR RENUNCIAT, NO SOU ──

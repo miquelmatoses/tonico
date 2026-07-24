@@ -8,6 +8,7 @@ import { modelSenior, modelJuvenil } from '../../lib/adaptador.js';
 import { calcularSetmana } from '../../lib/calendari.js';
 import { classificar } from '../../lib/diferencia.js';
 import { regeneraPipeline } from '../../lib/pipeline.js';
+import { derivaLlistat } from '../../lib/llistat.js';
 
 // ponytail: split CSV ingenu (sense cometes ni comes dins de camp, com els
 // exports reals). Si algun dia un camp porta comes, ací entra PapaParse.
@@ -141,6 +142,9 @@ export async function desar(db, usuariId, tipus, model, ancora, reemplaça = fal
     ).bind(instId, perHt.get(j.identitat.id_hattrick), ...cols.map((k) => j.instantania[k]));
   });
   await db.batch(insLots);
+
+  // Deriva l'estat llistat de la fitxa de venda des de la columna Transferible (només sènior).
+  if (tipus === 'senior') await derivaLlistat(db, usuariId, model.data, instId);
 
   return {
     tipus, temporada, setmana, instantania_id: instId,

@@ -9,7 +9,7 @@ export async function onRequestPost({ request, env }) {
   if (!correu || !contrasenya) return json({ error: 'falten_dades' }, 400);
   if (!env.SESSIO_SECRET) return json({ error: 'sense_secret_sessio' }, 500);
 
-  const u = await env.DB.prepare('SELECT id, contrasenya, correu_verificat FROM usuaris WHERE correu = ?')
+  const u = await env.DB.prepare('SELECT id, contrasenya, correu_verificat, idioma FROM usuaris WHERE correu = ?')
     .bind(correu).first();
   if (!u || !(await verificaContrasenya(contrasenya, u.contrasenya))) {
     return json({ error: 'credencials_incorrectes' }, 401);
@@ -20,7 +20,7 @@ export async function onRequestPost({ request, env }) {
 
   const exp = Math.floor(Date.now() / 1000) + TTL;
   const token = await signaSessio(u.id, env.SESSIO_SECRET, exp);
-  return json({ ok: true }, 200, {
+  return json({ ok: true, idioma: u.idioma }, 200, {
     'Set-Cookie': `sessio=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${TTL}`,
   });
 }

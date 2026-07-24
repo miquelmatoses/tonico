@@ -24,12 +24,18 @@ export async function onRequestGet({ request, env, data }) {
 
   const files = async (id) => {
     const { results } = await env.DB.prepare(
-      `SELECT ij.jugador_id, j.nom, ij.tsi, ij.sou, ${HABILITATS.map((h) => 'ij.' + h).join(', ')}
+      `SELECT ij.jugador_id, j.nom, ij.tsi, ij.sou, ij.edat_anys, ij.edat_dies, ${HABILITATS.map((h) => 'ij.' + h).join(', ')}
          FROM instantanies_jugadors ij JOIN jugadors j ON j.id = ij.jugador_id WHERE ij.instantania_id = ?`
     ).bind(id).all();
     return new Map(results.map((r) => [r.jugador_id, r]));
   };
   const [fa, fb] = [await files(aId), await files(bId)];
+  // Categoria vigent per jugador (per a declarar les altes: «Alta: X (17a, venda)»).
+  const { results: cats } = await env.DB.prepare(
+    `SELECT cj.jugador_id, cj.categoria FROM categories_jugador cj
+       JOIN (SELECT jugador_id, MAX(id) mid FROM categories_jugador GROUP BY jugador_id) m ON cj.id = m.mid`
+  ).all();
+  const catDe = new Map(cats.map((c) => [c.jugador_id, c.categoria]));
 
   const dies = Math.round((Date.parse(B.data) - Date.parse(A.data)) / 86400000);
   const setmanes = dies / 7;
@@ -44,8 +50,10 @@ export async function onRequestGet({ request, env, data }) {
       velocitat_tsi: setmanes > 0 ? Math.round(deltaTsi / setmanes) : null,   // TSI/setmana (dies reals)
       sou_a: a.sou, sou_b: b.sou, delta_sou: (b.sou ?? 0) - (a.sou ?? 0) });
   }
-  const nous = [...fb.values()].filter((b) => !fa.has(b.jugador_id)).map((b) => b.nom);
-  const desapareguts = [...fa.values()].filter((a) => !fb.has(a.jugador_id)).map((a) => a.nom);
+  // Altes i baixes declarades (una línia cadascuna), amb edat i categoria vigent.
+  const fitxa = (r) => ({ jugador_id: r.jugador_id, nom: r.nom, edat_anys: r.edat_anys, edat_dies: r.edat_dies, categoria: catDe.get(r.jugador_id) || null });
+  const nous = [...fb.values()].filter((b) => !fa.has(b.jugador_id)).map(fitxa);
+  const desapareguts = [...fa.values()].filter((a) => !fb.has(a.jugador_id)).map(fitxa);
 
   return json({
     comparable: true, a: A, b: B, dies, setmanes,

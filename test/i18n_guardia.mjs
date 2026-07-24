@@ -106,4 +106,19 @@ for (const d of dirs) {
 const orfenes = clausCa.filter((k) => /^(alerta|agenda)\./.test(k) && !emeses.has(k) && !EXCEPCIONS_ORFENES.includes(k));
 assert.deepEqual(orfenes, [], `claus i18n òrfenes (al catàleg però mai emeses): ${orfenes.join(', ')}`);
 
-console.log(`OK — guardià i18n: ${clausCa.length} claus, paritat ca↔en, literals estàtics, famílies dinàmiques i sense òrfenes`);
+// ── 6. GUARDIÀ LINGÜÍSTIC (valencià de la casa): formes VETADES al catàleg ca. Vore
+// docs/GLOSSARI.md. Impedix que tornen a colar-se «d'hui», «parte», «Fotrem», etc. ──
+const VETATS = [
+  [/\bd['’]hui\b/i, 'd\'hui → «de hui» (hui no s\'apostrofa)'],
+  [/\bavui\b/i, 'avui → «hui»'],
+  [/\bparte\b/i, 'parte → «informe» (castellanisme)'],
+  [/\bfotrem\b/i, 'Fotrem → «Acadèmia» (nom propi d\'un usuari)'],
+  [/\baquest[ao]?s?\b/i, 'aquest/-a → «este/esta»'],
+  [/\bsorti[rmt]/i, 'sortir → «eixir»'],
+  [/\b(?:me|te|se)va\b/i, 'meva/teva/seva → «meua/teua/seua»'],
+];
+const infraccions = [];
+for (const [k, v] of Object.entries(ca)) for (const [re, msg] of VETATS) if (re.test(v)) infraccions.push(`${k}: ${msg}  ·  «${v}»`);
+assert.deepEqual(infraccions, [], `formes vetades al catàleg ca:\n  ${infraccions.join('\n  ')}`);
+
+console.log(`OK — guardià i18n: ${clausCa.length} claus, paritat ca↔en, literals, òrfenes i formes vetades`);

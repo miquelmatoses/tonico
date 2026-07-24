@@ -1,10 +1,35 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-22 · COBERTURA LEAN v3 + PROTECCIÓ DE PORTERS + SALVATELLA (fet verificat)
+**Autoritzat per Miquel.** Migració 055. Principi LEAN nou a PRINCIPIS §6.
+- **Doctrina (també a `classificacio.md`):** la plantilla mínima **no és estalvi de sous** —
+  és l'assegurança que **cap entrenable jugue minuts sense guany d'entrenament**. Els llocs no
+  entrenables dels dos onzes els omplin **cossos sense valor**; un entrenable només **dobla** si
+  el seu règim (50%+50%) ho demana o per decisió manual.
+- **1 LEAN — fora `marge_absencies`:** el mínim és exactament el que els dos onzes necessiten en
+  setmana neta. Emergix **15** (8 entrenables + 1 futur + 2 porters + 4 de camp), derivat. Les
+  absències es gestionen quan passen (jugar amb 10), no amb coixí fix. *(Concilia els dos ordres:
+  el número passa de 17 —amb marge— a 15 —LEAN—; la doctrina de protegir tot el mínim es manté.)*
+- **2 La liquidació honra TOT el mínim** (`lib/cobertura.js` `retencioCobertura`): protegix
+  **porteria I camp** per separat. **Forat tapat:** abans la retenció excloïa els porters
+  (`j.posicio !== posicio_porter`) → es podien vendre els 3. Ara cada classe reté els de menys
+  valor fins al seu mínim. Test: cap seqüència de llistats baixa del mínim de cap classe.
+- **3 Una sola font:** l'alerta agregada compta els llistables **després** de la retenció, i
+  Vendes mostra «es retenen N per cobertura mínima (X de camp + Y porteria); la plantilla no
+  baixa de 15» (`vendes.retencio_resum`).
+- **4 Contracte d'alineació** (test): cap entrenable en lloc no entrenable havent-hi cos; sense
+  cos, plaça buida (jugar amb 10) declarada amb avís `incomplet`. L'entrenable mai baixa fora del
+  seu entrenament de manera silenciosa.
+- **5 SALVATELLA — FET VERIFICAT (wiki de Hattrick):** l'**experiència** d'un jugador determina el
+  **nivell màxim d'entrenador** que pot arribar a ser i **abarata la conversió**; el **lideratge es
+  conserva**. Per tant donar minuts al futur entrenador (Salvatella juga de davanter als dos rols)
+  és **inversió**, no supòsit — queda confirmada la doctrina.
+
 ## 2026-07-22 · FORA LES ACCIONS IMPOSSIBLES SOBRE UN JUGADOR LLISTAT
 **Autoritzat per Miquel.** Migració 054.
 - **Principi:** una vegada un jugador està a la subhasta, Hattrick **no** deixa canviar el
   preu ni retirar-lo. Per tant cap alerta pot proposar eixa acció (viola el principi #3:
-  «l'informe és l'agenda d'hui» — sense acció executable, no és alerta).
+  «l'informe és l'agenda de hui» — sense acció executable, no és alerta).
 - **`ALR_SUBHASTA_TANCA` retirada** (activa=0): deia «última oportunitat de revisar el preu
   o retirar-lo», acció impossible. La data de tancament ja viu a la fitxa de **Vendes**
   (columna «tancament previst»), i el resultat (desert/venut) el cobrix la pregunta de
@@ -153,7 +178,7 @@
   (b) el tancament cauria en **depressió PROFUNDA** (modificador ≤ pom) **I** cap rellotge
   d'urgència apreta (aniversari a la vora / depreciació mecànica: porter notable) → esperar COM
   A MOLT fins al primer tancament FORA de depressió. En recuperació o mercat ple: MAI s'espera.
-- **3 Alerta d'HUI:** tota venda no llistada sense ajornament legítim → «llista'l — cada setmana
+- **3 Alerta de HUI:** tota venda no llistada sense ajornament legítim → «llista'l — cada setmana
   són {sou} de sou i un dia més d'edat que perd. El valor no espera.» (`test/regles.mjs`.)
 - **4 L'aparador** seguix la regla simple existent (llistats amb subhasta activa juguen si hi ha
   plaça; la resta per valor) — cap sistema de rotació. **5 Els no venuts** seguixen el flux ja
@@ -387,7 +412,7 @@
   data (`data_accio`, migració 035). Un «vist» anticipat NO silencia l'alerta del dia
   d'acció: el dia D es crea una instància NOVA. (`lib/regles.js` `agendaItem`/`data_accio`,
   `lib/orquestra_alertes.js`; `test/alertes_persist.mjs`.)
-- **3 «L'informe és l'agenda d'hui»** (principi formal, `docs/PRINCIPIS.md` §3): una alerta
+- **3 «L'informe és l'agenda de hui»** (principi formal, `docs/PRINCIPIS.md` §3): una alerta
   només existix si l'acció òptima és executable HUI; acció futura → línia d'AGENDA; «de moment
   res» → informació de secció. **Subsecció AGENDA** al final de l'informe (una línia per data,
   files `estat='agenda'` reconstruïdes cada revisió; migració 036). Reclassificacions: (3b)
@@ -434,7 +459,7 @@
 - **9 Enllaços morts:** els jugadors de la plantilla sènior deixen de ser clicables (l'enllaç
   anava a `#fotrem`, que no és el seu lloc). **Millora futura:** FITXA DE JUGADOR (historial,
   TSI, transaccions); quan existisca, tornarà l'enllaç a la seua fitxa.
-- **PENDENT (bloc 2): punts 3, 5, 6, 7.** 3 (principi «l'informe és l'agenda d'hui» + subsecció
+- **PENDENT (bloc 2): punts 3, 5, 6, 7.** 3 (principi «l'informe és l'agenda de hui» + subsecció
   AGENDA + reclassificació d'alertes anticipades), 5 (doctrina de venda en fàbrica + marca de
   cobertura mínima), 6 (categoria «despatxar» amb valor_net econòmic), 7 (formatadors DRY
   `format.js` + nota al peu). Interconnectats amb el classificador (cobertura), l'economia i el

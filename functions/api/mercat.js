@@ -14,7 +14,8 @@ export async function onRequestGet({ env, data }) {
     let squad = [];
     if (inst) {
       squad = (await env.DB.prepare(
-        `SELECT ij.posicio_ultim_partit AS posicio, c.categoria FROM instantanies_jugadors ij
+        `SELECT j.nom, ij.posicio_ultim_partit AS posicio, c.categoria FROM instantanies_jugadors ij
+           JOIN jugadors j ON j.id = ij.jugador_id
            LEFT JOIN (SELECT cj.jugador_id, cj.categoria FROM categories_jugador cj
                        JOIN (SELECT jugador_id, MAX(id) mid FROM categories_jugador GROUP BY jugador_id) m ON cj.id=m.mid) c
                   ON c.jugador_id = ij.jugador_id

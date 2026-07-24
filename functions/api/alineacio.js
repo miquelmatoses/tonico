@@ -8,8 +8,10 @@ export async function onRequestGet({ env, data }) {
 }
 
 export async function onRequestPost({ request, env, data }) {
-  const { vetats, fixats } = await request.json().catch(() => ({}));
-  const r = await proposaAlineacio(env.DB, data.usuari.id, { vetats: vetats || [], fixats: fixats || [] });
+  const { vetats, fixats, rols_actius } = await request.json().catch(() => ({}));
+  const opts = { vetats: vetats || [], fixats: fixats || [] };
+  if (Array.isArray(rols_actius)) opts.rols_actius = rols_actius;    // setmana amb menys partits (p.ex. sense amistós)
+  const r = await proposaAlineacio(env.DB, data.usuari.id, opts);
   return json(r || { error: 'sense_dades' }, r ? 200 : 409);
 }
 

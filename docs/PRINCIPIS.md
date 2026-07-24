@@ -95,3 +95,23 @@ Aplicació (v3): la taula de Fotrem perd les columnes **Pipeline** i **Juga?** (
 guanya **NIVELL** (numèric continu, no els antics grups G1-G5) + dades pelades; el raonament va al detall de la
 fila o a la secció de l'onze. Les fitxes de venda: la marca de despatxar/cobertura passa
 a **insígnia curta** + detall a banda. L'escaneig s'aplica a TOTA taula.
+
+## 6. Principi LEAN: «EL MÍNIM EXACTE, LES ABSÈNCIES QUAN PASSEN»
+
+> El sistema manté el **mínim exacte** de cossos, variables i mecanismes per a la
+> **setmana neta**. **Cap marge permanent** per a un risc el cost del qual és menor que
+> el cost de cobrir-lo. Les absències (lesió, sanció) es gestionen **quan passen** —jugar
+> amb 10, o doblar un entrenable una setmana com a **excepció declarada**—, no amb coixins
+> fixos que carreguen sou i plaça cada setmana.
+
+La cobertura mínima **v3** aplica el principi: es lleva el pom `marge_absencies`. El mínim
+derivat és exactament el que els **dos onzes** necessiten en setmana neta amb el doblatge
+permés als cossos sense valor: `entrenables_objectiu + futur_entrenador + porters_minims
+(1 per partit) + camp_minim (cossos que doblen)`. Amb la config actual **emergix 15**
+(8+1+2+4), derivat, no escrit. La liquidació honra **tot** el mínim, camp **i** porteria.
+
+La cobertura mínima **no és estalvi de sous**: és l'**assegurança** que cap entrenable jugue
+minuts sense guany d'entrenament. Els llocs no entrenables dels dos partits els omplin
+cossos sense valor; un entrenable només **dobla** si el seu règim (50%+50%) ho demana o per
+decisió manual. Contracte d'alineació: **cap entrenable ocupa un lloc no entrenable mentres
+hi haja cos disponible**; sense cos, la plaça queda **buida** (jugar amb 10) i es declara.

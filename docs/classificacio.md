@@ -117,3 +117,14 @@ El llistat a 1 € és un override manual, no el defecte.
 3. **Fórmula d'entrenable**: `creativitat + 0.5·(20 − edat)` (més jove i més creatiu puntua més). ✔ o altres pesos?
 4. **Salvatella** (experiència 12): plaça de `futur_entrenador` (aforament 1) abans que `experiencia`. ✔?
 5. **Repujada mateix dia+equip**: substituïx la instantània (amb confirmació), no en crea una nova → cal ajustar el `pujar` de la Fase 0. ✔?
+
+## Cobertura mínima (LEAN): assegurança d'exposició, no estalvi
+
+La plantilla mínima NO és per estalviar sous. És l'assegurança que **cap entrenable
+jugue minuts sense guany d'entrenament**: els llocs no entrenables dels dos onzes els
+omplin **cossos sense valor** (categoria de venda/farciment/alliberament), i un entrenable
+només **dobla** si el seu règim d'entrenament ho demana (50%+50%) o per decisió manual.
+
+El mínim es **deriva** (formació + rols + entrenament), sense marge permanent (principi
+LEAN, PRINCIPIS §6): `entrenables_objectiu + futur_entrenador + porters_minims + camp_minim`.
+La liquidació honra **tot** el mínim (camp i porteria); mai per davall de `porters_minims`.

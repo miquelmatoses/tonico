@@ -20,6 +20,17 @@ export async function onRequestPost({ request, env, data }) {
     ).bind(pla.id, cos.temporada, cos.divisio_prevista ?? null, cos.mode ?? null).run();
     return json({ ok: true });
   }
+  // Merge de paràmetres del pla (JSON) sense trepitjar la resta: capital, divisió
+  // actual, tipus de setmana de partits (ab/un/copa), caducitat del Supporter, etc.
+  const MERGE = ['capital_objectiu', 'divisio_actual', 'tipus_setmana', 'supporter_caducitat', 'temporada_inflexio', 'entrenament_confirmat', 'entrenament_senior'];
+  const aplicar = MERGE.filter((k) => cos[k] !== undefined);
+  if (aplicar.length) {
+    const row = await env.DB.prepare('SELECT parametres FROM plans WHERE id=?').bind(pla.id).first();
+    const p = row?.parametres ? JSON.parse(row.parametres) : {};
+    for (const k of aplicar) p[k] = cos[k] === '' ? null : cos[k];
+    await env.DB.prepare('UPDATE plans SET parametres=? WHERE id=?').bind(JSON.stringify(p), pla.id).run();
+    return json({ ok: true });
+  }
   // Actualització del pla (fase, paràmetres)
   const sets = [], vals = [];
   if (cos.fase_actual !== undefined) { sets.push('fase_actual=?'); vals.push(cos.fase_actual); }

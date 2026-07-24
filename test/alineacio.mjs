@@ -138,4 +138,26 @@ assert.ok(a3.avisos.some((v) => v.tipus === 'entrenament_perdut' && v.jugador_id
   assert.equal(a1.avisos.some((v) => v.tipus === 'entrenament_perdut' && extsUn.some((e) => e.jugador_id === v.jugador_id)), false, 'l\'extrem al 50% no es compta com a perdut');
 }
 
-console.log('OK — alineació: rols A/B, MC 3/3, extrems dobles, experiència fora de la taula, un-sol-partit, Junta, cobertura, lesionat exclòs i cos compatible');
+// CONTRACTE (doctrina LEAN): cap entrenable ocupa un lloc NO entrenable mentres hi haja
+// cos disponible; i si no hi ha cos, la plaça queda BUIDA (jugar amb 10), mai un entrenable
+// fora del seu entrenament.
+{
+  const config = { rols: [{ id: 'A', competitiu: 1, nom_clau: 'x' }, { id: 'B', competitiu: 0, nom_clau: 'y' }],
+    buckets: { mc: ['MC'], defensa: ['DC'] },
+    slots: [{ codi: 'MC1', bucket: 'mc', entrena: true, pct: 100 }, { codi: 'DC1', bucket: 'defensa', entrena: false }] };
+  // Amb cos disponible: l'entrenable entrena d'MC, el cos ompli la defensa.
+  const ambCos = alinea([
+    { jugador_id: 1, nom: 'Entren', posicio: 'MC', categoria: 'entrenable' },
+    { jugador_id: 2, nom: 'Cos', posicio: 'DC', categoria: 'farciment' },
+  ], config);
+  const dcA = ambCos.onze.A.find((s) => s.bucket === 'defensa').jugador;
+  assert.equal(dcA?.categoria, 'farciment', 'la defensa (no entrenable) l\'ompli el cos, no l\'entrenable');
+  assert.ok(['A', 'B'].every((k) => !ambCos.onze[k].some((s) => s.bucket === 'defensa' && s.jugador?.categoria === 'entrenable')), 'cap entrenable en lloc no entrenable havent-hi cos');
+  // SENSE cos: la defensa queda BUIDA (jugar amb 10), l'entrenable NO baixa a cobrir-la.
+  const senseCos = alinea([{ jugador_id: 1, nom: 'Entren', posicio: 'MC', categoria: 'entrenable' }], config);
+  assert.equal(senseCos.onze.A.find((s) => s.bucket === 'defensa').jugador, null, 'sense cos, la plaça no entrenable queda buida (jugar amb 10)');
+  assert.ok(senseCos.avisos.some((v) => v.tipus === 'incomplet'), 'Paco declara la plaça buida, mai silenci');
+  assert.ok(['A', 'B'].every((k) => senseCos.onze[k].filter((s) => s.jugador?.jugador_id === 1 && s.bucket === 'defensa').length === 0), 'l\'entrenable no acaba fora del seu entrenament');
+}
+
+console.log('OK — alineació: rols A/B, MC 3/3, extrems dobles, experiència fora de la taula, un-sol-partit, Junta, cobertura, lesionat exclòs, cos compatible i contracte LEAN');

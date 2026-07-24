@@ -106,7 +106,7 @@ export async function esta_setmana(main) {
   if (pla && !pla.error && pla.temporadaActual != null) trossos.push(t('esta_setmana.estat_pla', { temporada: pla.temporadaActual, fase: t('fase.' + pla.fase_actual) }));
   const capçalera = hero(trossos.join(' · '));
 
-  // KPIs derivats (res decoratiu): accions d'hui i línies d'agenda.
+  // KPIs derivats (res decoratiu): accions de hui i línies d'agenda.
   const kpis = el('div', { class: 'kpis' });
   const kpi = (n, clau, alerta) => el('div', { class: 'kpi' + (alerta ? ' alerta' : '') },
     el('div', { class: 'kpi-xifra', text: String(n) }), el('div', { class: 'kpi-etiqueta', text: t(clau) }));
@@ -166,7 +166,7 @@ export async function esta_setmana(main) {
   main.append(boto());
 }
 
-// AGENDA (principi «l'informe és l'agenda d'hui»): una línia per data futura,
+// AGENDA (principi «l'informe és l'agenda de hui»): una línia per data futura,
 // «dia N: acció · acció». Les accions del mateix tipus s'agrupen per noms.
 function pintaAgenda(main, agenda) {
   if (!agenda || !agenda.length) return;
@@ -543,6 +543,12 @@ async function fitxesVenda(main) {
   const sec = card(t('vendes.titol'), jugadors.length);
   if (!jugadors.length) { sec.append(cos(el('p', { text: t('vendes.buit') }))); main.append(sec); return; }
   const nota = notes();   // qualificadors repetits (estimació…) → asterisc + llegenda única
+  // UNA SOLA FONT: la retenció per cobertura, amb el mínim derivat visible.
+  if (cobMin && (cobMin.retinguts_camp || cobMin.retinguts_porters)) {
+    sec.append(el('div', { class: 'card-cos' }, el('p', { class: 'nota-peu', text: t('vendes.retencio_resum', {
+      n: (cobMin.retinguts_camp || 0) + (cobMin.retinguts_porters || 0),
+      camp: cobMin.retinguts_camp || 0, porters: cobMin.retinguts_porters || 0, minim: cobMin.total }) })));
+  }
   sec.append(el('div', { class: 'graella-cap c-venda' },
     ...['col_jugador', 'col_proposat', 'col_preu', 'col_data', 'col_tancament', 'col_estat'].map((k) => el('span', { text: t('vendes.' + k) }))));
   for (const j of jugadors) sec.append(filaSegura(() => {

@@ -5,15 +5,16 @@ export async function onRequestGet({ env, data }) {
   const u = data.usuari.id;
   const items = [];
 
-  const nTx = (await env.DB.prepare('SELECT COUNT(*) n FROM transaccions WHERE usuari_id=?').bind(u).first()).n;
-  if (nTx === 0) items.push({ clau: 'caixa', ancora: 'economia' });
+  // Caixa: la font viva és finances.caixa (la caixa REAL declarada), no els moviments.
+  const fin = await env.DB.prepare('SELECT caixa FROM finances WHERE usuari_id=?').bind(u).first();
+  if (fin?.caixa == null) items.push({ clau: 'caixa', ancora: 'economia' });
 
-  const nPers = (await env.DB.prepare('SELECT COUNT(*) n FROM personal_declarat WHERE usuari_id=?').bind(u).first()).n;
+  // Personal: la font viva és personal_membres (model ric), no personal_declarat.
+  const nPers = (await env.DB.prepare('SELECT COUNT(*) n FROM personal_membres WHERE usuari_id=?').bind(u).first()).n;
   if (nPers === 0) items.push({ clau: 'personal', ancora: 'personal' });
 
-  const pla = await env.DB.prepare('SELECT parametres FROM plans WHERE usuari_id=? LIMIT 1').bind(u).first();
-  const params = pla?.parametres ? JSON.parse(pla.parametres) : {};
-  if (params.capital_objectiu == null) items.push({ clau: 'capital_objectiu', ancora: 'pla' });
+  // El capital d'inflexió ja NO es demana en fred: si no és manual, Tonico l'estima
+  // (secció Economia) i l'usuari confirma o edita. Res a reclamar ací.
 
   return json({ items });
 }

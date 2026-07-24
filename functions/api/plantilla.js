@@ -1,6 +1,10 @@
 // Tonico — vista de plantilla sènior: jugadors de l'última instantània amb la
 // seua categoria vigent (puntuació + justificació + origen) i la fornada.
+// La PUNTUACIÓ es DERIVA de la instantània actual i la config (no del valor desat
+// a categories_jugador, que pot ser ranci/null en desplaçats estables).
 import { temporadaOperativa } from '../../lib/calendari.js';
+import { avaluaPuntuacio } from '../../lib/classificador.js';
+import { carregaConfigPla } from '../../lib/config_pla.js';
 
 export async function onRequestGet({ env, data }) {
   const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id = ? AND tipus = 'senior'")
@@ -19,7 +23,8 @@ export async function onRequestGet({ env, data }) {
 
   const { results: jugadors } = await env.DB.prepare(
     `SELECT j.id, j.nom, j.especialitat, ij.posicio_ultim_partit AS posicio,
-            ij.edat_anys, ij.edat_dies, ij.tsi, ij.sou, ij.experiencia,
+            ij.edat_anys, ij.edat_dies, ij.tsi, ij.sou, ij.experiencia, ij.lideratge,
+            ij.lleialtat, ij.qualificacio_ultim_partit, ij.lesio,
             ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada,
             c.categoria, c.puntuacio, c.justificacio, c.origen,
             f.lletra AS fornada
@@ -44,7 +49,19 @@ export async function onRequestGet({ env, data }) {
       WHERE x.usuari_id = ? AND x.estat = 'pendent' ORDER BY x.diferencia DESC`
   ).bind(data.usuari.id).all();
 
-  return json({ instantania: inst, jugadors, intercanvis });
+  // Config de la plantilla per DERIVAR la puntuació de cada jugador a la seua categoria.
+  const pla = await env.DB.prepare('SELECT plantilla FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
+  const config = pla ? await carregaConfigPla(env.DB, pla.plantilla) : { categories: [], params: {} };
+  const specCat = new Map(config.categories.map((c) => [c.categoria, c.parametres?.puntuacio]));
+  const valorEsp = config.params?.valor_especialitats || [];
+  for (const j of jugadors) {
+    const spec = specCat.get(j.categoria);
+    const p = spec ? avaluaPuntuacio(spec, j, config.params) : null;
+    j.puntuacio = p != null ? p : (j.puntuacio ?? null);     // deriva; si la categoria no puntua, conserva el desat
+  }
+  jugadors.sort((a, b) => (b.puntuacio ?? -Infinity) - (a.puntuacio ?? -Infinity));
+
+  return json({ instantania: inst, jugadors, intercanvis, valor_especialitats: valorEsp });
 }
 
 const json = (obj, status = 200) =>

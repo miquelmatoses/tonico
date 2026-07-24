@@ -5,8 +5,10 @@ import { verificacioActiva, creaTokenVerificacio, enviarCorreuVerificacio } from
 
 const TTL = 60 * 60 * 24 * 30;               // 30 dies
 
+const IDIOMES = ['ca-valencia', 'en'];
+
 export async function onRequestPost({ request, env }) {
-  const { correu, contrasenya } = await request.json().catch(() => ({}));
+  const { correu, contrasenya, idioma } = await request.json().catch(() => ({}));
   if (!correu || !contrasenya) return json({ error: 'falten_dades' }, 400);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correu)) return json({ error: 'correu_invalid' }, 400);
   if (!env.SESSIO_SECRET) return json({ error: 'sense_secret_sessio' }, 500);
@@ -15,9 +17,10 @@ export async function onRequestPost({ request, env }) {
   if (existent) return json({ error: 'correu_ja_registrat' }, 409);
 
   const hash = await hashContrasenya(contrasenya);
+  const lang = IDIOMES.includes(idioma) ? idioma : 'ca-valencia';
   const { id } = await env.DB.prepare(
-    'INSERT INTO usuaris (correu, contrasenya) VALUES (?, ?) RETURNING id'
-  ).bind(correu, hash).first();
+    'INSERT INTO usuaris (correu, contrasenya, idioma) VALUES (?, ?, ?) RETURNING id'
+  ).bind(correu, hash, lang).first();
 
   const ara = Math.floor(Date.now() / 1000);
   if (await verificacioActiva(env.DB)) {

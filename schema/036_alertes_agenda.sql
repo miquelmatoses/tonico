@@ -1,4 +1,4 @@
--- Polit #10.3 — «L'informe és l'agenda d'hui». Els ítems amb acció FUTURA viuen a
+-- Polit #10.3 — «L'informe és l'agenda de hui». Els ítems amb acció FUTURA viuen a
 -- la subsecció Agenda com a files estat='agenda' (reconstruïdes cada revisió). Cal
 -- ampliar el CHECK d'estat. SQLite no permet ALTER del CHECK → reconstrucció de la
 -- taula (patró migració 022), conservant urgencia (006) i data_accio (035).

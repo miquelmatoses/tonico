@@ -47,7 +47,7 @@ assert.equal(REGLES.ALR_FINESTRA_MERCAT({ mercat: { depressio: false, finsDepres
   assert.equal(REGLES.ALR_FINESTRA_MERCAT({ ...ple, mercat: { depressio: true } }, p)[0].missatge_clau, 'alerta.finestra_mercat_fornada');
   // 3e: nucli ple + SENSE depressió (finestra futura) → informativa → FORA de l'informe (viu a Mercat).
   assert.equal(REGLES.ALR_FINESTRA_MERCAT({ ...ple, mercat: { depressio: false, finsDepressio: 3 } }, p).length, 0, 'finestra prevista → fora de l\'informe');
-  // Un any abans (raw T82): la compra encara no és d'hui → tampoc alerta.
+  // Un any abans (raw T82): la compra encara no és de hui → tampoc alerta.
   assert.equal(REGLES.ALR_FINESTRA_MERCAT({ compra: { nucli_ple: true }, pla: { temporada_raw: 82, proxima_eixida: { temporada: 84, fornades: ['A1'] } }, mercat: { depressio: true } }, p).length, 0, 'finestra a més d\'una temporada → fora de l\'informe');
   // Nucli ple + eixida LLUNY (T86, compra a final T85, encara a més d'un any) → res.
   assert.equal(REGLES.ALR_FINESTRA_MERCAT({ compra: { nucli_ple: true }, pla: { temporada_raw: 83, proxima_eixida: { temporada: 86, fornades: ['A2'] } }, mercat: { depressio: true } }, p).length, 0);

@@ -2,7 +2,7 @@
 // DELETE esborra. Els imports es guarden signats (ingressos +, despeses −).
 import { economia, signa } from '../../lib/economia.js';
 
-const TIPUS = ['compra', 'venda', 'sou_setmanal', 'ingres_patrocini', 'taquilla', 'personal', 'estadi', 'altres'];
+const TIPUS = ['compra', 'venda', 'sou_setmanal', 'ingres_patrocini', 'taquilla', 'personal', 'estadi', 'taxa_llistat', 'altres'];
 
 export async function onRequestGet({ env, data }) {
   const { results } = await env.DB.prepare(
