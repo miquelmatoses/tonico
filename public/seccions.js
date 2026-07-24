@@ -41,7 +41,8 @@ const CAMP = {
   davanter: { y: 27, cls: 'dv', xs: { 1: [50], 2: [38, 62], 3: [28, 50, 72] } },
 };
 const BUCKET_SIGLA = { porter: 'POR', defensa: 'DC', mc: 'MC', extrem: 'EX', davanter: 'DV' };
-// slots: [{bucket, jugador?/nom}]; opts.estat(s)→'entrena'|'cos'|'buit', opts.nom(s), opts.titol(s).
+// slots: [{bucket, jugador?/nom}]; opts.anell(s)→''|'ple'|'mig'|'doble'|'descobriment'|'buit',
+// opts.nom(s), opts.titol(s). El color del xip és la POSICIÓ; l'ANELL és l'entrenament.
 function campDeJoc(slots, opts) {
   const c = el('div', { class: 'camp' });
   const perBucket = new Map();
@@ -51,7 +52,7 @@ function campDeJoc(slots, opts) {
     const xs = (conf.xs && conf.xs[ss.length]) || ss.map((_, i) => ((i + 1) / (ss.length + 1)) * 100);
     ss.forEach((s, i) => {
       const xip = el('div', { class: 'jug' },
-        el('div', { class: `jug-chip ${conf.cls} ${opts.estat(s)}`, text: BUCKET_SIGLA[bucket] || bucket }),
+        el('div', { class: `jug-chip ${conf.cls} ${opts.anell(s)}`, text: BUCKET_SIGLA[bucket] || bucket }),
         el('div', { class: 'jug-nom', text: opts.nom(s) }));
       xip.style.left = xs[i] + '%'; xip.style.top = conf.y + '%';
       xip.title = opts.titol(s);
@@ -60,13 +61,25 @@ function campDeJoc(slots, opts) {
   }
   return c;
 }
-// Llegenda de colors del camp (posició + anell d'entrenament).
-function campLlegenda() {
+// SÈNIOR (§6): un sol entrenament, però per posició arriba al 100% o al 50% en este partit.
+const anellSenior = (s) => (!s.jugador ? 'buit' : s.entrena ? ((s.pct ?? 0) >= 100 ? 'ple' : 'mig') : '');
+// JUVENIL (§26): dos entrenaments. La plaça entrena els DOS components (ab), només el
+// principal (a→100%), només el secundari (b→66%), o REVELA una habilitat desconeguda.
+const anellJuvenil = (s) => {
+  if (s.motiu === 'estructura') return '';
+  if (s.valor_placa === 'ab') return 'doble';
+  if (s.motiu === 'descobriment') return 'descobriment';
+  if (s.valor_placa === 'a') return 'ple';
+  if (s.valor_placa === 'b') return 'mig';
+  return '';
+};
+// Llegenda de l'anell, segons el motor (els estats possibles no són els mateixos).
+function campLlegenda(mode) {
+  const items = mode === 'juvenil'
+    ? [['ple', 'principal'], ['mig', 'secundari'], ['doble', 'els_dos'], ['descobriment', 'descobrix']]
+    : [['ple', 'cent'], ['mig', 'mig']];
   const l = el('div', { class: 'camp-llegenda' });
-  for (const [cls, clau] of [['po', 'porter'], ['dc', 'defensa'], ['mc', 'mig'], ['ex', 'extrem'], ['dv', 'davanter']]) {
-    l.append(el('span', {}, el('i', { class: cls }), el('span', { text: t('camp.' + clau) })));
-  }
-  l.append(el('span', {}, el('i', { class: 'anell' }), el('span', { text: t('camp.entrena') })));
+  for (const [cls, clau] of items) l.append(el('span', {}, el('i', { class: cls }), el('span', { text: t('camp.' + clau) })));
   return l;
 }
 
@@ -258,7 +271,7 @@ export async function alineacio(main) {
     return t('alineacio.motiu_cos');
   };
   const camp = (slots) => campDeJoc(slots, {
-    estat: (s) => (!s.jugador ? 'buit' : s.entrena ? 'entrena' : 'cos'),
+    anell: anellSenior,
     nom: (s) => (s.jugador ? s.jugador.nom.split(' ')[0] : t('alineacio.buit')),
     titol: (s) => `${s.codi} · ${s.jugador ? s.jugador.nom : t('alineacio.buit')}${motiu(s) ? ' · ' + motiu(s) : ''}`,
   });
@@ -270,7 +283,7 @@ export async function alineacio(main) {
       el('div', { class: 'onze-cap' + (i ? ' b' : '') },
         el('div', { class: 'onze-titol', text: nom(partit) }),
         el('div', { class: 'onze-sub', text: t('alineacio.onze_sub', { n: entrenen }) })),
-      camp(d.onze[partit]), campLlegenda()));
+      camp(d.onze[partit]), campLlegenda('senior')));
   });
   main.append(onzes);
 
@@ -455,10 +468,10 @@ function onzeJuvenil(main, o) {
         : t('fotrem.onze_m_' + s.motiu);
   // El mateix camp que la sènior: xip acolorit per posició, motiu al títol (detall per fila).
   sec.append(campDeJoc(o.onze, {
-    estat: (s) => (s.motiu === 'estructura' ? 'cos' : 'entrena'),
+    anell: anellJuvenil,
     nom: (s) => (s.nom || '').split(' ')[0],
     titol: (s) => `${s.nom} · ${motiuSlot(s)}`,
-  }), campLlegenda());
+  }), campLlegenda('juvenil'));
   if (o.banqueta.length) {
     sec.append(el('div', { class: 'graella-fila' },
       el('b', { text: t('fotrem.onze_banqueta') }),

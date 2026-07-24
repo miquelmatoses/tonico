@@ -228,16 +228,28 @@ td.num, th.num { text-align: right; }
 .jug-chip.mc { background: var(--ok); }
 .jug-chip.ed, .jug-chip.ee, .jug-chip.ex { background: var(--blau); }
 .jug-chip.dv { background: var(--lila); }
-/* Estat: qui ENTRENA porta un anell llima; el buit, contorn discontinu translúcid. */
-.jug-chip.entrena { box-shadow: 0 0 0 3px var(--llima), 0 2px 5px rgba(0,0,0,.45); }
+/* ANELL D'ENTRENAMENT — canal independent del color de posició. Diu QUANT s'entrena
+   (guia §6 sènior: 100% / 50%; §26 juvenil: principal 100% / secundari 66,7% / els dos):
+     · ple    → 100% / principal        anell llima
+     · mig    → 50% / secundari          anell groc
+     · doble  → el juvenil entrena els DOS components   doble anell (groc dins, llima fora)
+     · descobriment → el juvenil REVELA una habilitat    contorn blau puntejat
+     · (res)  → fa cos / estructura, no entrena          sense anell */
+.jug-chip.ple   { box-shadow: 0 0 0 3px var(--llima), 0 2px 5px rgba(0,0,0,.45); }
+.jug-chip.mig   { box-shadow: 0 0 0 3px var(--groc),  0 2px 5px rgba(0,0,0,.45); }
+.jug-chip.doble { box-shadow: 0 0 0 3px var(--groc), 0 0 0 6px var(--llima), 0 2px 6px rgba(0,0,0,.5); }
+.jug-chip.descobriment { outline: 3px dotted var(--blau); outline-offset: 2px; }
 .jug-chip.buit { background: rgba(255,255,255,.15); border-style: dashed; box-shadow: none; }
 .jug-nom { font-size: 10.5px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.7);
   white-space: nowrap; margin-top: 3px; }
-/* Llegenda del camp (què vol dir cada color / l'anell). */
-.camp-llegenda { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 14px; font-size: 11px; font-weight: 700; color: var(--gris); }
-.camp-llegenda span { display: inline-flex; align-items: center; gap: 5px; }
-.camp-llegenda i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
-.camp-llegenda i.anell { background: var(--verd-fosc); box-shadow: 0 0 0 2px var(--llima); }
+/* Llegenda de l'anell (què vol dir cada estat d'entrenament). */
+.camp-llegenda { display: flex; flex-wrap: wrap; gap: 12px; padding: 12px 16px; font-size: 11px; font-weight: 700; color: var(--gris); }
+.camp-llegenda span { display: inline-flex; align-items: center; gap: 7px; }
+.camp-llegenda i { width: 14px; height: 14px; border-radius: 50%; background: var(--verd-fosc); border: 2px solid #fff; flex-shrink: 0; }
+.camp-llegenda i.ple   { box-shadow: 0 0 0 2px var(--llima); }
+.camp-llegenda i.mig   { box-shadow: 0 0 0 2px var(--groc); }
+.camp-llegenda i.doble { box-shadow: 0 0 0 2px var(--groc), 0 0 0 4px var(--llima); }
+.camp-llegenda i.descobriment { outline: 2px dotted var(--blau); outline-offset: 1px; }
 
 /* ══ GRAELLA DE COMPTABILITAT / DADES CURTES ══ */
 .graella { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 8px; }

@@ -526,10 +526,10 @@
   "pujada.descripcio": "Upload the Hattrick CSV (squad and, if you have one, academy) with the snapshot date.",
   "comparador.canvis_titol": "What changed",
   "fotrem.rellotges_titol": "Academy clocks",
-  "camp.porter": "Keeper",
-  "camp.defensa": "Defence",
-  "camp.mig": "Midfield",
-  "camp.extrem": "Wing",
-  "camp.davanter": "Forward",
-  "camp.entrena": "Trains"
+  "camp.mig": "50%",
+  "camp.cent": "100%",
+  "camp.principal": "primary (100%)",
+  "camp.secundari": "secondary (66%)",
+  "camp.els_dos": "both",
+  "camp.descobrix": "discovery"
 }
