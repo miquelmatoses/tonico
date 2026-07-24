@@ -20,18 +20,7 @@ const base = { dataInstantania: '2026-07-21', any_dies: 112, dies_subhasta: 3 };
   assert.equal(a.parametres.data_tancament, '2026-07-25', 'tanca el primer dia de la recuperació (dissabte)');
 }
 
-// ── ALR_SUBHASTA_TANCA: recordatori el dia abans (o el mateix) del tancament ──
-{
-  const ctx = { ...base, vendes_llistades: [
-    { jugador_id: 1, nom: 'Forçat', data_llistada: '2026-07-19' },   // tanca 07-22 → demà (hui 21-07)
-    { jugador_id: 2, nom: 'VendaB', data_llistada: '2026-07-05' },    // tanca 07-08 → passat
-  ] };
-  const a = REGLES.ALR_SUBHASTA_TANCA(ctx, { urgencia: 85 });
-  assert.equal(a.length, 1, 'només el que tanca demà');
-  assert.equal(a[0].parametres.nom, 'Forçat');
-  assert.equal(a[0].parametres.data, '2026-07-22', 'tancament = llistat + 3');
-  // Sense res que tanque prompte → cap alerta.
-  assert.equal(REGLES.ALR_SUBHASTA_TANCA({ ...base, vendes_llistades: [{ jugador_id: 3, nom: 'X', data_llistada: '2026-08-01' }] }, { urgencia: 85 }).length, 0);
-}
+// ALR_SUBHASTA_TANCA retirada (migració 054): una vegada llistat, HT no deixa canviar
+// el preu ni retirar-lo → no és una acció executable. La data de tancament viu a Vendes.
 
-console.log('OK — subhasta: recomanació per data de tancament + recordatori el dia abans');
+console.log('OK — subhasta: recomanació de llistat per data de tancament');

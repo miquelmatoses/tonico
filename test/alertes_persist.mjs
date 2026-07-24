@@ -82,19 +82,20 @@ for (const marca of ['vista', 'ignorada']) {
   assert.equal(visible(), abansV - 1, `${marca}: segueix amagada després de regenerar (no torna)`);
 }
 
-// 0b — VIST vs DIA D: una alerta anticipada VISTA no silencia la del dia d'acció.
-// La data d'acció entra a la clau d'idempotència → clau distinta → instància nova.
+// 0b — IDEMPOTÈNCIA amb DATA D'ACCIÓ: la data d'acció entra a la clau, de manera que
+// una anticipada VISTA i la del dia D són instàncies distintes. (Abans es provava amb
+// ALR_SUBHASTA_TANCA, retirada perquè no proposa cap acció executable sobre un llistat;
+// ací es prova la propietat de la CLAU directament, sense dependre de cap regla viva.)
 {
-  const jug = sqlite.prepare("SELECT cj.jugador_id FROM categories_jugador cj JOIN (SELECT jugador_id, MAX(id) mid FROM categories_jugador GROUP BY jugador_id) m ON cj.id=m.mid WHERE cj.categoria='venda' LIMIT 1").get().jugador_id;
-  const reglaId = sqlite.prepare("SELECT id FROM regles WHERE codi='ALR_SUBHASTA_TANCA'").get().id;
-  // Anticipada, ja VISTA, per a una data d'acció ANTIGA (mateix jugador i regla)
-  sqlite.prepare("INSERT INTO alertes (usuari_id, regla_id, jugador_id, data, missatge_clau, parametres, estat, urgencia, data_accio) VALUES (1,?,?,?,?,?,?,?,?)")
-    .run(reglaId, jug, '2026-07-10', 'alerta.subhasta_tanca', '{}', 'vista', 85, '2026-07-10');
-  // Es llista: la subhasta tanca el 18-07 (dia d'acció = snapshot) → ha de disparar de nou
-  sqlite.prepare("INSERT INTO vendes (jugador_id, usuari_id, estat, data_llistada) VALUES (?, 1, 'llistat', '2026-07-15')").run(jug);
-  await generaAlertes(db, 1);
-  assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM alertes a JOIN regles r ON r.id=a.regla_id WHERE r.codi='ALR_SUBHASTA_TANCA' AND a.jugador_id=? AND a.estat='nova' AND a.data_accio='2026-07-18'").get(jug).n, 1, 'el dia d\'acció crea una alerta NOVA malgrat l\'anticipada vista');
-  assert.notEqual(sqlite.prepare("SELECT estat FROM alertes WHERE jugador_id=? AND data_accio='2026-07-10'").get(jug).estat, 'nova', 'l\'anticipada vista no reapareix com a nova');
+  const reglaId = sqlite.prepare("SELECT id FROM regles WHERE codi='ALR_LLISTAR_VENDA'").get().id;
+  const jug = sqlite.prepare("SELECT id FROM jugadors LIMIT 1").get().id;
+  const ins = (data_accio, estat) => sqlite.prepare("INSERT INTO alertes (usuari_id, regla_id, jugador_id, data, missatge_clau, parametres, estat, urgencia, data_accio) VALUES (1,?,?,?,?,?,?,?,?)")
+    .run(reglaId, jug, data_accio, 'agenda.llistar', '{}', estat, 0, data_accio);
+  ins('2026-07-10', 'vista');    // anticipada, vista
+  ins('2026-07-18', 'nova');     // dia D: data d'acció distinta → conviu amb l'anticipada
+  const n = sqlite.prepare("SELECT COUNT(DISTINCT data_accio) c FROM alertes WHERE jugador_id=? AND regla_id=?").get(jug, reglaId).c;
+  assert.equal(n, 2, 'dos dates d\'acció → dos instàncies distintes (la clau inclou data_accio)');
+  assert.equal(sqlite.prepare("SELECT estat FROM alertes WHERE jugador_id=? AND data_accio='2026-07-10'").get(jug).estat, 'vista', 'l\'anticipada manté el seu estat, no es fon amb la del dia D');
 }
 
 // Resolució automàtica: si el juvenil arriba al mínim (10), l'alerta es resol sola

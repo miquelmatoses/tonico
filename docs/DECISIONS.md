@@ -1,5 +1,19 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-22 · FORA LES ACCIONS IMPOSSIBLES SOBRE UN JUGADOR LLISTAT
+**Autoritzat per Miquel.** Migració 054.
+- **Principi:** una vegada un jugador està a la subhasta, Hattrick **no** deixa canviar el
+  preu ni retirar-lo. Per tant cap alerta pot proposar eixa acció (viola el principi #3:
+  «l'informe és l'agenda d'hui» — sense acció executable, no és alerta).
+- **`ALR_SUBHASTA_TANCA` retirada** (activa=0): deia «última oportunitat de revisar el preu
+  o retirar-lo», acció impossible. La data de tancament ja viu a la fitxa de **Vendes**
+  (columna «tancament previst»), i el resultat (desert/venut) el cobrix la pregunta de
+  `resultat_pendent` quan la subhasta tanca. Test 0b (idempotència amb data d'acció)
+  repuntat: ara prova la propietat de la CLAU sense dependre de cap regla viva.
+- **`alerta.lesio_venda` reformulada:** de «Jo esperaria… per a tornar a llistar-lo»
+  (assumia que pots retirar-lo) a **condicional**: «si encara no té ofertes, valora
+  retirar-lo fins que es recupere» — perquè amb ofertes ja no es pot.
+
 ## 2026-07-22 · MOTOR D'ENTRENAMENT SÈNIOR GENERAL (triable per l'usuari)
 **Autoritzat per Miquel.** Migració 053.
 - **El problema:** l'entrenament sènior estava **cablejat** a la fàbrica (creativitat → MC 100%,

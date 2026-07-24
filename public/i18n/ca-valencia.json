@@ -463,7 +463,7 @@
   "comparador.alta": "Alta: {nom} ({edat}, {categoria})",
   "comparador.baixa": "Baixa: {nom} ({edat}, {categoria})",
   "comu.lesionat": "🤕",
-  "alerta.lesio_venda": "{nom} està llistat però lesionat ({setmanes} setm.): els compradors ho veuen i baixa el cartell. Jo esperaria que es recupere per a tornar a llistar-lo.",
+  "alerta.lesio_venda": "{nom} està llistat i lesionat ({setmanes} setm.): els compradors ho veuen i baixa el cartell. Si encara no té ofertes, valora retirar-lo fins que es recupere.",
   "comu.lesionat_durada": "🤕 {n} setm.",
   "fotrem.col_nivell": "Nivell",
   "fotrem.onze_m_recanvi": "recanvi",
