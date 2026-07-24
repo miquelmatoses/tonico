@@ -165,11 +165,12 @@ button { font-family: var(--font); cursor: pointer; }
 .fila-qui { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .pos { width: 34px; height: 26px; flex-shrink: 0; display: grid; place-items: center; border-radius: 7px;
   background: var(--verd-fosc); color: var(--llima); font-weight: 800; font-size: 11px; }
+/* Mateixa paleta de posició que les fitxes del camp (consistència en tota l'app). */
 .pos.po { background: var(--groc); color: var(--tinta); }
-.pos.dc, .pos.df { background: var(--blau); color: #fff; }
-.pos.mc { background: var(--verd); color: #fff; }
-.pos.ed, .pos.ee, .pos.ex { background: var(--lila); color: #fff; }
-.pos.dv { background: var(--roig); color: #fff; }
+.pos.dc, .pos.df { background: var(--roig); color: #fff; }
+.pos.mc { background: var(--ok); color: #fff; }
+.pos.ed, .pos.ee, .pos.ex { background: var(--blau); color: #fff; }
+.pos.dv { background: var(--lila); color: #fff; }
 .fila-nom { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fila-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px; font-size: 11px; color: var(--gris-clar); }
 .punts { font-family: var(--font-titol); font-size: 15px; color: var(--verd-fosc); }
@@ -206,22 +207,37 @@ td.num, th.num { text-align: right; }
 .onzes { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap: 18px; }
 .onze { background: var(--blanc); border: 3px solid var(--tinta); border-radius: 18px; overflow: hidden; box-shadow: var(--o5); }
 .onze-cap { padding: 12px 16px; background: var(--verd-fosc); color: var(--verd-clar); }
-.onze-cap.b { background: var(--llima); color: var(--verd-fosc); }
+.onze-cap.b { background: var(--blau); color: #fff; }              /* la B del disseny és blava */
 .onze-titol { font-family: var(--font-titol); font-size: 20px; text-transform: uppercase; }
 .onze-sub { font-size: 12px; opacity: .9; }
+/* Gespa amb ratlles verticals + marques (marc, cercle central i línia de mig camp). */
 .camp { position: relative; aspect-ratio: 3/4; border-bottom: 3px solid var(--tinta);
-  background: repeating-linear-gradient(0deg, var(--verd-camp-a) 0 34px, var(--verd-camp-b) 34px 68px); }
+  background:
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)) center 50% / calc(100% - 20px) 2px no-repeat,
+    repeating-linear-gradient(0deg, var(--verd-camp-a) 0 34px, var(--verd-camp-b) 34px 68px); }
 .camp::before { content: ''; position: absolute; inset: 10px; border: 2px solid rgba(255,255,255,.5); border-radius: 6px; }
 .camp::after { content: ''; position: absolute; left: 50%; top: 50%; width: 96px; height: 96px;
   transform: translate(-50%,-50%); border: 2px solid rgba(255,255,255,.5); border-radius: 50%; }
-.jug { position: absolute; transform: translate(-50%,-50%); display: flex; flex-direction: column; align-items: center; }
-.jug-chip { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
-  font-weight: 800; font-size: 11px; border: 2px solid var(--tinta); background: var(--llima); color: var(--verd-fosc); }
-.jug-chip.entrena { background: var(--llima); }
-.jug-chip.cos { background: var(--blanc); color: var(--gris); }
-.jug-chip.buit { background: rgba(255,255,255,.25); color: #fff; border-style: dashed; }
-.jug-nom { font-size: 10.5px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6);
-  white-space: nowrap; margin-top: 2px; }
+.jug { position: absolute; transform: translate(-50%,-50%); display: flex; flex-direction: column; align-items: center; z-index: 1; }
+/* Fitxa rodona acolorida per posició, vora blanca i ombra suau (com la proposta). */
+.jug-chip { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--font-titol); font-size: 12px; letter-spacing: .3px;
+  border: 2px solid #fff; color: #fff; background: var(--verd-fosc); box-shadow: 0 2px 5px rgba(0,0,0,.45); }
+.jug-chip.po { background: var(--groc); color: var(--tinta); }
+.jug-chip.dc, .jug-chip.df { background: var(--roig); }
+.jug-chip.mc { background: var(--ok); }
+.jug-chip.ed, .jug-chip.ee, .jug-chip.ex { background: var(--blau); }
+.jug-chip.dv { background: var(--lila); }
+/* Estat: qui ENTRENA porta un anell llima; el buit, contorn discontinu translúcid. */
+.jug-chip.entrena { box-shadow: 0 0 0 3px var(--llima), 0 2px 5px rgba(0,0,0,.45); }
+.jug-chip.buit { background: rgba(255,255,255,.15); border-style: dashed; box-shadow: none; }
+.jug-nom { font-size: 10.5px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.7);
+  white-space: nowrap; margin-top: 3px; }
+/* Llegenda del camp (què vol dir cada color / l'anell). */
+.camp-llegenda { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 14px; font-size: 11px; font-weight: 700; color: var(--gris); }
+.camp-llegenda span { display: inline-flex; align-items: center; gap: 5px; }
+.camp-llegenda i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.camp-llegenda i.anell { background: var(--verd-fosc); box-shadow: 0 0 0 2px var(--llima); }
 
 /* ══ GRAELLA DE COMPTABILITAT / DADES CURTES ══ */
 .graella { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 8px; }

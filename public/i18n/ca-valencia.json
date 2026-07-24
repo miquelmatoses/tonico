@@ -525,5 +525,11 @@
   "economia.falta_nota": "Falten {falta} ({pct}%)",
   "pujada.descripcio": "Puja el CSV de Hattrick (plantilla i, si en tens, acadèmia) amb la data de la instantània.",
   "comparador.canvis_titol": "Què ha canviat",
-  "fotrem.rellotges_titol": "Rellotges de l'acadèmia"
+  "fotrem.rellotges_titol": "Rellotges de l'acadèmia",
+  "camp.porter": "Porter",
+  "camp.defensa": "Defensa",
+  "camp.mig": "Mig",
+  "camp.extrem": "Extrem",
+  "camp.davanter": "Davanter",
+  "camp.entrena": "Entrena"
 }

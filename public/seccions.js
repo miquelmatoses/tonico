@@ -30,6 +30,46 @@ const cos = (...fills) => el('div', { class: 'card-cos' }, ...fills);
 const posCls = (p) => 'pos ' + String(p || '').toLowerCase().slice(0, 2);
 const nivellUrgencia = (u) => (u >= 70 ? 'urgent' : u >= 55 ? 'mitja' : 'baixa');
 
+// ── CAMP DE JOC (compartit sènior/juvenil) ──
+// Coordenades per posició calcades de la proposta de disseny (formació 3-3-2-2);
+// per a altres formacions, els slots d'un bucket es reparteixen en x sobre la seua línia.
+const CAMP = {
+  porter:   { y: 88, cls: 'po', xs: { 1: [50] } },
+  defensa:  { y: 71, cls: 'dc', xs: { 2: [34, 66], 3: [26, 50, 74], 4: [18, 39, 61, 82], 5: [15, 32, 50, 68, 85] } },
+  mc:       { y: 51, cls: 'mc', xs: { 2: [34, 66], 3: [28, 50, 72], 4: [18, 39, 61, 82] } },
+  extrem:   { y: 40, cls: 'ex', xs: { 1: [50], 2: [20, 80] } },
+  davanter: { y: 27, cls: 'dv', xs: { 1: [50], 2: [38, 62], 3: [28, 50, 72] } },
+};
+const BUCKET_SIGLA = { porter: 'POR', defensa: 'DC', mc: 'MC', extrem: 'EX', davanter: 'DV' };
+// slots: [{bucket, jugador?/nom}]; opts.estat(s)→'entrena'|'cos'|'buit', opts.nom(s), opts.titol(s).
+function campDeJoc(slots, opts) {
+  const c = el('div', { class: 'camp' });
+  const perBucket = new Map();
+  for (const s of slots) { if (!perBucket.has(s.bucket)) perBucket.set(s.bucket, []); perBucket.get(s.bucket).push(s); }
+  for (const [bucket, ss] of perBucket) {
+    const conf = CAMP[bucket] || { y: 50, cls: '' };
+    const xs = (conf.xs && conf.xs[ss.length]) || ss.map((_, i) => ((i + 1) / (ss.length + 1)) * 100);
+    ss.forEach((s, i) => {
+      const xip = el('div', { class: 'jug' },
+        el('div', { class: `jug-chip ${conf.cls} ${opts.estat(s)}`, text: BUCKET_SIGLA[bucket] || bucket }),
+        el('div', { class: 'jug-nom', text: opts.nom(s) }));
+      xip.style.left = xs[i] + '%'; xip.style.top = conf.y + '%';
+      xip.title = opts.titol(s);
+      c.append(xip);
+    });
+  }
+  return c;
+}
+// Llegenda de colors del camp (posició + anell d'entrenament).
+function campLlegenda() {
+  const l = el('div', { class: 'camp-llegenda' });
+  for (const [cls, clau] of [['po', 'porter'], ['dc', 'defensa'], ['mc', 'mig'], ['ex', 'extrem'], ['dv', 'davanter']]) {
+    l.append(el('span', {}, el('i', { class: cls }), el('span', { text: t('camp.' + clau) })));
+  }
+  l.append(el('span', {}, el('i', { class: 'anell' }), el('span', { text: t('camp.entrena') })));
+  return l;
+}
+
 // ── 1. Esta setmana (parte de Paco) ──
 export async function esta_setmana(main) {
   const { alertes, agenda, revisat, instantania } = await api('/api/alertes');
@@ -217,28 +257,11 @@ export async function alineacio(main) {
     if (c === 'farciment') return t('alineacio.motiu_farciment');
     return t('alineacio.motiu_cos');
   };
-  // El camp: cada bucket és una línia (y fix) i els seus slots es reparteixen en x.
-  // Derivat de la formació que torna l'API — cap posició cablejada per nom de jugador.
-  const LINIA = { porter: 90, defensa: 73, mc: 54, extrem: 36, davanter: 17 };
-  const camp = (slots) => {
-    const c = el('div', { class: 'camp' });
-    const perBucket = new Map();
-    for (const s of slots) { if (!perBucket.has(s.bucket)) perBucket.set(s.bucket, []); perBucket.get(s.bucket).push(s); }
-    for (const [bucket, ss] of perBucket) {
-      const y = LINIA[bucket] ?? 50;
-      ss.forEach((s, i) => {
-        const x = ((i + 1) / (ss.length + 1)) * 100;
-        const cls = !s.jugador ? 'buit' : s.entrena ? 'entrena' : 'cos';
-        const xip = el('div', { class: 'jug' },
-          el('div', { class: 'jug-chip ' + cls, text: s.codi }),
-          el('div', { class: 'jug-nom', text: s.jugador ? s.jugador.nom.split(' ')[0] : t('alineacio.buit') }));
-        xip.style.left = x + '%'; xip.style.top = y + '%';
-        xip.title = `${s.codi} · ${s.jugador ? s.jugador.nom : t('alineacio.buit')}${motiu(s) ? ' · ' + motiu(s) : ''}`;
-        c.append(xip);
-      });
-    }
-    return c;
-  };
+  const camp = (slots) => campDeJoc(slots, {
+    estat: (s) => (!s.jugador ? 'buit' : s.entrena ? 'entrena' : 'cos'),
+    nom: (s) => (s.jugador ? s.jugador.nom.split(' ')[0] : t('alineacio.buit')),
+    titol: (s) => `${s.codi} · ${s.jugador ? s.jugador.nom : t('alineacio.buit')}${motiu(s) ? ' · ' + motiu(s) : ''}`,
+  });
   const onzes = el('div', { class: 'onzes' });
   const ids = Object.keys(d.onze);
   ids.forEach((partit, i) => {
@@ -247,7 +270,7 @@ export async function alineacio(main) {
       el('div', { class: 'onze-cap' + (i ? ' b' : '') },
         el('div', { class: 'onze-titol', text: nom(partit) }),
         el('div', { class: 'onze-sub', text: t('alineacio.onze_sub', { n: entrenen }) })),
-      camp(d.onze[partit])));
+      camp(d.onze[partit]), campLlegenda()));
   });
   main.append(onzes);
 
@@ -409,7 +432,6 @@ function cridaSetmanal(main, c) {
 }
 
 // Onze juvenil proposat (2b): descobriment probabilístic + fre de suplents.
-const BUCKET_SIGLA = { porter: 'POR', defensa: 'DC', mc: 'MC', extrem: 'EX', davanter: 'DV' };
 function onzeJuvenil(main, o) {
   const sec = card(t('fotrem.onze_titol'), o.en_camp);
   const info = el('div', { class: 'card-cos' });
@@ -431,24 +453,12 @@ function onzeJuvenil(main, o) {
       : s.motiu === 'entrena'
         ? t('fotrem.onze_m_entrena', { principal: s.habilitat })
         : t('fotrem.onze_m_' + s.motiu);
-  // El mateix camp que la sènior: xip per plaça, i el motiu al títol (detall per fila).
-  const LINIA = { porter: 90, defensa: 73, mc: 54, extrem: 36, davanter: 17 };
-  const camp = el('div', { class: 'camp' });
-  const perBucket = new Map();
-  for (const s of o.onze) { if (!perBucket.has(s.bucket)) perBucket.set(s.bucket, []); perBucket.get(s.bucket).push(s); }
-  for (const [bucket, ss] of perBucket) {
-    const y = LINIA[bucket] ?? 50;
-    ss.forEach((s, i) => {
-      const cls = s.motiu === 'estructura' ? 'cos' : 'entrena';
-      const xip = el('div', { class: 'jug' },
-        el('div', { class: 'jug-chip ' + cls, text: BUCKET_SIGLA[bucket] || bucket }),
-        el('div', { class: 'jug-nom', text: (s.nom || '').split(' ')[0] }));
-      xip.style.left = ((i + 1) / (ss.length + 1)) * 100 + '%'; xip.style.top = y + '%';
-      xip.title = `${s.nom} · ${motiuSlot(s)}`;
-      camp.append(xip);
-    });
-  }
-  sec.append(camp);
+  // El mateix camp que la sènior: xip acolorit per posició, motiu al títol (detall per fila).
+  sec.append(campDeJoc(o.onze, {
+    estat: (s) => (s.motiu === 'estructura' ? 'cos' : 'entrena'),
+    nom: (s) => (s.nom || '').split(' ')[0],
+    titol: (s) => `${s.nom} · ${motiuSlot(s)}`,
+  }), campLlegenda());
   if (o.banqueta.length) {
     sec.append(el('div', { class: 'graella-fila' },
       el('b', { text: t('fotrem.onze_banqueta') }),
