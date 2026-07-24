@@ -531,7 +531,6 @@
   "camp.principal": "primary (100%)",
   "camp.secundari": "secondary (66%)",
   "camp.els_dos": "both",
-  "camp.descobrix": "discovery",
   "habilitat.porteria": "Goalkeeping",
   "habilitat.defensa": "Defending",
   "habilitat.creativitat": "Playmaking",
@@ -541,5 +540,6 @@
   "habilitat.pilota_aturada": "Set pieces",
   "personal.entrenament_senior": "Senior training",
   "personal.entrenament_senior_nota": "Changing it recalculates the training positions, the percentages, the cover and the line-ups.",
-  "vendes.retencio_resum": "{n} retained for minimum cover ({camp} outfield + {porters} keepers); the squad stays above {minim}."
+  "vendes.retencio_resum": "{n} retained for minimum cover ({camp} outfield + {porters} keepers); the squad stays above {minim}.",
+  "hdr.caixa_falta": "⚠ fill it in"
 }

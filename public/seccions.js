@@ -63,20 +63,24 @@ function campDeJoc(slots, opts) {
 }
 // SÈNIOR (§6): un sol entrenament, però per posició arriba al 100% o al 50% en este partit.
 const anellSenior = (s) => (!s.jugador ? 'buit' : s.entrena ? ((s.pct ?? 0) >= 100 ? 'ple' : 'mig') : '');
-// JUVENIL (§26): dos entrenaments. La plaça entrena els DOS components (ab), només el
-// principal (a→100%), només el secundari (b→66%), o REVELA una habilitat desconeguda.
+// JUVENIL (§26): dos entrenaments. L'anell diu el NIVELL D'ENTRENAMENT de la plaça,
+// no si es descobrix: entrena els DOS components (ab→doble), només el principal (a→ple,
+// 100%) o només el secundari (b→mig, 66%). Passades entrena mc I davanter per igual: un
+// davanter és 'b' (secundari), i ha d'eixir com a secundari encara que l'habilitat siga
+// desconeguda (llavors, a més, la descobrix — això ho diu el TEXT del motiu, no l'anell).
 const anellJuvenil = (s) => {
   if (s.motiu === 'estructura') return '';
   if (s.valor_placa === 'ab') return 'doble';
-  if (s.motiu === 'descobriment') return 'descobriment';
   if (s.valor_placa === 'a') return 'ple';
   if (s.valor_placa === 'b') return 'mig';
   return '';
 };
+// Cognom (el que mostra Hattrick): l'última paraula del nom.
+const cognom = (nom) => (String(nom || '').trim().split(/\s+/).pop() || '');
 // Llegenda de l'anell, segons el motor (els estats possibles no són els mateixos).
 function campLlegenda(mode) {
   const items = mode === 'juvenil'
-    ? [['ple', 'principal'], ['mig', 'secundari'], ['doble', 'els_dos'], ['descobriment', 'descobrix']]
+    ? [['ple', 'principal'], ['mig', 'secundari'], ['doble', 'els_dos']]
     : [['ple', 'cent'], ['mig', 'mig']];
   const l = el('div', { class: 'camp-llegenda' });
   for (const [cls, clau] of items) l.append(el('span', {}, el('i', { class: cls }), el('span', { text: t('camp.' + clau) })));
@@ -272,7 +276,7 @@ export async function alineacio(main) {
   };
   const camp = (slots) => campDeJoc(slots, {
     anell: anellSenior,
-    nom: (s) => (s.jugador ? s.jugador.nom.split(' ')[0] : t('alineacio.buit')),
+    nom: (s) => (s.jugador ? cognom(s.jugador.nom) : t('alineacio.buit')),
     titol: (s) => `${s.codi} · ${s.jugador ? s.jugador.nom : t('alineacio.buit')}${motiu(s) ? ' · ' + motiu(s) : ''}`,
   });
   const onzes = el('div', { class: 'onzes' });
@@ -469,7 +473,7 @@ function onzeJuvenil(main, o) {
   // El mateix camp que la sènior: xip acolorit per posició, motiu al títol (detall per fila).
   sec.append(campDeJoc(o.onze, {
     anell: anellJuvenil,
-    nom: (s) => (s.nom || '').split(' ')[0],
+    nom: (s) => cognom(s.nom),
     titol: (s) => `${s.nom} · ${motiuSlot(s)}`,
   }), campLlegenda('juvenil'));
   if (o.banqueta.length) {
@@ -583,7 +587,7 @@ async function fitxesVenda(main) {
             ...(j.lesionat ? [el('span', { class: 'pill perill', text: t('comu.lesionat_durada', { n: duradaLesio(j.lesio) ?? '?' }) })] : [])))),
       propCell, preu, dataL,
       el('span', { text: j.tancament_previst || '—' }),
-      el('div', {}, estat, ' ', venut));
+      el('div', { class: 'cel-controls' }, estat, venut));
   }, 1));
   for (const ll of nota.llegendes()) sec.append(cos(el('p', { class: 'nota-peu', text: ll })));
   main.append(sec);

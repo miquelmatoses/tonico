@@ -531,7 +531,6 @@
   "camp.principal": "principal (100%)",
   "camp.secundari": "secundari (66%)",
   "camp.els_dos": "els dos",
-  "camp.descobrix": "descobriment",
   "habilitat.porteria": "Porteria",
   "habilitat.defensa": "Defensa",
   "habilitat.creativitat": "Creativitat",
@@ -541,5 +540,6 @@
   "habilitat.pilota_aturada": "Pilota aturada",
   "personal.entrenament_senior": "Entrenament sènior",
   "personal.entrenament_senior_nota": "En canviar-lo, es recalculen les places que entrenen, els %, la cobertura i les alineacions.",
-  "vendes.retencio_resum": "Es retenen {n} per cobertura mínima ({camp} de camp + {porters} de porteria); la plantilla no baixa de {minim}."
+  "vendes.retencio_resum": "Es retenen {n} per cobertura mínima ({camp} de camp + {porters} de porteria); la plantilla no baixa de {minim}.",
+  "hdr.caixa_falta": "⚠ emplena-la"
 }

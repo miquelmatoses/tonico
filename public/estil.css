@@ -375,9 +375,16 @@ main:has(.auth) { max-width: none; padding: 0; }
 .graella-fila-d { display: grid; gap: 10px; padding: 9px 16px; align-items: center;
   border-top: 1px solid var(--vora-suau); font-size: 13px; }
 .graella-fila-d:nth-child(even) { background: #fbf9f0; }
-.c-venda { grid-template-columns: minmax(0,2fr) 1fr 1fr 1fr 1fr auto; }
-.c-pla { grid-template-columns: auto auto minmax(0,1fr) auto; }
-.c-staff { grid-template-columns: minmax(0,1.6fr) auto auto auto; }
+/* Columnes DETERMINISTES (minmax(0,fr)): així la capçalera i cada fila —graelles
+   separades— resolen les mateixes amplades i queden alineades, encara que les cel·les
+   porten inputs. Els controls omplin la seua cel·la (width:100%), sense forçar-la. */
+.c-venda { grid-template-columns: minmax(0,2.2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.6fr); }
+.c-pla { grid-template-columns: minmax(0,.7fr) minmax(0,.7fr) minmax(0,2fr) minmax(0,1fr); }
+.c-staff { grid-template-columns: minmax(0,1.8fr) minmax(0,1fr) minmax(0,.8fr) minmax(0,.9fr); }
+.graella-fila-d > input, .graella-fila-d > select { width: 100%; }
+.cel-controls { display: flex; gap: 6px; min-width: 0; }
+.cel-controls select { flex: 1; min-width: 0; }
+.cel-controls input { width: 4.5rem; flex-shrink: 0; }
 
 /* ══ ECONOMIA ══ */
 .eco-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 14px; margin-bottom: 16px; }
@@ -415,3 +422,8 @@ main:has(.auth) { max-width: none; padding: 0; }
 /* Un formulari dins d'una targeta és un bloc: la graella de camps ha d'ocupar tot l'ample. */
 form.card-cos { display: block; }
 .form-graella { width: 100%; }
+/* Caixa sense declarar: acció (no un blanc). */
+.hdr-caixa-falta { display: inline-block; background: var(--roig); color: #fff; font-family: var(--font);
+  font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+  padding: 3px 9px; border-radius: 999px; }
+.hdr-caixa-falta:hover { background: #fff; color: var(--roig); text-decoration: none; }
