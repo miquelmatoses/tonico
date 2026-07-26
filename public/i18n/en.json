@@ -562,5 +562,7 @@
   "vendes.eixida_rebaixar": "Lower the price",
   "vendes.eixida_rellistar": "List them again",
   "vendes.eixida_despatxar": "Release them",
-  "vendes.eixida_un_euro": "Put them at €1"
+  "vendes.eixida_un_euro": "Put them at €1",
+  "pujada.fitxer_buit": "«{nom}» is empty. Export it again from Hattrick and try once more.",
+  "pujada.no_es_csv": "That file doesn't look like the Hattrick export: I can't find the columns. Check it's the squad CSV and not another one."
 }

@@ -956,6 +956,16 @@ function formMembre(main) {
 }
 
 // ── 10a. Pujada de dades ──
+// Filtre del selector de fitxers. NO és validació: qui decidix si el fitxer val és el
+// CONTINGUT (el servidor el parseja i falla amb un motiu llegible si no és l'export).
+//
+// Per què tan ample: al mòbil, un `accept` estret BLOQUEJA fitxers legítims. iOS tradueix
+// l'extensió a UTI i, si el fitxer no ve etiquetat com a CSV (baixat des del navegador,
+// vingut d'una app de núvol, sense extensió…), el mostra en gris i no es pot triar —
+// exactament la sensació de «format no acceptat». A Android, molts proveïdors de fitxers
+// declaren application/octet-stream i el filtre se'ls menja igual.
+const ACCEPTA_CSV = '.csv,.txt,text/csv,text/plain,application/csv,application/vnd.ms-excel,application/octet-stream';
+
 export function pujada(main, teAcademia = true) {
   capcalera(main, 10, 'comparador');
   const c = card(t('pujada.titol'), null, 'llima');
@@ -963,23 +973,34 @@ export function pujada(main, teAcademia = true) {
   const graella = el('div', { class: 'form-graella' });
   const data = el('input', { type: 'date', name: 'data', required: 'true', 'aria-label': t('pujada.data') });
   data.value = new Date().toISOString().slice(0, 10);
-  const senior = el('input', { type: 'file', name: 'senior', accept: '.csv', 'aria-label': t('pujada.fitxer_senior') });
+  const senior = el('input', { type: 'file', name: 'senior', accept: ACCEPTA_CSV, 'aria-label': t('pujada.fitxer_senior') });
   const estat = el('p', { role: 'status' });
   graella.append(el('label', {}, t('pujada.data'), data), el('label', {}, t('pujada.fitxer_senior'), senior));
   if (teAcademia) {   // punt 3b: sense acadèmia, només CSV sènior
-    const juvenil = el('input', { type: 'file', name: 'juvenil', accept: '.csv', 'aria-label': t('pujada.fitxer_juvenil') });
+    const juvenil = el('input', { type: 'file', name: 'juvenil', accept: ACCEPTA_CSV, 'aria-label': t('pujada.fitxer_juvenil') });
     graella.append(el('label', {}, t('pujada.fitxer_juvenil'), juvenil));
   }
   form.append(el('p', { class: 'nota-peu', text: t('pujada.descripcio') }), graella,
     el('button', { type: 'submit', class: 'b-prim', text: t('pujada.enviar') }), estat);
   const envia = async (reemplaça) => {
+    // Un fitxer buit dona un error de parseig confús: val més dir-ho abans.
+    for (const inp of [senior, ...form.querySelectorAll('input[name="juvenil"]')]) {
+      const f = inp.files && inp.files[0];
+      if (f && f.size === 0) { estat.textContent = t('pujada.fitxer_buit', { nom: f.name }); return; }
+    }
     estat.textContent = t('comu.carregant');
     const fd = new FormData(form);
     if (reemplaça) fd.set('reemplaça', 'true');
     const r = await fetch('/api/pujar', { method: 'POST', credentials: 'same-origin', body: fd });
     const cos = await r.json().catch(() => ({}));
     if (r.status === 409 && cos.error === 'instantania_existix') { if (confirm(t('pujada.confirma_reemplaça'))) return envia(true); estat.textContent = ''; return; }
-    if (!r.ok) { estat.textContent = t('pujada.error', { detall: cos.detall || cos.error || '' }); return; }
+    if (!r.ok) {
+      // El servidor diu QUÈ ha passat; ací només es tria el text.
+      const clau = cos.error === 'fitxer_buit' ? 'pujada.fitxer_buit'
+        : cos.error === 'no_es_csv' ? 'pujada.no_es_csv' : null;
+      estat.textContent = clau ? t(clau, { nom: cos.nom || '' }) : t('pujada.error', { detall: cos.detall || cos.error || '' });
+      return;
+    }
     location.reload();
   };
   form.addEventListener('submit', (e) => { e.preventDefault(); envia(false); });

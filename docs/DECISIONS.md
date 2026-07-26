@@ -1,5 +1,26 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · PUJADA DES DEL MÒBIL: el fitxer es jutja pel contingut
+**Símptoma de Miquel:** al mòbil no es podien pujar els CSV, «com si fóra un format no
+acceptat»; a l'escriptori, cap problema. **No era el seu telèfon.**
+
+- **Causa:** els dos inputs de fitxer portaven `accept='.csv'`. El servidor no valida ni
+  extensió ni MIME (només llig el contingut), així que el filtre no protegia de res i sí
+  que bloquejava: iOS tradueix l'extensió a UTI i, si el fitxer no ve etiquetat com a CSV
+  (baixat des del navegador, vingut d'una app de núvol, sense extensió), el mostra **en
+  gris i no es pot triar**. A Android, molts proveïdors declaren
+  `application/octet-stream` i el filtre se'ls menja igual.
+- **Decisió:** el filtre del selector és **comoditat, no validació**. S'amplia a les formes
+  amb què un CSV legítim arriba de veres des d'un mòbil, i qui decidix si el fitxer val és
+  el **contingut**. Viu en una sola constant (`ACCEPTA_CSV`) perquè els dos inputs no
+  divergisquen.
+- **A canvi, el rebuig es fa llegible:** el servidor distingix `fitxer_buit` de `no_es_csv`
+  i diu de quin fitxer parla, en compte de deixar caure un error de parseig. Abans, un
+  fitxer equivocat donava un missatge tècnic.
+- **Regressió coberta** (`test/pujada_mobil.mjs`): els sis casos de com arriba un CSV des
+  del mòbil han de passar, i el test **falla si algú torna a posar un `accept` estret**.
+
+
 ## 2026-07-26 · TANCAMENT DEL v3 (fet i verificat a prod)
 - **Fusionat a `main`** i desplegat des de main. Abans el codi viu no estava a cap branca
   desplegable: qualsevol desplegament de main hauria tornat al model vell.

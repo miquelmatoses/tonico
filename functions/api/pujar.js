@@ -34,7 +34,15 @@ export async function onRequestPost(context) {
     ]) {
       const fitxer = form.get(camp);
       if (!fitxer || typeof fitxer.text !== 'function') continue;
-      const model = adapta(tokenitza(await fitxer.text()), dataInst);
+      const cru = await fitxer.text();
+      // El fitxer es jutja pel CONTINGUT, no pel nom ni pel tipus MIME: al mòbil un CSV
+      // legítim arriba sovint com application/octet-stream o sense extensió.
+      if (!cru.trim()) return json({ error: 'fitxer_buit', camp, nom: fitxer.name || null }, 400);
+      const files = tokenitza(cru);
+      if (files.length < 2 || files[0].length < 5) {
+        return json({ error: 'no_es_csv', camp, nom: fitxer.name || null }, 400);
+      }
+      const model = adapta(files, dataInst);
       resultats.push(await desar(env.DB, usuari.id, tipus, model, ancora, reemplaça));
     }
   } catch (e) {

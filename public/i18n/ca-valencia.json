@@ -562,5 +562,7 @@
   "vendes.eixida_rebaixar": "Rebaixa el preu",
   "vendes.eixida_rellistar": "Torna'l a llistar",
   "vendes.eixida_despatxar": "Despatxa'l",
-  "vendes.eixida_un_euro": "Posa'l a 1 €"
+  "vendes.eixida_un_euro": "Posa'l a 1 €",
+  "pujada.fitxer_buit": "«{nom}» està buit. Torna a exportar-lo de Hattrick i prova de nou.",
+  "pujada.no_es_csv": "Eixe fitxer no sembla l'export de Hattrick: no hi trobe les columnes. Comprova que és el CSV de la plantilla i no un altre."
 }
