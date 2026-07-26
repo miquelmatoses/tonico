@@ -525,5 +525,6 @@
   "classif.futur_entrenador": "Futur entrenador: acumula experiència.",
   "alineacio.motiu_titular": "Titular del lloc",
   "motiu_baixa.despatx": "Despatxat",
-  "alineacio.llocs_buits": "Queden {n} llocs sense cobrir: es juga amb un menys."
+  "alineacio.llocs_buits": "Queden {n} llocs sense cobrir: es juga amb un menys.",
+  "falten.estadi": "Els números de l'estadi: ves a la calculadora, mira la configuració NRG i apunta'm el manteniment i el cost de l'obra."
 }

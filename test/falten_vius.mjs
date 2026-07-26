@@ -20,7 +20,10 @@ sqlite.exec(`
   INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou) VALUES (1,'especialista','metge',5,1000);
 `);
 await desaConfig(db, 1, { estrategia: 'competitiva', pais: 'ES', divisio: 'VII', partits_setmana: 2 });
-assert.deepEqual(await items(), [], 'amb finances, personal i config posats, «em falten» s\'apaga');
+// L'estadi (PAS 8) també es demana: la guia delega en calculadores i no es modela.
+assert.deepEqual(await items(), ['estadi'], 'queda l\'estadi, que es declara de la calculadora');
+sqlite.prepare('UPDATE finances SET estadi_manteniment=?, estadi_cost_obra=? WHERE usuari_id=1').run(6000, 250000);
+assert.deepEqual(await items(), [], 'amb tot declarat, «em falten» s\'apaga');
 
 // Encara amb 0 moviments/personal_declarat (les fonts velles): no ha d'importar.
 assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM transaccions').get().n, 0);

@@ -525,5 +525,6 @@
   "classif.futur_entrenador": "Future coach: building experience.",
   "alineacio.motiu_titular": "Slot starter",
   "motiu_baixa.despatx": "Released",
-  "alineacio.llocs_buits": "{n} slots left uncovered: you play a man short."
+  "alineacio.llocs_buits": "{n} slots left uncovered: you play a man short.",
+  "falten.estadi": "The stadium figures: go to the calculator, look at the NRG setup and log me the upkeep and the build cost."
 }

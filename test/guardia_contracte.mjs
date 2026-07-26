@@ -24,6 +24,8 @@ import { calibrat as esCalibrat, estimacioComparables, preuEsperat, setmanesVend
 import { valorEn, compatible, alineaOnzes } from '../lib/onze.js';
 import { util as utilJuv, valorNetPromo, destiPromocio, objectiuJuvenil, sobrants, reiniciCrida } from '../lib/juvenil_v3.js';
 import { costFlux, nivellPagable, planPersonal, decisioRenovacio } from '../lib/personal_v3.js';
+import { guanyJugador, admissibleJugador, deltaFlux, guanyEstadi, admissibleEstadi,
+  eficiencia, decisioEstoc } from '../lib/estoc.js';
 
 const arrel = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { formules } = JSON.parse(readFileSync(join(arrel, 'formules.json'), 'utf8'));
@@ -306,6 +308,39 @@ const VERIFICADES = {
     const r = alineaOnzes([{ jugador_id: 1, categoria: 'core', extrem: 5 }], LL,
       [{ id: 'A', competitiu: true }, { id: 'B' }], { pes_entrenament: 1000 });
     assert.equal(r.comptabilitat.find((c) => c.jugador_id === 1).total, 100);
+  },
+
+  // PAS 8 — el bucle d'estoc: jugadors i estadi amb la MATEIXA unitat.
+  'P8.guany': () => assert.equal(guanyJugador(3, 1.5), 4.5, 'mancança × pes'),
+  'P8.cost': () => assert.equal(eficiencia(4.5, 50000), 0.00009, 'guany/cost'),
+  'P8.admissible': () => {
+    assert.equal(admissibleJugador({ preu: 50000, sou: 900 }, { caixa_disponible: 100000, pressupost_sou_lloc: 1000 }), true);
+    assert.equal(admissibleJugador({ preu: 150000 }, { caixa_disponible: 100000 }), false, 'cap compra amb diners no cobrats');
+    assert.equal(admissibleJugador({ preu: 50000, sou: 5000 }, { caixa_disponible: 100000, pressupost_sou_lloc: 1000 }), false);
+  },
+  'P8.flux': () => assert.equal(deltaFlux(9000, 6000), 3000, 'Δflux = manteniment actual − nou'),
+  'P8.guany_2': () => {
+    const TS = { creativitat: { 1: 250, 2: 270, 3: 330, 4: 510, 5: 850 } };
+    const PES = { mc: 1.5 };
+    const ambManc = { mc: { habilitat: 'creativitat', mancanca: 2 } };
+    assert.ok(guanyEstadi(ambManc, { sou_sostenible: 300, delta_flux: 3000, taula_salaris: TS, pesos: PES }) > 0);
+    const sense = { mc: { habilitat: 'creativitat', mancanca: 0 } };
+    assert.equal(guanyEstadi(sense, { sou_sostenible: 300, delta_flux: 3000, taula_salaris: TS, pesos: PES }), 0,
+      'pujar el sostre d\'un lloc ja cobert val 0');
+  },
+  'P8.admissible_2': () => {
+    assert.equal(admissibleEstadi({ cost: 50000, caixa_disponible: 100000, flux: 1000, delta_flux: 500 }), true);
+    assert.equal(admissibleEstadi({ cost: 50000, caixa_disponible: 100000, flux: 1000, delta_flux: -2000 }), false,
+      'cap obra que deixe el flux en negatiu');
+  },
+  'P8.eficiencia': () => {
+    const t = decisioEstoc([
+      { id: 'j', admissible: true, eficiencia: eficiencia(4.5, 50000) },
+      { id: 'e', admissible: true, eficiencia: eficiencia(3.0, 20000) },
+    ]);
+    assert.equal(t.id, 'e', 'guanya la millor relació guany/cost, no el guany més gran');
+    assert.equal(decisioEstoc([{ id: 'x', admissible: false, eficiencia: 1 }]), null,
+      'sense opció admissible, cap compra: només es ven');
   },
 
   // PAS 11 — el personal és bucle de FLUX: tots cobren igual, mana la prioritat.

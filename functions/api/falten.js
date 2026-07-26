@@ -8,7 +8,7 @@ export async function onRequestGet({ env, data }) {
   const items = [];
 
   // Caixa: la font viva és finances.caixa (la caixa REAL declarada), no els moviments.
-  const fin = await env.DB.prepare('SELECT caixa FROM finances WHERE usuari_id=?').bind(u).first();
+  const fin = await env.DB.prepare('SELECT caixa, estadi_manteniment FROM finances WHERE usuari_id=?').bind(u).first();
   if (fin?.caixa == null) items.push({ clau: 'caixa', ancora: 'economia' });
 
   // Personal: la font viva és personal_membres (model ric), no personal_declarat.
@@ -19,6 +19,9 @@ export async function onRequestGet({ env, data }) {
   // derivar llocs_partit ni el nivell objectiu: es demanen, mai se suposen.
   const config = await llegixConfig(env.DB, u);
   for (const clau of faltenConfig(config)) items.push({ clau: 'config_' + clau, ancora: 'personal' });
+
+  // Estadi (PAS 8): la guia delega en calculadores, així que es DEMANA, no es modela.
+  if (fin && fin.estadi_manteniment == null) items.push({ clau: 'estadi', ancora: 'economia' });
 
   // El capital d'inflexió ja NO es demana en fred: si no és manual, Tonico l'estima
   // (secció Economia) i l'usuari confirma o edita. Res a reclamar ací.

@@ -55,7 +55,7 @@ const families = {
   'vendes': ['col_jugador', 'col_posicio', 'col_especialitat', 'col_proposat', 'col_preu', 'col_data', 'col_tancament', 'col_estat', 'col_venut'],
   'fotrem.joc_motiu_': ['revelar', 'dud', 'entrena', 'sense_pipeline'],
   'fotrem.onze_m_': ['entrena', 'estructura', 'recanvi'],
-  'falten': ['caixa', 'personal', 'config_pais', 'config_divisio', 'config_partits_setmana', 'config_estrategia'],
+  'falten': ['caixa', 'personal', 'estadi', 'config_pais', 'config_divisio', 'config_partits_setmana', 'config_estrategia'],
   'dia': ['0', '1', '2', '3', '4', '5', '6'],   // noms de dia per a l'agenda
   'agenda': ['llistar'],                          // etiquetes curtes d'acció (missatge_clau del servidor)
   'element': ['assistents', 'metge', 'psicoleg'],
