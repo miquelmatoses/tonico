@@ -40,6 +40,37 @@ for (const f of fitxers) {
 for (const k of estatics) if (!k.endsWith('_')) assert.ok(te(k), `falta la clau i18n estàtica referenciada: ${k}`);
 
 // ── 3. Famílies DINÀMIQUES t('prefix.' + variable): cada valor possible ──
+// El domini dels `motiu` es DERIVA del codi (qualsevol `motiu: 'x'` de lib/), perquè afegir
+// un motiu nou sense la seua clau és justament el que produïa «[text no disponible]».
+function motiusDelCodi() {
+  // Només hi ha DOS llocs que renderitzen t('motiu.' + …): els avisos d'alineació i el
+  // veredicte de crida. El domini es deriva de les seues DUES funcions productores — no de
+  // fitxers sencers, que arrossegarien `motiu` d'altres espais de noms (bucle d'estoc,
+  // destí de venda, pipeline juvenil) que es renderitzen amb altres prefixos.
+  const PRODUCTORS = [
+    ['../lib/orquestra_alineacio.js', 'avisosOnze'],
+    ['../lib/fotrem.js', 'avaluaCrida'],
+  ];
+  const vals = new Set();
+  for (const [ruta, fn] of PRODUCTORS) {
+    const src = readFileSync(new URL(ruta, import.meta.url), 'utf8');
+    const i = src.indexOf(`function ${fn}(`);
+    assert.ok(i >= 0, `el productor de motius ${fn} ja no existix: actualitza el guardià`);
+    // Sobre el COS SENCER, no per línia: l'assignació de `motiu` pot ocupar més d'una
+    // línia, i per línia el regex no la veia (i el domini eixia buit sense dir-ho).
+    const cos = src.slice(i, src.indexOf('\n}\n', i))
+      .split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+    for (const m of cos.matchAll(/\bmotiu:\s*'([a-z_]+)'/g)) vals.add(m[1]);
+    for (const m of cos.matchAll(/\bmotiu\s*=\s*([^;]+);/g)) {
+      for (const q of m[1].matchAll(/'([a-z_]+)'/g)) vals.add(q[1]);
+    }
+    for (const m of cos.matchAll(/motiu:\s*'([a-z_]+)'/g)) vals.add(m[1]);
+  }
+  assert.ok(vals.size >= 5,
+    `el domini de motius ha eixit quasi buit (${vals.size}): el guardià no llig els productors`);
+  return [...vals];
+}
+
 const families = {
   'habilitat': ['porteria','defensa','creativitat','passades','extrem','anotacio','pilota_aturada'],
   'vendes.eixida_': ['rebaixar','rellistar','despatxar','un_euro'],
@@ -47,7 +78,7 @@ const families = {
   'flux': ['col_tipus','col_nivell','col_cost','col_accio'],
   'estoc': ['col_opcio','col_guany','col_cost','col_eficiencia'],
   'categoria': ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'],
-  'motiu': ['mai', 'potencial', 'compost', 'per_davall', 'fluix', 'sense_dades', 'lesionat', 'sancionat', 'vetat', 'banqueta'],
+  'motiu': motiusDelCodi(),        // derivat del codi: un motiu nou el caça sol
   'motiu_baixa': ['venda', 'despatx', 'promocio', 'altres'],
   'tipus': ['compra', 'venda', 'sou_setmanal', 'ingres_patrocini', 'taquilla', 'personal', 'estadi', 'taxa_llistat', 'altres'],
   'font': ['comparables', 'pom'],

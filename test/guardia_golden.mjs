@@ -81,7 +81,10 @@ const igual = (vist, esperat, què) => { assert.deepEqual(vist, esperat, `golden
 {
   const { pla_flux } = await json(apiPersonal);
   const eco = await economia(db, 1);
-  igual(pla_flux.flux_lliure, eco.flux - eco.reserva_flux, 'flux lliure = flux − reserva');
+  // F3: flux_lliure torna a sumar el cost del personal ACTUAL (ja va restat dins del flux).
+  igual(pla_flux.flux_lliure, eco.flux_lliure, 'flux lliure de la font única');
+  igual(eco.flux_lliure, Math.max(0, eco.flux + eco.despeses.personal - eco.reserva_flux),
+    'flux_lliure = MAX(0; flux + cost_personal_actual − reserva_flux)');
   for (const x of pla_flux.pla) {
     if (x.exclos) { igual(x.cost, 0, 'un tipus exclòs no consumix flux'); continue; }
     igual(x.cost, x.nivell ? costFlux(x.nivell, pla_flux.staff_cost_base) : 0, `cost de ${x.tipus}`);

@@ -16,6 +16,14 @@ export async function onRequestGet({ env, data }) {
   const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id=? AND tipus='senior'").bind(data.usuari.id).first();
   if (!equip) return json({ jugadors: [] });
   const inst = await env.DB.prepare('SELECT id FROM instantanies WHERE equip_id=? ORDER BY data DESC, id DESC LIMIT 1').bind(equip.id).first();
+  // `transferible` de la instantània ANTERIOR: el dispar de la PREGUNTA (P7) és la transició
+  // 1 → buit entre instantànies, no l'estat de la fitxa.
+  const instAbans = await env.DB.prepare('SELECT id FROM instantanies WHERE equip_id=? AND id<? ORDER BY data DESC, id DESC LIMIT 1').bind(equip.id, inst?.id ?? 0).first();
+  const transfAbans = new Map();
+  if (instAbans) {
+    const { results: ant } = await env.DB.prepare('SELECT jugador_id, transferible FROM instantanies_jugadors WHERE instantania_id=?').bind(instAbans.id).all();
+    for (const r of ant) transfAbans.set(r.jugador_id, r.transferible);
+  }
   if (!inst) return json({ jugadors: [] });
 
   const { results: jugadors } = await env.DB.prepare(
@@ -84,7 +92,8 @@ export async function onRequestGet({ env, data }) {
     const valor = punts[i] ?? preu_proposat ?? 0;
     return { ...j, estat: j.estat || 'pendent', preu_proposat, valor, puntuacio: punts[i] ?? null, preu_estimacio_grossa: pe.base === 'divisio',
       tancament_previst: tancament(j.data_llistada), lesionat: esLesionat(j.lesio), calibrat,
-      pregunta: preguntaVenda({ ...j, transferible_anterior: j.transferible_anterior ?? (j.data_llistada ? 1 : null),
+      pregunta: preguntaVenda({ transferible_abans: transfAbans.get(j.jugador_id),
+        transferible_ara: j.transferible,
         venda_apuntada: j.estat === 'venut' || j.estat === 'despatxat' }),
       valor_net, despatxar: calibrat && valor_net != null && valor_net < despatxarLlindar && !forc };
   });

@@ -1,5 +1,44 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · CORRECCIONS DEL FULL (F1-F3) + SIS VIOLACIONS D'INVARIANT
+**Correccions del contracte, aprovades per Miquel:**
+- **F1 · Restricció 15**: cap derivació que depenga del PAS 0 s'executa amb el PAS 0
+  incomplet. El sistema informa què falta i no toca res.
+- **F2 · Fora `compatible(j, lloc)`** del PAS 9. Era vàcua i el concepte sobrava:
+  l'assignació és MAXIMITZACIÓ PURA i qui discrimina és `valor(j, lloc)`. Invariant nou:
+  cap lloc queda buit havent-hi un retingut disponible.
+- **F3 · `flux_lliure = MAX(0; flux + cost_personal_actual − reserva_flux)`**: el cost del
+  personal actual ja va restat dins del flux, així que el bucle es veia sense marge just per
+  tindre el personal que estava valorant. Ara simètric amb `sou_sostenible`.
+
+**Violacions trobades per propietat sobre l'estat viu:**
+- **I1 (a)** · `P2.max_partits`: el codi tractava un lloc que NO entrena com si fóra al 100%
+  (màx 1 partit). El full diu `pct(lloc(j)) < 100 → 2`, i un lloc que no entrena té pct 0.
+  Efecte real: 1 lloc buit amb 6 titulars lliures. Verificat: 22/22 assignacions, 0 buits
+  amb candidat, 0 assignats superats per un lliure.
+- **I2 (a)** · `P7.pregunta`: el dispar estava lligat a l'estat de la FITXA (que es queda
+  `llistat` fins que algú responga), no a la transició de `transferible` entre INSTANTÀNIES.
+  La pregunta no disparava MAI. Quatre jugadors reals van eixir del mercat el 22-07 sense
+  venda apuntada i dos alhora constaven de `titular`: dos seccions dient coses incompatibles.
+- **I3 (a)** · invariant 12: `alerta.llistar_ja` interpolava un sou sense declarar-lo com a
+  import → es pintava en cru. **Regla**: el G2 comprova ara TOTES les emissions d'alerta i
+  peta si un import no es declara a `diners` (verificat llevant la declaració).
+- **I4 (a)** · invariant 10: l'alineació emet `motiu: 'llistat'` i la clau no existia. **Regla**:
+  el guardià DERIVA el domini de motius de les dues funcions productores. De pas es va
+  descobrir que el meu primer extractor llegia per línia i l'assignació ocupa dues:
+  el domini eixia buit sense dir-ho, i ara una asserció ho impedix.
+- **I5 (a)** · la VENDA no rebia puntuació; el full sí que li dona clau d'orde (`P7.ordre_venda`
+  = sobrecost DESC). **Regla**: test per a TOT rol de `ROLS`, no per als que fallaven.
+- **I6 (a)** · tres taules pintaven capçalera abans de saber si hi havia files. **Regla**: un
+  ajudant únic (`graellaAmbFiles`) que es nega a pintar una taula buida, i un test que peta
+  si apareix una capçalera sense guarda.
+
+**Tensió del contracte que queda anotada (no tocada):** `porters_n = 1 × partits_setmana` reté
+2 porters, però amb `max_partits` un porter en lloc que no entrena pot jugar els DOS partits.
+El resultat fidel al full és que el segon porter es reté i no juga. Si el v3 és LEAN, potser
+`porters_n` hauria de ser 1: decisió de Miquel.
+
+
 ## 2026-07-26 · PUJADA DES DEL MÒBIL: el fitxer es jutja pel contingut
 **Símptoma de Miquel:** al mòbil no es podien pujar els CSV, «com si fóra un format no
 acceptat»; a l'escriptori, cap problema. **No era el seu telèfon.**

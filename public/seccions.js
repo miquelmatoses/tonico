@@ -544,17 +544,14 @@ function bucleEstoc(main, e) {
   } else {
     cos.append(el('p', { class: 'nota-peu', text: t('estoc.cap_opcio') }));
   }
-  const g = el('div', { class: 'graella' });
-  g.append(el('div', { class: 'graella-cap c-estoc' },
-    ...['col_opcio', 'col_guany', 'col_cost', 'col_eficiencia'].map((k) => el('span', { text: t('estoc.' + k) }))));
-  for (const o of e.opcions) {
-    g.append(el('div', { class: 'graella-fila-d c-estoc' + (o.admissible ? '' : ' inadmissible') },
+  const g = graellaAmbFiles('c-estoc',
+    ['col_opcio', 'col_guany', 'col_cost', 'col_eficiencia'].map((k) => t('estoc.' + k)),
+    e.opcions.map((o) => el('div', { class: 'graella-fila-d c-estoc' + (o.admissible ? '' : ' inadmissible') },
       el('span', { text: o.tipus === 'estadi' ? t('estoc.estadi') : t('estoc.lloc', { lloc: o.lloc }) }),
       el('span', { text: String(o.guany ?? '—') }),
       el('span', { text: o.cost == null ? '—' : diners(o.cost) }),
-      el('span', { class: 'graella-val', text: o.eficiencia == null ? '—' : String(o.eficiencia) })));
-  }
-  cos.append(g);
+      el('span', { class: 'graella-val', text: o.eficiencia == null ? '—' : String(o.eficiencia) }))));
+  if (g) cos.append(g);
   if (!e.estadi_declarat) cos.append(el('p', { class: 'nota-peu', text: t('estoc.estadi_falta') }));
   c.append(cos); main.append(c);
 }
@@ -616,7 +613,8 @@ async function fitxesVenda(main) {
       n: (cobMin.retinguts_camp || 0) + (cobMin.retinguts_porters || 0),
       camp: cobMin.retinguts_camp || 0, porters: cobMin.retinguts_porters || 0, minim: cobMin.total }) })));
   }
-  sec.append(el('div', { class: 'graella-cap c-venda' },
+  // Sense fitxes, no es pinta la taula (ni la capçalera).
+  if (jugadors.length) sec.append(el('div', { class: 'graella-cap c-venda' },
     ...['col_jugador', 'col_proposat', 'col_preu', 'col_data', 'col_tancament', 'col_estat'].map((k) => el('span', { text: t('vendes.' + k) }))));
   for (const j of jugadors) sec.append(filaSegura(() => {
     const preu = el('input', { type: 'number', size: '8', 'aria-label': t('vendes.col_preu') }); if (j.preu_eixida != null) preu.value = j.preu_eixida;
@@ -663,6 +661,16 @@ async function fitxesVenda(main) {
 const TIPUS_MOV = ['compra', 'venda', 'sou_setmanal', 'ingres_patrocini', 'taquilla', 'personal', 'estadi', 'taxa_llistat', 'altres'];
 // Formata en «diners» les claus monetàries d'un objecte de paràmetres (la resta
 // intacta): així cap plantilla econòmica interpola un número cru.
+// PATRÓ: sense files, NO es pinta la taula (ni la capçalera). Qui vulga una graella passa
+// per ací i no pot oblidar-se'n.
+const graellaAmbFiles = (classe, capçaleres, files) => {
+  if (!files || !files.length) return null;
+  const g = el('div', { class: 'graella' });
+  g.append(el('div', { class: 'graella-cap ' + classe }, ...capçaleres.map((x) => el('span', { text: x }))));
+  for (const f of files) g.append(f);
+  return g;
+};
+
 const eur = (obj, ...keys) => { const o = { ...obj }; for (const k of keys) if (o[k] != null) o[k] = diners(o[k]); return o; };
 export async function economia(main) {
   capcalera(main, 7, 'economia');
@@ -855,17 +863,14 @@ function plaFlux(main, p) {
     cos.append(el('p', { class: 'nota-peu', text: t('flux.sense_flux') }));
   } else {
     cos.append(el('p', { class: 'nota-peu', text: t('flux.capçal', { lliure: diners(p.flux_lliure), restant: diners(p.flux_restant) }) }));
-    const g = el('div', { class: 'graella' });
-    g.append(el('div', { class: 'graella-cap c-flux' },
-      ...['col_tipus', 'col_nivell', 'col_cost', 'col_accio'].map((k) => el('span', { text: t('flux.' + k) }))));
-    for (const x of p.pla) {
-      g.append(el('div', { class: 'graella-fila-d c-flux' },
-        el('span', { text: t('element.' + x.tipus) === t('comu.text_indisponible') ? x.tipus : t('element.' + x.tipus) }),
+    const g = graellaAmbFiles('c-flux',
+      ['col_tipus', 'col_nivell', 'col_cost', 'col_accio'].map((k) => t('flux.' + k)),
+      p.pla.map((x) => el('div', { class: 'graella-fila-d c-flux' },
+        el('span', { text: t('element.' + x.tipus) }),
         el('span', { text: x.exclos ? '—' : String(x.nivell) }),
         el('span', { text: x.cost ? diners(x.cost) : '—' }),
-        el('span', { class: 'graella-val', text: t('flux.accio_' + x.accio) })));
-    }
-    cos.append(g);
+        el('span', { class: 'graella-val', text: t('flux.accio_' + x.accio) }))));
+    if (g) cos.append(g);
     cos.append(el('p', { class: 'nota-peu', text: t('flux.avis_compromis') }));
   }
   c.append(cos); main.append(c);

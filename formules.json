@@ -1176,7 +1176,7 @@
       "pas": "P11",
       "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
       "clau": "flux_lliure",
-      "linia": "flux_lliure       = flux − `reserva_flux`",
+      "linia": "flux_lliure       = MAX(0; flux + cost_personal_actual − `reserva_flux`)",
       "entrades": [
         "flux"
       ],

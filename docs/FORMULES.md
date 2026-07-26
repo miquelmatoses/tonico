@@ -202,7 +202,10 @@ capacitat_objectiu   = configuració NRG de `url_calculadora_estadi`   [declarad
 llocs ordenats per pes DESC, partit ASC
 disponible(j, lloc) = j ∈ retinguts I ¬llistat(j) I ¬lesionat(j)
                     I ¬(sancionat(j) I partit = lliga)
-                    I partits_assignats(j) < max_partits(j) I compatible(j, lloc)
+                    I partits_assignats(j) < max_partits(j)
+   [NO hi ha `compatible`: l'assignació és MAXIMITZACIÓ PURA. Qui discrimina és
+    valor(j, lloc) — un porter en un lloc de defensa hi val la seua defensa, i per
+    tant el perd contra un defensa de veres.]
 valor(j, lloc)  = SI(entrenable(lloc) I j ∈ core ∪ rotatius; `pes_entrenament`;
                      hab(j, habilitat_lloc(lloc)))
 jugador(lloc)   = PRIMER(ORDENA(FILTRA(retinguts; disponible); valor DESC,
@@ -210,6 +213,7 @@ jugador(lloc)   = PRIMER(ORDENA(FILTRA(retinguts; disponible); valor DESC,
    11A (competitiu) = els millors per valor · 11B = onze d'entrenament: garantix
    els minuts dels rotatius i dels juvenils promocionats; la resta, cossos
 buit(lloc) = ∅ → juga amb un menys; excepció declarada si cal moure un entrenable
+   [INVARIANT: cap lloc queda buit havent-hi un retingut disponible.]
 comptabilitat(j) = SUMA(pct dels llocs assignats)
 ```
 
@@ -251,7 +255,10 @@ reexecuta el PAS a CADA pujada (revelacions recalibren esperat_act)
 
 cost_flux(nivell) = `staff_cost_base` × 2^(nivell−1)
                     [1.020 · 2.040 · 4.080 · 8.160 · 16.320]
-flux_lliure       = flux − `reserva_flux`
+flux_lliure       = MAX(0; flux + cost_personal_actual − `reserva_flux`)
+   [el cost del personal que ja tens ja va restat dins del flux: si no se li torna a
+    sumar, el bucle es veu sense marge just per tindre el personal que està valorant.
+    Simètric amb sou_sostenible, que fa el mateix amb la nòmina.]
 
 prioritat_personal = `prioritat_personal`   [orde fix, pom]
    1. assistents  — accelera l'entrenament (sempre, tots dos)
@@ -324,6 +331,10 @@ Cap moviment derivat encadena efectes irreversibles.
 13. GOLDEN DE PANTALLA: render(fixture) = avaluador(fixture), valor a valor (G3).
 14. Vocabulari únic: lloc de partit · lloc entrenable · core · rotatiu · titular ·
     cos · retingut · sobrant · mancança · flux · estoc · flux_lliure. Cap sinònim.
+15. PRECONDICIÓ DEL PAS 0: cap derivació que depenga del PAS 0 s'executa amb el PAS 0
+    incomplet. Si falta `partits_setmana`, `pais` o `divisio`, el sistema INFORMA QUÈ
+    FALTA I NO TOCA RES: no assigna rols, no genera moviments i no emet accions que en
+    depenguen. Les fórmules que no en depenen (`N_core`, `titulars`) sí que s'avaluen.
 
 ---
 

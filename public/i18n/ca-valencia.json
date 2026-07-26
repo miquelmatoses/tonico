@@ -565,5 +565,6 @@
   "pujada.fitxer_buit": "«{nom}» està buit. Torna a exportar-lo de Hattrick i prova de nou.",
   "pujada.no_es_csv": "Eixe fitxer no sembla l'export de Hattrick: no hi trobe les columnes. Comprova que és el CSV de la plantilla i no un altre.",
   "esta_setmana.sub": "El que toca fer hui, i res més.",
-  "esta_setmana.estat": "Temporada {temporada} · estratègia {estrategia}"
+  "esta_setmana.estat": "Temporada {temporada} · estratègia {estrategia}",
+  "motiu.llistat": "està al mercat"
 }

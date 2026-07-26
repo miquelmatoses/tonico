@@ -37,7 +37,57 @@ function escaneja(rel) {
   return violacions;
 }
 
-const actuals = FITXERS.flatMap(escaneja);
+// ── I3: QUALSEVOL import renderitzat sense passar pel formatador únic ──
+// Un valor monetari que arriba a la vista ha de passar per diners()/eur(). Es busca l'ACCÉS
+// al camp (`obj.sou`), no la paraula: si no, les claus i18n («flux.sense_flux») donarien
+// falsos positius. Per això primer es lleven els literals de cadena, i s'ignoren els usos
+// que només comparen (`x.caixa == null`), que no pinten res.
+const CAMPS_IMPORT = ['sou', 'preu', 'caixa', 'cost', 'flux', 'import', 'valor_net', 'pressupost',
+  'sou_sostenible', 'caixa_disponible', 'estadi_cost_obra', 'estadi_manteniment', 'flux_lliure',
+  'flux_restant', 'despeses_fixes', 'ingressos_recurrents', 'nomina', 'preu_esperat',
+  'preu_proposat', 'delta_flux', 'sou_total', 'marge'];
+const senseCadenes = (l) => l
+  .replace(/'(?:[^'\\]|\\.)*'/g, "''")
+  .replace(/"(?:[^"\\]|\\.)*"/g, '""')
+  .replace(/`(?:[^`\\]|\\.)*`/g, '``');
+
+function escanejaImports(rel) {
+  const out = [];
+  readFileSync(join(arrel, rel), 'utf8').split('\n').forEach((linia, i) => {
+    const net = senseCadenes(linia.replace(/\/\/.*$/, '')).trim();
+    if (!net || !net.includes('text:')) return;
+    if (/diners\(|eur\(/.test(net)) return;                 // ja passa pel formatador
+    for (const camp of CAMPS_IMPORT) {
+      const re = new RegExp(`\\.${camp}\\b(?!\\s*[=!<>])`);   // accés al camp, no comparació
+      if (!re.test(net)) continue;
+      out.push({ fitxer: rel, linia: i + 1, text: linia.trim(), import_cru: camp });
+      break;
+    }
+  });
+  return out;
+}
+
+// ── I3 (regla, no cas): cap alerta pot passar un IMPORT sense declarar-lo a `diners`.
+// Les unitats les declara qui emet; si no, la vista el pinta en cru. Es comprova sobre TOTES
+// les emissions d'alerta, no sobre les que s'hagen vist fallar.
+const emissionsSenseDeclarar = () => {
+  const src = readFileSync(join(arrel, 'lib/regles.js'), 'utf8');
+  const fora = [];
+  // Cada crida a alerta(...): params entre les primeres claus, i `diners` com a últim array.
+  for (const m of src.matchAll(/alerta\(\s*'([A-Z_]+)'[^;]*?\{([^{}]*)\}([^;]*?)\)/gs)) {
+    const [, codi, params, cua] = m;
+    const claus = [...params.matchAll(/(\w+)\s*:/g)].map((x) => x[1]);
+    const declarats = new Set([...(cua.match(/\[([^\]]*)\]/)?.[1] || '').matchAll(/'(\w+)'/g)].map((x) => x[1]));
+    for (const c of claus) {
+      if (!CAMPS_IMPORT.includes(c)) continue;
+      if (declarats.has(c)) continue;
+      fora.push({ fitxer: 'lib/regles.js', linia: 0, text: `${codi}: l'import «${c}» no es declara a \`diners\``, import_cru: c });
+    }
+  }
+  return fora;
+};
+
+const actuals = [...FITXERS.flatMap(escaneja), ...FITXERS.flatMap(escanejaImports), ...emissionsSenseDeclarar()];
 const sig = (v) => `${v.fitxer}:${v.text}`;                        // signatura estable a moviments de línia
 
 if (process.env.ACTUALITZA_BASELINE) {

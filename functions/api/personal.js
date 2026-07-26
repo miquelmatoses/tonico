@@ -31,7 +31,7 @@ async function plaFlux(db, usuariId) {
   const base = Number(await pom('staff_cost_base')) || null;
   const prioritat = JSON.parse((await pom('prioritat_personal')) || '[]');
   const divisioPsic = normalitzaDivisio(await pom('divisio_psicoleg'));
-  const fluxLliure = eco.flux == null ? null : eco.flux - (eco.reserva_flux ?? 0);
+  const fluxLliure = eco.flux_lliure;
   if (fluxLliure == null || !base || !prioritat.length) {
     return { flux_lliure: fluxLliure, pla: [], falten: eco.flux == null ? ['flux'] : [] };
   }

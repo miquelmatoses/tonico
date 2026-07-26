@@ -56,11 +56,11 @@ assert.equal(pe.pla_flux.pla.find((x) => x.tipus === 'psicoleg').exclos, true,
 
 // ── VENDA: la PREGUNTA amb les quatre eixides ──
 assert.deepEqual(EIXIDES_DESERTA, ['rebaixar', 'rellistar', 'despatxar', 'un_euro']);
-assert.equal(preguntaVenda({ transferible_anterior: 1, transferible: 0 })?.pregunta, 'venut_o_deserta',
-  'si ha eixit del mercat i no sabem com, es pregunta');
-assert.equal(preguntaVenda({ transferible_anterior: 1, transferible: 0, venda_apuntada: true }), null,
+assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: null })?.pregunta, 'venut_o_deserta',
+  'la transició 1 → buit sense venda apuntada dispara la pregunta');
+assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: null, venda_apuntada: true }), null,
   'si ja sabem què va passar, no es pregunta');
-assert.equal(preguntaVenda({ transferible: 1 }), null, 'mentres està llistat, no es pregunta');
+assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: 1 }), null, 'mentres seguix llistat, no es pregunta');
 
 // I la tria es pot desar: cada eixida deixa la fitxa en un estat concret.
 sqlite.exec("INSERT INTO vendes (jugador_id, usuari_id, estat) VALUES (1,1,'llistat');");

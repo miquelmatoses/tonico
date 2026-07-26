@@ -1,7 +1,7 @@
 // Tonico — ALINEACIONS (contracte v3, PAS 9): greedy per PES, amb max_partits i les
 // exclusions del contracte. node test/onze.mjs
 import assert from 'node:assert/strict';
-import { valorEn, compatible, alineaOnzes } from '../lib/onze.js';
+import { valorEn, alineaOnzes } from '../lib/onze.js';
 
 const PARTITS = [{ id: 'A', competitiu: true }, { id: 'B', competitiu: false }];
 // Llocs amb el seu PES (del PAS 4): el mig pesa més que la banda, i la banda que el porter.
@@ -22,11 +22,21 @@ assert.equal(valorEn(j(1, 'cos', { creativitat: 5 }), LLOCS[0], 1000), 5,
   'un cos, en canvi, val el que val la seua habilitat');
 assert.equal(valorEn(j(1, 'titular', { defensa: 7 }), LLOCS[3], 1000), 7);
 
-// ── compatible: porteria és per a porters, i els porters són per a porteria ──
-assert.equal(compatible(j(1, 'porter', {}), LLOCS[4]), true);
-assert.equal(compatible(j(1, 'porter', {}), LLOCS[3]), false, 'un porter no ocupa un lloc de camp');
-assert.equal(compatible(j(1, 'cos', {}), LLOCS[4]), false, 'la porteria no és per a un cos');
-assert.equal(compatible(j(1, 'cos', {}), LLOCS[3]), true);
+// ── F2: NO hi ha `compatible`. Qui discrimina és valor(j, lloc): un porter en un lloc de
+// defensa hi val la seua DEFENSA, i el perd contra un defensa de veres. ──
+{
+  const LL = [{ lloc: 'dc1', entrena: false, habilitat: 'defensa', pes: 1 }];
+  const P1 = [{ id: 'A', competitiu: true }];
+  const r = alineaOnzes([
+    j(1, 'porter', { porteria: 9, defensa: 1 }),
+    j(2, 'titular', { defensa: 7 }),
+  ], LL, P1, { pes_entrenament: 1000 });
+  assert.equal(r.onze.A[0].jugador.jugador_id, 2, 'el defensa guanya el lloc de defensa pel VALOR');
+  // I si l'únic retingut és el porter, el lloc NO queda buit (invariant nou de F2).
+  const nomesPorter = alineaOnzes([j(1, 'porter', { porteria: 9, defensa: 1 })], LL, P1, { pes_entrenament: 1000 });
+  assert.equal(nomesPorter.onze.A[0].jugador.jugador_id, 1, 'cap lloc buit havent-hi un retingut disponible');
+  assert.equal(nomesPorter.buits.length, 0);
+}
 
 // ── L'onze: el nucli agafa els llocs que entrenen ──
 const squad = [
@@ -57,11 +67,17 @@ assert.equal(ext1A.jugador_id, ext1B.jugador_id, 'el lloc al 50% el dobla el mat
 const comptExt = r.comptabilitat.find((c) => c.jugador_id === ext1A.jugador_id);
 assert.equal(comptExt.total, 100, '50% + 50% = la setmana completa');
 
-// La porteria la cobrixen porters, un per partit
-assert.equal(r.onze.A.find((x) => x.lloc === 'por').jugador.categoria, 'porter');
-assert.equal(r.onze.B.find((x) => x.lloc === 'por').jugador.categoria, 'porter');
-assert.notEqual(r.onze.A.find((x) => x.lloc === 'por').jugador.jugador_id,
-  r.onze.B.find((x) => x.lloc === 'por').jugador.jugador_id, 'un porter per partit');
+// La porteria queda coberta als DOS partits. Un lloc que no entrena té pct 0 (< 100), així
+// que qui l'ocupa pot doblar: el millor porter juga els dos, i el segon queda retingut de
+// cobertura sense jugar. És el que el contracte dona (max_partits + maximització), no una
+// regla de «un porter per partit».
+for (const p of ['A', 'B']) {
+  assert.equal(r.onze[p].find((x) => x.lloc === 'por').jugador.categoria, 'porter',
+    `la porteria del partit ${p} la cobrix un porter (és qui més hi val)`);
+}
+assert.equal(r.onze.A.find((x) => x.lloc === 'por').jugador.jugador_id,
+  r.onze.B.find((x) => x.lloc === 'por').jugador.jugador_id,
+  'i és el mateix: pot doblar perquè el seu lloc no entrena');
 
 // ── Exclusions del contracte: llistat no juga, lesionat no s'alinea ──
 const ambBaixes = squad.map((x) => (x.jugador_id === 1 ? { ...x, llistat: true }
@@ -110,15 +126,5 @@ assert.equal(r5.onze.A.find((x) => x.lloc === 'mc1').jugador.jugador_id, 3, 'el 
   assert.ok(senseCos.buits.length === 1, 'el buit es declara, mai en silenci');
 }
 
-// ── Un porter no ompli un lloc de camp ni un jugador de camp la porteria ──
-{
-  const LL = [{ lloc: 'por', entrena: false, habilitat: 'porteria', pes: 0.66 },
-    { lloc: 'dc1', entrena: false, habilitat: 'defensa', pes: 0.74 }];
-  const r = alineaOnzes([j(1, 'porter', { porteria: 9 }), j(2, 'cos', { defensa: 5 })],
-    LL, [{ id: 'A', competitiu: true }], { pes_entrenament: 1000 });
-  assert.equal(r.onze.A.find((x) => x.lloc === 'por').jugador.jugador_id, 1);
-  assert.equal(r.onze.A.find((x) => x.lloc === 'dc1').jugador.jugador_id, 2,
-    'el porter no baixa a la defensa');
-}
 
-console.log('OK — onzes v3: greedy per pes, max_partits, exclusions, compatibilitat i buits');
+console.log('OK — onzes v3: greedy per pes, max_partits, exclusions i maximització pura');

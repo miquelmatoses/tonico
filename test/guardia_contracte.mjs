@@ -14,14 +14,14 @@ import { valorPlaces } from '../lib/valor_placa.js';
 import { valorHabilitat, lecturaPromocio } from '../lib/ranquing_juvenil.js';
 import { fCalendari, temporadaOperativa } from '../lib/calendari.js';
 import { ESTRATEGIES, falten as confFalten, llocsPartit } from '../lib/config.js';
-import { souSostenible, caixaDisponible } from '../lib/economia.js';
+import { souSostenible, caixaDisponible, fluxLliure } from '../lib/economia.js';
 import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
 import { pesLloc, pressupostSou, nivellObjectiu, carregaConfigPesos } from '../lib/pesos.js';
 import { nivellActual, mancanca, exces, sobrecost, prioritat } from '../lib/mancanca.js';
 import { comptesNucli, maxPartits, construeixPlantilla } from '../lib/plantilla.js';
 import { calibrat as esCalibrat, estimacioComparables, preuEsperat, setmanesVenda, valorNet,
   urgent as esUrgent, motiuVenda, ordreVenda, desti } from '../lib/preu.js';
-import { valorEn, compatible, alineaOnzes } from '../lib/onze.js';
+import { valorEn, alineaOnzes } from '../lib/onze.js';
 import { util as utilJuv, valorNetPromo, destiPromocio, objectiuJuvenil, sobrants, reiniciCrida } from '../lib/juvenil_v3.js';
 import { costFlux, nivellPagable, planPersonal, decisioRenovacio } from '../lib/personal_v3.js';
 import { guanyJugador, admissibleJugador, deltaFlux, guanyEstadi, admissibleEstadi,
@@ -197,12 +197,12 @@ const VERIFICADES = {
   // ── PAS 7 / PAS 8 / PAS 9 ──
   'P7.pregunta': () => {
     // PREGUNTA quan transferible passa 1→buit sense venda apuntada, amb les 4 eixides.
-    assert.equal(preguntaVenda({ transferible_anterior: 1, transferible: 0 })?.pregunta, 'venut_o_deserta');
-    assert.deepEqual(preguntaVenda({ transferible_anterior: 1, transferible: 0 }).eixides, EIXIDES_DESERTA);
+    assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: null })?.pregunta, 'venut_o_deserta');
+    assert.deepEqual(preguntaVenda({ transferible_abans: 1, transferible_ara: null }).eixides, EIXIDES_DESERTA);
     assert.deepEqual(EIXIDES_DESERTA, ['rebaixar', 'rellistar', 'despatxar', 'un_euro']);
-    assert.equal(preguntaVenda({ transferible_anterior: 1, transferible: 0, venda_apuntada: true }), null,
+    assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: null, venda_apuntada: true }), null,
       'si ja sabem què va passar, no es pregunta');
-    assert.equal(preguntaVenda({ transferible: 1 }), null, 'mentres està llistat, tampoc');
+    assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: 1 }), null, 'mentres seguix llistat, tampoc');
   },
   'P8.pregunta': () => {
     // Es DEMANA a l'inici de cada temporada, de la calculadora: els camps existixen i
@@ -301,8 +301,13 @@ const VERIFICADES = {
 
   // ── PAS 11 / PAS 12 ──
   'P11.flux_lliure': () => {
-    const fluxLliure = (flux, reserva) => flux - reserva;
-    assert.equal(fluxLliure(10000, 4000), 6000, 'flux − reserva_flux');
+    // F3: MAX(0; flux + cost_personal_actual − reserva_flux). El cost del personal que ja
+    // tens ja va restat dins del flux; si no se li torna a sumar, el bucle es veu sense
+    // marge just per tindre el personal que està valorant.
+    assert.equal(fluxLliure(10000, 2040, 4000), 8040);
+    assert.equal(fluxLliure(-500, 2040, 0), 1540, 'amb flux negatiu, el personal actual el sosté');
+    assert.equal(fluxLliure(-9000, 2040, 0), 0, 'MAX(0; …)');
+    assert.equal(fluxLliure(null, 2040, 0), null, 'sense flux no se suposa marge');
   },
   'P11.accio': () => {
     // ACCIÓ("contracta/puja de nivell") SI el nivell que el flux sosté > el declarat
@@ -577,7 +582,6 @@ const VERIFICADES = {
     const sanc = alineaOnzes([{ ...base, sancionat: true }], LL, P, { partit_lliga: 'A' });
     assert.equal(sanc.onze.A[0].jugador, null, 'sancionat: fora de la lliga');
     assert.equal(sanc.onze.B[0].jugador.jugador_id, 1, 'però juga l\'altre partit');
-    assert.equal(compatible({ categoria: 'porter' }, { habilitat: 'defensa' }), false);
     // «j ∈ retinguts»: el sobrant NO s'alinea. Sense este filtre, un porter en venda
     // acabava ocupant un lloc de camp.
     const sobrant = alineaOnzes([{ ...base, categoria: 'venda' }], LL, P, {});

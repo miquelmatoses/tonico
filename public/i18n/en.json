@@ -565,5 +565,6 @@
   "pujada.fitxer_buit": "«{nom}» is empty. Export it again from Hattrick and try once more.",
   "pujada.no_es_csv": "That file doesn't look like the Hattrick export: I can't find the columns. Check it's the squad CSV and not another one.",
   "esta_setmana.sub": "What to do today, and nothing else.",
-  "esta_setmana.estat": "Season {temporada} · {estrategia} strategy"
+  "esta_setmana.estat": "Season {temporada} · {estrategia} strategy",
+  "motiu.llistat": "is on the market"
 }
