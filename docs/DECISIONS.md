@@ -1,5 +1,24 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · RECONSTRUCCIÓ v3 · L4 (fet i verificat a prod)
+- **L4 — pesos i nivell objectiu** (migració 059, desplegada en el mateix lot). `lib/pesos.js`
+  amb `pes(lloc)`, `pressupost_sou(lloc)` i `nivell_objectiu(lloc)`.
+  **Origen de cada número (cap inventat):**
+  · `taula_aportacio` ← guia §4, parsejada de l'ESTRUCTURA HTML de la taula, no del text
+    pla (el text pla perd l'alineació de columnes en les files amb cel·les buides i
+    hauria assignat percentatges a la columna equivocada). 20 posicions × 10 sectors.
+  · `pes_central`=0,36 i `pes_banda`=0,255 ← guia §5 (36,0% de les ocasions pel mig,
+    25,5% per cada costat).
+  · `taula_salaris` ← guia §8, nivells 1..16 (Insuficient..Diví). Creativitat i Anotació
+    no publiquen el 16: la taula ho reflectix i `nivell_objectiu` s'hi para.
+  · **Únic pom NO CALIBRAT: `pes_mig`** (defecte 1,0). La guia diu que el mig decidix QUI
+    té l'ocasió, però no publica quant pesa contra els sectors. Va etiquetat.
+  · `posicio_aportacio` i `taula_habilitat_lloc` són el pont entre els llocs de la
+    formació i la matriu/escala de salaris.
+  **Propietat verificada al test:** més flux mai dona menys nivell (monotonia), i el mig
+  camp és el lloc que més pesa, que és el que el model afirma.
+
+
 ## 2026-07-26 · RECONSTRUCCIÓ v3 · L3 (fet i verificat a prod)
 - **L3 — economia flux/estoc** (migració 058, desplegada en el mateix lot).
   `ingressos_recurrents` (taquilla+patrocini+premis), `despeses_fixes`, `flux`,

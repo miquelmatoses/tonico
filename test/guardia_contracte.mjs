@@ -16,6 +16,7 @@ import { fCalendari, temporadaOperativa } from '../lib/calendari.js';
 import { ESTRATEGIES, falten as confFalten, llocsPartit } from '../lib/config.js';
 import { souSostenible, caixaDisponible } from '../lib/economia.js';
 import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
+import { pesLloc, pressupostSou, nivellObjectiu } from '../lib/pesos.js';
 
 const arrel = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { formules } = JSON.parse(readFileSync(join(arrel, 'formules.json'), 'utf8'));
@@ -129,6 +130,30 @@ const VERIFICADES = {
     }
     assert.equal(normalitzaDivisio('vii'), 'VII');
     assert.equal(normalitzaDivisio('9'), null, 'el que no és divisió no se suposa');
+  },
+
+  // PAS 2/4 — el pes d'un lloc i el nivell que l'economia hi sosté. Números de la guia.
+  'P2.pes': () => {
+    // pes(lloc) = SUMA(sectors: aportacio × pes_sector). Guia §5: central .36, banda .255.
+    const ps = { mig: 1, central: 0.36, banda: 0.255 };
+    const ap = { Mig: { 'Mig#Cre': 1, 'DC#Def': 0.4, 'Lat#Def': 0.19, 'AC#Anot': 0.22, 'AC#Pas': 0.33, 'AL#Anot': 0.26 } };
+    const aMa = 1 * 1 + 0.4 * 0.36 + 0.19 * 0.255 + 0.22 * 0.36 + 0.33 * 0.36 + 0.26 * 0.255;
+    assert.equal(pesLloc('Mig', ap, ps), Math.round(aMa * 10000) / 10000);
+    assert.equal(pesLloc('cap', ap, ps), null, 'posició desconeguda → no se suposa');
+  },
+  'P4.pressupost_sou': () => {
+    // pressupost_sou(lloc) = sou_sostenible × pes(lloc) / SUMA(pesos)
+    const pesos = { a: 3, b: 1 };
+    assert.deepEqual(pressupostSou(pesos, 8000), { a: 6000, b: 2000 });
+    assert.equal(pressupostSou(pesos, null), null, 'sense sou sostenible, res');
+  },
+  'P4.nivell_objectiu': () => {
+    // MAX(n : taula_salaris(hab, n) ≤ pressupost). Guia §8: creativitat 1→250, 2→270, 3→330.
+    const ts = { creativitat: { 1: 250, 2: 270, 3: 330 } };
+    assert.equal(nivellObjectiu('creativitat', 330, ts), 3);
+    assert.equal(nivellObjectiu('creativitat', 329, ts), 2);
+    assert.equal(nivellObjectiu('creativitat', 100, ts), 0, 'no arriba ni al primer');
+    assert.equal(nivellObjectiu('creativitat', null, ts), null);
   },
 
   // P10.valor casos (a)(b)(c): coincidixen amb valorHabilitat. El cas (d) NO — vore DIVERGENTS.
