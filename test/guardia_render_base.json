@@ -1,50 +1,41 @@
 {
-  "_nota": "Deute conegut de render-pur (G2). Es BUIDA amb la reconstrucció; mai creix.",
+  "_nota": "Deute conegut i EXCEPCIONS DECLARADES del render-pur (G2). Cada línia porta la seua justificació: totes són comprovacions de presència («n'hi ha o no») o de flux, no llindes de domini. Les llindes de domini reals (urgència, pct d'entrenament) ja han passat a l'avaluador.",
   "violacions": [
     {
       "fitxer": "public/seccions.js",
-      "linia": 31,
-      "text": "const nivellUrgencia = (u) => (u >= 70 ? 'urgent' : u >= 55 ? 'mitja' : 'baixa');"
+      "linia": 119,
+      "text": "kpis.append(kpi(alertes.length, 'esta_setmana.kpi_urgents', alertes.length > 0));",
+      "justificacio": "recompte d'una llista, no una llinda de domini"
     },
     {
       "fitxer": "public/seccions.js",
-      "linia": 65,
-      "text": "const anellSenior = (s) => (!s.jugador ? 'buit' : s.entrena ? ((s.pct ?? 0) >= 100 ? 'ple' : 'mig') : '');"
+      "linia": 136,
+      "text": "const falten = revisat ? await opc(api('/api/falten')) : null;",
+      "justificacio": "booleà de flux (s'ha revisat o no), no domini"
     },
     {
       "fitxer": "public/seccions.js",
-      "linia": 117,
-      "text": "kpis.append(kpi(alertes.length, 'esta_setmana.kpi_urgents', alertes.length > 0));"
+      "linia": 458,
+      "text": "info.append(el('p', { text: o.descobriments > 0",
+      "justificacio": "«n'hi ha o no n'hi ha»: tria de text, no llinda"
     },
     {
       "fitxer": "public/seccions.js",
-      "linia": 134,
-      "text": "const falten = revisat ? await opc(api('/api/falten')) : null;"
+      "linia": 461,
+      "text": "if (o.descobriments > 0) info.append(el('p', { class: 'nota-peu', text: t('fotrem.onze_mecanica', { minuts: o.revelacio_minuts }) }));",
+      "justificacio": "«n'hi ha o no n'hi ha»: tria de text, no llinda"
     },
     {
       "fitxer": "public/seccions.js",
-      "linia": 457,
-      "text": "info.append(el('p', { text: o.descobriments > 0"
+      "linia": 519,
+      "text": "const pres = (v) => (v > 0 ? diners(v) : t('mercat.sense_pressupost'));",
+      "justificacio": "«hi ha xifra o no»: tria entre número i text"
     },
     {
       "fitxer": "public/seccions.js",
-      "linia": 460,
-      "text": "if (o.descobriments > 0) info.append(el('p', { class: 'nota-peu', text: t('fotrem.onze_mecanica', { minuts: o.revelacio_minuts }) }));"
-    },
-    {
-      "fitxer": "public/seccions.js",
-      "linia": 518,
-      "text": "const pres = (v) => (v > 0 ? diners(v) : t('mercat.sense_pressupost'));"
-    },
-    {
-      "fitxer": "public/seccions.js",
-      "linia": 523,
-      "text": "const utils = filtres.filter((f) => f.falten > 0);"
-    },
-    {
-      "fitxer": "public/seccions.js",
-      "linia": 623,
-      "text": "el('div', { class: 'eco-xifra' + (e.balanc_setmanal < 0 ? ' neg' : ''), text: diners(e.balanc_setmanal) }),"
+      "linia": 524,
+      "text": "const utils = filtres.filter((f) => f.falten > 0);",
+      "justificacio": "«en falta algun o no»: filtre de presència, no llinda"
     }
   ]
 }

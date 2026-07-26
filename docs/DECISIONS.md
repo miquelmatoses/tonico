@@ -1,5 +1,24 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · RECONSTRUCCIÓ v3 · L10, L11 i L12 (fet i verificat a prod)
+- **L10 — bucle d'estoc** (migració 065). Jugadors i estadi competixen pel mateix diner amb
+  la mateixa unitat: guany d'un fitxatge = mancança×pes; guany d'una obra = el que el seu
+  Δflux DESBLOQUEJA on hi ha mancança. Guanya la millor relació guany/cost, no el guany més
+  gran. **Estadi: no es modela, es DEMANA** (la guia §10 delega en calculadores) — l'usuari
+  declara manteniment i cost d'obra de la configuració NRG i Paco els reclama amb l'adreça.
+- **L11 — personal** (migració 064). Tot el personal cobra igual: `staff_cost_base × 2^(n−1)`.
+  Per això **no hi ha comparació d'eficiència entre tipus** (hauria exigit inventar els
+  efectes d'assistent, metge i psicòleg, que la guia no publica): prioritat fixa i cada
+  tipus s'emporta el nivell que el flux restant sostinga. **Acomiadar no existix.**
+- **L12 — informe i agenda** (migració 066). `urgencia_tipus` i les llindes passen a poms.
+  **Les llindes 70/55 vivien a la VISTA** (`seccions.js`), que és el que l'invariant 12
+  prohibix; ara les llig l'avaluador i la vista només tria classe. Igual amb l'anell
+  d'entrenament (`pct >= 100`), que ara el calcula el PAS 9.
+  **Baseline del G2: de 9 a 6**, i les 6 que queden són **excepcions declarades i
+  justificades línia a línia** — totes són comprovacions de presència («n'hi ha o no») o de
+  flux, no llindes de domini.
+
+
 ## 2026-07-26 · RECONSTRUCCIÓ v3 · L8 (fet i verificat a prod)
 - **L8 — alineacions per PES** (migració 062, desplegada en el mateix lot). `lib/onze.js`
   substituïx `lib/alineacio.js` (retirat): l'onze es munta greedy pels llocs de més pes,

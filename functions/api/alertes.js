@@ -3,6 +3,8 @@
 import { estatRevisio } from '../../lib/orquestra_alertes.js';
 import { regeneraPipeline } from '../../lib/pipeline.js';
 
+import { nivellAccio } from '../../lib/informe.js';
+
 export async function onRequestGet({ env, data }) {
   const { results } = await env.DB.prepare(
     `SELECT a.id, a.missatge_clau, a.parametres, a.urgencia, a.estat, j.nom AS jugador
@@ -24,8 +26,17 @@ export async function onRequestGet({ env, data }) {
   }
   const agenda = [...perDia].map(([data_accio, accions]) => ({ data: data_accio, accions }));
   const { revisat, instantania } = await estatRevisio(env.DB, data.usuari.id);
+  const llind = async (clau) => {
+    const f = await env.DB.prepare(
+      "SELECT valor FROM plantilles_parametres WHERE plantilla=(SELECT estrategia FROM config_usuari WHERE usuari_id=?) AND clau=?"
+    ).bind(data.usuari.id, clau).first();
+    return f?.valor != null ? parseInt(f.valor, 10) : null;
+  };
+  const llindars = { llindar_urgent: await llind('llindar_urgent'), llindar_aviat: await llind('llindar_aviat') };
+  const ambNivell = (a) => ({ ...a, nivell: nivellAccio(a.urgencia, llindars) });
+
   return json({
-    alertes: results.map((a) => ({ ...a, parametres: a.parametres ? JSON.parse(a.parametres) : {} })),
+    alertes: results.map((a) => ambNivell({ ...a, parametres: a.parametres ? JSON.parse(a.parametres) : {} })),
     agenda, revisat, instantania,
   });
 }

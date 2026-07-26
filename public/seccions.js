@@ -28,7 +28,9 @@ const card = (titol, compte, variant) => {
 const cos = (...fills) => el('div', { class: 'card-cos' }, ...fills);
 // Sigla de posició → classe de color del xip.
 const posCls = (p) => 'pos ' + String(p || '').toLowerCase().slice(0, 2);
-const nivellUrgencia = (u) => (u >= 70 ? 'urgent' : u >= 55 ? 'mitja' : 'baixa');
+// El NIVELL el calcula l'avaluador (PAS 12) amb llindes que són poms: ací només es tria
+// la classe. La vista no compara números de domini (invariant 12).
+const classeNivell = (n) => ({ urgent: 'urgent', aviat: 'mitja', normal: 'baixa' }[n] || 'baixa');
 
 // ── CAMP DE JOC (compartit sènior/juvenil) ──
 // Coordenades per posició calcades de la proposta de disseny (formació 3-3-2-2);
@@ -61,8 +63,8 @@ function campDeJoc(slots, opts) {
   }
   return c;
 }
-// SÈNIOR (§6): un sol entrenament, però per posició arriba al 100% o al 50% en este partit.
-const anellSenior = (s) => (!s.jugador ? 'buit' : s.entrena ? ((s.pct ?? 0) >= 100 ? 'ple' : 'mig') : '');
+// SÈNIOR: l'anell (quant d'entrenament hi ha en joc) el calcula l'avaluador al PAS 9.
+const anellSenior = (s) => s.anell ?? '';
 // JUVENIL (§26): dos entrenaments. L'anell diu el NIVELL D'ENTRENAMENT de la plaça,
 // no si es descobrix: entrena els DOS components (ab→doble), només el principal (a→ple,
 // 100%) o només el secundari (b→mig, 66%). Passades entrena mc I davanter per igual: un
@@ -148,7 +150,7 @@ export async function esta_setmana(main) {
   if (alertes.length) {
     const graella = el('ul', { class: 'targetes' });
     for (const a of alertes) {
-      const niv = nivellUrgencia(a.urgencia ?? 0);
+      const niv = classeNivell(a.nivell);
       const par = a.parametres || {};
       const li = el('li', { class: 'targeta ' + niv },
         el('div', { class: 'targeta-cap' },

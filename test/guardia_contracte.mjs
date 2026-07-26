@@ -26,6 +26,7 @@ import { util as utilJuv, valorNetPromo, destiPromocio, objectiuJuvenil, sobrant
 import { costFlux, nivellPagable, planPersonal, decisioRenovacio } from '../lib/personal_v3.js';
 import { guanyJugador, admissibleJugador, deltaFlux, guanyEstadi, admissibleEstadi,
   eficiencia, decisioEstoc } from '../lib/estoc.js';
+import { nivellAccio, agrupaAlertes, ordenaAgenda } from '../lib/informe.js';
 
 const arrel = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { formules } = JSON.parse(readFileSync(join(arrel, 'formules.json'), 'utf8'));
@@ -309,6 +310,26 @@ const VERIFICADES = {
       [{ id: 'A', competitiu: true }, { id: 'B' }], { pes_entrenament: 1000 });
     assert.equal(r.comptabilitat.find((c) => c.jugador_id === 1).total, 100);
   },
+
+  // PAS 12 — informe i agenda. Les llindes són POMS, mai números a la vista.
+  'P12.nivell': () => {
+    const LL = { llindar_urgent: 70, llindar_aviat: 55 };
+    assert.equal(nivellAccio(70, LL), 'urgent');
+    assert.equal(nivellAccio(69, LL), 'aviat');
+    assert.equal(nivellAccio(54, LL), 'normal');
+    assert.equal(nivellAccio(90, {}), 'normal', 'sense llindes declarades no s\'inventa alarma');
+  },
+  'P12.alertes': () => {
+    const g = agrupaAlertes([{ tipus: 'a', urgencia: 40 }, { tipus: 'a', urgencia: 72 }, { tipus: 'b', urgencia: 60 }],
+      { llindar_urgent: 70, llindar_aviat: 55 });
+    assert.equal(g.length, 2, 'una línia per TIPUS');
+    assert.equal(g[0].tipus, 'a');
+    assert.equal(g[0].urgencia, 72, 'ordenades per urgència DESC');
+    assert.deepEqual(agrupaAlertes([], {}), [], '«de moment res» no és una alerta');
+  },
+  'P12.agenda': () => assert.deepEqual(
+    ordenaAgenda([{ data_accio: '2026-08-03' }, { data_accio: '2026-07-28' }]).map((x) => x.data_accio),
+    ['2026-07-28', '2026-08-03'], 'per data'),
 
   // PAS 8 — el bucle d'estoc: jugadors i estadi amb la MATEIXA unitat.
   'P8.guany': () => assert.equal(guanyJugador(3, 1.5), 4.5, 'mancança × pes'),
