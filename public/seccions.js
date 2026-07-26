@@ -992,7 +992,9 @@ function filaMembre(m) {
   };
   const nivell = num('nivell', m.nivell);
   const sou = num('sou', m.sou);
-  const setm = num('setmanes_contracte', m.setmanes_contracte);
+  // La DATA de fi, no un compte de setmanes: un compte es congela i el venciment no arriba mai.
+  const fi = el('input', { type: 'date', 'aria-label': t('personal.data_fi_contracte') });
+  if (m.data_fi_contracte) fi.value = m.data_fi_contracte;
   const desa = el('button', { type: 'submit', class: 'b-xic', text: t('personal.desa') });
   const esb = el('button', { type: 'button', class: 'b-xic neutre', text: t('personal.esborra') });
   esb.addEventListener('click', () => api('/api/personal', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: m.id }) }).then(() => location.reload()));
@@ -1001,13 +1003,13 @@ function filaMembre(m) {
       el('b', { text: lblElement(m.tipus || m.rol) })),
     el('label', { class: 'camp-xic' }, t('personal.nivell'), nivell),
     el('label', { class: 'camp-xic' }, t('personal.sou'), sou),
-    el('label', { class: 'camp-xic' }, t('personal.setmanes_contracte'), setm),
+    el('label', { class: 'camp-xic' }, t('personal.data_fi_contracte'), fi),
     desa, esb);
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     await api('/api/personal', { method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ id: m.id, rol: m.rol, tipus: m.tipus || m.rol,
-        nivell: nivell.value || null, sou: sou.value || null, setmanes_contracte: setm.value || null }) });
+        nivell: nivell.value || null, sou: sou.value || null, data_fi_contracte: fi.value || null }) });
     location.reload();
   });
   return f;

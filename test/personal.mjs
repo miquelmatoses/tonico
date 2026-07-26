@@ -31,9 +31,9 @@ assert.equal(d.desquadres.length, 2, 'sense declarar: falten assistents i metge'
 assert.ok(d.checklists.find((c) => c.fase === 'inflexio').cost_total === 430000, 'checklist d\'inflexió amb el cost de FuturCoach');
 
 // Model ric: cada especialista és un membre; el desquadre compara COMPTES per tipus.
-await personal.onRequestPost(ctx({ rol: 'especialista', tipus: 'assistents', nivell: 7, sou: 2000, setmanes_contracte: 10 }));
-await personal.onRequestPost(ctx({ rol: 'especialista', tipus: 'assistents', nivell: 6, sou: 1800, setmanes_contracte: 10 }));
-await personal.onRequestPost(ctx({ rol: 'especialista', tipus: 'metge', nivell: 5, sou: 1000, setmanes_contracte: 2 }));
+await personal.onRequestPost(ctx({ rol: 'especialista', tipus: 'assistents', nivell: 7, sou: 2000, data_fi_contracte: '2026-10-04' }));
+await personal.onRequestPost(ctx({ rol: 'especialista', tipus: 'assistents', nivell: 6, sou: 1800, data_fi_contracte: '2026-10-04' }));
+await personal.onRequestPost(ctx({ rol: 'especialista', tipus: 'metge', nivell: 5, sou: 1000, data_fi_contracte: '2026-08-09' }));
 d = await (await personal.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 assert.equal(d.membres.length, 3, 'tres membres declarats');
 assert.equal(d.desquadres.length, 0, 'declarat el personal → tot quadra');

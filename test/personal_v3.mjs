@@ -1,7 +1,7 @@
 // Tonico — PERSONAL del v3 (PAS 11): bucle de FLUX, prioritat fixa, sense acomiadar.
 // node test/personal_v3.mjs
 import assert from 'node:assert/strict';
-import { costFlux, nivellPagable, planPersonal, decisioRenovacio } from '../lib/personal_v3.js';
+import { costFlux, nivellPagable, planPersonal, decisioRenovacio, setmanesRestants } from '../lib/personal_v3.js';
 
 const BASE = 1020;   // staff_cost_base
 
@@ -66,3 +66,25 @@ console.log('OK — personal v3: cost per nivell, prioritat fixa i renovació');
   assert.equal(dolent.pla[0].nivell, 5, 'i amb el doble sí — que és el que passava');
 }
 console.log('OK — el pressupost de personal va en setmanes, com la seua escala');
+
+// ── EL CONTRACTE ÉS UNA DATA, NO UN COMPTE ────────────────────────────────────────────
+// REGRESSIÓ REAL: `setmanes_contracte` era un COMPTE declarat que ningú decrementava. Els
+// quatre membres de Miquel deien «16» des del dia que els va declarar, o siga que el venciment
+// no arribava MAI i l'avís de renovació no podia disparar-se. Una data no es podrix.
+{
+  assert.equal(setmanesRestants('2026-11-04', '2026-10-26'), 2, 'nou dies → dues setmanes');
+  assert.equal(setmanesRestants('2026-10-26', '2026-10-26'), 0, 'hui mateix → venç');
+  assert.equal(setmanesRestants('2026-10-19', '2026-10-26'), -1, 'ja passat → negatiu, no zero');
+  assert.equal(setmanesRestants(null, '2026-10-26'), null, 'sense data no se suposa res');
+
+  // LA PROPIETAT: el mateix contracte, mirat més tard, queda MENYS. Amb un compte declarat
+  // això no passava, i eixe era exactament el bug.
+  const fi = '2026-11-04';
+  let previ = Infinity;
+  for (const hui of ['2026-09-01', '2026-10-01', '2026-10-26', '2026-11-04']) {
+    const r = setmanesRestants(fi, hui);
+    assert.ok(r < previ, `passant el temps, el contracte ha d'acostar-se al venciment (${hui})`);
+    previ = r;
+  }
+}
+console.log('OK — el contracte venç de veres: les setmanes es deriven de la data');

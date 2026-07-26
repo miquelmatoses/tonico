@@ -16,7 +16,7 @@ function compteEspecialistes(membres) {
   return c;
 }
 
-import { planPersonal, decisioRenovacio, baseTipus } from '../../lib/personal_v3.js';
+import { planPersonal, decisioRenovacio, baseTipus, setmanesRestants } from '../../lib/personal_v3.js';
 import { economia } from '../../lib/economia.js';
 import { llegixConfig } from '../../lib/config.js';
 import { normalitzaDivisio, divisioArab } from '../../lib/divisio.js';
@@ -48,8 +48,12 @@ async function plaFlux(db, usuariId) {
   // existix ni renovar el que no toca. La identitat d'un membre és el seu `tipus`; l'agrupació
   // porta el COMPTE, perquè de tipus com l'assistent n'hi pot haver més d'un.
   const { results: membres } = await db.prepare(
-    "SELECT COALESCE(NULLIF(tipus,''), rol) AS tipus, nivell, setmanes_contracte FROM personal_membres WHERE usuari_id=?"
+    "SELECT COALESCE(NULLIF(tipus,''), rol) AS tipus, nivell, data_fi_contracte FROM personal_membres WHERE usuari_id=?"
   ).bind(usuariId).all();
+  // Les setmanes que queden es DERIVEN de la data: un compte declarat es congela i el
+  // venciment no arriba mai (era el cas — els quatre membres deien «16» indefinidament).
+  const avui = new Date().toISOString().slice(0, 10);
+  for (const m of membres) m.setmanes_contracte = setmanesRestants(m.data_fi_contracte, avui);
   const perTipus = new Map();
   for (const m of membres) {
     if (!perTipus.has(m.tipus)) perTipus.set(m.tipus, []);
@@ -74,7 +78,8 @@ async function plaFlux(db, usuariId) {
     else if (x.nivell > d.nivell) accio = 'puja';
     return { ...x, nivell_declarat: d?.nivell ?? null, venciment: !!venç,
       accio, renovacio: renovacio?.accio ?? null, renovacio_nivell: renovacio?.nivell ?? null,
-      setmanes_contracte: d?.setmanes_contracte ?? null };
+      setmanes_contracte: d?.setmanes_contracte ?? null,
+      data_fi_contracte: d?.data_fi_contracte ?? null };
   });
   return { flux_lliure: fluxLliure, flux_restant, staff_cost_base: base, pla: amb, falten: [] };
 }
@@ -95,8 +100,11 @@ export async function onRequestGet({ env, data }) {
   };
 
   const { results: membres } = await env.DB.prepare(
-    'SELECT id, rol, tipus, nivell, sou, setmanes_contracte FROM personal_membres WHERE usuari_id=? ORDER BY rol, tipus, id'
+    'SELECT id, rol, tipus, nivell, sou, data_fi_contracte FROM personal_membres WHERE usuari_id=? ORDER BY rol, tipus, id'
   ).bind(data.usuari.id).all();
+  // Les setmanes que queden es DERIVEN de la data (mai declarades: un compte es congela).
+  const avuiGet = new Date().toISOString().slice(0, 10);
+  for (const m of membres) m.setmanes_contracte = setmanesRestants(m.data_fi_contracte, avuiGet);
   const compte = compteEspecialistes(membres);
 
   const { results: fases } = await env.DB.prepare('SELECT fase, config FROM fases_config WHERE plantilla=? ORDER BY fase').bind(pla.plantilla).all();
@@ -113,14 +121,14 @@ export async function onRequestGet({ env, data }) {
 export async function onRequestPost({ request, env, data }) {
   const c = await request.json().catch(() => ({}));
   if (!ROLS.includes(c.rol)) return json({ error: 'rol_invalid' }, 400);
-  const camps = [c.rol, c.tipus || null, enter(c.nivell), enter(c.sou), enter(c.setmanes_contracte)];
+  const camps = [c.rol, c.tipus || null, enter(c.nivell), enter(c.sou), c.data_fi_contracte || null];
   if (c.id) {                                        // edició d'un membre propi
     const own = await env.DB.prepare('SELECT id FROM personal_membres WHERE id=? AND usuari_id=?').bind(c.id, data.usuari.id).first();
     if (!own) return json({ error: 'no_trobat' }, 404);
-    await env.DB.prepare('UPDATE personal_membres SET rol=?, tipus=?, nivell=?, sou=?, setmanes_contracte=? WHERE id=?').bind(...camps, c.id).run();
+    await env.DB.prepare('UPDATE personal_membres SET rol=?, tipus=?, nivell=?, sou=?, data_fi_contracte=? WHERE id=?').bind(...camps, c.id).run();
     return json({ ok: true });
   }
-  await env.DB.prepare('INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou, setmanes_contracte) VALUES (?, ?, ?, ?, ?, ?)').bind(data.usuari.id, ...camps).run();
+  await env.DB.prepare('INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou, data_fi_contracte) VALUES (?, ?, ?, ?, ?, ?)').bind(data.usuari.id, ...camps).run();
   return json({ ok: true }, 201);
 }
 

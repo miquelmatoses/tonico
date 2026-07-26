@@ -85,11 +85,12 @@ const ctx = { env: { DB: db }, data: { usuari: { id: 1 } } };
 const cap = (await (await apiPersonal.onRequestGet(ctx)).json()).pla_flux;
 assert.ok(cap.pla.some((x) => x.accio === 'contracta'), 'sense res declarat, es proposa contractar');
 
-// Ara es declara EXACTAMENT el que el pla demana, amb contracte llarg.
+// Ara es declara EXACTAMENT el que el pla demana, amb contracte llarg (16 setmanes vista).
+const finLluny = new Date(Date.now() + 16 * 7 * 86400000).toISOString().slice(0, 10);
 for (const x of cap.pla.filter((p) => !p.exclos && p.nivell > 0)) {
   for (let k = 0; k < (x.quantitat ?? 1); k++) {
-    sqlite.exec(`INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou, setmanes_contracte)
-      VALUES (1,'especialista','${x.tipus}',${x.nivell},${x.cost},16);`);
+    sqlite.exec(`INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou, data_fi_contracte)
+      VALUES (1,'especialista','${x.tipus}',${x.nivell},${x.cost},'${finLluny}');`);
   }
 }
 const amb = (await (await apiPersonal.onRequestGet(ctx)).json()).pla_flux;
@@ -102,7 +103,8 @@ for (const x of amb.pla.filter((p) => !p.exclos && p.nivell > 0)) {
 }
 
 // I si un venç, torna a haver-hi acció: la renovació depén del VENCIMENT, no de existir.
-sqlite.exec('UPDATE personal_membres SET setmanes_contracte=0 WHERE usuari_id=1;');
+// El venciment es DERIVA de la data: posar-la a hui és «li queda 0 setmanes».
+sqlite.exec(`UPDATE personal_membres SET data_fi_contracte='${new Date().toISOString().slice(0, 10)}' WHERE usuari_id=1;`);
 const venç = (await (await apiPersonal.onRequestGet(ctx)).json()).pla_flux;
 assert.ok(venç.pla.some((x) => x.venciment && x.accio !== 'res'),
   'V3: al venciment sí que hi ha decisió de renovació');
