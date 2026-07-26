@@ -22,7 +22,7 @@
     {
       "fitxer": "public/seccions.js",
       "linia": 461,
-      "text": "if (o.descobriments > 0) info.append(el('p', { class: 'nota-peu', text: t('fotrem.onze_mecanica', { minuts: o.revelacio_minuts }) }));",
+      "text": "if (o.descobriments > 0) info.append(el('p', { class: 'nota-peu', text: t('juvenils.onze_mecanica', { minuts: o.revelacio_minuts }) }));",
       "justificacio": "«n'hi ha o no n'hi ha»: tria de text, no llinda"
     },
     {

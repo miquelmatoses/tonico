@@ -45,7 +45,7 @@ for (const ing of [50000, 80000, 120000, 200000]) {
 // despesa_planter: es DERIVA. Les instal·lacions només amb acadèmia; els cercapromeses en
 // QUALSEVOL mode (1..3), perquè el mode diu si es criden, no quants n'hi ha.
 const COSTOS = { cost_instalacions: 5000, cost_cercapromeses: 5000 };
-assert.equal(despesaPlanter('academia', 3, COSTOS), 20000, 'el fixture real de Benifotrem');
+assert.equal(despesaPlanter('academia', 3, COSTOS), 20000, 'el fixture real de Sènior FC');
 assert.equal(despesaPlanter('cercapromeses', 3, COSTOS), 15000, 'sense acadèmia, no es paguen instal·lacions');
 assert.equal(despesaPlanter('cap', 1, COSTOS), 5000,
   '«cap» NO vol dir cost zero: el cercapromeses hi és i es paga igual');

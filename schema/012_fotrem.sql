@@ -1,4 +1,4 @@
--- Tonico — migració 012: Fotrem complet (Fase 7). Decisió per juvenil (elegit /
+-- Tonico — migració 012: Juvenils complet (Fase 7). Decisió per juvenil (elegit /
 -- seguiment / cua d'eixida), llindars d'acceptació de crides i alerta predictiva.
 CREATE TABLE juvenils_estat (
   jugador_id  INTEGER PRIMARY KEY REFERENCES jugadors(id),

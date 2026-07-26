@@ -1,6 +1,6 @@
 // Tonico — avaluador d'ofertes de crida (polit #2.4d). Per a OFERTES NOVES del
 // cercapromeses (no per als de casa): veredicte segons la doctrina per edat.
-import { avaluaCrida } from '../../lib/fotrem.js';
+import { avaluaCrida } from '../../lib/juvenils_vista.js';
 
 export async function onRequestGet({ request, env, data }) {
   const q = new URL(request.url).searchParams;

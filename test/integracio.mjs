@@ -33,7 +33,7 @@ sqlite.exec(src('../schema/002_llavor.sql'));
 sqlite.exec(src('../schema/027_vendes.sql'));            // desar deriva l'estat llistat (Transferible)
 sqlite.exec(src('../schema/048_llistat_derivat.sql'));
 sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1, 'zero@tonico', 'x');
-             INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1, 1, 'Benifotrem', 'senior');`);
+             INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1, 1, 'Sènior FC', 'senior');`);
 const db = new D1(sqlite);
 const ancora = await carregaAncora(db);
 assert.equal(ancora.anyDies, 112);

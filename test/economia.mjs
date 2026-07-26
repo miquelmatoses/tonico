@@ -17,7 +17,7 @@ const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
              INSERT INTO config_usuari (usuari_id, estrategia, pais, divisio, sistema_juvenil, n_cercapromeses, partits_setmana)
                VALUES (1,'competitiva','ES','VII','academia',3,2);
-             INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'Benifotrem','senior');
+             INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'Sènior FC','senior');
              INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');`);
 const ancora = await carregaAncora(db);
 const senior = readFileSync(new URL('../data/fixtures/players.csv', import.meta.url), 'utf8')

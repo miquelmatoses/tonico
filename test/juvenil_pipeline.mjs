@@ -1,7 +1,7 @@
 // Tonico — Àrees F/G: juvenils avaluats contra el pipeline de la fàbrica +
 // especialitats. node test/juvenil_pipeline.mjs
 import assert from 'node:assert/strict';
-import { avaluaPipeline, vistaJuvenil } from '../lib/fotrem.js';
+import { avaluaPipeline, vistaJuvenil } from '../lib/juvenils_vista.js';
 import { REGLES } from '../lib/regles.js';
 
 const pipe = { principal: 'creativitat', secundari: 'passades', vendibles: ['anotacio', 'extrem', 'defensa'],
@@ -37,7 +37,7 @@ const juvenils = [
   { jugador_id: 3, nom: 'Decidit', estat: 'cua_eixida', pipeline: { fora: true, proposta: 'cua_eixida' } },
   { jugador_id: 4, nom: 'Dins', estat: 'seguiment', pipeline: { fora: false } },
 ];
-// 3c: sense crida disponible o sense sobrepassar l'objectiu → res (la taula de Fotrem ho mostra).
+// 3c: sense crida disponible o sense sobrepassar l'objectiu → res (la taula de Juvenils ho mostra).
 assert.equal(REGLES.ALR_JOVE_FORA_PIPELINE({ juvenils }, { urgencia: 50 }).length, 0, 'sense crida disponible → res');
 assert.equal(REGLES.ALR_JOVE_FORA_PIPELINE({ juvenils, crida: { disponible: true }, juvenil_objectiu: 10 }, { urgencia: 50 }).length, 0, 'crida disponible però sense sobrepassar l\'objectiu → res');
 // Amb crida disponible I sobrepassament de l'objectiu (acceptar el nou passaria de 3) → una línia.

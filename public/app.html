@@ -27,7 +27,7 @@
     <section id="decisions"><div class="cos"></div></section>
     <section id="alineacio"><div class="cos"></div></section>
     <section id="plantilla"><div class="cos"></div></section>
-    <section id="fotrem"><div class="cos"></div></section>
+    <section id="juvenils"><div class="cos"></div></section>
     <section id="mercat"><div class="cos"></div></section>
     <section id="economia"><div class="cos"></div></section>
     <section id="configuracio"><div class="cos"></div></section>
@@ -50,10 +50,10 @@
     const SECCIONS = [
       ['esta-setmana', 'esta_setmana', S.esta_setmana], ['decisions', 'decisions', S.decisions],
       ['alineacio', 'alineacio', S.alineacio], ['plantilla', 'plantilla', S.plantilla],
-      ['fotrem', 'fotrem', S.fotrem], ['mercat', 'mercat', S.mercat],
+      ['juvenils', 'juvenils', S.juvenils], ['mercat', 'mercat', S.mercat],
       ['economia', 'economia', S.economia], ['configuracio', 'configuracio', S.configuracio], ['personal', 'personal', S.personal],
-    ].filter(([id]) => teAcademia || id !== 'fotrem');   // punt 3c: sense acadèmia, res de Fotrem
-    if (!teAcademia) document.getElementById('fotrem')?.remove();
+    ].filter(([id]) => teAcademia || id !== 'juvenils');   // punt 3c: sense acadèmia, res de Juvenils
+    if (!teAcademia) document.getElementById('juvenils')?.remove();
 
     // Píndoles de navegació
     const nav = document.getElementById('ancores');

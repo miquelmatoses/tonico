@@ -112,7 +112,7 @@ export function pintaNav(activa) {
     document.createTextNode(' · '),
     el('a', { href: '/mercat.html', text: t('nav.mercat') }),
     document.createTextNode(' · '),
-    el('a', { href: '/fotrem.html', text: t('nav.fotrem') }),
+    el('a', { href: '/juvenils.html', text: t('nav.juvenils') }),
     document.createTextNode(' · '),
     el('a', { href: '/personal.html', text: t('nav.personal') }),
     document.createTextNode(' · '),

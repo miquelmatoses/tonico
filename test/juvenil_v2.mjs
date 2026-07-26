@@ -1,7 +1,7 @@
 // Tonico — doctrina juvenil v2: llenguatge pla, desconegut ≠ venda (cas Revelable),
 // juga/no juga, fre de suplents i rànquing d'eixida. node test/juvenil_v2.mjs
 import assert from 'node:assert/strict';
-import { avaluaPipeline } from '../lib/fotrem.js';
+import { avaluaPipeline } from '../lib/juvenils_vista.js';
 import { recomanaJoc, freSuplents, ranquingEixida, revelacions } from '../lib/juvenil.js';
 import { alineaJuvenil } from '../lib/alineacio_juvenil.js';
 import { REGLES } from '../lib/regles.js';

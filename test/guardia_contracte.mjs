@@ -395,7 +395,7 @@ const VERIFICADES = {
   // PAS 3 — el flux decidix el sou sostenible; l'estoc, la compra d'hui.
   'P3.ingressos_recurrents': () => {
     // v3.1: NOMÉS taquilla + per_periode(patrocini). `premis` és estoc, no flux.
-    assert.equal(21127 + perPeriode(40500, 2), 102127, 'el fixture real de Benifotrem');
+    assert.equal(21127 + perPeriode(40500, 2), 102127, 'el fixture real de Sènior FC');
   },
   'P3.per_periode': () => {
     assert.equal(perPeriode(7100, 2), 14200, 'tot import setmanal es normalitza al període');

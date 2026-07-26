@@ -135,9 +135,9 @@ export async function esta_setmana(main) {
     el('div', { class: 'briefing-cap' }, el('div', { class: 'avatar', text: 'PM' }),
       el('div', {}, el('div', { class: 'briefing-nom', text: t(revisat ? (alertes.length ? 'esta_setmana.salutacio' : 'esta_setmana.tot_be') : 'esta_setmana.no_revisat') }),
         el('div', { class: 'briefing-rol', text: t('esta_setmana.firma') }))));
-  // Resum d'una línia de l'onze juvenil (2d): el detall viu a Fotrem, no al parte.
-  const fot = await opc(api('/api/fotrem'));
-  if (fot && fot.onze_juvenil) brief.append(el('p', {}, el('a', { href: '#fotrem', text: tp('esta_setmana.resum_juvenil', fot.onze_juvenil.descobriments) })));
+  // Resum d'una línia de l'onze juvenil (2d): el detall viu a Juvenils, no al parte.
+  const fot = await opc(api('/api/juvenils'));
+  if (fot && fot.onze_juvenil) brief.append(el('p', {}, el('a', { href: '#juvenils', text: tp('esta_setmana.resum_juvenil', fot.onze_juvenil.descobriments) })));
   // Peticions manuals que li falten (punt 3)
   const falten = revisat ? await opc(api('/api/falten')) : null;
   if (falten && falten.items && falten.items.length) {
@@ -371,52 +371,52 @@ export async function plantilla(main) {
   }
 }
 
-// ── 5. Fotrem ──
+// ── 5. Juvenils ──
 const HABS_ENTREN = ['porteria', 'defensa', 'creativitat', 'extrem', 'passades', 'anotacio', 'pilota_aturada'];
-export async function fotrem(main) {
-  capcalera(main, 5, 'fotrem');
+export async function juvenils(main) {
+  capcalera(main, 5, 'juvenils');
   const ESTATS = ['seguiment', 'elegit', 'cua_eixida'];
-  const val = (v) => (v == null ? '-' : v === 'desconegut' ? t('fotrem.desconegut') : v);
-  const d = await api('/api/fotrem');
+  const val = (v) => (v == null ? '-' : v === 'desconegut' ? t('juvenils.desconegut') : v);
+  const d = await api('/api/juvenils');
   const juvenils = d.juvenils;
   // Recordatori permanent de tàctica (punt 15) + entrenament juvenil (punt 12)
-  main.append(el('div', { class: 'tip', text: '⚡ ' + t('fotrem.tactica_reminder') }));
-  const rell = card(t('fotrem.rellotges_titol'));
+  main.append(el('div', { class: 'tip', text: '⚡ ' + t('juvenils.tactica_reminder') }));
+  const rell = card(t('juvenils.rellotges_titol'));
   const rc = el('div', { class: 'card-cos' });
   if (d.crida) cridaSetmanal(rc, d.crida);
   // 4a: proposta de promoció setmanal (millor nivell elegible); cua → despatx/vendre.
   if (d.promocio) {
     const p = d.promocio.proposta;
-    rc.append(el('p', { text: !p ? t('fotrem.promocio_cap')
-      : p.cua ? t('fotrem.promocio_cua', { nom: p.nom, nivell: decimal(p.nivell) })
-        : t('fotrem.promocio_proposta', { nom: p.nom, nivell: decimal(p.nivell) }) }));
+    rc.append(el('p', { text: !p ? t('juvenils.promocio_cap')
+      : p.cua ? t('juvenils.promocio_cua', { nom: p.nom, nivell: decimal(p.nivell) })
+        : t('juvenils.promocio_proposta', { nom: p.nom, nivell: decimal(p.nivell) }) }));
   }
   rell.append(rc);
   const duoDalt = el('div', { class: 'duo' }, rell);
   formEntrenamentJuvenil(duoDalt, d);
   main.append(duoDalt);
-  if (!juvenils.length) { main.append(el('p', { text: t('fotrem.buit') })); return; }
+  if (!juvenils.length) { main.append(el('p', { text: t('juvenils.buit') })); return; }
   const hab = (j) => j.habilitats.filter((h) => h.actual != null || h.potencial != null).map((h) => `${SIGLA[h.habilitat]} ${val(h.actual)}/${val(h.potencial)}`).join('  ');
   // Pipeline en llenguatge pla (punt 2). Desconegut ≠ dolent: destí «per determinar».
   const pipeTxt = (j) => {
     const p = j.pipeline; if (!p) return '';
-    if (p.motiu === 'per_determinar') return t('fotrem.pipe_per_determinar', { habilitat: p.principal });
+    if (p.motiu === 'per_determinar') return t('juvenils.pipe_per_determinar', { habilitat: p.principal });
     if (p.fora) {
-      const base = p.motiu === 'topat' ? t('fotrem.pipe_topat', { habilitat: p.principal, actual: p.principal_actual, potencial: p.principal_potencial })
-        : t('fotrem.pipe_sostre', { potencial: p.principal_potencial });
-      return `${base} → ${t(p.proposta === 'promocionar_vendre' ? 'fotrem.prop_vendre' : 'fotrem.prop_cua')}`;
+      const base = p.motiu === 'topat' ? t('juvenils.pipe_topat', { habilitat: p.principal, actual: p.principal_actual, potencial: p.principal_potencial })
+        : t('juvenils.pipe_sostre', { potencial: p.principal_potencial });
+      return `${base} → ${t(p.proposta === 'promocionar_vendre' ? 'juvenils.prop_vendre' : 'juvenils.prop_cua')}`;
     }
-    return `${t('fotrem.pipe_creix', { habilitat: p.principal, actual: p.principal_actual, potencial: p.principal_potencial })} · ${t(p.desti_promocio === 'promociona' ? 'fotrem.desti_promociona' : 'fotrem.desti_venda')}`;
+    return `${t('juvenils.pipe_creix', { habilitat: p.principal, actual: p.principal_actual, potencial: p.principal_potencial })} · ${t(p.desti_promocio === 'promociona' ? 'juvenils.desti_promociona' : 'juvenils.desti_venda')}`;
   };
   // Taules netes: NIVELL numèric (una dada per columna); el PERQUÈ (raonament) viu al
   // títol de la cel·la (detall per fila), no a la graella. Aterratge = només la data (5b).
   // Rànquing per NIVELL: insígnia de nivell, qui és, i el rellotge de promoció.
   // El PERQUÈ (pipeline) viu al títol de la fila, no dins la graella.
   const duo = el('div', { class: 'duo' });
-  const rank = card(t('fotrem.titol'), juvenils.length, 'llima');
+  const rank = card(t('juvenils.titol'), juvenils.length, 'llima');
   juvenils.forEach((j, i) => rank.append(filaSegura(() => {
-    const sel = el('select', { 'aria-label': t('fotrem.col_estat') }, ...ESTATS.map((e) => { const o = el('option', { value: e, text: t('fotrem.estat_' + e) }); if (e === j.estat) o.setAttribute('selected', ''); return o; }));
-    sel.addEventListener('change', () => api('/api/fotrem', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.jugador_id, estat: sel.value }) }).catch(() => {}));
+    const sel = el('select', { 'aria-label': t('juvenils.col_estat') }, ...ESTATS.map((e) => { const o = el('option', { value: e, text: t('juvenils.estat_' + e) }); if (e === j.estat) o.setAttribute('selected', ''); return o; }));
+    sel.addEventListener('change', () => api('/api/juvenils', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.jugador_id, estat: sel.value }) }).catch(() => {}));
     const fila = el('div', { class: 'rank-fila' },
       el('div', { class: 'nivell' + (i === 0 ? ' top' : ''), text: j.nivell != null ? decimal(j.nivell) : '—' }),
       el('div', {}, el('div', { class: 'fila-nom', text: j.nom }),
@@ -424,7 +424,7 @@ export async function fotrem(main) {
           el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` }),
           el('span', { class: 'skills', text: hab(j) }))),
       el('div', { class: 'rank-dreta' },
-        el('b', { text: j.dies_restants_promocio != null ? tp('fotrem.dies', j.dies_restants_promocio, { dies: j.dies_restants_promocio }) : '—' }),
+        el('b', { text: j.dies_restants_promocio != null ? tp('juvenils.dies', j.dies_restants_promocio, { dies: j.dies_restants_promocio }) : '—' }),
         el('span', { text: j.aterratge?.data || (typeof j.aterratge === 'string' ? j.aterratge : '—') }), ' ', sel));
     const perque = pipeTxt(j); if (perque) fila.setAttribute('title', perque);   // detall per fila
     return fila;
@@ -434,58 +434,58 @@ export async function fotrem(main) {
   main.append(duo);
 
   // Avaluador d'ofertes noves (punt 4d)
-  const cOf = card(t('fotrem.oferta_titol'));
+  const cOf = card(t('juvenils.oferta_titol'));
   const form = el('form', { class: 'card-cos' });
-  const edatInp = el('input', { type: 'number', size: '3', 'aria-label': t('fotrem.edat') });   // NO ombrejar el formatador edat()   // crea
-  const pot = el('input', { type: 'number', size: '3', 'aria-label': t('fotrem.col_potencial') });   // crea
-  const comp = el('input', { type: 'number', size: '3', 'aria-label': t('fotrem.compost') });   // crea
+  const edatInp = el('input', { type: 'number', size: '3', 'aria-label': t('juvenils.edat') });   // NO ombrejar el formatador edat()   // crea
+  const pot = el('input', { type: 'number', size: '3', 'aria-label': t('juvenils.col_potencial') });   // crea
+  const comp = el('input', { type: 'number', size: '3', 'aria-label': t('juvenils.compost') });   // crea
   const res = el('span', {});
-  const b = el('button', { type: 'button', class: 'b-prim', text: t('fotrem.avalua') });
+  const b = el('button', { type: 'button', class: 'b-prim', text: t('juvenils.avalua') });
   b.addEventListener('click', async () => {
     const r = await opc(api('/api/oferta?' + new URLSearchParams({ edat: edatInp.value, potencial: pot.value, compost: comp.value })));
-    res.textContent = r && r.veredicte ? (r.veredicte.accepta ? t('fotrem.crida_accepta', { motiu: t('motiu.' + r.veredicte.motiu) }) : t('fotrem.crida_rebutja', { motiu: t('motiu.' + r.veredicte.motiu) })) : '—';
+    res.textContent = r && r.veredicte ? (r.veredicte.accepta ? t('juvenils.crida_accepta', { motiu: t('motiu.' + r.veredicte.motiu) }) : t('juvenils.crida_rebutja', { motiu: t('motiu.' + r.veredicte.motiu) })) : '—';
   });
   form.append(el('div', { class: 'form-graella' },
-    el('label', {}, t('fotrem.edat'), edatInp), el('label', {}, t('fotrem.col_potencial'), pot),
-    el('label', {}, t('fotrem.compost'), comp)), b, ' ', res);
+    el('label', {}, t('juvenils.edat'), edatInp), el('label', {}, t('juvenils.col_potencial'), pot),
+    el('label', {}, t('juvenils.compost'), comp)), b, ' ', res);
   cOf.append(form); main.append(cOf);
 }
 
 // Rellotge de crida (reinici setmanal global): disponible → acció «he fet la crida»
 // (data + resultat); gastada o tancada → línia informativa amb la pròxima.
 function cridaSetmanal(main, c) {
-  if (!c.disponible) { main.append(el('p', { class: 'nota-peu', text: t('fotrem.crida_proxima', { proxima: c.proxima }) })); return; }
+  if (!c.disponible) { main.append(el('p', { class: 'nota-peu', text: t('juvenils.crida_proxima', { proxima: c.proxima }) })); return; }
   const fer = (resultat) => api('/api/crides', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ resultat }) }).then(() => location.reload());
-  const acc = el('button', { type: 'button', class: 'b-xic', text: t('fotrem.crida_feta_accepta') });
+  const acc = el('button', { type: 'button', class: 'b-xic', text: t('juvenils.crida_feta_accepta') });
   acc.addEventListener('click', () => fer('acceptat'));
-  const reb = el('button', { type: 'button', class: 'b-xic neutre', text: t('fotrem.crida_feta_rebutja') });
+  const reb = el('button', { type: 'button', class: 'b-xic neutre', text: t('juvenils.crida_feta_rebutja') });
   reb.addEventListener('click', () => fer('rebutjat'));
   main.append(el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
-    el('span', { class: 'mov-text', text: t('fotrem.crida_disponible', { caduca: c.caducitat }) }), acc, reb));
+    el('span', { class: 'mov-text', text: t('juvenils.crida_disponible', { caduca: c.caducitat }) }), acc, reb));
 }
 
 // Onze juvenil proposat (2b): descobriment probabilístic + fre de suplents.
 function onzeJuvenil(main, o) {
-  const sec = card(t('fotrem.onze_titol'), o.en_camp);
+  const sec = card(t('juvenils.onze_titol'), o.en_camp);
   const info = el('div', { class: 'card-cos' });
-  if (o.no_viable) info.append(el('p', { text: t('fotrem.onze_no_viable', { en_camp: o.en_camp, minim: o.minim }) }));
+  if (o.no_viable) info.append(el('p', { text: t('juvenils.onze_no_viable', { en_camp: o.en_camp, minim: o.minim }) }));
   // 2c: capçalera derivada del repartiment REAL; si no hi ha descobriment, en positiu.
   info.append(el('p', { text: o.descobriments > 0
-    ? t('fotrem.onze_repartiment', { descobriments: o.descobriments, entrenen: o.entrenen, estructura: o.estructura })
-    : tp('fotrem.onze_tot_entrena', o.entrenen) }));
-  if (o.descobriments > 0) info.append(el('p', { class: 'nota-peu', text: t('fotrem.onze_mecanica', { minuts: o.revelacio_minuts }) }));
-  if (o.sense_marge) info.append(el('p', { class: 'nota-peu', text: t('fotrem.onze_sense_marge') }));
+    ? t('juvenils.onze_repartiment', { descobriments: o.descobriments, entrenen: o.entrenen, estructura: o.estructura })
+    : tp('juvenils.onze_tot_entrena', o.entrenen) }));
+  if (o.descobriments > 0) info.append(el('p', { class: 'nota-peu', text: t('juvenils.onze_mecanica', { minuts: o.revelacio_minuts }) }));
+  if (o.sense_marge) info.append(el('p', { class: 'nota-peu', text: t('juvenils.onze_sense_marge') }));
   sec.append(info);
   // El descobriment porta el seu propi text (amb plural i dies); el MIXT els encadena:
   // «entrena X · descobriment de Y» — les dues coses passen a la mateixa plaça.
-  const txtDescobriment = (s, hab) => tp('fotrem.onze_m_descobriment', (hab || '').split(' i ').length, { principal: hab, dies: s.dies_restants_promocio ?? '?' });
+  const txtDescobriment = (s, hab) => tp('juvenils.onze_m_descobriment', (hab || '').split(' i ').length, { principal: hab, dies: s.dies_restants_promocio ?? '?' });
   const motiuSlot = (s) => s.motiu === 'descobriment'
     ? txtDescobriment(s, s.habilitat)
     : s.motiu === 'mixt'
-      ? `${t('fotrem.onze_m_entrena', { principal: s.habilitat_entrena })} · ${txtDescobriment(s, s.habilitat_descobrix)}`
+      ? `${t('juvenils.onze_m_entrena', { principal: s.habilitat_entrena })} · ${txtDescobriment(s, s.habilitat_descobrix)}`
       : s.motiu === 'entrena'
-        ? t('fotrem.onze_m_entrena', { principal: s.habilitat })
-        : t('fotrem.onze_m_' + s.motiu);
+        ? t('juvenils.onze_m_entrena', { principal: s.habilitat })
+        : t('juvenils.onze_m_' + s.motiu);
   // El mateix camp que la sènior: xip acolorit per posició, motiu al títol (detall per fila).
   sec.append(campDeJoc(o.onze, {
     anell: anellJuvenil,
@@ -494,7 +494,7 @@ function onzeJuvenil(main, o) {
   }), campLlegenda('juvenil'));
   if (o.banqueta.length) {
     sec.append(el('div', { class: 'graella-fila' },
-      el('b', { text: t('fotrem.onze_banqueta') }),
+      el('b', { text: t('juvenils.onze_banqueta') }),
       el('span', { text: o.banqueta.map((s) => s.nom).join(', ') })));
   }
   main.append(sec);
@@ -504,20 +504,20 @@ function onzeJuvenil(main, o) {
 function formEntrenamentJuvenil(main, d) {
   const ej = d.entrenament_juvenil || {};
   const pipe = d.pipeline ? `${d.pipeline.principal}/${d.pipeline.secundari}` : '—';
-  const sec = card(t('fotrem.entrenament_titol'), null, 'llima');
+  const sec = card(t('juvenils.entrenament_titol'), null, 'llima');
   const sc = el('div', { class: 'card-cos' });
-  if (ej.principal) sc.append(el('p', { class: 'nota-peu', text: t('fotrem.entrenament_actual', { principal: ej.principal, secundari: ej.secundari || '?', pipeline: pipe }) }));
+  if (ej.principal) sc.append(el('p', { class: 'nota-peu', text: t('juvenils.entrenament_actual', { principal: ej.principal, secundari: ej.secundari || '?', pipeline: pipe }) }));
   sec.append(sc);
   // Punt 4: si no hi ha res declarat, preselecciona el pipeline de la fase (no alfabètic).
   const defPrin = ej.principal ?? d.pipeline?.principal ?? null;
   const defSec = ej.secundari ?? d.pipeline?.secundari ?? null;
   const opcs = (sel) => HABS_ENTREN.map((h) => { const o = el('option', { value: h, text: h }); if (sel === h) o.setAttribute('selected', ''); return o; });
-  const principal = el('select', { 'aria-label': t('fotrem.entrenament_principal') }, ...opcs(defPrin));   // precarrega
-  const secundari = el('select', { 'aria-label': t('fotrem.entrenament_secundari') }, el('option', { value: '', text: '—' }), ...opcs(defSec));
-  const b = el('button', { type: 'submit', class: 'b-prim', text: t('fotrem.entrenament_desa') });
+  const principal = el('select', { 'aria-label': t('juvenils.entrenament_principal') }, ...opcs(defPrin));   // precarrega
+  const secundari = el('select', { 'aria-label': t('juvenils.entrenament_secundari') }, el('option', { value: '', text: '—' }), ...opcs(defSec));
+  const b = el('button', { type: 'submit', class: 'b-prim', text: t('juvenils.entrenament_desa') });
   const f = el('form', { class: 'card-cos' }, el('div', { class: 'form-graella' },
-    el('label', {}, t('fotrem.entrenament_principal'), principal),
-    el('label', {}, t('fotrem.entrenament_secundari'), secundari)), b);
+    el('label', {}, t('juvenils.entrenament_principal'), principal),
+    el('label', {}, t('juvenils.entrenament_secundari'), secundari)), b);
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     await api('/api/pla', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ entrenament_juvenil: { principal: principal.value, secundari: secundari.value || null } }) });

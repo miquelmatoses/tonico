@@ -27,7 +27,7 @@ assert.ok(clausAlerta.length >= 10, 'troba les claus d\'alerta');
 for (const k of new Set(clausAlerta)) assert.ok(te(k), `falta la clau i18n d'alerta: ${k}`);
 
 // ── 2. Literals ESTÀTICS t('a.b') i data-i18n="a.b" a tot public/ ──
-// (Este pas és qui hauria caçat fotrem.edat.) Els prefixos dinàmics t('a.' + x)
+// (Este pas és qui hauria caçat juvenils.edat.) Els prefixos dinàmics t('a.' + x)
 // acaben en punt o en «_» i NO es capturen ací; es cobrixen al pas 3.
 const pub = new URL('../public/', import.meta.url);
 const fitxers = ['comu.js', 'seccions.js',
@@ -52,7 +52,7 @@ function motiusDelCodi() {
   // destí de venda, pipeline juvenil) que es renderitzen amb altres prefixos.
   const PRODUCTORS = [
     ['../lib/orquestra_alineacio.js', 'avisosOnze'],
-    ['../lib/fotrem.js', 'avaluaCrida'],
+    ['../lib/juvenils_vista.js', 'avaluaCrida'],
   ];
   const vals = new Set();
   for (const [ruta, fn] of PRODUCTORS) {
@@ -88,15 +88,15 @@ const families = {
   'motiu_baixa': ['venda', 'despatx', 'promocio', 'altres'],
   // `tipus.*` (moviments) i `font.*` (d'on eixia el preu estimat) han caigut: ni hi ha
   // comptabilitat de moviments ni cap estimació de preu.
-  'fotrem.estat_': ['seguiment', 'elegit', 'cua_eixida'],
+  'juvenils.estat_': ['seguiment', 'elegit', 'cua_eixida'],
   'configuracio.partits_': ['1', '2'],
   'estrategia': ['competitiva', 'cycle'],
   'sistema_juvenil': ['academia', 'cercapromeses', 'cap'],
   'personal.rol_': ['entrenador', 'especialista'],
   'vendes.estat_': ['pendent', 'llistat', 'venut', 'desert', 'despatxat'],
   'vendes': ['col_jugador', 'col_posicio', 'col_especialitat', 'col_situacio', 'col_data', 'col_tancament', 'col_estat'],
-  'fotrem.joc_motiu_': ['revelar', 'dud', 'entrena', 'sense_pipeline'],
-  'fotrem.onze_m_': ['entrena', 'estructura', 'recanvi'],
+  'juvenils.joc_motiu_': ['revelar', 'dud', 'entrena', 'sense_pipeline'],
+  'juvenils.onze_m_': ['entrena', 'estructura', 'recanvi'],
   'falten': ['caixa', 'personal', 'estadi', 'config_pais', 'config_divisio', 'config_partits_setmana', 'config_estrategia'],
   'dia': ['0', '1', '2', '3', '4', '5', '6'],   // noms de dia per a l'agenda
   'agenda': ['llistar'],                          // etiquetes curtes d'acció (missatge_clau del servidor)
@@ -104,7 +104,7 @@ const families = {
   'element': ['assistent', 'metge', 'psicoleg', 'forma', 'tactic', 'financer', 'entrenador'],
   // Columnes construïdes des d'arrays (t('prefix.' + k)):
   'personal': ['rol', 'tipus', 'nivell', 'sou', 'setmanes_contracte'],
-  'fotrem': ['col_jugador', 'col_nivell', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_potencial', 'col_promocio', 'col_aterratge', 'col_estat'],
+  'juvenils': ['col_jugador', 'col_nivell', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_potencial', 'col_promocio', 'col_aterratge', 'col_estat'],
   'plantilla': ['col_jugador', 'col_posicio', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_tsi', 'col_puntuacio', 'col_categoria'],
   'jugador': ['col_data', 'col_temporada', 'col_edat', 'col_tsi', 'col_sou', 'col_habilitats', 'col_pops', 'col_categoria', 'col_origen', 'col_puntuacio'],
 };
@@ -115,7 +115,7 @@ for (const [prefix, vals] of Object.entries(families)) for (const v of vals) {
 
 // ── 3b. PLURALS (punt 4): cada base tp() ha de tindre _1 i _n a les dues llengües, i la
 // forma _1 (n=1) no pot renderitzar «1 {plural}» (cap «1 <paraula acabada en s>»). ──
-const basesPlural = ['esta_setmana.resum_juvenil', 'fotrem.onze_tot_entrena', 'fotrem.onze_m_descobriment', 'alerta.llistar_agregat'];
+const basesPlural = ['esta_setmana.resum_juvenil', 'juvenils.onze_tot_entrena', 'juvenils.onze_m_descobriment', 'alerta.llistar_agregat'];
 for (const cat of [ca, en]) for (const base of basesPlural) {
   for (const suf of ['_1', '_n']) assert.ok(Object.prototype.hasOwnProperty.call(cat, base + suf), `falta la forma plural ${base}${suf}`);
   const un = cat[base + '_1'].replace(/\{n\}/g, '1');
@@ -150,12 +150,12 @@ const orfenes = clausCa.filter((k) => /^(alerta|agenda)\./.test(k) && !emesa(k) 
 assert.deepEqual(orfenes, [], `claus i18n òrfenes (al catàleg però mai emeses): ${orfenes.join(', ')}`);
 
 // ── 6. GUARDIÀ LINGÜÍSTIC (valencià de la casa): formes VETADES al catàleg ca. Vore
-// docs/GLOSSARI.md. Impedix que tornen a colar-se «d'hui», «parte», «Fotrem», etc. ──
+// docs/GLOSSARI.md. Impedix que tornen a colar-se «d'hui», «parte», «Juvenils», etc. ──
 const VETATS = [
   [/\bd['’]hui\b/i, 'd\'hui → «de hui» (hui no s\'apostrofa)'],
   [/\bavui\b/i, 'avui → «hui»'],
   [/\bparte\b/i, 'parte → «informe» (castellanisme)'],
-  [/\bfotrem\b/i, 'Fotrem → «Acadèmia» (nom propi d\'un usuari)'],
+  [/\bfotrem\b/i, 'Juvenils → «Acadèmia» (nom propi d\'un usuari)'],
   [/\baquest[ao]?s?\b/i, 'aquest/-a → «este/esta»'],
   [/\bsorti[rmt]/i, 'sortir → «eixir»'],
   [/\b(?:me|te|se)va\b/i, 'meva/teva/seva → «meua/teua/seua»'],
@@ -170,7 +170,7 @@ assert.deepEqual(infraccions, [], `formes vetades al catàleg ca:\n  ${infraccio
 // regulars dona ~145 falsos positius sobre 580 claus: un guardià que crida el llop cada dia
 // no es mira. Per a fer-ho bé cal recórrer l'AST de la vista o instrumentar `t()` en execució.
 // Passada MANUAL feta el 2026-07-26: cinc textos morts de la fàbrica esborrats
-// (pujada.exit, economia.capital_coixi_sou, comparador.velocitat, fotrem.onze_descobriments,
+// (pujada.exit, economia.capital_coixi_sou, comparador.velocitat, juvenils.onze_descobriments,
 // esta_setmana.alineacio_resum). El control automàtic de `alerta.*`/`agenda.*` (pas 5) es
 // queda, que és on el text mort fa més mal: eixes claus les emet el codi, no la vista.
 
@@ -185,9 +185,9 @@ const EXEMPTS_PLURAL = new Set([
   'alerta.llistar_lesionat',           // idem
   'moviments.historial',               // «Historial ({n})» — compte entre parèntesis
   'alineacio.onze_sub',                // «{n} entrenant» — gerundi invariable
-  'fotrem.onze_repartiment',           // comptes + gerundis, cap plural que concorde
+  'juvenils.onze_repartiment',           // comptes + gerundis, cap plural que concorde
   'vendes.retingut_cobertura',         // «{n} de camp» — sense nom en plural
-  'fotrem.onze_no_viable',             // «només {en_camp} en camp» — idem
+  'juvenils.onze_no_viable',             // «només {en_camp} en camp» — idem
   'mercat.filtre_core', 'mercat.filtre_cos',   // «Falten: {falten}.» — etiqueta de llista
   'alerta.crida_juvenil',              // «es quedarà en {futur}» — no compta res
 ]);

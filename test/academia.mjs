@@ -21,7 +21,7 @@ assert.equal(juvAlerts(), 0, 'sense acadèmia: cap alerta juvenil (ni crida ni m
 
 // ── L'usuari ACTIVA l'acadèmia després (obri el juvenil a HT) ──
 sqlite.exec(`
-  INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (2,1,'Fotrem','juvenil');
+  INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (2,1,'Juvenils','juvenil');
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (2,2,'2026-07-25',83,1);
   INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (2,2,200,'J');
   INSERT INTO instantanies_juvenils (instantania_id, jugador_id, dies_restants_promocio) VALUES (2,2,50);

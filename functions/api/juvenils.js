@@ -1,7 +1,7 @@
-// Tonico — Fotrem (Fase 7). GET la vista dels juvenils (habilitats 3 estats,
+// Tonico — Juvenils (Fase 7). GET la vista dels juvenils (habilitats 3 estats,
 // projecció d'aterratge, avaluació de crida) + decisions; POST fixa una decisió.
 import { carregaAncora } from './pujar.js';
-import { vistaJuvenil } from '../../lib/fotrem.js';
+import { vistaJuvenil } from '../../lib/juvenils_vista.js';
 import { entrenamentPrescrit } from '../../lib/entrenament_places.js';
 import { recomanaJoc } from '../../lib/juvenil.js';
 import { alineaJuvenil } from '../../lib/alineacio_juvenil.js';

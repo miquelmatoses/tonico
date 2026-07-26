@@ -58,7 +58,7 @@ assert.equal((await r.json()).error, 'sense_equips');
 
 // ── Onboarding: crea els dos equips ──
 r = await crida(equips.onRequestPost, { method: 'POST', url: '/api/equips', cookie,
-  body: JSON.stringify({ senior: { nom: 'Benifotrem', id_hattrick: '12345' }, juvenil: { nom: 'Fotrem' } }) });
+  body: JSON.stringify({ senior: { nom: 'Sènior FC', id_hattrick: '12345' }, juvenil: { nom: 'Juvenils' } }) });
 assert.equal(r.status, 201);
 r = await crida(equips.onRequestGet, { url: '/api/equips', cookie });
 assert.equal((await r.json()).equips.length, 2);

@@ -8,7 +8,7 @@ import * as comparador from '../functions/api/comparador.js';
 
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
-             INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'Benifotrem','senior');`);
+             INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'Sènior FC','senior');`);
 const ancora = await carregaAncora(db);
 const base = readFileSync(new URL('../data/fixtures/players.csv', import.meta.url), 'utf8')
   .replace(/\r/g, '').split('\n').filter((l) => l !== '').map((l) => l.split(','));

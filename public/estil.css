@@ -157,7 +157,7 @@ button { font-family: var(--font); cursor: pointer; }
 .card-compte { background: rgba(0,0,0,.18); padding: 2px 9px; border-radius: 999px; font-weight: 800; font-size: 13px; }
 .card-cos { padding: 16px; }
 
-/* ══ FILA DE JUGADOR (plantilla, fotrem, vendes) ══ */
+/* ══ FILA DE JUGADOR (plantilla, juvenils, vendes) ══ */
 .fila { display: grid; grid-template-columns: minmax(0,2.4fr) auto auto minmax(0,1.6fr) auto;
   align-items: center; gap: 12px; padding: 9px 16px; border-top: 1px solid var(--vora-suau); }
 .fila:first-child { border-top: 0; }
@@ -345,7 +345,7 @@ ul { margin: 0 0 12px; padding-left: 18px; }
 /* Les pantalles d'autenticació són a sang: el <main> de l'app no les ha de capar. */
 main:has(.auth) { max-width: none; padding: 0; }
 
-/* ══ GRAELLA DE DUES COLUMNES (Moviments, Fotrem, Economia, Personal) ══ */
+/* ══ GRAELLA DE DUES COLUMNES (Moviments, Juvenils, Economia, Personal) ══ */
 .duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr)); gap: 16px; align-items: start; }
 
 /* ══ BANNER DE CONSELL ══ */
