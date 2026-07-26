@@ -61,4 +61,36 @@ assert.ok(/const graellaAmbFiles = /.test(vista), 'l\'ajudant únic de graella e
 assert.ok(/if \(!files \|\| !files\.length\) return null;/.test(vista),
   'i es nega a pintar una taula sense files');
 
-console.log('OK — regressions de pantalla: tota categoria amb puntuació, cap taula buida');
+// ── V1: cap camp es pinta buit havent-hi valor ──
+// La regla: tot camp de formulari o duu el VALOR ACTUAL precarregat, o declara per què no en
+// té. Un camp que es pinta buit i després es desa esborra el que hi havia; i un camp buit
+// obliga l'usuari a tornar a teclejar el que el sistema ja sap.
+//   `value:` a la construcció, o `X.value = …` dins de la mateixa funció → precarregat.
+//   `// crea`        → formulari d'alta: no hi ha valor previ.
+//   `// precarrega`  → el valor entra per un ajudant (que hi posa `selected`).
+// Un camp nou sense res d'això peta ací: és la manera de no repetir el defecte.
+{
+  const linies = vista.split('\n');
+  const fiFuncio = (i) => { let k = i; while (k < linies.length && !/^\}/.test(linies[k])) k++; return k; };
+  const nus = [];
+  linies.forEach((l, i) => {
+    const re = /const (\w+) = el\('(input|select)'/g;
+    let m;
+    while ((m = re.exec(l))) {
+      if (/value:|type: 'file'|type: 'submit'|type: 'hidden'/.test(l)) continue;
+      if (/setAttribute\('selected'/.test(l)) continue;
+      if (/\/\/ (crea|precarrega)$/.test(l.trimEnd())) continue;
+      const cos = linies.slice(i, fiFuncio(i)).join('\n');
+      if (new RegExp(`\\b${m[1]}\\.value\\s*=`).test(cos)) continue;
+      nus.push(`${i + 1}:${m[1]}`);
+    }
+  });
+  assert.deepEqual(nus, [],
+    `camps sense valor precarregat ni motiu declarat (${nus.join(', ')}): ` +
+    'o li poses el valor actual, o el marques «// crea» / «// precarrega»');
+  // I que els marcadors no es tornen un calaix de sastre buit: han de existir de veritat.
+  assert.ok((vista.match(/\/\/ (crea|precarrega)$/gm) || []).length >= 5,
+    'els marcadors de camp existixen i s\'usen');
+}
+
+console.log('OK — regressions de pantalla: tota categoria amb puntuació, cap taula buida, cap camp buit sense motiu');

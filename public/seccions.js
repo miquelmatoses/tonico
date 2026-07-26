@@ -252,7 +252,7 @@ export async function decisions(main) {
   if (!pendents.length) cosM.append(el('p', { class: 'nota-peu', text: t('decisions.sense_motius') }));
   for (const j of pendents) {
     const sel = el('select', {}, ...['venda', 'despatx', 'promocio', 'altres'].map((m) => el('option', { value: m, text: t('motiu_baixa.' + m) })));
-    const imp = el('input', { type: 'number', size: '8', 'aria-label': t('decisions.import') });
+    const imp = el('input', { type: 'number', size: '8', 'aria-label': t('decisions.import') });   // crea
     const origenSel = el('select', {}, el('option', { value: '', text: '—' }), ...(j.candidats_juvenils || []).map((c) => el('option', { value: c.id, text: c.nom })));
     const b = el('button', { type: 'button', class: 'b-xic', text: t('decisions.desa') });
     b.addEventListener('click', async () => {
@@ -432,9 +432,9 @@ export async function fotrem(main) {
   // Avaluador d'ofertes noves (punt 4d)
   const cOf = card(t('fotrem.oferta_titol'));
   const form = el('form', { class: 'card-cos' });
-  const edatInp = el('input', { type: 'number', size: '3', 'aria-label': t('fotrem.edat') });   // NO ombrejar el formatador edat()
-  const pot = el('input', { type: 'number', size: '3', 'aria-label': t('fotrem.col_potencial') });
-  const comp = el('input', { type: 'number', size: '3', 'aria-label': t('fotrem.compost') });
+  const edatInp = el('input', { type: 'number', size: '3', 'aria-label': t('fotrem.edat') });   // NO ombrejar el formatador edat()   // crea
+  const pot = el('input', { type: 'number', size: '3', 'aria-label': t('fotrem.col_potencial') });   // crea
+  const comp = el('input', { type: 'number', size: '3', 'aria-label': t('fotrem.compost') });   // crea
   const res = el('span', {});
   const b = el('button', { type: 'button', class: 'b-prim', text: t('fotrem.avalua') });
   b.addEventListener('click', async () => {
@@ -508,7 +508,7 @@ function formEntrenamentJuvenil(main, d) {
   const defPrin = ej.principal ?? d.pipeline?.principal ?? null;
   const defSec = ej.secundari ?? d.pipeline?.secundari ?? null;
   const opcs = (sel) => HABS_ENTREN.map((h) => { const o = el('option', { value: h, text: h }); if (sel === h) o.setAttribute('selected', ''); return o; });
-  const principal = el('select', { 'aria-label': t('fotrem.entrenament_principal') }, ...opcs(defPrin));
+  const principal = el('select', { 'aria-label': t('fotrem.entrenament_principal') }, ...opcs(defPrin));   // precarrega
   const secundari = el('select', { 'aria-label': t('fotrem.entrenament_secundari') }, el('option', { value: '', text: '—' }), ...opcs(defSec));
   const b = el('button', { type: 'submit', class: 'b-prim', text: t('fotrem.entrenament_desa') });
   const f = el('form', { class: 'card-cos' }, el('div', { class: 'form-graella' },
@@ -755,9 +755,10 @@ function formMoviment(main) {
   const graella = el('div', { class: 'form-graella' });
   const tipus = el('select', { 'aria-label': t('economia.tipus') }, ...TIPUS_MOV.map((x) => el('option', { value: x, text: t('tipus.' + x) })));
   const imp = el('input', { type: 'number', 'aria-label': t('economia.import') });
-  const jug = el('input', { type: 'number', 'aria-label': t('economia.jugador_id') });
+  const jug = el('input', { type: 'number', 'aria-label': t('economia.jugador_id') });   // crea
   const data = el('input', { type: 'date', 'aria-label': t('economia.data') });
-  const nota = el('input', { type: 'text', 'aria-label': t('economia.nota') });
+  data.value = new Date().toISOString().slice(0, 10);   // hui: el valor actual, precarregat
+  const nota = el('input', { type: 'text', 'aria-label': t('economia.nota') });   // crea
   const b = el('button', { type: 'submit', class: 'b-prim', text: t('economia.afig') });
   graella.append(el('label', {}, t('economia.tipus'), tipus), el('label', {}, t('economia.import'), imp),
     el('label', {}, t('economia.jugador_id'), jug), el('label', {}, t('economia.data'), data),
@@ -838,7 +839,7 @@ function formConfig(main, config) {
 }
 
 function formActivaAcademia(main) {
-  const nom = el('input', { type: 'text', 'aria-label': t('configuracio.academia_nom') });
+  const nom = el('input', { type: 'text', 'aria-label': t('configuracio.academia_nom') });   // crea
   const b = el('button', { type: 'submit', class: 'b-prim', text: t('configuracio.academia_desa') });
   const c = card(t('configuracio.activa_academia'));
   const f = el('form', { class: 'card-cos' }, el('label', {}, t('configuracio.academia_nom'), nom), b);
@@ -894,15 +895,7 @@ export async function personal(main) {
     secM.append(av);
   }
   if (d.membres.length) {
-    for (const m of d.membres) {
-      const b = el('button', { type: 'button', class: 'b-xic neutre', text: t('personal.esborra') });
-      b.addEventListener('click', () => api('/api/personal', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: m.id }) }).then(() => location.reload()));
-      secM.append(el('div', { class: 'graella-fila-d c-staff' },
-        el('div', {}, el('span', { class: 'tag', text: t('personal.rol_' + m.rol) }), ' ',
-          el('b', { text: m.tipus ? lblElement(m.tipus) : '—' })),
-        el('span', { class: 'pill', text: t('personal.nivell') + ' ' + (m.nivell ?? '—') }),
-        el('b', { text: m.sou != null ? diners(m.sou) : '—' }), b));
-    }
+    for (const m of d.membres) secM.append(filaMembre(m));
   } else secM.append(cos(el('p', { class: 'nota-peu', text: t('personal.cap_membre') })));
   formMembre(secM);
   duo.append(secM);
@@ -916,7 +909,7 @@ function formEntrenament(main, ent) {
   // ENTRENAMENT SÈNIOR TRIABLE: en canviar-lo, es deriven de nou les places que
   // entrenen, els %, la cobertura, les alineacions i els anells del camp (guia §6).
   if (ent.opcions && ent.opcions.length) {
-    const selT = el('select', { 'aria-label': t('personal.entrenament_senior') },
+    const selT = el('select', { 'aria-label': t('personal.entrenament_senior') },   // precarrega
       ...ent.opcions.map((h) => { const o = el('option', { value: h, text: t('habilitat.' + h) }); if (h === ent.senior) o.setAttribute('selected', ''); return o; }));
     selT.addEventListener('change', async () => {
       await api('/api/pla', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ entrenament_senior: selT.value }) });
@@ -948,14 +941,46 @@ function formEntrenament(main, ent) {
   main.append(sec);
 }
 
+// Una dada que el sistema ja té es mostra dins del camp que la demana: canviar el nivell del
+// metge no pot obligar a esborrar el membre i tornar a teclejar sou i setmanes. L'API ja sabia
+// editar (POST amb `id`); només calia que la pantalla ho oferira.
+function filaMembre(m) {
+  const num = (clau, val) => {
+    const i = el('input', { type: 'number', size: '5', 'aria-label': t('personal.' + clau) });
+    if (val != null) i.value = val;                      // valor actual precarregat
+    return i;
+  };
+  const nivell = num('nivell', m.nivell);
+  const sou = num('sou', m.sou);
+  const setm = num('setmanes_contracte', m.setmanes_contracte);
+  const desa = el('button', { type: 'submit', class: 'b-xic', text: t('personal.desa') });
+  const esb = el('button', { type: 'button', class: 'b-xic neutre', text: t('personal.esborra') });
+  esb.addEventListener('click', () => api('/api/personal', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: m.id }) }).then(() => location.reload()));
+  const f = el('form', { class: 'graella-fila-d c-staff' },
+    el('div', {}, el('span', { class: 'tag', text: t('personal.rol_' + m.rol) }), ' ',
+      el('b', { text: lblElement(m.tipus || m.rol) })),
+    el('label', { class: 'camp-xic' }, t('personal.nivell'), nivell),
+    el('label', { class: 'camp-xic' }, t('personal.sou'), sou),
+    el('label', { class: 'camp-xic' }, t('personal.setmanes_contracte'), setm),
+    desa, esb);
+  f.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    await api('/api/personal', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: m.id, rol: m.rol, tipus: m.tipus || m.rol,
+        nivell: nivell.value || null, sou: sou.value || null, setmanes_contracte: setm.value || null }) });
+    location.reload();
+  });
+  return f;
+}
+
 function formMembre(main) {
   const f = el('form', { class: 'card-cos' });
   const graella = el('div', { class: 'form-graella' });
   const rol = el('select', { 'aria-label': t('personal.rol') }, ...['entrenador', 'especialista'].map((r) => el('option', { value: r, text: t('personal.rol_' + r) })));
   const tipus = el('select', { 'aria-label': t('personal.tipus') }, ...ESPECIALISTES.map((x) => el('option', { value: x, text: lblElement(x) })));
-  const nivell = el('input', { type: 'number', 'aria-label': t('personal.nivell') });
-  const sou = el('input', { type: 'number', 'aria-label': t('personal.sou') });
-  const setm = el('input', { type: 'number', 'aria-label': t('personal.setmanes_contracte') });
+  const nivell = el('input', { type: 'number', 'aria-label': t('personal.nivell') });   // crea
+  const sou = el('input', { type: 'number', 'aria-label': t('personal.sou') });   // crea
+  const setm = el('input', { type: 'number', 'aria-label': t('personal.setmanes_contracte') });   // crea
   const b = el('button', { type: 'submit', class: 'b-prim', text: t('personal.afig') });
   graella.append(el('label', {}, t('personal.rol'), rol), el('label', {}, t('personal.tipus'), tipus),
     el('label', {}, t('personal.nivell'), nivell), el('label', {}, t('personal.sou'), sou),
@@ -964,7 +989,7 @@ function formMembre(main) {
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     await api('/api/personal', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      rol: rol.value, tipus: rol.value === 'especialista' ? tipus.value : null,
+      rol: rol.value, tipus: rol.value === 'especialista' ? tipus.value : rol.value,
       nivell: nivell.value || null, sou: sou.value || null, setmanes_contracte: setm.value || null }) });
     location.reload();
   });

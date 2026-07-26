@@ -42,17 +42,35 @@ async function plaFlux(db, usuariId) {
     return meua != null && llindar != null && meua <= llindar;
   };
   const { pla, flux_restant } = planPersonal(fluxLliure, base, prioritat, { admet });
-  // Els membres declarats, per a dir si toca pujar de nivell o renovar.
-  const { results: membres } = await db.prepare('SELECT tipus, nivell, setmanes_contracte FROM personal_membres WHERE usuari_id=?').bind(usuariId).all();
-  const declarat = new Map();
-  for (const m of membres) declarat.set(m.tipus, m);
+  // L'ACCIÓ ÉS LA DIFERÈNCIA entre el pla i el DECLARAT: no es proposa contractar el que ja
+  // existix ni renovar el que no toca. La identitat d'un membre és el seu `tipus`; l'agrupació
+  // porta el COMPTE, perquè de tipus com l'assistent n'hi pot haver més d'un.
+  const { results: membres } = await db.prepare(
+    "SELECT COALESCE(NULLIF(tipus,''), rol) AS tipus, nivell, setmanes_contracte FROM personal_membres WHERE usuari_id=?"
+  ).bind(usuariId).all();
+  const perTipus = new Map();
+  for (const m of membres) {
+    if (!perTipus.has(m.tipus)) perTipus.set(m.tipus, []);
+    perTipus.get(m.tipus).push(m);
+  }
+  // Dins d'un tipus, els declarats s'aparellen amb les places del pla de més nivell a menys.
+  for (const llista of perTipus.values()) llista.sort((a, b) => (b.nivell ?? 0) - (a.nivell ?? 0));
+  const avis = Number(await pom('dies_avis_caducitat')) || 2;
+  const consumits = new Map();
   const amb = pla.map((x) => {
-    const d = declarat.get(x.tipus);
-    const renovacio = d ? decisioRenovacio(d.nivell, fluxLliure, base) : null;
-    return { ...x, nivell_declarat: d?.nivell ?? null,
-      accio: x.exclos ? 'exclos' : d == null ? (x.nivell > 0 ? 'contracta' : 'res')
-        : x.nivell > d.nivell ? 'puja' : renovacio?.accio ?? 'res',
-      renovacio: renovacio?.accio ?? null, renovacio_nivell: renovacio?.nivell ?? null,
+    const i = consumits.get(x.tipus) ?? 0;
+    consumits.set(x.tipus, i + 1);
+    const d = (perTipus.get(x.tipus) || [])[i] ?? null;      // la i-èsima plaça d'este tipus
+    // RENOVAR només toca al VENCIMENT (0 ≤ setmanes_restants ≤ dies_avis_caducitat).
+    const venç = d && d.setmanes_contracte != null && d.setmanes_contracte >= 0 && d.setmanes_contracte <= avis;
+    const renovacio = venç ? decisioRenovacio(d.nivell, fluxLliure, base) : null;
+    let accio = 'res';
+    if (x.exclos) accio = 'exclos';
+    else if (d == null) accio = x.nivell > 0 ? 'contracta' : 'res';
+    else if (venç) accio = renovacio?.accio ?? 'res';
+    else if (x.nivell > d.nivell) accio = 'puja';
+    return { ...x, nivell_declarat: d?.nivell ?? null, venciment: !!venç,
+      accio, renovacio: renovacio?.accio ?? null, renovacio_nivell: renovacio?.nivell ?? null,
       setmanes_contracte: d?.setmanes_contracte ?? null };
   });
   return { flux_lliure: fluxLliure, flux_restant, staff_cost_base: base, pla: amb, falten: [] };

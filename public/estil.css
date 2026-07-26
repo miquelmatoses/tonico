@@ -380,7 +380,11 @@ main:has(.auth) { max-width: none; padding: 0; }
    porten inputs. Els controls omplin la seua cel·la (width:100%), sense forçar-la. */
 .c-venda { grid-template-columns: minmax(0,2.2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.6fr); }
 .c-pla { grid-template-columns: minmax(0,.7fr) minmax(0,.7fr) minmax(0,2fr) minmax(0,1fr); }
-.c-staff { grid-template-columns: minmax(0,1.8fr) minmax(0,1fr) minmax(0,.8fr) minmax(0,.9fr); }
+.c-staff { grid-template-columns: minmax(0,1.6fr) repeat(3, minmax(0,.9fr)) auto auto; align-items: end; }
+/* Camp xic dins d'una fila: etiqueta damunt, en xicotet, i el camp a tot l'ample de la
+   columna. Així el número és sempre llegible i l'etiqueta no empeny la fila. */
+.camp-xic { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: .74rem; color: var(--tenue); }
+.camp-xic input { width: 100%; min-width: 0; font-size: .9rem; }
 .graella-fila-d > input, .graella-fila-d > select { width: 100%; }
 .cel-controls { display: flex; gap: 6px; min-width: 0; }
 .cel-controls select { flex: 1; min-width: 0; }
@@ -416,7 +420,11 @@ main:has(.auth) { max-width: none; padding: 0; }
   font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--gris); }
 
 @media (max-width: 60rem) {
-  .c-venda, .c-pla, .c-staff { grid-template-columns: 1fr auto; }
+  .c-venda, .c-pla { grid-template-columns: 1fr auto; }
+  /* El personal porta tres camps i dos botons: en pantalla estreta la fila es tanca en una
+     columna i cada camp queda a tot l'ample, que és el que el fa teclejable. */
+  .c-staff { grid-template-columns: 1fr; }
+  .c-staff button { justify-self: start; }
   .graella-cap { display: none; }
 }
 /* Un formulari dins d'una targeta és un bloc: la graella de camps ha d'ocupar tot l'ample. */
