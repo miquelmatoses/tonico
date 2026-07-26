@@ -30,7 +30,7 @@ import { guanyJugador, admissibleJugador, deltaManteniment, estadiCaduc, admissi
   eficiencia, decisioEstoc } from '../lib/estoc.js';
 import { nivellAccio, agrupaAlertes, ordenaAgenda } from '../lib/informe.js';
 import { REGLES } from '../lib/regles.js';
-import { entrenamentPrescrit, desquadreEntrenament, placesEntrenament } from '../lib/entrenament_places.js';
+import { entrenamentPrescrit, placesEntrenament } from '../lib/entrenament_places.js';
 import { valorHabilitat as valorHab, valorEsperatDesconegut, ranquingJuvenil } from '../lib/ranquing_juvenil.js';
 import { esLesionat } from '../public/format.js';
 import { nova } from './_d1shim.mjs';
@@ -143,16 +143,6 @@ const VERIFICADES = {
     assert.equal(p.intensitat, 100);
     assert.ok(p.resistencia != null, 'resistencia_pct declarada');
   },
-  'P1.accio': () => {
-    // ACCIÓ SI configurat_HT ≠ prescrit: la 4-tupla sencera
-    const pres = { skill: 'creativitat', skill_b: 'passades', intensitat: 100, resistencia: 10 };
-    assert.equal(desquadreEntrenament(pres, pres).desquadre, false);
-    assert.equal(desquadreEntrenament(pres, { ...pres, intensitat: 90 }).desquadre, true,
-      'canviar només la intensitat també és desquadre');
-    assert.deepEqual(desquadreEntrenament(pres, { ...pres, skill_b: 'extrem' }).difs, ['skill_b']);
-    assert.equal(desquadreEntrenament(pres, null).motiu, 'sense_confirmar');
-  },
-
   // ── PAS 4 / PAS 6 ──
   'P4.habilitat_lloc': async () => {
     const cfg = await carregaConfigPesos(dbFix, 'competitiva');

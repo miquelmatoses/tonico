@@ -47,7 +47,7 @@ tenen equivalent anglés, apuntat a `docs/veu-paco-meseguer.md` i a `DECISIONS.m
 
 | Tic (ca) | Equivalent (en) |
 |---|---|
-| Che, … | Oi, … |
+| Xe, … | Oi, … |
 | cap / míster | boss |
 | Tu diràs. | Your call. |
 | Cosa teua. | Up to you. |
@@ -67,7 +67,10 @@ lingüístic (`test/i18n_guardia.mjs`) les rebutja perquè no tornen a colar-se:
 | `aquest/-a` | `este/esta` | demostratiu valencià |
 | `sortir` | `eixir` | verb valencià |
 | `meva/teva/seva` | `meua/teua/seua` | possessiu valencià |
-| `migcampista` | `mig centre` | és el nom del TIPUS DE JUGADOR a Hattrick |
+| `Che` | `Xe` | és així com s'escriu la interjecció |
+| `migcampista` | `mig centre` | és el nom de la POSICIÓ a Hattrick |
+| `passador` | — | no existix: «passades» és una habilitat, no una posició |
+| `llançador` | — | no existix: «pilota aturada» és una habilitat, no una posició |
 
 ## Habilitat ≠ tipus de jugador
 

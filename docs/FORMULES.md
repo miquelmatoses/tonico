@@ -76,8 +76,12 @@ de declaració: sense finestra, la dada no es demana.
 (A, B) = (creativitat, passades)   · intensitat 100% · resistència `resistencia_pct`
    [prescripció: el motor de partit decidix per possessió del mig del camp, i el
     mercat de MC és el més líquid → l'entrenament que competix i finança alhora]
-ACCIÓ("canvia l'entrenament a HT")  SI configurat_HT ≠ prescrit
 ```
+**Cap acció de desquadre.** Hi havia `ACCIÓ("canvia l'entrenament a HT") SI configurat_HT ≠
+prescrit`, i amb ella un panell per a CONFIRMAR què hi ha posat a HT. Però l'entrenament es
+prescriu: oferir un panell per a declarar-lo era oferir una decisió que no existix, i sense eixe
+panell la comparació no té el seu costat esquerre. Tornarà, si de cas, amb la secció
+d'Entrenament — allí l'entrenador i la confirmació tindran on viure.
 
 ## PAS 2 — LLOCS I PESOS
 

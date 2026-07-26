@@ -1,9 +1,9 @@
-// Tonico — personal i entrenament (Fase 8 + Àrea B). Model RIC: membres amb rol
-// (entrenador/especialista), tipus, nivell, sou i setmanes de contracte. GET
-// l'esperat per la fase + els membres + desquadres + checklist; POST afig/edita un
-// membre; DELETE l'esborra. El desquadre compara el COMPTE d'especialistes per
-// tipus amb l'esperat de la fase.
-import { entrenamentPrescrit } from '../../lib/entrenament.js';
+// Tonico — PERSONAL (PAS 11). Els especialistes que el flux sosté: tipus, nivell, sou i data
+// de fi de contracte. GET torna els membres i el pla de flux; POST afig/edita; DELETE esborra.
+//
+// Ni entrenament ni entrenador: l'entrenament es PRESCRIU i l'entrenador no és especialista
+// (no gasta plaça, no cobra per esta escala, no té contracte de 16 setmanes). Tots dos van a la
+// secció d'Entrenament quan la fem.
 
 const ROLS = ['entrenador', 'especialista'];
 const enter = (x) => (x == null || x === '' ? null : Math.round(Number(x)));
@@ -14,20 +14,13 @@ import { diesRestants } from '../../lib/personal_v3.js';
 export async function onRequestGet({ env, data }) {
   const pla = await env.DB.prepare('SELECT plantilla, fase_actual, parametres FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
   if (!pla) return json({ error: 'sense_pla' }, 404);
-  const params = pla.parametres ? JSON.parse(pla.parametres) : {};
-  const prescrit = await entrenamentPrescrit(env.DB, pla.plantilla);
-  // Entrenament SÈNIOR triable: l'usuari pot canviar-lo i tot el sistema (places, %,
-  // cobertura, anells) es deriva. Opcions = habilitats de la taula d'entrenament.
-  const taula = JSON.parse((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='taula_entrenament'").first())?.valor || '{}');
-  const entrenament = {
-    prescrit,
-    confirmat: params.entrenament_confirmat ?? null,
-    senior: params.entrenament_senior || prescrit?.principal || prescrit?.tipus || null,
-    opcions: Object.keys(taula),
-  };
+  // CAP BLOC D'ENTRENAMENT ací. Es prescriu (no es tria ni es confirma) i, amb l'entrenador,
+  // se'n va a la secció d'Entrenament quan la fem. Personal és personal.
 
+  // L'ENTRENADOR no és personal: no gasta plaça, no cobra per esta escala i no té contracte
+  // de 16 setmanes. Fora d'esta llista (el seu sou segueix comptant al flux).
   const { results: membres } = await env.DB.prepare(
-    'SELECT id, rol, tipus, nivell, sou, data_fi_contracte FROM personal_membres WHERE usuari_id=? ORDER BY rol, tipus, id'
+    "SELECT id, rol, tipus, nivell, sou, data_fi_contracte FROM personal_membres WHERE usuari_id=? AND rol <> 'entrenador' ORDER BY tipus, id"
   ).bind(data.usuari.id).all();
   // Els dies que queden es DERIVEN de la data (mai declarats: un compte es congela).
   const avuiGet = new Date().toISOString().slice(0, 10);
@@ -36,7 +29,7 @@ export async function onRequestGet({ env, data }) {
   // lligava ni amb la fase real. Els «desquadres» es calculaven contra el no-res i els
   // checklists encara servien el paquet d'inflexió. Qui diu ara què falta és el pla de flux.
   const pla_flux = await plaPersonal(env.DB, data.usuari.id);
-  return json({ fase_actual: pla.fase_actual, membres, entrenament, pla_flux });
+  return json({ fase_actual: pla.fase_actual, membres, pla_flux });
 }
 
 export async function onRequestPost({ request, env, data }) {

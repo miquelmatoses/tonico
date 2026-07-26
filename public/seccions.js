@@ -507,9 +507,11 @@ function onzeJuvenil(main, o) {
 // llocs que entrenes). No es tria, no es confirma i no es desa res — es diu QUÈ HAS DE POSAR a
 // Hattrick, igual que el recordatori de tàctica diu que jugues amb joc d'especialitats.
 //
-// I es diu amb el nom de l'HABILITAT, no amb el del tipus de jugador: el catàleg `habilitat.*`
-// diu «mig centre» i «passador», que són tipus de jugador (serveixen per a «compra'm un mig
-// centre»), i entrenar-los no vol dir res. S'entrena creativitat i passades.
+// I es diu amb el nom de l'HABILITAT (`hab.*`). Hi havia un segon catàleg, `habilitat.*`, que
+// aparellava una a una les set habilitats amb un «tipus de jugador» — però Hattrick només té
+// CINC posicions (porter, defensa, mig centre, extrem, davanter) i les dues que sobraven es van
+// omplir amb noms fabricats: «passador» i «llançador», que no existixen. Se n'ha anat sencer:
+// la posició ja la diu el lloc (MC3) i l'habilitat ja té el seu nom.
 function formEntrenamentJuvenil(main, d) {
   const pr = d.pipeline;
   const sec = card(t('juvenils.entrenament_titol'), null, 'llima');
@@ -562,7 +564,7 @@ function bucleEstoc(main, e) {
         ? t('estoc.opcio_estadi', ambXifres({ cost: e.recomanada.cost,
             manteniment: e.recomanada.delta_manteniment }, ['cost', 'manteniment']))
         : tp('estoc.opcio_jugador', e.recomanada.mancanca,
-            ambXifres({ lloc: e.recomanada.lloc, habilitat: t('habilitat.' + e.recomanada.habilitat),
+            ambXifres({ lloc: e.recomanada.lloc, habilitat: t('hab.' + e.recomanada.habilitat),
               // El nivell es diu pel seu NOM de Hattrick. Les claus van indexades pel nivell de
               // Tonico: fer «n + 4» ací seria aritmètica de domini a la vista (invariant 12).
               nivell: t('nivell_ht.' + e.recomanada.nivell_objectiu),
@@ -615,7 +617,7 @@ export async function mercat(main) {
           : t('mercat.rang', { min: f.edat_min, max: f.edat_max }));
         camp('creativitat_min', f.creativitat_min);
       } else if (f.habilitat) {
-        camp('habilitat', `${t('habilitat.' + f.habilitat.camp)} ${f.habilitat.op} ${f.habilitat.valor}`);
+        camp('habilitat', `${t('hab.' + f.habilitat.camp)} ${f.habilitat.op} ${f.habilitat.valor}`);
       }
       camp('pressupost', pres(f.pressupost));
       cfc.append(el('div', { class: 'filtre' },

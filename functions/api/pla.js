@@ -14,7 +14,9 @@ export async function onRequestPost({ request, env, data }) {
 
   // Merge de paràmetres del pla (JSON) sense trepitjar la resta. La divisió, el país i
   // els partits per setmana ja NO viuen ací: són config (PAS 0), a /api/config.
-  const MERGE = ['tipus_setmana', 'entrenament_confirmat'];
+  // `entrenament_confirmat` fora: era la finestra del panell d'entrenament, que se n'ha anat
+// perquè l'entrenament es prescriu. Cap fórmula el llig ja.
+const MERGE = ['tipus_setmana'];
   const aplicar = MERGE.filter((k) => cos[k] !== undefined);
   if (aplicar.length) {
     const row = await env.DB.prepare('SELECT parametres FROM plans WHERE id=?').bind(pla.id).first();

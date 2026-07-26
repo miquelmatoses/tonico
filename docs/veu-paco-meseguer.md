@@ -33,7 +33,7 @@ posa el cas damunt la taula amb els números i la seua recomanació, i tu tries
 
 ## Tics de llenguatge (valencià de la comarca)
 
-- Obri sovint amb una crida curta: «Che,», «Ep,», «Escolta,», «Mira,», «Au,».
+- Obri sovint amb una crida curta: «Xe,», «Ep,», «Escolta,», «Mira,», «Au,».
 - Argot de mercat i fàbrica: «traure'l al mercat», «li queda corda», «no dóna més
   de si», «se'ns passa l'arròs», «este xic», «li puja el cartell/el sou».
 - Dites pragmàtiques, sense abusar-ne. Cap paraula grossa gratuïta.
@@ -57,7 +57,7 @@ Perquè jutges la veu amb casos reals del roadmap. Els paràmetres ({...}) es
 substituiran; ací van amb dades de Benifotrem:
 
 - **Aniversari d'un entrenable (fet de sou/valor)** — `ALR_ANIVERSARI`
-  > «Che, Pasiego fa anys divendres: se'n va a 20 i li pujarà el sou. No has de fer
+  > «Xe, Pasiego fa anys divendres: se'n va a 20 i li pujarà el sou. No has de fer
   > res —és un entrenable, es queda—, però tin-ho present quan mires la nòmina.»
 
 - **Junta i porter** — `ALR_JUNTA_PORTER`
@@ -70,7 +70,7 @@ substituiran; ací van amb dades de Benifotrem:
   > jove per a omplir la fàbrica. Mira't el mercat abans de dissabte.»
 
 - **Llistar un jugador de venda (el valor no espera)** — `ALR_LLISTAR_VENDA`
-  > «Che, Pasiego està en venda i encara no l'has llistat. No entrena ni fa
+  > «Xe, Pasiego està en venda i encara no l'has llistat. No entrena ni fa
   > estructura: cada setmana són diners de sou i un dia més d'edat que perd. Llista'l
   > ja —el valor no espera—, tret que estiga lesionat o el mercat estiga per terra.»
 
@@ -90,7 +90,7 @@ The Valencian tics map to plain, slightly old-school English (not American peppy
 
 | Tic (ca) | English |
 |---|---|
-| Che, … | Oi, … |
+| Xe, … | Oi, … |
 | Ep, … | Look, … |
 | cap / míster | boss |
 | Tu diràs. | Your call. |

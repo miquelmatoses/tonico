@@ -18,11 +18,11 @@ assert.equal(ent.principal, 'creativitat');
 assert.equal(ent.secundaria, 'passades');
 assert.equal(await entrenamentPrescrit(db, 'inexistent'), null, 'sense prescripció no se n\'inventa');
 
-// Desquadre: si el confirmat difereix del prescrit, dispara.
-const p = { urgencia: 68 };
-assert.equal(REGLES.ALR_ENTRENAMENT_DESQUADRE({ entrenament: ent, entrenament_confirmat: { tipus: 'anotacio', intensitat: 100, resistencia: 10 } }, p).length, 1, 'tipus diferent → dispara');
-assert.equal(REGLES.ALR_ENTRENAMENT_DESQUADRE({ entrenament: ent, entrenament_confirmat: { tipus: 'creativitat', intensitat: 100, resistencia: 10 } }, p).length, 0, 'igual → no dispara');
-assert.equal(REGLES.ALR_ENTRENAMENT_DESQUADRE({ entrenament: ent, entrenament_confirmat: null }, p).length, 0, 'sense confirmar → no dispara');
-assert.equal(REGLES.ALR_ENTRENAMENT_DESQUADRE({ entrenament: ent, entrenament_confirmat: { intensitat: 80 } }, p).length, 1, 'intensitat diferent → dispara');
+// FORA L'ALERTA DE DESQUADRE. Comparava l'entrenament CONFIRMAT a HT amb el prescrit, i la
+// finestra per a confirmar-lo era el panell de Personal, que se n'ha anat: l'entrenament es
+// prescriu, o siga que un panell per a declarar-lo oferia una decisió que no existix. Sense el
+// costat esquerre, la comparació no pot donar res. Mateix cas que ALR_ENTRENAMENT_JUVENIL.
+assert.equal(REGLES.ALR_ENTRENAMENT_DESQUADRE, undefined,
+  'la regla se n\'ha anat del motor, no només de la pantalla');
 
-console.log('OK — entrenament: prescripció del full (no fase) i alerta de desquadre');
+console.log('OK — entrenament: la prescripció ix del full, no de la fase');

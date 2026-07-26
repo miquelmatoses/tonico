@@ -75,7 +75,10 @@ function motiusDelCodi() {
 }
 
 const families = {
-  'habilitat': ['porteria','defensa','creativitat','passades','extrem','anotacio','pilota_aturada'],
+  // UN SOL vocabulari: `hab.*`, el nom de l'HABILITAT. El catàleg `habilitat.*` aparellava una
+  // a una les set habilitats amb un «tipus de jugador», però Hattrick només té CINC posicions:
+  // «passador» i «llançador» estaven inventats per a omplir la taula.
+  'hab': ['porteria','defensa','creativitat','passades','extrem','anotacio','pilota_aturada'],
   // Les accions que el pla POT proposar. Fora `puja`/`puja_al_venciment`/`exclos`: pujar de
   // nivell fora del venciment no és una acció possible (és acomiadar), i el pla ja no exclou
   // ningú. Les formes `_n` porten el nivell concret que el flux sosté.
@@ -126,6 +129,24 @@ for (const cat of [ca, en]) for (const base of basesPlural) {
   assert.ok(!/\b1\s+\S*s\b/.test(un), `plural mal a ${base}_1 (n=1): «${un}»`);
 }
 
+// ── 3c. ESPAIS DE NOMS INTERPOLATS: tot `t('prefix.' + x)` de la vista ha de tindre almenys
+// una clau `prefix.*` al catàleg. Sense això, un catàleg retirat es queda interpolat en una
+// branca poc transitada i no ho descobrix ningú: `habilitat.*` (els «tipus de jugador» amb
+// «passador» i «llançador» inventats) va sobreviure així a la línia de la recomanació de
+// fitxatge, que HUI no s'executa mai perquè cap candidat de mercat és admissible encara. ──
+{
+  const orfes = [];
+  for (const f of readdirSync(new URL('../public/', import.meta.url)).filter((x) => x.endsWith('.js'))) {
+    const src = readFileSync(new URL(`../public/${f}`, import.meta.url), 'utf8');
+    for (const m of src.matchAll(/\bt\(\s*'([a-z_]+)\.'\s*\+/g)) {
+      const prefix = m[1];
+      if (!clausCa.some((k) => k.startsWith(prefix + '.'))) orfes.push(`${f}: t('${prefix}.' + …)`);
+    }
+  }
+  assert.deepEqual([...new Set(orfes)], [],
+    `la vista interpola espais de noms que el catàleg no té:\n  ${[...new Set(orfes)].join('\n  ')}`);
+}
+
 // Rols de partit: el nom visible és una clau i18n (config per plantilla).
 for (const k of ['rol.onze_a', 'rol.onze_b', 'rol.onze_a_curt', 'rol.onze_b_curt']) assert.ok(te(k), `falta el nom de rol: ${k}`);
 
@@ -163,7 +184,10 @@ const VETATS = [
   [/\baquest[ao]?s?\b/i, 'aquest/-a → «este/esta»'],
   [/\bsorti[rmt]/i, 'sortir → «eixir»'],
   [/\b(?:me|te|se)va\b/i, 'meva/teva/seva → «meua/teua/seua»'],
-  [/\bmigcampista/i, 'migcampista → «mig centre» (és el nom del tipus de jugador)'],
+  [/\bche\b/i, 'Che → «Xe» (és així com s\'escriu)'],
+  [/\bmigcampista/i, 'migcampista → «mig centre» (és el nom de la posició)'],
+  [/\bpassador\b/i, 'passador → no existix: «passades» és una habilitat, no una posició'],
+  [/\bllançador\b/i, 'llançador → no existix: «pilota aturada» és una habilitat, no una posició'],
 ];
 
 // CLAUS VETADES: text que no ha d'existir perquè la decisió és NO DIR RES. Una clau «no hi ha

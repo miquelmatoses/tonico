@@ -199,16 +199,6 @@
       "taules": []
     },
     {
-      "id": "P1.accio",
-      "pas": "P1",
-      "pasTitol": "ENTRENAMENT (prescrit, no triable)",
-      "clau": "ACCIÓ",
-      "linia": "ACCIÓ(\"canvia l'entrenament a HT\")  SI configurat_HT ≠ prescrit",
-      "entrades": [],
-      "poms": [],
-      "taules": []
-    },
-    {
       "id": "P2.pos_a",
       "pas": "P2",
       "pasTitol": "LLOCS I PESOS",
