@@ -2,7 +2,6 @@
 // va eixir. Venda amb import → crea la transacció d'Economia d'un colp. Promoció
 // → enllaça amb la fila juvenil d'origen (jugador_origen_juvenil_id). Resol
 // l'alerta ALR_TRANSACCIO_PENDENT.
-import { signa } from '../../lib/economia.js';
 
 const MOTIUS = ['venda', 'despatx', 'promocio', 'altres'];
 
@@ -39,11 +38,9 @@ export async function onRequestPost({ request, env, data }) {
     "UPDATE jugadors SET estat='baixa', motiu_baixa=?, jugador_origen_juvenil_id=? WHERE id=?"
   ).bind(c.motiu === 'altres' ? null : c.motiu, c.motiu === 'promocio' ? (c.origen_juvenil_id || null) : null, c.jugador_id)];
 
-  if (c.motiu === 'venda' && c.import != null && !isNaN(Number(c.import))) {
-    lots.push(env.DB.prepare(
-      'INSERT INTO transaccions (usuari_id, jugador_id, tipus, import, data, nota) VALUES (?, ?, ?, ?, ?, ?)'
-    ).bind(data.usuari.id, c.jugador_id, 'venda', signa('venda', Number(c.import)), new Date().toISOString().slice(0, 10), 'motiu de baixa'));
-  }
+  // L'IMPORT d'una venda ja no s'apunta: no entra a cap fórmula. La caixa és la DECLARADA
+  // («diners disponibles»), i el diner d'una venda hi apareix al període següent. Apuntar-lo
+  // ací era comptabilitat que no alimentava cap decisió.
   await env.DB.batch(lots);
   return json({ ok: true }, 201);
 }

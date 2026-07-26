@@ -34,10 +34,15 @@ assert.equal(dn.jugadors[0].despatxar, false,
   'ni amb un sou desproporcionat: qui decidix acomiadar-lo és que la subhasta quede deserta');
 sqlite.exec('UPDATE instantanies_jugadors SET sou=NULL WHERE jugador_id=1');   // restaura per a la resta del test
 
+// La fitxa només guarda el que mou el rellotge de la subhasta: data de llistat i estat. Un
+// `preu_eixida` enviat s'IGNORA — l'API ja no en té camp.
 await vendes.onRequestPost(ctx({ jugador_id: 1, preu_eixida: 250000, data_llistada: '2026-07-25', estat: 'llistat' }));
 d = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
-assert.equal(d.jugadors[0].preu_eixida, 250000);
 assert.equal(d.jugadors[0].estat, 'llistat');
+assert.equal(d.jugadors[0].data_llistada, '2026-07-25');
+assert.equal(d.jugadors[0].preu_eixida, undefined, 'cap preu a l\'eixida, ni el que s\'ha enviat');
+assert.equal(sqlite.prepare('SELECT preu_eixida FROM vendes WHERE jugador_id=1').get().preu_eixida, null,
+  'i tampoc s\'escriu a la BD: la porta està tancada, no només amagada');
 // Un LLISTAT (forçat) mai mostra despatxar — ara trivialment, perquè ja no es proposa mai.
 sqlite.exec('UPDATE instantanies_jugadors SET sou=70000 WHERE jugador_id=1');
 const dforcat = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();

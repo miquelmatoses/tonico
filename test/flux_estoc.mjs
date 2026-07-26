@@ -2,8 +2,8 @@
 // l'estoc, què pots comprar HUI. La caixa és la DECLARADA: mai un projectat, mai una
 // derivada disfressada de saldo real.
 //
-// EL PERÍODE ÉS BI-SETMANAL: només la taquilla ja ve per període; tot el que és setmanal es
-// multiplica per `setmanes_periode`. node test/flux_estoc.mjs
+// EL PERÍODE ÉS BI-SETMANAL i es declaren les DOS setmanes literals: els ingressos són la seua
+// suma, i les despeses (constants setmanals) es multipliquen per `setmanes_periode`.
 import assert from 'node:assert/strict';
 import { nova } from './_d1shim.mjs';
 import { economia, souSostenible, caixaDisponible, perPeriode, reservaFlux,
@@ -77,13 +77,17 @@ e = await economia(db, 1, '2026-07-26');
 assert.equal(e.caixa, null, 'amb moviments però sense declaració: seguix null');
 
 // ── 2. Ingressos BI-SETMANALS declarats del període tancat ──
-// Taquilla ja per període; patrocini setmanal → × 2. Igual que el fixture real de HT.
-sqlite.exec(`INSERT INTO finances (usuari_id, caixa, caixa_data, periode_data, despesa_estadi, taquilla, patrocini)
-             VALUES (1,173004,'2026-07-26','2026-07-19',7100,21127,40500);`);
+
+// Les DOS setmanes, literals, com a l'informe: setmana passada (taquilla 21.127 + patrocini
+// 40.500) i esta setmana (taquilla 0 perquè el partit era fora + patrocini 40.500).
+sqlite.exec(`INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi,
+               taquilla_s1, patrocini_s1, taquilla_s2, patrocini_s2)
+             VALUES (1,173004,'2026-07-26',7100,21127,40500,0,40500);`);
 e = await economia(db, 1, '2026-07-26');
 assert.equal(e.caixa, 173004, 'la caixa són els «Diners disponibles»');
 assert.equal(e.caixa_disponible, 173004, 'sense reserva declarada, tota disponible');
-assert.equal(e.ingressos_recurrents, 21127 + 40500 * 2, 'taquilla + per_periode(patrocini)');
+assert.equal(e.ingressos_recurrents, 21127 + 40500 + 0 + 40500,
+  'la suma de les DOS setmanes: cap multiplicació al camí dels ingressos');
 assert.equal(e.despeses.nomina, 5000 * 2, 'la nòmina és setmanal → × 2');
 assert.equal(e.despeses.manteniment_estadi, 7100 * 2, 'el manteniment és constant setmanal → × 2');
 assert.equal(e.despeses.planter, 5000 * 2);
@@ -101,12 +105,12 @@ assert.equal(e.reserva_flux, Math.round(e.ingressos_recurrents * 0.05),
 assert.equal(e.sou_sostenible,
   Math.max(0, e.ingressos_recurrents - e.reserva_flux - (e.despeses_fixes - e.despeses.nomina)));
 
-// ── 4. `premis` NO entra al flux (v3.1): és una prima de temporada, va a l'estoc ──
-const abansPremis = e.ingressos_recurrents;
-sqlite.exec("UPDATE finances SET premis=50000 WHERE usuari_id=1;");
+// ── 4. Res que no siga taquilla o patrocini pot moure el sostre de sou ──
+const abans = e.ingressos_recurrents;
+sqlite.exec("UPDATE finances SET premis=50000, taquilla=99999, patrocini=99999 WHERE usuari_id=1;");
 e = await economia(db, 1, '2026-07-26');
-assert.equal(e.ingressos_recurrents, abansPremis,
-  'els premis no poden moure el sostre de sou: no són recurrents');
+assert.equal(e.ingressos_recurrents, abans,
+  'ni els premis ni les columnes velles: només les dos setmanes declarades manen');
 
 // ── 5. El personal consumix flux (PAS 11 el llig d'ací), també normalitzat ──
 sqlite.exec("INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou) VALUES (1,'especialista','metge',2,2040);");
@@ -119,8 +123,8 @@ e = await economia(db, 1, '2026-07-26');
 assert.equal(e.planter_derivat, 20000, 'acadèmia + 3 cercapromeses = el fixture real');
 assert.equal(e.despeses.planter, 40000, 'i entra al període doblat');
 
-// ── 7. Dades velles: es diu, no es calla ──
-sqlite.exec("UPDATE finances SET periode_data='2026-06-01' WHERE usuari_id=1;");
+// ── 7. Dades velles: es diu, no es calla (la frescor la data `caixa_data`) ──
+sqlite.exec("UPDATE finances SET caixa_data='2026-06-01' WHERE usuari_id=1;");
 assert.equal((await economia(db, 1, '2026-07-26')).dades_velles, true);
 
 // ── 8. La divisió ix normalitzada (cap taula pot fallar en silenci) ──

@@ -48,8 +48,9 @@ accionable.
 
 **OBERT · gravetat: cosmètica**
 
-L'entrada 12 diu «Caixa real + despeses fixes (planter, estadi) + ingressos setmanals». Amb el
-v3.1 el planter es deriva i els ingressos són bi-setmanals. Cal repassar la taula.
+L'entrada 12 diu «Caixa real + despeses fixes (planter, estadi) + ingressos setmanals» i
+l'entrada 8 parla de l'historial de transferències amb imports. Les dues són del model anterior:
+ara es declaren quatre coses i no hi ha comptabilitat de moviments. Cal repassar la taula.
 
 ---
 

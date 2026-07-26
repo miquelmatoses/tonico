@@ -32,8 +32,9 @@ sqlite.exec(`
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, sou, creativitat, defensa, porteria, anotacio, extrem, passades)
     VALUES (1,1,'MC',22,3000,5,1,1,1,1,1),(1,2,'DC',24,2000,1,6,1,1,1,1);
   INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (1,'core','auto'),(2,'titular','auto');
-  INSERT INTO finances (usuari_id, caixa, caixa_data, periode_data, taquilla, patrocini, despesa_estadi, estadi_manteniment, estadi_cost_obra, estadi_data)
-    VALUES (1, 500000, '2026-07-25', '2026-07-25', 21127, 40500, 7100, 9000, 200000, '2026-07-25');
+  INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi,
+      taquilla_s1, patrocini_s1, taquilla_s2, patrocini_s2, estadi_manteniment, estadi_cost_obra, estadi_data)
+    VALUES (1, 500000, '2026-07-25', 7100, 21127, 40500, 0, 40500, 9000, 200000, '2026-07-25');
   INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou, setmanes_contracte) VALUES (1,'especialista','metge',2,2040,4);
 `);
 const ctx = { env: { DB: db }, data: { usuari: { id: 1 } } };
@@ -48,8 +49,10 @@ const igual = (vist, esperat, què) => { assert.deepEqual(vist, esperat, `golden
   const vista = await json(apiEconomia);
   // El que la pantalla mostra com a caixa és el saldo DECLARAT, no una derivada.
   igual(vista.finances.caixa, eco.caixa, 'caixa de la pantalla = caixa de l\'avaluador');
-  // PERÍODE BI-SETMANAL: la taquilla ja ve per període; el patrocini és setmanal → × 2.
-  igual(eco.ingressos_recurrents, 21127 + 40500 * 2, 'ingressos = taquilla + per_periode(patrocini)');
+  // I la pantalla consumix l'avaluador de la MATEIXA resposta: cap aritmètica a la vista.
+  igual(vista.economia.ingressos_recurrents, eco.ingressos_recurrents, 'ingressos servits per l\'avaluador');
+  // PERÍODE BI-SETMANAL: es declaren les DOS setmanes i els ingressos són la seua suma.
+  igual(eco.ingressos_recurrents, 21127 + 40500 + 0 + 40500, 'ingressos = suma de les dos setmanes');
   igual(eco.planter_derivat, despesaPlanter('academia', 3, { cost_instalacions: 5000, cost_cercapromeses: 5000 }),
     'el planter es DERIVA, no es declara');
   igual(eco.despeses_fixes, (5000 + 20000 + 7100 + 2040) * 2,
@@ -103,7 +106,7 @@ const igual = (vist, esperat, què) => { assert.deepEqual(vist, esperat, `golden
   igual(gastat + pla_flux.flux_restant, pla_flux.flux_lliure, 'tot el flux queda comptat, res se\'n perd');
 }
 
-// ── VENDES: la fitxa NO pot mostrar cap preu (v3.1) ──
+// ── VENDES: la fitxa NO pot mostrar ni demanar cap preu (v3.1) ──
 {
   sqlite.exec("INSERT INTO vendes (jugador_id, usuari_id, estat) VALUES (2,1,'pendent');");
   sqlite.exec("UPDATE categories_jugador SET categoria='venda' WHERE jugador_id=2;");
@@ -111,6 +114,8 @@ const igual = (vist, esperat, què) => { assert.deepEqual(vist, esperat, `golden
   for (const j of v.jugadors) {
     igual(j.preu_proposat, undefined, `${j.nom}: cap preu estimat a la fitxa`);
     igual(j.valor_net, undefined, `${j.nom}: cap valor net`);
+    igual(j.preu_eixida, undefined, `${j.nom}: cap objectiu d'eixida`);
+    igual(j.preu_venut, undefined, `${j.nom}: cap import venut`);
     igual(j.despatxar, false, `${j.nom}: despatxar ja no ix d'una previsió`);
     assert.ok(j.valor != null, `${j.nom}: sí que porta el valor de retenció, que és derivat`);
   }

@@ -619,23 +619,17 @@ async function fitxesVenda(main) {
   }
   // Sense fitxes, no es pinta la taula (ni la capçalera).
   if (jugadors.length) sec.append(el('div', { class: 'graella-cap c-venda' },
-    ...['col_jugador', 'col_proposat', 'col_preu', 'col_data', 'col_tancament', 'col_estat'].map((k) => el('span', { text: t('vendes.' + k) }))));
+    ...['col_jugador', 'col_situacio', 'col_data', 'col_tancament', 'col_estat'].map((k) => el('span', { text: t('vendes.' + k) }))));
   for (const j of jugadors) sec.append(filaSegura(() => {
-    const preu = el('input', { type: 'number', size: '8', 'aria-label': t('vendes.col_preu') }); if (j.preu_eixida != null) preu.value = j.preu_eixida;
+    // Cap camp de PREU: ni objectiu d'eixida ni import venut. El preu no entra a cap fórmula
+    // (v3.1) i preguntar-lo era l'última porta oberta. La fitxa es queda amb el que mou el
+    // rellotge de la subhasta: la data de llistat i l'estat.
     const dataL = el('input', { type: 'date', 'aria-label': t('vendes.col_data') }); if (j.data_llistada) dataL.value = j.data_llistada;
     const estat = el('select', { 'aria-label': t('vendes.col_estat') }, ...ESTATS_VENDA.map((e) => { const o = el('option', { value: e, text: t('vendes.estat_' + e) }); if (e === j.estat) o.setAttribute('selected', ''); return o; }));
-    const venut = el('input', { type: 'number', size: '8', 'aria-label': t('vendes.col_venut') }); if (j.preu_venut != null) venut.value = j.preu_venut;
     const desar = () => api('/api/vendes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      jugador_id: j.jugador_id, preu_eixida: preu.value || null, data_llistada: dataL.value || null, estat: estat.value, preu_venut: venut.value || null }) }).catch(() => {});
-    for (const c of [preu, dataL, estat, venut]) c.addEventListener('change', desar);
-    const propTxt = j.preu_proposat != null
-      ? diners(j.preu_proposat) + (j.preu_estimacio_grossa ? nota.marca(t('vendes.estimacio_grossa')) : '')
-      : '—';
-    // 6: valor net < llindar → llistar és tirar diners → despatxar, amb el càlcul visible.
-    const propCell = el('div', {}, el('span', { text: propTxt }));
-    if (j.despatxar) propCell.append(el('div', { class: 'despatxar', text: t('vendes.despatxar', { net: diners(j.valor_net) }) }));
-    // La porta de calibratge bloqueja el càlcul econòmic → la fila HO DIU, mai cel·la buida.
-    else if (!j.calibrat) propCell.append(el('div', { class: 'nota-peu', text: t('vendes.pendent_calibratge') }));
+      jugador_id: j.jugador_id, data_llistada: dataL.value || null, estat: estat.value }) }).catch(() => {});
+    for (const c of [dataL, estat]) c.addEventListener('change', desar);
+    const propCell = el('div', {});
     // La subhasta d'un llistat ha acabat sense venda apuntada → pregunta el resultat (tria a Estat).
     if (j.resultat_pendent) propCell.append(el('div', { class: 'nota-peu', text: t('vendes.resultat_pregunta') }));
     // Estat de liquidació (mateixa font que l'alerta agregada): llistat / retingut per
@@ -653,16 +647,15 @@ async function fitxesVenda(main) {
         el('div', {}, el('div', { class: 'fila-nom', text: j.nom }),
           el('div', { class: 'fila-meta' }, el('span', { text: j.especialitat || '—' }),
             ...(j.lesionat ? [el('span', { class: 'pill perill', text: t('comu.lesionat_durada', { n: duradaLesio(j.lesio) ?? '?' }) })] : [])))),
-      propCell, preu, dataL,
+      propCell, dataL,
       el('span', { text: j.tancament_previst || '—' }),
-      el('div', { class: 'cel-controls' }, estat, venut));
+      el('div', { class: 'cel-controls' }, estat));
   }, 1));
   for (const ll of nota.llegendes()) sec.append(cos(el('p', { class: 'nota-peu', text: ll })));
   main.append(sec);
 }
 
 // ── 7. Economia ──
-const TIPUS_MOV = ['compra', 'venda', 'sou_setmanal', 'ingres_patrocini', 'taquilla', 'personal', 'estadi', 'taxa_llistat', 'altres'];
 // Formata en «diners» les claus monetàries d'un objecte de paràmetres (la resta
 // intacta): així cap plantilla econòmica interpola un número cru.
 // PATRÓ: sense files, NO es pinta la taula (ni la capçalera). Qui vulga una graella passa
@@ -678,7 +671,7 @@ const graellaAmbFiles = (classe, capçaleres, files) => {
 const eur = (obj, ...keys) => ambXifres(obj, keys);   // àlies curt: els noms de clau són els diners
 export async function economia(main) {
   capcalera(main, 7, 'economia');
-  const { transaccions, economia: e } = await api('/api/transaccions');
+  const { economia: e } = await api('/api/finances');
   // Les xifres del PAS 3: ESTOC (caixa disponible) i FLUX (i el sou que sosté).
   // Cap aritmètica ací: tot ve calculat de l'avaluador (invariant 12, render pur).
   const kpis = el('div', { class: 'eco-kpis' });
@@ -706,89 +699,72 @@ export async function economia(main) {
   }
   main.append(kpis);
   if (e.flux == null) main.append(el('p', { class: 'nota-peu', text: t('economia.sense_ingressos') }));
-  if (e.periode_data == null) main.append(el('p', { class: 'nota-peu', text: t('economia.sense_periode') }));
-  else if (e.dades_velles) main.append(el('p', { class: 'nota-peu', text: t('economia.dades_velles', { data: e.periode_data }) }));
+  if (e.dades_velles) main.append(el('p', { class: 'nota-peu', text: t('economia.dades_velles', { data: e.caixa_data }) }));
 
-  // Dues targetes de treball: declarar les xifres reals i apuntar moviments.
-  const duo = el('div', { class: 'duo' });
+  // UNA targeta de treball: DECLARAR. No hi ha comptabilitat de moviments — amb la caixa
+  // declarada i el flux eixint de taquilla+patrocini, apuntar moviment a moviment no alimentava
+  // cap decisió. La segona targeta és l'estimació d'estadi, que és d'una altra cadència (un colp
+  // per temporada) i per això no es barreja amb la declaració del període.
   const cFin = card(t('economia.finances_titol'));
   formFinances(cFin, e);
-  duo.append(cFin);
+  main.append(cFin);
 
-  const cMov = card(t('economia.moviments_titol'), transaccions.length);
-  const llista = el('div', { class: 'card-cos' });
-  if (transaccions.length) {
-    for (const tr of transaccions.slice(0, 30)) {
-      const b = el('button', { type: 'button', class: 'b-xic neutre', text: t('economia.esborra') });
-      b.addEventListener('click', () => api('/api/transaccions', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: tr.id }) }).then(() => location.reload()));
-      llista.append(el('div', { class: 'mov-fila' },
-        el('span', { class: 'mov-punt' }),
-        el('span', { class: 'mov-text', text: `${tr.data} · ${t('tipus.' + tr.tipus)}${tr.jugador ? ' · ' + tr.jugador : ''}` }),
-        el('b', { text: diners(tr.import) }), b));
-    }
-  } else llista.append(el('p', { class: 'nota-peu', text: t('economia.buit') }));
-  cMov.append(llista);
-  formMoviment(cMov);
-  duo.append(cMov);
-  main.append(duo);
-
+  const cEst = card(t('economia.estadi_titol'));
+  formEstadi(cEst, e);
+  main.append(cEst);
+  if (e.estadi_caduc) main.append(el('p', { class: 'nota-peu', text: t('economia.estadi_caduc_nota', { data: e.estadi_data }) }));
 }
 
-// FINESTRA DE DECLARACIÓ (invariant 17). De l'informe de HT només es declaren els ingressos
-// recurrents BI-SETMANALS i la caixa; el planter es deriva i la nòmina ve del CSV. El
-// manteniment d'estadi i els números de la calculadora també tenen finestra, perquè Tonico
-// els consumix i no els pot derivar: cap dada demanada sense on posar-la.
+// LA DECLARACIÓ DEL PERÍODE. Quatre coses i prou (invariant 17: tot el que Tonico consumix i
+// no pot derivar té finestra; i res que no consumisca en té). Taquilla i patrocinadors de les
+// DOS setmanes —així el període és la suma i no hi ha cap factor 2 al camí—, els diners
+// disponibles i el manteniment d'estadi. La nòmina ve del CSV, el personal de les seues fitxes
+// i el planter es deriva: res d'això es pregunta.
 function formFinances(main, e) {
   const f = el('form', { class: 'card-cos' });
   const graella = el('div', { class: 'form-graella' });
   const camp = (clau, val, type = 'number') => { const i = el('input', { type, 'aria-label': t('economia.' + clau) }); if (val != null) i.value = val; return el('label', {}, t('economia.' + clau), i); };
+  const s1 = e.setmanes?.[0] || {}, s2 = e.setmanes?.[1] || {};
+  const tq1 = camp('taquilla_s1', s1.taquilla);
+  const pt1 = camp('patrocini_s1', s1.patrocini);
+  const tq2 = camp('taquilla_s2', s2.taquilla);
+  const pt2 = camp('patrocini_s2', s2.patrocini);
   const caixa = camp('caixa_real', e.caixa);
-  const caixaData = camp('caixa_data', e.caixa_data, 'date');
-  const periodeData = camp('periode_data', e.periode_data, 'date');
-  const taquilla = camp('taquilla', e.taquilla);
-  const patrocini = camp('patrocini', e.patrocini);
   const estadi = camp('despesa_estadi', e.manteniment_estadi || null);
-  const estadiMant = camp('estadi_manteniment', e.estadi_manteniment);
-  const estadiObra = camp('estadi_cost_obra', e.estadi_cost_obra);
-  const estadiData = camp('estadi_data', e.estadi_data, 'date');
-  graella.append(periodeData, taquilla, patrocini, caixa, caixaData, estadi,
-    estadiMant, estadiObra, estadiData);
+  graella.append(tq1, pt1, tq2, pt2, caixa, estadi);
   f.append(graella, el('button', { type: 'submit', class: 'b-prim', text: t('economia.finances_desa') }));
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const v = (l) => { const x = l.querySelector('input').value; return x === '' ? null : x; };
     await api('/api/finances', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      caixa: v(caixa), caixa_data: v(caixaData), periode_data: v(periodeData),
-      taquilla: v(taquilla), patrocini: v(patrocini), despesa_estadi: v(estadi),
-      estadi_manteniment: v(estadiMant), estadi_cost_obra: v(estadiObra), estadi_data: v(estadiData) }) });
+      taquilla_s1: v(tq1), patrocini_s1: v(pt1), taquilla_s2: v(tq2), patrocini_s2: v(pt2),
+      caixa: v(caixa), despesa_estadi: v(estadi) }) });
     location.reload();
   });
   main.append(f);
 }
 
-function formMoviment(main) {
+// L'ESTIMACIÓ D'ESTADI: els números que dona la calculadora externa, un colp per temporada.
+// Cadència distinta de la declaració del període, i caduquen (PAS 8) — per això va a banda.
+function formEstadi(main, e) {
   const f = el('form', { class: 'card-cos' });
   const graella = el('div', { class: 'form-graella' });
-  const tipus = el('select', { 'aria-label': t('economia.tipus') }, ...TIPUS_MOV.map((x) => el('option', { value: x, text: t('tipus.' + x) })));
-  const imp = el('input', { type: 'number', 'aria-label': t('economia.import') });
-  const jug = el('input', { type: 'number', 'aria-label': t('economia.jugador_id') });   // crea
-  const data = el('input', { type: 'date', 'aria-label': t('economia.data') });
-  data.value = new Date().toISOString().slice(0, 10);   // hui: el valor actual, precarregat
-  const nota = el('input', { type: 'text', 'aria-label': t('economia.nota') });   // crea
-  const b = el('button', { type: 'submit', class: 'b-prim', text: t('economia.afig') });
-  graella.append(el('label', {}, t('economia.tipus'), tipus), el('label', {}, t('economia.import'), imp),
-    el('label', {}, t('economia.jugador_id'), jug), el('label', {}, t('economia.data'), data),
-    el('label', {}, t('economia.nota'), nota));
-  f.append(graella, b);
+  const camp = (clau, val, type = 'number') => { const i = el('input', { type, 'aria-label': t('economia.' + clau) }); if (val != null) i.value = val; return el('label', {}, t('economia.' + clau), i); };
+  const obra = camp('estadi_cost_obra', e.estadi_cost_obra);
+  const mant = camp('estadi_manteniment', e.estadi_manteniment);
+  const data = camp('estadi_data', e.estadi_data, 'date');
+  graella.append(obra, mant, data);
+  f.append(graella, el('button', { type: 'submit', class: 'b-prim', text: t('economia.estadi_desa') }));
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
-    if (imp.value === '') return;
-    await api('/api/transaccions', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      tipus: tipus.value, import: Number(imp.value), jugador_id: jug.value ? Number(jug.value) : null, data: data.value || null, nota: nota.value || null }) });
+    const v = (l) => { const x = l.querySelector('input').value; return x === '' ? null : x; };
+    await api('/api/finances', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
+      estadi_cost_obra: v(obra), estadi_manteniment: v(mant), estadi_data: v(data) }) });
     location.reload();
   });
   main.append(f);
 }
+
 
 
 // ── 8. Pla mestre ──

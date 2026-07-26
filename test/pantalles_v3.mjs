@@ -19,8 +19,9 @@ sqlite.exec(`
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, sou, creativitat, defensa, porteria, anotacio, extrem, passades)
     VALUES (1,1,'MC',22,3000,5,1,1,1,1,1),(1,2,'DC',24,2000,1,6,1,1,1,1);
   INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (1,'core','auto'),(2,'titular','auto');
-  INSERT INTO finances (usuari_id, caixa, caixa_data, taquilla, patrocini, premis, despesa_planter, despesa_estadi)
-    VALUES (1, 500000, '2026-07-25', 30000, 20000, 5000, 2000, 9000);
+  INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi,
+      taquilla_s1, patrocini_s1, taquilla_s2, patrocini_s2)
+    VALUES (1, 500000, '2026-07-25', 6000, 60000, 40000, 0, 40000);
 `);
 const ctx = { env: { DB: db }, data: { usuari: { id: 1 } } };
 
@@ -35,7 +36,7 @@ assert.equal(m.estoc.estadi_declarat, false, 'sense números d\'estadi, no hi ha
 for (const o of m.estoc.opcions) assert.ok(o.motiu, 'cada opció porta el seu motiu DERIVAT');
 
 // Amb els números de la calculadora declarats, l'obra entra — i VA PRIMER (v3.1).
-sqlite.prepare('UPDATE finances SET estadi_manteniment=?, estadi_cost_obra=?, despesa_estadi=? WHERE usuari_id=1').run(9000, 200000, 6000);
+sqlite.prepare('UPDATE finances SET estadi_manteniment=?, estadi_cost_obra=? WHERE usuari_id=1').run(9000, 200000);
 const m2 = await (await mercat.onRequestGet(ctx)).json();
 assert.equal(m2.estoc.estadi_declarat, true, 'declarada, l\'obra ja es pot proposar');
 const opEstadi = m2.estoc.opcions.find((o) => o.tipus === 'estadi');
@@ -70,9 +71,11 @@ const post = (cos) => vendes.onRequestPost({ request: new Request('http://t', { 
   headers: { 'content-type': 'application/json' }, body: JSON.stringify(cos) }), ...ctx });
 await post({ jugador_id: 1, eixida_deserta: 'despatxar' });
 assert.equal(sqlite.prepare('SELECT estat FROM vendes WHERE jugador_id=1').get().estat, 'despatxat');
+// `un_euro` era un override del PREU; ara és NOMÉS un estat (rellistar-lo a la baixa). Cap
+// import: Tonico no guarda preus perquè cap preu entra a cap fórmula.
 await post({ jugador_id: 1, eixida_deserta: 'un_euro' });
 const v = sqlite.prepare('SELECT estat, preu_eixida FROM vendes WHERE jugador_id=1').get();
-assert.equal(v.estat, 'llistat');
-assert.equal(v.preu_eixida, 1, 'l\'1 € és un override explícit del preu');
+assert.equal(v.estat, 'llistat', 'l\'1 € torna la fitxa al mercat');
+assert.equal(v.preu_eixida, null, 'i no escriu cap import: el preu ja no és cosa de Tonico');
 
 console.log('OK — pantalles: el bucle d\'estoc, el pla de flux i la pregunta de venda arriben a la vista');

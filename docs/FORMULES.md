@@ -104,10 +104,12 @@ periode_setmanes = `setmanes_periode`                       [2: un partit a casa
     bisetmanal». Un flux calculat sobre una setmana val el doble o la meitat segons
     quina toque, i eixa oscil·lació és més gran que el flux net.]
 per_periode(x)   = x × `setmanes_periode`                   ← NORMALITZACIÓ
-   [tot import SETMANAL es multiplica; només la taquilla ja ve per període]
-ingressos_recurrents = taquilla + per_periode(patrocini)
-   [NOMÉS els dos extrapolables. Club d'aficionats, comissions i vendes són PUNTUALS
-    i no entren al flux: no es poden extrapolar i marejarien el sostre de sou]
+   [per a les DESPESES, que són constants setmanals]
+ingressos_recurrents = SUMA(setmanes del període: taquilla + patrocini)
+   [es declaren les DOS setmanes, LITERALS (la passada i esta): així el període és la
+    seua suma i cap factor 2 toca els ingressos. NOMÉS taquilla i patrocinadors: club
+    d'aficionats, comissions i vendes són PUNTUALS, no s'extrapolen i marejarien el
+    sostre de sou]
 despesa_planter  = SI(sistema_juvenil = 'academia'; `cost_instalacions_juvenils`; 0)
                  + `cost_cercapromeses` × n_cercapromeses
 despeses_fixes   = per_periode(nòmina + manteniment_estadi + personal + despesa_planter)
@@ -121,9 +123,14 @@ caixa            = saldo real declarat (mai projectat)
    [= «Diners disponibles» de l'informe, no «diners al final de setmana»]
 caixa_disponible = MAX(0; caixa − `reserva_caixa`)
 ```
-De l'informe setmanal de HT es declaren **només dos coses**: els ingressos recurrents i la
-caixa. La nòmina ve del CSV i el personal de les seues fitxes; el planter es deriva. Una
+De l'informe setmanal de HT es declaren **QUATRE coses i cap més**: **taquilla** i
+**patrocinadors** (de la setmana passada i d'esta), **diners disponibles** i **manteniment
+d'estadi**. La nòmina ve del CSV, el personal de les seues fitxes i el planter es deriva. Una
 xifra, una font (invariant 1): si no hi ha dues fonts, no hi pot haver discrepància.
+
+**No hi ha comptabilitat de moviments.** Amb la caixa declarada i el flux eixint de
+taquilla+patrocini, apuntar moviment a moviment no alimenta cap decisió: el diner d'una venda
+apareix a la caixa del període següent, que és on el sistema el mira.
 
 ## PAS 4 — NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)
 
@@ -185,7 +192,8 @@ destí(deserta) = SI(j ∈ sobrants; ACCIÓ("despatxa'l"); TRIA(`eixides_deserta
    [ES LLISTA UNA VEGADA. Si va desert i el jugador SOBRA —no té lloc a cap dels dos
     onzes— s'acomiada: rellistar-lo cada setmana és pagar `cost_llistat` per res.
     Un retingut, un rotatiu o un cos MAI s'acomiaden per anar deserts]
-venda_cobrada  = import real declarat        → la caixa cobrada activa el PAS 8
+caixa cobrada  = la `caixa` DECLARADA del període següent    → activa el PAS 8
+   [l'import d'una venda NO s'apunta: no entra a cap fórmula. Es veu a la caixa]
 ```
 **Cap estimació de preu.** Tonico no diu quant val un jugador: qui ho diu és el mercat, i
 el resultat entra com a **venda cobrada** (estoc). Un preu esperat era un número inventat
@@ -419,10 +427,16 @@ amb la demostració de cada error, a [`docs/FORATS.md`](FORATS.md).
 15. **Dues bases de personal**: l'entrenador no cobra com la resta (1.250 contra 1.020).
 16. **`despesa_planter` es deriva** de `sistema_juvenil` i `n_cercapromeses`; el
    `manteniment_estadi` es declara i és constant fins a la remodelació.
-17. **Fora l'estimació de preu de venda**: no canviava cap decisió. L'ordre de venda el
-   porta `sobrecost` i «es ven o s'acomiada» el decidix la subhasta, no una previsió. Amb
-   ella cauen `valor_net`, `valor_net_promo` i la branca `PROMOCIONA_I_LLISTA` del PAS 10,
-   que era el juvenil-com-a-negoci que el canvi 9 ja havia retirat.
+17. **Fora TOT el preu de venda**: ni estimat ni declarat. No canviava cap decisió: l'ordre
+   de venda el porta `sobrecost` i «es ven o s'acomiada» el decidix la subhasta. Amb ell
+   cauen `valor_net`, `valor_net_promo`, la branca `PROMOCIONA_I_LLISTA` del PAS 10 (el
+   juvenil-com-a-negoci que el canvi 9 ja havia retirat) i els camps `preu_eixida` i
+   `preu_venut` de la fitxa.
+18. **L'ECONOMIA SÓN QUATRE COSES** (ordre de Miquel): taquilla i patrocinadors de les dos
+   setmanes, diners disponibles i manteniment d'estadi. **Fora la comptabilitat de
+   moviments** sencera (formulari, llista, API i l'alerta que reclamava l'import d'una
+   venda): amb la caixa declarada, apuntar moviment a moviment no alimentava cap decisió.
+   I els ingressos es declaren **per setmana, literals**, així que cap factor 2 els toca.
 
 ## PROCÉS
 

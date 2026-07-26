@@ -1,5 +1,47 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · L'ECONOMIA SÓN QUATRE COSES (correcció de Miquel, i era greu)
+**Símptoma de Miquel:** *«si t'he dit que Tonico només ha de tindre taquilla, patrocinadors,
+diners disponibles i manteniment de l'estadi, de la setmana passada i esta, per què has fet
+esta mamarratxada? CONTINUA PREGUNTANT-ME PER MOVIMENTS PREUS DE VENDA I XORRADES»**
+
+**Causa:** el v3.1 va llevar l'ESTIMACIÓ de preu i es va quedar ahí. Tot el que hi penjava
+seguia en peu, i cada peça seguia demanant dades que ja no decidien res:
+1. El **formulari de moviments** de la pantalla d'Economia (tipus, import, jugador, data,
+   nota) amb la seua llista de transaccions.
+2. Els camps de **preu de la fitxa de venda** (`preu_eixida`, `preu_venut`), i una columna
+   «proposat» que ja només pintava «—» perquè l'estimació havia caigut.
+3. El **meu propi formulari de finances**, que havia quedat en NOU camps.
+
+**Decisions:**
+- **De l'informe es declaren QUATRE coses i cap més:** taquilla i patrocinadors *de la
+  setmana passada i d'esta*, diners disponibles, manteniment d'estadi. L'estimació d'estadi
+  (cost d'obra + manteniment futur + data) va a una targeta a banda: és d'una altra cadència
+  (un colp per temporada, amb caducitat) i barrejar-la amb la declaració del període era part
+  del soroll.
+- **Les DOS setmanes es declaren literals**, i els ingressos del període són la seua suma.
+  Efecte lateral valuós: desapareix la multiplicació per 2 del camí dels ingressos, o siga
+  l'error que l'invariant 16 vigilava. Només les despeses (constants setmanals) es normalitzen.
+- **Fora la comptabilitat de moviments sencera**: formulari, llista, `functions/api/transaccions.js`,
+  `signa()`, l'apunt automàtic des de `motius.js` i `ALR_TRANSACCIO_PENDENT`. Amb la caixa
+  DECLARADA i el flux eixint de taquilla+patrocini, apuntar moviment a moviment no alimentava
+  cap decisió: el diner d'una venda apareix a la caixa del període següent. La **taula** es
+  queda (té apunts fets per Miquel i esborrar-la seria destructiu), però ja no la llig ningú —
+  i hi ha un test que ho prova: mig milió apuntat i la caixa segueix `null`.
+- **Fora els camps de preu de la fitxa de venda.** `un_euro` passa a ser només un ESTAT
+  (rellistar a la baixa), sense import. Un `preu_eixida` enviat per l'API s'ignora, i el test
+  comprova que **tampoc s'escriu a la BD**: la porta es tanca, no s'amaga.
+- La pantalla d'Economia serveix ara de `/api/finances`, que torna les xifres declarades **i**
+  l'eixida de l'avaluador. La frescor la data `caixa_data`, que ja s'omplia sola: `periode_data`
+  sobrava (un camp menys per a demanar).
+
+**Neteja que arrossega:** 20 claus i18n mortes, les famílies `tipus.*` (moviments) i `font.*`
+(d'on eixia el preu estimat), `test/economia.mjs` reescrit per a guardar el que valia —el camí
+d'extrem a extrem des del CSV real— i tirar el que provava el subsistema mort.
+
+**Lliçó de procés apuntada:** llevar la causa i deixar els consumidors en peu no és llevar-la.
+Quan una peça cau, toca resseguir qui la demanava — formularis inclosos.
+
 ## 2026-07-26 · CONTRACTE v3.1 — SET CORRECCIONS SOBRE DADES REALS DE HT
 Diagnosticades contra l'informe setmanal real de Benifotrem (T83). El full manda i s'ha
 canviat primer (invariant 11); `formules.json` regenerat: **104 fórmules**. Registre de

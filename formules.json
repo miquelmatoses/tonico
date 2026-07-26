@@ -328,10 +328,8 @@
       "pas": "P3",
       "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
       "clau": "ingressos_recurrents",
-      "linia": "ingressos_recurrents = taquilla + per_periode(patrocini)",
-      "entrades": [
-        "per_periode"
-      ],
+      "linia": "ingressos_recurrents = SUMA(setmanes del període: taquilla + patrocini)",
+      "entrades": [],
       "poms": [],
       "taules": []
     },
@@ -767,15 +765,15 @@
       "taules": []
     },
     {
-      "id": "P7.venda_cobrada",
+      "id": "P7.caixa",
       "pas": "P7",
       "pasTitol": "VENDRE (allibera sou i genera caixa)",
-      "clau": "venda_cobrada",
-      "linia": "venda_cobrada  = import real declarat        → la caixa cobrada activa el PAS 8",
-      "entrades": [
+      "clau": "caixa",
+      "linia": "caixa cobrada  = la `caixa` DECLARADA del període següent    → activa el PAS 8",
+      "entrades": [],
+      "poms": [
         "caixa"
       ],
-      "poms": [],
       "taules": []
     },
     {

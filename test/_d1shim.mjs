@@ -92,5 +92,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/069_personal_vocabulari.sql'));
   sqlite.exec(src('../schema/070_alerta_compte.sql'));
   sqlite.exec(src('../schema/071_v31_economia_personal.sql'));
+  sqlite.exec(src('../schema/072_economia_quatre_camps.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

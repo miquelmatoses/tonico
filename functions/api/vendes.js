@@ -31,7 +31,7 @@ export async function onRequestGet({ env, data }) {
     `SELECT j.id AS jugador_id, j.nom, j.especialitat, ij.posicio_ultim_partit AS posicio, ij.edat_anys,
             ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada,
             ij.lleialtat, ij.qualificacio_ultim_partit, ij.sou, ij.lesio,
-            v.preu_eixida, v.data_llistada, v.estat, v.preu_venut, v.resultat_pendent, c.categoria
+            v.data_llistada, v.estat, v.resultat_pendent, c.categoria
        FROM instantanies_jugadors ij JOIN jugadors j ON j.id = ij.jugador_id
        JOIN ${sqlCategoriaVigent(['categoria'])} c
          ON c.jugador_id = j.id
@@ -126,10 +126,10 @@ export async function onRequestPost({ request, env, data }) {
     const EIXIDES = { rebaixar: 'pendent', rellistar: 'llistat', despatxar: 'despatxat', un_euro: 'llistat' };
     const nouEstat = EIXIDES[cosPrev.eixida_deserta];
     if (!nouEstat || !cosPrev.jugador_id) return json({ error: 'dades_invalides' }, 400);
-    await env.DB.prepare(
-      `UPDATE vendes SET estat=?, preu_eixida=CASE WHEN ?='un_euro' THEN 1 ELSE preu_eixida END
-        WHERE usuari_id=? AND jugador_id=?`
-    ).bind(nouEstat, cosPrev.eixida_deserta, data.usuari.id, cosPrev.jugador_id).run();
+    // `un_euro` era un override del PREU; ara és només un ESTAT (rellistar-lo a la baixa).
+    // Sense import, perquè cap import entra a cap fórmula.
+    await env.DB.prepare('UPDATE vendes SET estat=? WHERE usuari_id=? AND jugador_id=?')
+      .bind(nouEstat, data.usuari.id, cosPrev.jugador_id).run();
     return json({ ok: true, estat: nouEstat });
   }
   const c = await request.json().catch(() => ({}));
@@ -139,11 +139,11 @@ export async function onRequestPost({ request, env, data }) {
   const estat = ESTATS.includes(c.estat) ? c.estat : 'pendent';
   // En editar/desar l'usuari resol la fitxa: es neteja la pregunta de resultat pendent.
   await env.DB.prepare(
-    `INSERT INTO vendes (jugador_id, usuari_id, preu_eixida, data_llistada, estat, preu_venut, resultat_pendent)
-     VALUES (?, ?, ?, ?, ?, ?, 0)
-     ON CONFLICT(jugador_id) DO UPDATE SET preu_eixida=excluded.preu_eixida, data_llistada=excluded.data_llistada,
-       estat=excluded.estat, preu_venut=excluded.preu_venut, resultat_pendent=0`
-  ).bind(c.jugador_id, data.usuari.id, enter(c.preu_eixida), c.data_llistada || null, estat, enter(c.preu_venut)).run();
+    `INSERT INTO vendes (jugador_id, usuari_id, data_llistada, estat, resultat_pendent)
+     VALUES (?, ?, ?, ?, 0)
+     ON CONFLICT(jugador_id) DO UPDATE SET data_llistada=excluded.data_llistada,
+       estat=excluded.estat, resultat_pendent=0`
+  ).bind(c.jugador_id, data.usuari.id, c.data_llistada || null, estat).run();
   return json({ ok: true }, 201);
 }
 
