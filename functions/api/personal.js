@@ -31,7 +31,9 @@ async function plaFlux(db, usuariId) {
   const base = Number(await pom('staff_cost_base')) || null;
   const prioritat = JSON.parse((await pom('prioritat_personal')) || '[]');
   const divisioPsic = normalitzaDivisio(await pom('divisio_psicoleg'));
-  const fluxLliure = eco.flux_lliure;
+  // SETMANAL: l'escala de personal va en €/setmana i `flux_lliure` en unitats del període.
+  // Comparar-los era donar-li el doble de pressupost del que hi ha (bug caçat el 26-07).
+  const fluxLliure = eco.flux_lliure_setmanal;
   if (fluxLliure == null || !base || !prioritat.length) {
     return { flux_lliure: fluxLliure, pla: [], falten: eco.flux == null ? ['flux'] : [] };
   }

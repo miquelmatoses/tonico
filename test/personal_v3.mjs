@@ -48,3 +48,21 @@ assert.deepEqual(decisioRenovacio(2, 100, BASE), { accio: 'no_renoves', nivell: 
   'si no arriba a cap nivell, no es renova');
 
 console.log('OK — personal v3: cost per nivell, prioritat fixa i renovació');
+
+// ── EL PRESSUPOST VA EN SETMANES, com l'escala ────────────────────────────────────────
+// REGRESSIÓ REAL: `flux_lliure` es calcula en unitats del PERÍODE (2 setmanes) i l'escala de
+// personal va en €/SETMANA. Comparar-los donava al planificador el DOBLE de pressupost, i
+// proposava un assistent de nivell 5 — 16.320 €/setmana, més que tot el personal junt.
+{
+  const PRIOR = [{ tipus: 'assistent', quants: 2 }, { tipus: 'entrenador', base: 1250 },
+    { tipus: 'metge' }, { tipus: 'psicoleg' }];
+  const setmanal = 9610;                 // el que el flux sosté DE VERES cada setmana
+  const { pla } = planPersonal(setmanal, 1020, PRIOR);
+  const cost = pla.reduce((a, x) => a + x.cost, 0);
+  assert.ok(cost <= setmanal, `el pla no pot passar-se del pressupost (${cost} > ${setmanal})`);
+  // Amb el doble (el bug) el primer assistent arribava al 5; amb el pressupost bo, no.
+  assert.ok(pla[0].nivell < 5, 'amb el pressupost setmanal, cap plaça arriba al nivell 5');
+  const dolent = planPersonal(setmanal * 2, 1020, PRIOR);
+  assert.equal(dolent.pla[0].nivell, 5, 'i amb el doble sí — que és el que passava');
+}
+console.log('OK — el pressupost de personal va en setmanes, com la seua escala');

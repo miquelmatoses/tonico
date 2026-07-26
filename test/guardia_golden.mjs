@@ -94,7 +94,9 @@ const igual = (vist, esperat, què) => { assert.deepEqual(vist, esperat, `golden
   const { pla_flux } = await json(apiPersonal);
   const eco = await economia(db, 1, '2026-07-26');
   // F3: flux_lliure torna a sumar el cost del personal ACTUAL (ja va restat dins del flux).
-  igual(pla_flux.flux_lliure, eco.flux_lliure, 'flux lliure de la font única');
+  // El pla de personal consumix el SETMANAL: l'escala de personal va en €/setmana.
+  igual(pla_flux.flux_lliure, eco.flux_lliure_setmanal, 'flux lliure de la font única, en setmanal');
+  igual(eco.flux_lliure_setmanal, eco.flux_lliure / eco.setmanes_periode, 'i el canvi d\'unitat el fa l\'economia');
   igual(eco.flux_lliure, Math.max(0, eco.flux + eco.despeses.personal - eco.reserva_flux),
     'flux_lliure = MAX(0; flux + per_periode(personal) − reserva_flux)');
   for (const x of pla_flux.pla) {
