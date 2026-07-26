@@ -1,5 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 38" width="38" height="38">
-  <rect width="38" height="38" rx="10" fill="#c6f24e"/>
-  <text x="19" y="20" text-anchor="middle" dominant-baseline="central"
-        font-family="Georgia,'Times New Roman',serif" font-weight="800" font-size="26" fill="#0c3a1e">T</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 72" width="64" height="72">
+  <defs><clipPath id="f"><path d="M3 3h58v37c0 17-15 25-29 31C18 65 3 57 3 40z"></path></clipPath></defs>
+  <path d="M3 3h58v37c0 17-15 25-29 31C18 65 3 57 3 40z" fill="#c6f24e"></path>
+  <g clip-path="url(#f)">
+    <path d="M-6 46L46-6h24L-6 70z" fill="#0c3a1e"></path>
+    <path d="M10 12h42v13H37.5v27h-11V25H10z" fill="#c6f24e" stroke="#0c3a1e" stroke-width="3"></path>
+  </g>
 </svg>

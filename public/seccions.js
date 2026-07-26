@@ -207,14 +207,14 @@ function pintaAgenda(main, agenda) {
 // ── 2. Moviments (fets automàticament amb Desfés + preguntes d'overrides + motius) ──
 export async function decisions(main) {
   capcalera(main, 2, 'decisions');
-  const boto = (id, accio, text) => { const b = el('button', { type: 'button', class: 'b-xic neutre', text }); b.addEventListener('click', async () => { await api('/api/intercanvis', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, accio }) }); location.reload(); }); return b; };
+  const boto = (id, accio, text, cls = 'b-xic neutre') => { const b = el('button', { type: 'button', class: cls, text }); b.addEventListener('click', async () => { await api('/api/intercanvis', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, accio }) }); location.reload(); }); return b; };
   const { moviments, historial = [], preguntes } = await api('/api/intercanvis');
   const liniaMov = (x) => {
     const dif = decimal(x.diferencia);
     const txt = x.entrant ? t('moviments.mov', { entrant: x.entrant, eixent: x.eixent, desti: t('categoria.' + x.desti_eixent), diferencia: dif })
       : t('moviments.mov_solo', { eixent: x.eixent, categoria: t('categoria.' + x.categoria), desti: t('categoria.' + x.desti_eixent) });
     return el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
-      el('span', { class: 'mov-text', text: txt }), boto(x.id, 'desfer', t('moviments.desfes')));
+      el('span', { class: 'mov-text', text: txt }), boto(x.id, 'desfer', t('moviments.desfes'), 'b-enllac'));
   };
 
   const duo = el('div', { class: 'duo' });
@@ -232,26 +232,28 @@ export async function decisions(main) {
   }
   duo.append(subF);
 
+  // LES DUES COLUMNES DEL DISSENY. El que s'ha FET va a la targeta sòlida; el que ESPERA la
+  // teua paraula —preguntes i motius— va junt a un panell discontinu. La jerarquia és la
+  // vora: sòlida = passat, discontínua = pendent. Abans eren tres targetes iguals i les dues
+  // pendents competien visualment amb el que ja estava resolt.
+  const pend = el('div', { class: 'card-pendent' });
+
   // Preguntes prèvies (només overrides manuals)
-  const subP = card(t('moviments.preguntes_titol'), preguntes.length);
-  const cosP = el('div', { class: 'card-cos' });
-  if (!preguntes.length) cosP.append(el('p', { class: 'nota-peu', text: t('moviments.cap_pregunta') }));
+  pend.append(el('h3', { class: 'pend-et', text: t('moviments.preguntes_titol') }));
+  if (!preguntes.length) pend.append(el('p', { class: 'pend-buit', text: t('moviments.cap_pregunta') }));
   for (const x of preguntes) {
     const dif = decimal(x.diferencia);
     const p = el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
       el('span', { class: 'mov-text', text: t('moviments.pregunta', { entrant: x.entrant, eixent: x.eixent, categoria: t('categoria.' + x.categoria), desti: t('categoria.' + x.desti_eixent), diferencia: dif }) }));
     p.append(boto(x.id, 'acceptar', t('plantilla.acceptar')), boto(x.id, 'rebutjar', t('plantilla.rebutjar')));
-    cosP.append(p);
+    pend.append(p);
   }
-  subP.append(cosP);
-  duo.append(subP);
 
   // Motius de baixa (punt 4b)
   const motius = await opc(api('/api/motius'));
   const pendents = motius?.pendents || [];
-  const subM = card(t('decisions.motius_titol'), pendents.length);
-  const cosM = el('div', { class: 'card-cos' });
-  if (!pendents.length) cosM.append(el('p', { class: 'nota-peu', text: t('decisions.sense_motius') }));
+  pend.append(el('h3', { class: 'pend-et', text: t('decisions.motius_titol') }));
+  if (!pendents.length) pend.append(el('p', { class: 'pend-buit', text: t('decisions.sense_motius') }));
   for (const j of pendents) {
     const sel = el('select', {}, ...['venda', 'despatx', 'promocio', 'altres'].map((m) => el('option', { value: m, text: t('motiu_baixa.' + m) })));
     const origenSel = el('select', {}, el('option', { value: '', text: '—' }), ...(j.candidats_juvenils || []).map((c) => el('option', { value: c.id, text: c.nom })));
@@ -260,13 +262,12 @@ export async function decisions(main) {
       await api('/api/motius', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.id, motiu: sel.value, origen_juvenil_id: origenSel.value ? Number(origenSel.value) : null }) });
       location.reload();
     });
-    cosM.append(el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
-      // Sense casella d'IMPORT: la venda ja no s'apunta enlloc (no entra a cap fórmula) i
-      // demanar-la era una porta oberta a un número que no anava a cap lloc.
+    // Sense casella d'IMPORT: la venda ja no s'apunta enlloc (no entra a cap fórmula) i
+    // demanar-la era una porta oberta a un número que no anava a cap lloc.
+    pend.append(el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
       el('span', { class: 'mov-text', text: t('decisions.motiu_jugador', { nom: j.nom }) }), sel, origenSel, b));
   }
-  subM.append(cosM);
-  duo.append(subM);
+  duo.append(pend);
   main.append(duo);
 }
 

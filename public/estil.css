@@ -55,8 +55,8 @@ a:hover { color: var(--ok); }
 .hdr { position: sticky; top: 0; z-index: 50; background: var(--verd-fosc); border-bottom: 3px solid var(--tinta); }
 .hdr-fila { max-width: 1180px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 16px; }
 .hdr-marca { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.hdr-logo { width: 38px; height: 38px; border-radius: 10px; background: var(--llima); color: var(--verd-fosc);
-  display: grid; place-items: center; font-family: var(--font-titol); font-size: 22px; box-shadow: 2px 2px 0 rgba(0,0,0,.35); }
+/* L'escut del disseny: SVG, no una lletra en una caixa. Manté la proporció 64×72. */
+.hdr-logo { width: 34px; height: 38px; display: block; filter: drop-shadow(2px 2px 0 rgba(0,0,0,.35)); }
 .hdr-nom { font-family: var(--font-titol); font-size: 22px; color: #fff; letter-spacing: 1px; }
 .hdr-fase { background: var(--llima); color: var(--verd-fosc); font-weight: 800; font-size: 11px; padding: 3px 8px; border-radius: 6px; }
 .hdr-buit { flex: 1; }
@@ -325,7 +325,7 @@ ul { margin: 0 0 12px; padding-left: 18px; }
   width: 520px; height: 520px; border: 3px solid rgba(255,255,255,.14); border-radius: 50%; }
 .auth-pitch > * { position: relative; z-index: 1; }
 .auth-marca { display: flex; align-items: center; gap: 12px; }
-.auth-marca .hdr-logo { width: 46px; height: 46px; border-radius: 12px; font-size: 26px; }
+.auth-marca .hdr-logo { width: 41px; height: 46px; }
 .auth-marca .hdr-nom { font-size: 26px; }
 .auth-pitch h1 em { color: var(--llima); font-style: normal; }
 .auth-sub { font-size: 17px; line-height: 1.5; max-width: 30ch; color: var(--verd-pal); margin: 0; }
@@ -466,3 +466,18 @@ form.card-cos { display: block; }
 .eco-unitat { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
   color: var(--gris); margin-top: -2px; }
 .eco-card.fosc .eco-unitat { color: var(--verd-suau); }
+
+/* ── MOVIMENTS: dues columnes, i la vora diu l'estat ───────────────────────────
+   Sòlida = el que ja s'ha fet. Discontínua = el que espera la teua paraula. Abans
+   eren tres targetes iguals i el pendent competia amb el resolt. */
+.card-pendent { background: #fbf8ee; border: 2px dashed #cdd6cf; border-radius: 16px; padding: 18px; }
+.pend-et { margin: 0 0 8px; font-family: var(--font-titol); font-size: 12px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .5px; color: var(--gris); }
+/* Tot títol que no és el primer del panell necessita aire, vinga d'on vinga. */
+.card-pendent > * + .pend-et { margin-top: 20px; }
+.pend-buit { margin: 0 0 4px; font-size: 13.5px; color: var(--gris); }
+.card-pendent .mov-fila { border-top: 1px solid #eae5d6; }
+/* «Desfés» és un enllaç, no un botó: l'acció principal de la fila és el text. */
+.b-enllac { background: none; border: 0; padding: 0; cursor: pointer; font-size: 12px; font-weight: 700;
+  color: var(--verd-fosc); text-decoration: underline; font-family: inherit; }
+.b-enllac:hover { color: var(--llima-fosc, #1a9c4a); }

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" width="300" height="80">
+  <defs><clipPath id="l"><path d="M3 3h58v37c0 17-15 25-29 31C18 65 3 57 3 40z" transform="translate(4 4)"></path></clipPath></defs>
+  <g transform="translate(4 4)"><path d="M3 3h58v37c0 17-15 25-29 31C18 65 3 57 3 40z" fill="#c6f24e"></path></g>
+  <g clip-path="url(#l)" transform="translate(4 4)">
+    <path d="M-6 44L44-6h22L-6 66z" fill="#0c3a1e"></path>
+    <path d="M13 13h36v10.5H36.5v23h-10.5v-23H13z" fill="#c6f24e" stroke="#0c3a1e" stroke-width="2.6"></path>
+    <circle cx="45" cy="52" r="8.5" fill="#c6f24e" stroke="#0c3a1e" stroke-width="2.6"></circle>
+  </g>
+  <g transform="translate(4 4)"><path d="M3 3h58v37c0 17-15 25-29 31C18 65 3 57 3 40z" fill="none" stroke="#14231a" stroke-width="4"></path></g>
+  <text x="84" y="45" font-family="Anton, Impact, 'Arial Narrow', sans-serif" font-size="40" letter-spacing="1.5" fill="#14231a">TONICO</text>
+  <text x="86" y="63" font-family="Manrope, sans-serif" font-weight="800" font-size="11" letter-spacing="4" fill="#5a6b60">DIRECCIÓ ESPORTIVA</text>
+</svg>
