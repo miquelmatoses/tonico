@@ -116,7 +116,7 @@ p { margin: 0 0 10px; }
 .briefing a { color: var(--llima); text-decoration: underline; }
 
 /* ══ TARGETES D'ACCIÓ ══ */
-.targetes { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; list-style: none; margin: 0 0 18px; padding: 0; }
+.targetes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 14px; list-style: none; margin: 0 0 18px; padding: 0; }
 .targeta { background: var(--blanc); border: 2px solid var(--tinta); border-radius: 14px; padding: 14px 16px; box-shadow: var(--o3); }
 .targeta.urgent { border-left: 8px solid var(--roig); }
 .targeta.mitja { border-left: 8px solid var(--groc); }
@@ -204,7 +204,7 @@ tbody td:first-child { font-weight: 700; }
 td.num, th.num { text-align: right; }
 
 /* ══ CAMP DE JOC ══ */
-.onzes { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap: 18px; }
+.onzes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 18px; }
 .onze { background: var(--blanc); border: 3px solid var(--tinta); border-radius: 18px; overflow: hidden; box-shadow: var(--o5); }
 .onze-cap { padding: 12px 16px; background: var(--verd-fosc); color: var(--verd-clar); }
 .onze-cap.b { background: var(--blau); color: #fff; }              /* la B del disseny és blava */
@@ -252,7 +252,7 @@ td.num, th.num { text-align: right; }
 .camp-llegenda i.descobriment { outline: 2px dotted var(--blau); outline-offset: 1px; }
 
 /* ══ GRAELLA DE COMPTABILITAT / DADES CURTES ══ */
-.graella { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 8px; }
+.graella { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 8px; }
 .graella-fila { display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 8px 12px; background: var(--paper); border-radius: 10px; font-size: 13px; }
 .graella-fila b { font-weight: 700; }
@@ -346,7 +346,7 @@ ul { margin: 0 0 12px; padding-left: 18px; }
 main:has(.auth) { max-width: none; padding: 0; }
 
 /* ══ GRAELLA DE DUES COLUMNES (Moviments, Fotrem, Economia, Personal) ══ */
-.duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; align-items: start; }
+.duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr)); gap: 16px; align-items: start; }
 
 /* ══ BANNER DE CONSELL ══ */
 .tip { background: var(--llima); border: 2px solid var(--tinta); border-radius: 12px; padding: 10px 14px;
@@ -380,6 +380,11 @@ main:has(.auth) { max-width: none; padding: 0; }
    porten inputs. Els controls omplin la seua cel·la (width:100%), sense forçar-la. */
 .c-venda { grid-template-columns: minmax(0,2.2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.6fr); }
 .c-pla { grid-template-columns: minmax(0,.7fr) minmax(0,.7fr) minmax(0,2fr) minmax(0,1fr); }
+/* Estes dos files no tenien columnes definides: queien a la columna implícita, o siga que
+   capçalera i fila resolien amplades distintes i les xifres no quadraven amb el seu títol.
+   L'opció i l'acció són text; el guany, el cost i el rendiment són xifres i van a la dreta. */
+.c-estoc { grid-template-columns: minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr); }
+.c-flux  { grid-template-columns: minmax(0,1.6fr) minmax(0,.7fr) minmax(0,1.2fr) minmax(0,1.4fr); }
 .c-staff { grid-template-columns: minmax(0,1.6fr) repeat(3, minmax(0,.9fr)) auto auto; align-items: end; }
 /* Camp xic dins d'una fila: etiqueta damunt, en xicotet, i el camp a tot l'ample de la
    columna. Així el número és sempre llegible i l'etiqueta no empeny la fila. */
@@ -391,7 +396,7 @@ main:has(.auth) { max-width: none; padding: 0; }
 .cel-controls input { width: 4.5rem; flex-shrink: 0; }
 
 /* ══ ECONOMIA ══ */
-.eco-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 14px; margin-bottom: 16px; }
+.eco-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 14px; margin-bottom: 16px; }
 .eco-card { background: var(--blanc); border: 2px solid var(--tinta); border-radius: 16px; padding: 16px 18px; box-shadow: var(--o4); }
 .eco-card.fosc { background: var(--verd-fosc); color: var(--verd-clar); }
 .eco-et { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--gris); }
@@ -405,7 +410,7 @@ main:has(.auth) { max-width: none; padding: 0; }
 .barra > i { display: block; height: 100%; background: var(--llima); }
 
 /* ══ FORMULARI EN GRAELLA ══ */
-.form-graella { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 10px; margin-bottom: 12px; }
+.form-graella { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 10px; margin-bottom: 12px; }
 .form-graella label { text-transform: uppercase; }
 .form-graella input, .form-graella select { width: 100%; }
 
@@ -420,10 +425,15 @@ main:has(.auth) { max-width: none; padding: 0; }
   font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--gris); }
 
 @media (max-width: 60rem) {
-  .c-venda, .c-pla { grid-template-columns: 1fr auto; }
+  .c-venda, .c-pla, .c-estoc, .c-flux { grid-template-columns: 1fr auto; }
   /* El personal porta tres camps i dos botons: en pantalla estreta la fila es tanca en una
      columna i cada camp queda a tot l'ample, que és el que el fa teclejable. */
-  .c-staff { grid-template-columns: 1fr; }
+  /* Estes dos files no tenien columnes definides: queien a la columna implícita, o siga que
+   capçalera i fila resolien amplades distintes i les xifres no quadraven amb el seu títol.
+   L'opció i l'acció són text; el guany, el cost i el rendiment són xifres i van a la dreta. */
+.c-estoc { grid-template-columns: minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr); }
+.c-flux  { grid-template-columns: minmax(0,1.6fr) minmax(0,.7fr) minmax(0,1.2fr) minmax(0,1.4fr); }
+.c-staff { grid-template-columns: 1fr; }
   .c-staff button { justify-self: start; }
   .graella-cap { display: none; }
 }

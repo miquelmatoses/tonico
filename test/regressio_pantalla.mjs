@@ -93,4 +93,49 @@ assert.ok(/if \(!files \|\| !files\.length\) return null;/.test(vista),
     'els marcadors de camp existixen i s\'usen');
 }
 
+// ── V10: cada taula ha de dur les seues columnes definides ──
+// La capçalera i les files són graelles SEPARADES: si la classe de fila no té
+// `grid-template-columns`, cadascuna resol amplades pel seu compte i els números no queden
+// sota el seu títol (i amb una sola columna implícita, la taula es desfà en una llista).
+// La regla lliga les DOS coses que han de quadrar: el nombre de capçaleres que la vista
+// passa i el nombre de pistes que el CSS declara.
+{
+  const css = readFileSync(new URL('../public/estil.css', import.meta.url), 'utf8');
+  const pistes = (classe) => {
+    const m = css.match(new RegExp(`\\.${classe}\\s*\\{[^}]*grid-template-columns:\\s*([^;]+);`));
+    if (!m) return null;
+    // `repeat(n, X)` compta com n pistes; la resta, un token per pista.
+    let n = 0;
+    for (const tros of m[1].replace(/minmax\([^)]*\)/g, 'M').split(/\s+/).filter(Boolean)) {
+      const r = tros.match(/^repeat\((\d+),$/);
+      n += r ? Number(r[1]) : (tros === 'M,' || tros === 'M' || /^(auto|[\d.]+fr|\dpx)/.test(tros) ? 1 : 0);
+    }
+    return n;
+  };
+  const problemes = [];
+  for (const m of vista.matchAll(/graellaAmbFiles\('(c-[\w-]+)',\s*\n?\s*\[([^\]]*)\]/g)) {
+    const classe = m[1];
+    const nCaps = m[2].split(',').filter((x) => x.trim()).length;
+    const nPistes = pistes(classe);
+    if (nPistes == null) { problemes.push(`${classe}: cap grid-template-columns al CSS`); continue; }
+    if (nPistes !== nCaps) problemes.push(`${classe}: ${nCaps} capçaleres però ${nPistes} pistes al CSS`);
+  }
+  assert.ok(problemes.length === 0, `taules amb columnes mal definides:\n  ${problemes.join('\n  ')}`);
+  // I TOTA classe de fila que la vista use ha de tindre columnes, encara que la capçalera no
+  // vinga de `graellaAmbFiles` (hi ha taules que la munten a mà).
+  const classes = new Set([...vista.matchAll(/graella-fila-d (c-[\w-]+)/g)].map((m) => m[1]));
+  for (const m of vista.matchAll(/graella-fila-d (c-[\w-]+)' \+/g)) classes.add(m[1]);
+  assert.ok(classes.size >= 3, `la comprovació ha de vore diverses taules (${[...classes].join(', ')})`);
+  const sense = [...classes].filter((c) => pistes(c) == null);
+  assert.deepEqual(sense, [], `classes de fila sense grid-template-columns: ${sense.join(', ')}`);
+
+  // I cap pista pot tindre un mínim FIX més ample que un telèfon estret (360 − 40 de marges):
+  // la pista no encongix per davall del seu mínim i la pàgina es desplaça de costat. L'idioma
+  // segur és `minmax(min(Npx, 100%), 1fr)`.
+  const rígides = [...css.matchAll(/minmax\((\d{3})px,\s*1fr\)/g)]
+    .filter((m) => Number(m[1]) > 320).map((m) => m[0]);
+  assert.deepEqual(rígides, [],
+    `pistes amb mínim fix més ample que un telèfon estret: ${rígides.join(', ')} → usa minmax(min(Npx, 100%), 1fr)`);
+}
+
 console.log('OK — regressions de pantalla: tota categoria amb puntuació, cap taula buida, cap camp buit sense motiu');
