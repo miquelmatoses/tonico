@@ -322,6 +322,23 @@ const VERIFICADES = {
     assert.equal(pressupostPersonal(35000, 0.40, 65280), 14000, 'la quota mana quan cap');
     assert.equal(pressupostPersonal(500000, 0.40, 65280), 65280, 'i el sostre quan la quota el passa');
   },
+  'P11.lliure': () => {
+    // lliure = pressupost − SUMA(sous DECLARATS). El nivell uniforme diu què sosté el flux a
+    // LLARG, suposant totes les places en eixe nivell; no és el que es pot pagar HUI, perquè
+    // els que ja hi són no baixen de nivell fins al venciment. Amb 3 a nivell 2 (6.120) d'un
+    // pressupost de 6.564 el pla diu «4 places a nivell 1», però només queden 444 €.
+    const uniforme = planPersonal(6564, 1020, [{ tipus: 'a' }, { tipus: 'b' }, { tipus: 'c' }, { tipus: 'd' }]);
+    assert.equal(uniforme.nivell, 1, 'el pla sosté el nivell 1 a les quatre places');
+    const lliure = 6564 - 3 * 2040;
+    assert.equal(lliure, 444, 'però el que queda de veres són 444 €');
+    assert.equal(nivellPagable(lliure, 1020), 0, 'i no paga ni un nivell 1: cap acció');
+    // Amb els tres a nivell 1 en queden 3.504, que pagarien un nivell 2 (2.040) — però el
+    // SOSTRE és el nivell uniforme: contractar hui un nivell que al venciment tocaria baixar
+    // seria comprometre flux per a després desfer-lo, i acomiadar costa 2× l'estalvi.
+    assert.equal(nivellPagable(6564 - 3 * 1020, 1020), 2, 'el que queda pagaria un nivell 2…');
+    assert.equal(Math.min(nivellPagable(6564 - 3 * 1020, 1020), uniforme.nivell), 1,
+      '…però el nivell uniforme el limita a 1');
+  },
   'P11.accio': () => {
     // ACCIÓ("contracta/puja de nivell") SI el nivell que el flux sosté > el declarat
     const r = planPersonal(5000, 1020, [{ tipus: 'metge' }]);

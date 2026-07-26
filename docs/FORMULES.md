@@ -365,11 +365,22 @@ prioritat_personal = `prioritat_personal`   [orde fix, pom]
    4. psicòleg    — el perfil «competitiu + entrenament» de la guia el posa ací
    5. forma · 6. tàctic · 7. financer — fora de la quota de 4 en la pràctica
 
-ACCIÓ("contracta", tipus, nivell)         SI la plaça està LLIURE
-ACCIÓ("puja al venciment", tipus, nivell)  SI ocupada I nivell > declarat
+lliure = pressupost_personal − SUMA(sous DECLARATS)   [el que queda de VERES, ara]
+   [el nivell uniforme diu QUÈ SOSTÉ EL FLUX a llarg, suposant TOTES les places en
+    eixe nivell. No és el que es pot pagar HUI: els que ja hi són no poden baixar
+    de nivell fins al venciment. Amb 3 a nivell 2 (6.120) d'un pressupost de
+    6.564, el pla diu «4 places a nivell 1» però només queden 444 € — i proposar
+    un fitxatge de 1.020 era proposar una cosa que no es pot pagar]
+
+ACCIÓ("contracta", tipus, n)  SI la plaça està LLIURE
+   n = MÍN(MAX(k : cost_flux(tipus, k) ≤ lliure); nivell_uniforme)
+   [i `lliure` es descompta a cada plaça compromesa: dues places lliures no es
+    poden gastar el mateix diner. El sostre del nivell uniforme evita contractar
+    hui un nivell que al venciment tocaria baixar]
    [pujar a mitjan contracte vol dir ACOMIADAR, i acomiadar costa 2× l'estalvi
     respecte d'un contracte més curt (guia «Staff»): al nivell 4, trencar a la
-    setmana 10 de 16 val 57.600 €. Per això només es proposa al venciment]
+    setmana 10 de 16 val 57.600 €. Per això el nivell NOMÉS es mou al venciment,
+    i qui ho decidix —cap amunt i cap avall— és el bloc RENOVAR]
 AVÍS: compromet el flux `setmanes_contracte` setmanes (no es pot desfer)
 [i mentre no arribe el venciment NO hi ha cap acció: dir «renova» amb 40 dies per davant
  és soroll, perquè eixe dia no es pot fer res. Vore `dies_avis_contracte`.]
@@ -377,10 +388,15 @@ AVÍS: compromet el flux `setmanes_contracte` setmanes (no es pot desfer)
 RENOVAR (única decisió reversible; NO existix acomiadar):
    dies_restants(membre) = ARROD.AMUNT(data_fi − hui)      [DIES; una data no es podrix]
    PER membre amb 0 ≤ dies_restants ≤ `dies_avis_contracte`:
+      flux_lliure = lliure + sou(membre)
+         [el SEU sou torna al calaix: eixe és el pressupost d'esta plaça. Si no,
+          es compararia el cost de renovar-lo contra un calaix que encara el conté]
+      n = MÍN(MAX(k : cost_flux(tipus, k) ≤ flux_lliure); nivell_uniforme)
+      SI(n > actual;                                  ACCIÓ("renova al nivell n")
       SI(cost_flux(tipus, actual) ≤ flux_lliure;      ACCIÓ("renova")
-      SI(existix n < actual amb cost_flux(tipus, n) ≤ flux_lliure;
-                                                      ACCIÓ("renova al nivell n")
-                                                      ACCIÓ("no renoves")))
+      SI(existix m < actual amb cost_flux(tipus, m) ≤ flux_lliure;
+                                                      ACCIÓ("renova al nivell m")
+                                                      ACCIÓ("no renoves"))))
    [el flux només es pot retallar al venciment: contractar és comprometre's]
 ```
 

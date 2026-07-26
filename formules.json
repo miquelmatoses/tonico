@@ -1342,26 +1342,24 @@
       "taules": []
     },
     {
-      "id": "P11.accio",
+      "id": "P11.lliure",
       "pas": "P11",
       "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
-      "clau": "ACCIÓ",
-      "linia": "ACCIÓ(\"contracta\", tipus, nivell)         SI la plaça està LLIURE",
+      "clau": "lliure",
+      "linia": "lliure = pressupost_personal − SUMA(sous DECLARATS)   [el que queda de VERES, ara]",
       "entrades": [
-        "nivell"
+        "pressupost_personal"
       ],
       "poms": [],
       "taules": []
     },
     {
-      "id": "P11.accio_2",
+      "id": "P11.accio",
       "pas": "P11",
       "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
       "clau": "ACCIÓ",
-      "linia": "ACCIÓ(\"puja al venciment\", tipus, nivell)  SI ocupada I nivell > declarat",
-      "entrades": [
-        "nivell"
-      ],
+      "linia": "ACCIÓ(\"contracta\", tipus, n)  SI la plaça està LLIURE",
+      "entrades": [],
       "poms": [],
       "taules": []
     },

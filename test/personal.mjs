@@ -52,10 +52,47 @@ for (const t of ['assistent', 'assistent', 'metge']) {
   await personal.onRequestPost(ctx({ rol: 'especialista', tipus: t, nivell: 2, sou: 2040, data_fi_contracte: '2026-11-04' }));
 }
 d = await get();
-const psic = d.pla_flux.pla.find((x) => x.tipus === 'psicoleg');
-assert.equal(psic.accio, 'contracta', 'la plaça lliure és la que es proposa omplir');
 assert.ok(d.pla_flux.pla.filter((x) => x.tipus !== 'psicoleg').every((x) => x.accio !== 'contracta'),
-  'i les ocupades no es tornen a proposar');
+  'les ocupades no es tornen a proposar');
+
+// ── 3b. NO ES PROPOSA EL QUE NO ES POT PAGAR. Ací està el cas real de Miquel: el pla diu que
+// el flux sosté 4 places a nivell 1 (4 × 1 020 = 4 080 ≤ 6 564), però eixe món suposa que els
+// tres que ja hi són han baixat de nivell 2 a 1 — i no poden fer-ho fins al venciment. Hui se'n
+// paguen 6 120: contractar el psicòleg valdria 7 140. La plaça és lliure, però l'acció no hi és.
+{
+  const p = d.pla_flux;
+  assert.equal(p.pagat, 6120, 'es paguen tres a nivell 2');
+  assert.ok(p.restant < 1020, 'i el que queda no arriba ni per a un nivell 1');
+  assert.equal(p.pla.find((x) => x.tipus === 'psicoleg').accio, 'res',
+    'la plaça lliure NO es proposa: no es pot pagar');
+}
+
+// ── 3c. I quan SÍ que es pot, es proposa, i al nivell que el que queda paga. Amb els tres a
+// nivell 1 (3 060) en queden 3 504: hi cap un nivell 1, no un nivell 2 (que en valdria 2 040
+// però deixaria el conjunt per damunt del que el pla sosté a llarg).
+{
+  sqlite.exec('UPDATE personal_membres SET nivell=1, sou=1020 WHERE rol=\'especialista\';');
+  const p = (await get()).pla_flux;
+  const psic = p.pla.find((x) => x.tipus === 'psicoleg');
+  assert.equal(psic.accio, 'contracta', 'amb marge, la plaça lliure sí que es proposa');
+  assert.equal(psic.accio_nivell, 1, 'i al nivell que el que queda paga');
+  sqlite.exec('UPDATE personal_membres SET nivell=2, sou=2040 WHERE rol=\'especialista\';');
+}
+// ── 3d. DUES PLACES LLIURES NO ES GASTEN EL MATEIX DINER. Amb dos assistents a 2 760 (5 520)
+// en queden 1 044: paga UN nivell 1, no dos. Sense descomptar el que s'acaba de comprometre,
+// les dues places lliures es proposarien alhora i la segona no es podria pagar.
+{
+  sqlite.exec("DELETE FROM personal_membres WHERE tipus='metge';");
+  sqlite.exec("UPDATE personal_membres SET sou=2760 WHERE tipus='assistent';");
+  const p = (await get()).pla_flux;
+  assert.equal(p.pagat, 5520, 'dos assistents a 2 760');
+  const proposades = p.pla.filter((x) => x.accio === 'contracta');
+  assert.equal(proposades.length, 1, 'només una de les dues places lliures: el diner no es duplica');
+  assert.equal(proposades[0].tipus, 'metge', 'i és la primera per prioritat');
+  sqlite.exec("UPDATE personal_membres SET sou=2040 WHERE tipus='assistent';");
+}
+await personal.onRequestPost(ctx({ rol: 'especialista', tipus: 'metge', nivell: 2, sou: 2040, data_fi_contracte: '2026-11-04' }));
+d = await get();
 
 // ── 4. Fora del venciment NO hi ha acció. Pujar a mitjan contracte és acomiadar, i acomiadar
 // costa 2× l'estalvi: una plaça ocupada i lluny del venciment no té cap acció possible, i
@@ -113,4 +150,19 @@ assert.equal(REGLES.ALR_CONTRACTE_PERSONAL({ personal: { membres: [
   assert.ok(met.dies_contracte > 0, 'i els dies que li queden, derivats de la data');
 }
 
-console.log('OK — personal: quota de 4, ordre de prioritat, nivell uniforme i timing de contracte');
+// ── 8. AL VENCIMENT, EL SEU PROPI SOU TORNA AL CALAIX. És el pressupost d'eixa plaça: si no
+// se li tornara, es compararia el cost de renovar-lo contra un calaix del qual ell encara
+// forma part, i eixiria «no el renoves» per a algú que ja s'està pagant sense problema.
+{
+  const hui = new Date();
+  const prop = new Date(hui.getTime() + 5 * 86400000).toISOString().slice(0, 10);
+  sqlite.prepare("UPDATE personal_membres SET data_fi_contracte=? WHERE tipus='metge'").run(prop);
+  const p = (await get()).pla_flux;
+  const met = p.pla.find((x) => x.tipus === 'metge');
+  assert.equal(met.venciment, true, 'a cinc dies, està dins de la finestra');
+  assert.ok(p.restant < 1020, 'i el que queda al calaix no paga ni un nivell 1…');
+  assert.notEqual(met.accio, 'no_renoves',
+    '…però el seu sou torna: renovar-lo no es compara contra un calaix que encara el conté');
+}
+
+console.log('OK — personal: quota de 4, prioritat, nivell uniforme, timing i el que es pot pagar');
