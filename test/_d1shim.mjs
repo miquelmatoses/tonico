@@ -97,5 +97,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/074_taula_salaris_divi.sql'));
   sqlite.exec(src('../schema/075_historic_setmanes.sql'));
   sqlite.exec(src('../schema/076_contracte_data.sql'));
+  sqlite.exec(src('../schema/077_personal_guia.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

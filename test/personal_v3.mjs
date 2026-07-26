@@ -1,7 +1,8 @@
 // Tonico — PERSONAL del v3 (PAS 11): bucle de FLUX, prioritat fixa, sense acomiadar.
 // node test/personal_v3.mjs
 import assert from 'node:assert/strict';
-import { costFlux, nivellPagable, planPersonal, decisioRenovacio, setmanesRestants } from '../lib/personal_v3.js';
+import { costFlux, nivellPagable, planPersonal, decisioRenovacio, setmanesRestants,
+  placesAdmeses, sostrePersonal } from '../lib/personal_v3.js';
 
 const BASE = 1020;   // staff_cost_base
 
@@ -17,29 +18,36 @@ assert.equal(nivellPagable(1019, BASE), 0, 'si no arriba ni al primer, cap nivel
 assert.equal(nivellPagable(null, BASE), 0);
 
 // ── El pla per PRIORITAT: cada tipus agafa el que el flux restant encara paga ──
-const PRIOR = [{ tipus: 'assistent', quants: 2 }, { tipus: 'entrenador' }, { tipus: 'metge' }, { tipus: 'psicoleg' }];
-const r = planPersonal(30000, BASE, PRIOR);
-assert.equal(r.pla[0].tipus, 'assistent');
-assert.equal(r.pla[0].nivell, 5, 'el primer assistent s\'emporta el més alt que el flux paga (16.320 ≤ 30.000)');
-assert.deepEqual(r.pla.map((x) => x.nivell), [5, 4, 3, 1, 0],
-  'i cada següent agafa el més alt que encara paga el que queda');
-assert.ok(r.pla[1].nivell <= r.pla[0].nivell, 'el segon agafa del que queda');
-assert.ok(r.flux_restant >= 0, 'mai es compromet més flux del que hi ha');
-const gastat = r.pla.reduce((a, x) => a + x.cost, 0);
-assert.equal(gastat + r.flux_restant, 30000, 'tot el flux queda comptat');
+// ── planPersonal: AMPLADA ABANS QUE PROFUNDITAT, amb les quotes del joc ──────────────
+// Substituïx el repartiment VORAÇ (el primer tipus s'enduia el màxim i els últims es
+// quedaven a zero). L'efecte és lineal i el cost exponencial: 4 places a nivell 1 donen 4,0
+// punts i una plaça a nivell 3 en dona 0,6 — mateix diner, sis vegades menys efecte.
+const PRIOR = [{ tipus: 'assistent', quants: 2 }, { tipus: 'metge' }, { tipus: 'psicoleg' },
+  { tipus: 'forma' }, { tipus: 'tactic' }, { tipus: 'financer' }];
+const QUOTES = { total: 4, per_tipus: { assistent: 2, metge: 1, psicoleg: 1, forma: 1, tactic: 1, financer: 1 } };
 
-// L'ORDE de la prioritat mana: amb poc flux, els primers s'ho emporten i els últims es
-// queden a zero (no es reparteix «un poc per a cadascú»).
-const pobre = planPersonal(3000, BASE, PRIOR);
-assert.ok(pobre.pla[0].nivell >= 1, 'el primer de la prioritat entra');
-assert.equal(pobre.pla[pobre.pla.length - 1].nivell, 0, 'l\'últim es queda sense');
+// Les QUOTES del joc: 4 places en total i 2 assistents com a màxim, per prioritat.
+const places = placesAdmeses(PRIOR, QUOTES);
+assert.deepEqual(places.map((p) => p.tipus), ['assistent', 'assistent', 'metge', 'psicoleg'],
+  'quatre places, en l\'orde de la prioritat, i la resta de tipus no hi caben');
 
-// Un tipus exclòs (p. ex. el psicòleg en divisions baixes) no consumix flux.
-const senseP = planPersonal(30000, BASE, PRIOR, { admet: (t) => t !== 'psicoleg' });
-assert.equal(senseP.pla.find((x) => x.tipus === 'psicoleg').exclos, true);
-assert.equal(senseP.pla.find((x) => x.tipus === 'psicoleg').cost, 0);
+// El nivell és UNIFORME i el més alt que el pressupost pague per a TOTES les places.
+const r = planPersonal(8564, 1020, PRIOR, { quotes: QUOTES });
+assert.equal(r.nivell, 2, '8.564 € paguen 4 × 2.040 = 8.160, però no 4 × 4.080');
+assert.ok(r.pla.every((x) => x.nivell === 2), 'totes al mateix nivell: cap plaça a zero');
+assert.equal(r.pla.reduce((a, x) => a + x.cost, 0), 8160);
 
-// ── Renovar: l'ÚNICA decisió reversible (acomiadar no existix) ──
+// LA PROPIETAT que el voraç violava: cap plaça es queda a 0 mentre una altra puja.
+for (const press of [4080, 8160, 16320, 32640, 65280]) {
+  const x = planPersonal(press, 1020, PRIOR, { quotes: QUOTES });
+  const nivells = new Set(x.pla.map((p) => p.nivell));
+  assert.equal(nivells.size, 1, `amb ${press} € totes les places han d'anar al mateix nivell`);
+  assert.ok(x.pla.reduce((a, p) => a + p.cost, 0) <= press, 'i mai passar-se del pressupost');
+}
+
+// El sostre: el que el personal pot absorbir. Passat això, el sobrant és per als jugadors.
+assert.equal(sostrePersonal(places, 1020), 4 * 16320, '4 places al nivell màxim');
+
 assert.deepEqual(decisioRenovacio(3, 5000, BASE), { accio: 'renova', nivell: 3 },
   'si el flux encara el paga, es renova');
 assert.deepEqual(decisioRenovacio(4, 5000, BASE), { accio: 'renova_al_nivell', nivell: 3 },
@@ -49,23 +57,6 @@ assert.deepEqual(decisioRenovacio(2, 100, BASE), { accio: 'no_renoves', nivell: 
 
 console.log('OK — personal v3: cost per nivell, prioritat fixa i renovació');
 
-// ── EL PRESSUPOST VA EN SETMANES, com l'escala ────────────────────────────────────────
-// REGRESSIÓ REAL: `flux_lliure` es calcula en unitats del PERÍODE (2 setmanes) i l'escala de
-// personal va en €/SETMANA. Comparar-los donava al planificador el DOBLE de pressupost, i
-// proposava un assistent de nivell 5 — 16.320 €/setmana, més que tot el personal junt.
-{
-  const PRIOR = [{ tipus: 'assistent', quants: 2 }, { tipus: 'entrenador', base: 1250 },
-    { tipus: 'metge' }, { tipus: 'psicoleg' }];
-  const setmanal = 9610;                 // el que el flux sosté DE VERES cada setmana
-  const { pla } = planPersonal(setmanal, 1020, PRIOR);
-  const cost = pla.reduce((a, x) => a + x.cost, 0);
-  assert.ok(cost <= setmanal, `el pla no pot passar-se del pressupost (${cost} > ${setmanal})`);
-  // Amb el doble (el bug) el primer assistent arribava al 5; amb el pressupost bo, no.
-  assert.ok(pla[0].nivell < 5, 'amb el pressupost setmanal, cap plaça arriba al nivell 5');
-  const dolent = planPersonal(setmanal * 2, 1020, PRIOR);
-  assert.equal(dolent.pla[0].nivell, 5, 'i amb el doble sí — que és el que passava');
-}
-console.log('OK — el pressupost de personal va en setmanes, com la seua escala');
 
 // ── EL CONTRACTE ÉS UNA DATA, NO UN COMPTE ────────────────────────────────────────────
 // REGRESSIÓ REAL: `setmanes_contracte` era un COMPTE declarat que ningú decrementava. Els

@@ -94,19 +94,18 @@ const igual = (vist, esperat, què) => { assert.deepEqual(vist, esperat, `golden
   const { pla_flux } = await json(apiPersonal);
   const eco = await economia(db, 1, '2026-07-26');
   // F3: flux_lliure torna a sumar el cost del personal ACTUAL (ja va restat dins del flux).
-  // El pla de personal consumix el SETMANAL: l'escala de personal va en €/setmana.
-  igual(pla_flux.flux_lliure, eco.flux_lliure_setmanal, 'flux lliure de la font única, en setmanal');
-  igual(eco.flux_lliure_setmanal, eco.flux_lliure / eco.setmanes_periode, 'i el canvi d\'unitat el fa l\'economia');
-  igual(eco.flux_lliure, Math.max(0, eco.flux + eco.despeses.personal - eco.reserva_flux),
-    'flux_lliure = MAX(0; flux + per_periode(personal) − reserva_flux)');
+  // El pressupost del personal és una QUOTA del repartible, acotada pel sostre absorbible.
+  igual(pla_flux.pressupost, Math.min(eco.flux_repartible_setmanal * eco.quota_personal, pla_flux.sostre),
+    'pressupost = MIN(quota × repartible; sostre)');
+  igual(pla_flux.places, 4, 'les places que la quota del joc permet');
   for (const x of pla_flux.pla) {
-    if (x.exclos) { igual(x.cost, 0, 'un tipus exclòs no consumix flux'); continue; }
     // DUES bases (v3.1): la de l'entrenador no és la dels especialistes.
     igual(x.cost, x.nivell ? costFlux(x.nivell, x.base) : 0, `cost de ${x.tipus}`);
+    igual(x.nivell, pla_flux.nivell, `${x.tipus}: nivell uniforme, cap plaça per davall`);
     assert.ok(x.accio, `${x.tipus} porta acció derivada`);
   }
   const gastat = pla_flux.pla.reduce((a, x) => a + x.cost, 0);
-  igual(gastat + pla_flux.flux_restant, pla_flux.flux_lliure, 'tot el flux queda comptat, res se\'n perd');
+  igual(gastat + pla_flux.flux_restant, pla_flux.pressupost, 'tot el pressupost queda comptat, res se\'n perd');
 }
 
 // ── VENDES: la fitxa NO pot mostrar ni demanar cap preu (v3.1) ──

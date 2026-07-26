@@ -50,13 +50,14 @@ assert.equal(m2.estoc.opcions[0].tipus, 'estadi', 'l\'estadi va primer a la llis
 // ── PERSONAL: el pla de flux arriba a la pantalla ──
 const pe = await (await personal.onRequestGet(ctx)).json();
 assert.ok(pe.pla_flux, 'el personal serveix el pla de flux');
-assert.ok(pe.pla_flux.flux_lliure > 0, 'amb el flux lliure');
+assert.ok(pe.pla_flux.pressupost > 0, 'amb el pressupost de personal');
 assert.ok(pe.pla_flux.pla.length > 0, 'i el pla per prioritat');
 for (const x of pe.pla_flux.pla) assert.ok(x.accio, 'cada línia diu QUÈ FER');
 assert.equal(pe.pla_flux.pla[0].tipus, 'assistent', 'i l\'orde és el del contracte');
 // El psicòleg no entra en divisió VII (només de `divisio_psicoleg` cap amunt).
-assert.equal(pe.pla_flux.pla.find((x) => x.tipus === 'psicoleg').exclos, true,
-  'el psicòleg queda fora en divisió baixa');
+// El psicòleg ja NO queda fora: `divisio_psicoleg` era una regla sense font a la guia.
+assert.ok(pe.pla_flux.pla.some((x) => x.tipus === 'psicoleg'), 'el psicòleg entra a la quarta plaça');
+assert.equal(pe.pla_flux.pla.length, 4, 'i les places són les 4 de la quota del joc');
 
 // ── VENDA: la PREGUNTA amb les quatre eixides ──
 assert.deepEqual(EIXIDES_DESERTA, ['rebaixar', 'rellistar', 'despatxar', 'un_euro']);

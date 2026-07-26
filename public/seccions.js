@@ -895,7 +895,6 @@ function formActivaAcademia(main) {
 
 // ── 9. Personal ──
 const ESPECIALISTES = ['assistents', 'metge', 'psicoleg'];
-const lblElement = (k) => { const v = t('element.' + k); return v === t('comu.text_indisponible') ? k : v; };
 // PAS 11: el pla que el FLUX sosté, per prioritat. La vista només interpola.
 function plaFlux(main, p) {
   const c = card(t('flux.titol'), p.pla.length);
@@ -903,7 +902,8 @@ function plaFlux(main, p) {
   if (p.falten && p.falten.length) {
     cos.append(el('p', { class: 'nota-peu', text: t('flux.sense_flux') }));
   } else {
-    cos.append(el('p', { class: 'nota-peu', text: t('flux.capçal', { lliure: diners(p.flux_lliure), restant: diners(p.flux_restant) }) }));
+    cos.append(el('p', { class: 'nota-peu', text: t('flux.capçal', {
+      pressupost: diners(Math.round(p.pressupost)), quota: percent(p.quota), restant: diners(Math.round(p.flux_restant)) }) }));
     const g = graellaAmbFiles('c-flux',
       ['col_tipus', 'col_nivell', 'col_cost', 'col_accio'].map((k) => t('flux.' + k)),
       p.pla.map((x) => el('div', { class: 'graella-fila-d c-flux' },
@@ -929,11 +929,8 @@ export async function personal(main) {
 
   // Membres declarats (rol, tipus, nivell, sou, setmanes de contracte)
   const secM = card(t('personal.membres_titol'), d.membres.length);
-  if (d.desquadres.length) {
-    const av = el('div', { class: 'card-cos' });
-    for (const x of d.desquadres) av.append(el('p', { class: 'nota-peu', text: t('personal.desquadre', { clau: lblElement(x.clau), declarat: x.declarat, esperat: x.esperat }) }));
-    secM.append(av);
-  }
+  // Fora els «desquadres» contra el personal esperat per FASE: era el model fàbrica i la fase
+  // real no lligava amb cap. Qui diu què falta és el pla de flux, ací damunt.
   if (d.membres.length) {
     for (const m of d.membres) secM.append(filaMembre(m));
   } else secM.append(cos(el('p', { class: 'nota-peu', text: t('personal.cap_membre') })));

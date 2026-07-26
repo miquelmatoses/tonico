@@ -394,10 +394,23 @@
       "pas": "P3",
       "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
       "clau": "despeses_fixes",
-      "linia": "despeses_fixes   = per_periode(nòmina + manteniment_estadi + personal + despesa_planter)",
+      "linia": "despeses_fixes   = per_periode(nòmina + manteniment_estadi + personal + despesa_planter",
       "entrades": [
         "despesa_planter",
         "per_periode"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P3.flux_repartible",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "flux_repartible",
+      "linia": "flux_repartible  = ingressos_recurrents − reserva_flux",
+      "entrades": [
+        "ingressos_recurrents",
+        "reserva_flux"
       ],
       "poms": [],
       "taules": []
@@ -1240,6 +1253,62 @@
       "taules": []
     },
     {
+      "id": "P11.pressupost_personal",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "pressupost_personal",
+      "linia": "pressupost_personal = MIN(`quota_personal` × flux_repartible; sostre_personal)",
+      "entrades": [
+        "flux_repartible",
+        "sostre_personal"
+      ],
+      "poms": [
+        "quota_personal"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P11.places",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "places",
+      "linia": "places      = les que la QUOTA DEL JOC permet, per orde de `prioritat_personal`",
+      "entrades": [
+        "prioritat_personal"
+      ],
+      "poms": [
+        "prioritat_personal"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P11.sostre_personal",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "sostre_personal",
+      "linia": "sostre_personal = SUMA(places × cost_flux(nivell_max))",
+      "entrades": [
+        "cost_flux",
+        "places"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P11.nivell",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "nivell",
+      "linia": "nivell      = MAX(n : SUMA(places × cost_flux(n)) ≤ pressupost_personal)",
+      "entrades": [
+        "cost_flux",
+        "places",
+        "pressupost_personal"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
       "id": "P11.cost_flux",
       "pas": "P11",
       "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
@@ -1247,20 +1316,6 @@
       "linia": "cost_flux(tipus, nivell) = base(tipus) × 2^(nivell−1)",
       "entrades": [
         "nivell"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P11.flux_lliure",
-      "pas": "P11",
-      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
-      "clau": "flux_lliure",
-      "linia": "flux_lliure       = MAX(0; flux + per_periode(cost_personal_actual) − reserva_flux)",
-      "entrades": [
-        "flux",
-        "per_periode",
-        "reserva_flux"
       ],
       "poms": [],
       "taules": []
@@ -1278,25 +1333,24 @@
       "taules": []
     },
     {
-      "id": "P11.nivell",
+      "id": "P11.accio",
       "pas": "P11",
       "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
-      "clau": "nivell",
-      "linia": "nivell(tipus) = MAX(n : cost_flux_acumulat(tipus, n) ≤ flux_lliure)",
+      "clau": "ACCIÓ",
+      "linia": "ACCIÓ(\"contracta\", tipus, nivell)         SI la plaça està LLIURE",
       "entrades": [
-        "flux_lliure"
+        "nivell"
       ],
       "poms": [],
       "taules": []
     },
     {
-      "id": "P11.accio",
+      "id": "P11.accio_2",
       "pas": "P11",
       "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
       "clau": "ACCIÓ",
-      "linia": "ACCIÓ(\"contracta/puja de nivell\", tipus, nivell, cost_flux)  SI nivell(tipus) > declarat",
+      "linia": "ACCIÓ(\"puja al venciment\", tipus, nivell)  SI ocupada I nivell > declarat",
       "entrades": [
-        "cost_flux",
         "nivell"
       ],
       "poms": [],

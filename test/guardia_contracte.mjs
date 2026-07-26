@@ -14,8 +14,8 @@ import { valorPlaces } from '../lib/valor_placa.js';
 import { valorHabilitat, lecturaPromocio } from '../lib/ranquing_juvenil.js';
 import { fCalendari, temporadaOperativa } from '../lib/calendari.js';
 import { ESTRATEGIES, falten as confFalten, llocsPartit } from '../lib/config.js';
-import { souSostenible, fluxLliure, perPeriode, reservaFlux,
-  despesaPlanter, dadesVelles } from '../lib/economia.js';
+import { souSostenible, perPeriode, reservaFlux, despesaPlanter, dadesVelles,
+  fluxRepartible, pressupostPersonal } from '../lib/economia.js';
 import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
 import { pesLloc, pressupostSou, nivellObjectiu, carregaConfigPesos } from '../lib/pesos.js';
 import { nivellActual, mancanca, exces, sobrecost, prioritat } from '../lib/mancanca.js';
@@ -298,14 +298,13 @@ const VERIFICADES = {
   },
 
   // ── PAS 11 / PAS 12 ──
-  'P11.flux_lliure': () => {
-    // F3: MAX(0; flux + cost_personal_actual − reserva_flux). El cost del personal que ja
-    // tens ja va restat dins del flux; si no se li torna a sumar, el bucle es veu sense
-    // marge just per tindre el personal que està valorant.
-    assert.equal(fluxLliure(10000, 2040, 4000), 8040);
-    assert.equal(fluxLliure(-500, 2040, 0), 1540, 'amb flux negatiu, el personal actual el sosté');
-    assert.equal(fluxLliure(-9000, 2040, 0), 0, 'MAX(0; …)');
-    assert.equal(fluxLliure(null, 2040, 0), null, 'sense flux no se suposa marge');
+  'P3.flux_repartible': () => {
+    // El calaix únic: es lleven els FETS (planter, manteniment, sou de l'entrenador) i el
+    // pressupost del personal és una QUOTA d'això, acotada pel que pot absorbir.
+    assert.equal(fluxRepartible(100000, 60000, 5000), 35000);
+    assert.equal(fluxRepartible(100000, 999999, 5000), 0, 'mai negatiu');
+    assert.equal(pressupostPersonal(35000, 0.40, 65280), 14000, 'la quota mana quan cap');
+    assert.equal(pressupostPersonal(500000, 0.40, 65280), 65280, 'i el sostre quan la quota el passa');
   },
   'P11.accio': () => {
     // ACCIÓ("contracta/puja de nivell") SI el nivell que el flux sosté > el declarat
@@ -701,11 +700,18 @@ const VERIFICADES = {
     assert.equal(nivellPagable(16319, 1020), 4);
     assert.equal(nivellPagable(1019, 1020), 0, 'si no arriba al primer, cap');
   },
-  'P11.prioritat_personal': () => {
-    const p = [{ tipus: 'assistent', quants: 2 }, { tipus: 'entrenador' }, { tipus: 'metge' }, { tipus: 'psicoleg' }];
-    const r = planPersonal(30000, 1020, p);
-    assert.deepEqual(r.pla.map((x) => x.nivell), [5, 4, 3, 1, 0],
-      'cada tipus agafa el més alt que el flux restant encara paga, per orde');
+  'P11.places': () => {
+    // AMPLADA ABANS QUE PROFUNDITAT: efecte lineal, cost exponencial. Les places de la quota
+    // s'omplin TOTES al mateix nivell. El repartiment voraç d'abans (el primer s'enduia el
+    // màxim) deixava l'entrenador i el metge a zero.
+    const p = [{ tipus: 'assistent', quants: 2 }, { tipus: 'metge' }, { tipus: 'psicoleg' },
+      { tipus: 'forma' }, { tipus: 'tactic' }, { tipus: 'financer' }];
+    const q = { total: 4, per_tipus: { assistent: 2, metge: 1, psicoleg: 1, forma: 1, tactic: 1, financer: 1 } };
+    const r = planPersonal(30000, 1020, p, { quotes: q });
+    assert.deepEqual(r.pla.map((x) => x.tipus), ['assistent', 'assistent', 'metge', 'psicoleg'],
+      'la quota del joc: 4 places, 2 assistents, per orde de prioritat');
+    assert.deepEqual(r.pla.map((x) => x.nivell), [3, 3, 3, 3],
+      'totes al mateix nivell: cap plaça a zero mentre una altra puja');
     assert.ok(r.flux_restant >= 0, 'mai es compromet més flux del que hi ha');
   },
   'P11.renovar': () => {

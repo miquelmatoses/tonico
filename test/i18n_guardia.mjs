@@ -77,7 +77,7 @@ function motiusDelCodi() {
 const families = {
   'habilitat': ['porteria','defensa','creativitat','passades','extrem','anotacio','pilota_aturada'],
   'vendes.eixida_': ['rebaixar','rellistar','despatxar','un_euro'],
-  'flux.accio_': ['contracta','puja','renova','renova_al_nivell','no_renoves','res','exclos'],
+  'flux.accio_': ['contracta','puja','puja_al_venciment','renova','renova_al_nivell','no_renoves','res','exclos'],
   'flux': ['col_tipus','col_nivell','col_cost','col_accio'],
   'estoc': ['col_opcio','col_guany','col_cost','col_eficiencia'],
   'categoria': ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'],
@@ -100,7 +100,8 @@ const families = {
   'falten': ['caixa', 'personal', 'estadi', 'config_pais', 'config_divisio', 'config_partits_setmana', 'config_estrategia'],
   'dia': ['0', '1', '2', '3', '4', '5', '6'],   // noms de dia per a l'agenda
   'agenda': ['llistar'],                          // etiquetes curtes d'acció (missatge_clau del servidor)
-  'element': ['assistents', 'metge', 'psicoleg'],
+  // Els sis tipus d'especialista de la guia + l'entrenador principal (que no gasta plaça).
+  'element': ['assistent', 'metge', 'psicoleg', 'forma', 'tactic', 'financer', 'entrenador'],
   // Columnes construïdes des d'arrays (t('prefix.' + k)):
   'personal': ['rol', 'tipus', 'nivell', 'sou', 'setmanes_contracte'],
   'fotrem': ['col_jugador', 'col_nivell', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_potencial', 'col_promocio', 'col_aterratge', 'col_estat'],

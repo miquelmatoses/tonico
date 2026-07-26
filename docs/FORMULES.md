@@ -123,7 +123,13 @@ calibrat         = COMPTA(setmanes_declarades) ≥ `setmanes_mitjana`
     extrapolar-ne un creixement seria PROJECTAR (invariant 3)]
 despesa_planter  = SI(sistema_juvenil = 'academia'; `cost_instalacions_juvenils`; 0)
                  + `cost_cercapromeses` × n_cercapromeses
-despeses_fixes   = per_periode(nòmina + manteniment_estadi + personal + despesa_planter)
+despeses_fixes   = per_periode(nòmina + manteniment_estadi + personal + despesa_planter
+                               + sou_entrenador)
+flux_repartible  = ingressos_recurrents − reserva_flux
+                   − per_periode(manteniment_estadi + despesa_planter + sou_entrenador)
+   [EL CALAIX ÚNIC del qual ixen els sous del personal I els dels jugadors. Es lleven
+    els FETS —planter derivat, manteniment declarat, sou de l'entrenador (que només
+    canvia si canvies d'entrenador)— i queda el que sí que es decidix]
 flux             = ingressos_recurrents − despeses_fixes
 reserva_flux     = `reserva_flux_pct` × ingressos_recurrents
 sou_sostenible   = MAX(0; ingressos_recurrents − reserva_flux
@@ -306,6 +312,20 @@ reexecuta el PAS a CADA pujada (revelacions recalibren esperat_act)
     i de la BASE del tipus. Per tant no es compara eficiència entre tipus — es seguix
     una PRIORITAT fixa i cada tipus s'emporta el nivell més alt que el flux sostinga.]
 
+pressupost_personal = MIN(`quota_personal` × flux_repartible; sostre_personal)
+   [`quota_personal` és POLÍTICA declarada, com `reserva_flux_pct`: no ix de cap taula.
+    El NIVELL n'és conseqüència, no a l'inrevés — si es fixara el nivell seria un import
+    fix i no escalaria amb els ingressos]
+places      = les que la QUOTA DEL JOC permet, per orde de `prioritat_personal`
+   [`quotes_personal`: 4 especialistes en total, 2 assistents, 1 de cada altre tipus.
+    L'ENTRENADOR PRINCIPAL no és especialista: no gasta plaça i va al PAS 8]
+sostre_personal = SUMA(places × cost_flux(nivell_max))
+   [passat això el personal no pot absorbir més: el sobrant va als jugadors]
+nivell      = MAX(n : SUMA(places × cost_flux(n)) ≤ pressupost_personal)
+   [AMPLADA ABANS QUE PROFUNDITAT: l'efecte és lineal i el cost exponencial (guia
+    «Staff»), així que 4 places a nivell 1 donen 4,0 punts i una plaça a nivell 3 en
+    dona 0,6 — mateix diner, sis vegades menys. MAI es deixa una plaça buida per a
+    pujar-ne una altra: totes al mateix nivell]
 cost_flux(tipus, nivell) = base(tipus) × 2^(nivell−1)
    base(tipus) = BUSCA(`prioritat_personal`; tipus) → base   [si no en declara: `staff_cost_base`]
    [DUES bases, no una: 1.020 per als especialistes (1.020 · 2.040 · 4.080 · 8.160 ·
@@ -313,22 +333,25 @@ cost_flux(tipus, nivell) = base(tipus) × 2^(nivell−1)
     Mateixa progressió, base distinta: l'entrenador NO cobra com la resta d'empleats.
     Verificat contra l'informe real: 2 assistents + metge de nivell 2 (3 × 2.040) +
     entrenador de nivell 3 (5.000) = 11.120 €, la xifra exacta de HT.]
-flux_lliure       = MAX(0; flux + per_periode(cost_personal_actual) − reserva_flux)
+
    [el cost del personal que ja tens ja va restat dins del flux: si no se li torna a
     sumar, el bucle es veu sense marge just per tindre el personal que està valorant.
     Simètric amb sou_sostenible, que fa el mateix amb la nòmina.]
 
 prioritat_personal = `prioritat_personal`   [orde fix, pom]
-   1. assistents  — accelera l'entrenament (sempre, tots dos)
-   2. entrenador  — eficiència d'entrenament (guia §7: notable 100%, excel·lent 105,3%)
-   3. metge       — assegurança de baixes
-   4. psicòleg    — NOMÉS SI divisio ≤ `divisio_psicoleg`
+   1. assistent   — +3,5% de velocitat d'entrenament per nivell: l'única palanca que
+                    multiplica el motor de l'estratègia
+   2. metge       — els assistents PUGEN el risc de lesió (+2,5%/niv) i ell el baixa
+                    (−7,5%/niv): van acoblats, i ix de la guia
+   3. assistent   — el segon, fins a la quota de 2
+   4. psicòleg    — el perfil «competitiu + entrenament» de la guia el posa ací
+   5. forma · 6. tàctic · 7. financer — fora de la quota de 4 en la pràctica
 
-nivell(tipus) = MAX(n : cost_flux_acumulat(tipus, n) ≤ flux_lliure)
-                seguint prioritat_personal
-   [el pressupost es gasta per orde: el que queda després dels anteriors]
-
-ACCIÓ("contracta/puja de nivell", tipus, nivell, cost_flux)  SI nivell(tipus) > declarat
+ACCIÓ("contracta", tipus, nivell)         SI la plaça està LLIURE
+ACCIÓ("puja al venciment", tipus, nivell)  SI ocupada I nivell > declarat
+   [pujar a mitjan contracte vol dir ACOMIADAR, i acomiadar costa 2× l'estalvi
+    respecte d'un contracte més curt (guia «Staff»): al nivell 4, trencar a la
+    setmana 10 de 16 val 57.600 €. Per això només es proposa al venciment]
 AVÍS: compromet el flux `setmanes_contracte` setmanes (no es pot desfer)
 
 RENOVAR (única decisió reversible; NO existix acomiadar):

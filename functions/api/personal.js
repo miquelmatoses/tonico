@@ -3,23 +3,14 @@
 // l'esperat per la fase + els membres + desquadres + checklist; POST afig/edita un
 // membre; DELETE l'esborra. El desquadre compara el COMPTE d'especialistes per
 // tipus amb l'esperat de la fase.
-import { comparaPersonal, checklistCanviFase } from '../../lib/personal.js';
-import { entrenamentFase } from '../../lib/entrenament.js';
+import { entrenamentPrescrit } from '../../lib/entrenament.js';
 
 const ROLS = ['entrenador', 'especialista'];
 const enter = (x) => (x == null || x === '' ? null : Math.round(Number(x)));
 
-// Compte d'especialistes per tipus (per comparar amb l'esperat de la fase).
-function compteEspecialistes(membres) {
-  const c = {};
-  for (const m of membres) if (m.rol === 'especialista' && m.tipus) c[m.tipus] = (c[m.tipus] || 0) + 1;
-  return c;
-}
-
-import { planPersonal, decisioRenovacio, baseTipus, setmanesRestants } from '../../lib/personal_v3.js';
+import { planPersonal, decisioRenovacio, setmanesRestants, placesAdmeses, sostrePersonal } from '../../lib/personal_v3.js';
 import { economia } from '../../lib/economia.js';
 import { llegixConfig } from '../../lib/config.js';
-import { normalitzaDivisio, divisioArab } from '../../lib/divisio.js';
 
 // PAS 11: el pla de personal que el FLUX sosté, per prioritat. Ací no hi ha política: els
 // números són poms i l'orde és el del contracte.
@@ -30,20 +21,18 @@ async function plaFlux(db, usuariId) {
   const pom = async (clau) => (await db.prepare('SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau=?').bind(estrategia, clau).first())?.valor ?? null;
   const base = Number(await pom('staff_cost_base')) || null;
   const prioritat = JSON.parse((await pom('prioritat_personal')) || '[]');
-  const divisioPsic = normalitzaDivisio(await pom('divisio_psicoleg'));
-  // SETMANAL: l'escala de personal va en €/setmana i `flux_lliure` en unitats del període.
-  // Comparar-los era donar-li el doble de pressupost del que hi ha (bug caçat el 26-07).
-  const fluxLliure = eco.flux_lliure_setmanal;
-  if (fluxLliure == null || !base || !prioritat.length) {
-    return { flux_lliure: fluxLliure, pla: [], falten: eco.flux == null ? ['flux'] : [] };
+  const quotes = JSON.parse((await db.prepare("SELECT valor FROM constants_joc WHERE clau='quotes_personal'").first())?.valor || 'null');
+  const nivellMax = Number((await db.prepare("SELECT valor FROM constants_joc WHERE clau='nivell_max_personal'").first())?.valor) || 5;
+  // El pressupost del personal és una QUOTA del repartible, acotada pel que pot absorbir.
+  // SETMANAL: l'escala va en €/setmana (el repartible ve en unitats del període).
+  const places = placesAdmeses(prioritat, quotes);
+  const sostre = sostrePersonal(places, base, nivellMax);
+  const pressupost = eco.flux_repartible_setmanal == null ? null
+    : Math.min(eco.flux_repartible_setmanal * eco.quota_personal, sostre);
+  if (pressupost == null || !base || !prioritat.length) {
+    return { pressupost: null, pla: [], falten: eco.flux == null ? ['flux'] : [] };
   }
-  // El psicòleg només de `divisio_psicoleg` cap amunt (número de divisió més baix = més alta).
-  const admet = (tipus) => {
-    if (tipus !== 'psicoleg') return true;
-    const meua = divisioArab(conf?.divisio); const llindar = divisioArab(divisioPsic);
-    return meua != null && llindar != null && meua <= llindar;
-  };
-  const { pla, flux_restant } = planPersonal(fluxLliure, base, prioritat, { admet });
+  const { pla, flux_restant, nivell } = planPersonal(pressupost, base, prioritat, { quotes, nivell_max: nivellMax });
   // L'ACCIÓ ÉS LA DIFERÈNCIA entre el pla i el DECLARAT: no es proposa contractar el que ja
   // existix ni renovar el que no toca. La identitat d'un membre és el seu `tipus`; l'agrupació
   // porta el COMPTE, perquè de tipus com l'assistent n'hi pot haver més d'un.
@@ -70,25 +59,28 @@ async function plaFlux(db, usuariId) {
     // RENOVAR només toca al VENCIMENT (0 ≤ setmanes_restants ≤ dies_avis_caducitat).
     const venç = d && d.setmanes_contracte != null && d.setmanes_contracte >= 0 && d.setmanes_contracte <= avis;
     // La renovació es valora amb la base DEL SEU TIPUS: l'entrenador no cobra com la resta.
-    const renovacio = venç ? decisioRenovacio(d.nivell, fluxLliure, baseTipus(x.tipus, prioritat, base)) : null;
+    const renovacio = venç ? decisioRenovacio(d.nivell, pressupost / places.length, base) : null;
+    // QUAN es proposa (guia «Coach»/«Staff»): contractar només si la PLAÇA ESTÀ LLIURE, i
+    // pujar de nivell NOMÉS AL VENCIMENT. Pujar a mitjan contracte vol dir acomiadar, i
+    // acomiadar costa 2× l'estalvi — al nivell 4, 57.600 € per trencar a la setmana 10.
     let accio = 'res';
-    if (x.exclos) accio = 'exclos';
-    else if (d == null) accio = x.nivell > 0 ? 'contracta' : 'res';
+    if (d == null) accio = x.nivell > 0 ? 'contracta' : 'res';
     else if (venç) accio = renovacio?.accio ?? 'res';
-    else if (x.nivell > d.nivell) accio = 'puja';
+    else if (x.nivell > d.nivell) accio = 'puja_al_venciment';
     return { ...x, nivell_declarat: d?.nivell ?? null, venciment: !!venç,
       accio, renovacio: renovacio?.accio ?? null, renovacio_nivell: renovacio?.nivell ?? null,
       setmanes_contracte: d?.setmanes_contracte ?? null,
       data_fi_contracte: d?.data_fi_contracte ?? null };
   });
-  return { flux_lliure: fluxLliure, flux_restant, staff_cost_base: base, pla: amb, falten: [] };
+  return { pressupost, sostre, quota: eco.quota_personal, nivell, flux_restant,
+    staff_cost_base: base, places: places.length, pla: amb, falten: [] };
 }
 
 export async function onRequestGet({ env, data }) {
   const pla = await env.DB.prepare('SELECT plantilla, fase_actual, parametres FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
   if (!pla) return json({ error: 'sense_pla' }, 404);
   const params = pla.parametres ? JSON.parse(pla.parametres) : {};
-  const prescrit = await entrenamentFase(env.DB, pla.plantilla, pla.fase_actual);
+  const prescrit = await entrenamentPrescrit(env.DB, pla.plantilla);
   // Entrenament SÈNIOR triable: l'usuari pot canviar-lo i tot el sistema (places, %,
   // cobertura, anells) es deriva. Opcions = habilitats de la taula d'entrenament.
   const taula = JSON.parse((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='taula_entrenament'").first())?.valor || '{}');
@@ -105,17 +97,11 @@ export async function onRequestGet({ env, data }) {
   // Les setmanes que queden es DERIVEN de la data (mai declarades: un compte es congela).
   const avuiGet = new Date().toISOString().slice(0, 10);
   for (const m of membres) m.setmanes_contracte = setmanesRestants(m.data_fi_contracte, avuiGet);
-  const compte = compteEspecialistes(membres);
-
-  const { results: fases } = await env.DB.prepare('SELECT fase, config FROM fases_config WHERE plantilla=? ORDER BY fase').bind(pla.plantilla).all();
-  const actual = fases.find((f) => f.fase === pla.fase_actual);
-  const esperat = actual ? JSON.parse(actual.config) : { personal: {} };
-  const desquadres = comparaPersonal(esperat.personal, compte);
-  const checklists = fases.filter((f) => f.fase !== pla.fase_actual)
-    .map((f) => ({ fase: f.fase, ...checklistCanviFase(JSON.parse(f.config), compte) }));
-
+  // FORA `fases_config`: era del model fàbrica (fases `fabrica`/`inflexio`/`competitiu`) i no
+  // lligava ni amb la fase real. Els «desquadres» es calculaven contra el no-res i els
+  // checklists encara servien el paquet d'inflexió. Qui diu ara què falta és el pla de flux.
   const pla_flux = await plaFlux(env.DB, data.usuari.id);
-  return json({ fase_actual: pla.fase_actual, esperat, membres, desquadres, checklists, entrenament , pla_flux });
+  return json({ fase_actual: pla.fase_actual, membres, entrenament, pla_flux });
 }
 
 export async function onRequestPost({ request, env, data }) {
