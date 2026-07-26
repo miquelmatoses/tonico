@@ -94,7 +94,9 @@ const families = {
   'estrategia': ['competitiva', 'cycle'],
   'sistema_juvenil': ['academia', 'cercapromeses', 'cap'],
   'personal.rol_': ['entrenador', 'especialista'],
-  'vendes.estat_': ['pendent', 'llistat', 'venut', 'desert', 'despatxat'],
+  // «desert» fora: no es tria a mà (es deduïx de la transició del CSV i es desa) i un jugador
+  // desert ja no arriba a la fitxa de venda.
+  'vendes.estat_': ['pendent', 'llistat', 'venut', 'despatxat'],
   'vendes': ['col_jugador', 'col_posicio', 'col_especialitat', 'col_situacio', 'col_data', 'col_tancament', 'col_estat'],
   'juvenils.joc_motiu_': ['revelar', 'dud', 'entrena', 'sense_pipeline'],
   'juvenils.onze_m_': ['entrena', 'estructura', 'recanvi'],

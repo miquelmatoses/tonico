@@ -1,6 +1,6 @@
 // Tonico — fitxes de venda (Àrea E). GET els jugadors en categoria 'venda' amb la
 // seua fitxa (preu d'eixida proposat/editat, data de llistada, estat); POST upsert.
-import { habilitatMax, subhastaDeserta, despatxable } from '../../lib/vendes.js';
+import { habilitatMax } from '../../lib/vendes.js';
 import { normalitzaDivisio } from '../../lib/divisio.js';
 import { avaluaPuntuacio } from '../../lib/classificador.js';
 import { carregaConfigPla } from '../../lib/config_pla.js';
@@ -17,14 +17,6 @@ export async function onRequestGet({ env, data }) {
   const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id=? AND tipus='senior'").bind(data.usuari.id).first();
   if (!equip) return json({ jugadors: [] });
   const inst = await env.DB.prepare('SELECT id FROM instantanies WHERE equip_id=? ORDER BY data DESC, id DESC LIMIT 1').bind(equip.id).first();
-  // `transferible` de la instantània ANTERIOR: el dispar de la PREGUNTA (P7) és la transició
-  // 1 → buit entre instantànies, no l'estat de la fitxa.
-  const instAbans = await env.DB.prepare('SELECT id FROM instantanies WHERE equip_id=? AND id<? ORDER BY data DESC, id DESC LIMIT 1').bind(equip.id, inst?.id ?? 0).first();
-  const transfAbans = new Map();
-  if (instAbans) {
-    const { results: ant } = await env.DB.prepare('SELECT jugador_id, transferible FROM instantanies_jugadors WHERE instantania_id=?').bind(instAbans.id).all();
-    for (const r of ant) transfAbans.set(r.jugador_id, r.transferible);
-  }
   if (!inst) return json({ jugadors: [] });
 
   const { results: jugadors } = await env.DB.prepare(
@@ -36,7 +28,8 @@ export async function onRequestGet({ env, data }) {
        JOIN ${sqlCategoriaVigent(['categoria'])} c
          ON c.jugador_id = j.id
        LEFT JOIN vendes v ON v.jugador_id = j.id
-      WHERE ij.instantania_id = ? AND c.categoria = 'venda'`
+      WHERE ij.instantania_id = ? AND c.categoria = 'venda'
+        AND COALESCE(v.estat,'pendent') <> 'desert'`
   ).bind(inst.id).all();
 
   // v3.1: FORA l'estimació de preu. No es llegixen `preus_observats`, ni `base_preu_divisio`,
@@ -73,15 +66,13 @@ export async function onRequestGet({ env, data }) {
     // construcció (la consulta filtra categoria='venda'), però es deriva del camp i no del
     // filtre: si la consulta canvia, açò no ha de mentir en silenci.
     const esSobrant = j.categoria === 'venda' || j.categoria === 'sobrant';
-    // LA SUBHASTA DESERTA ES DEDUÏX, no es pregunta: si estava transferible, ja no ho està i
-    // SEGUIX A LA PLANTILLA, és que ningú l'ha comprat. Preguntar-ho era demanar-li a Miquel
-    // una cosa que el sistema ja sap.
-    const desert = subhastaDeserta({ transferible_abans: transfAbans.get(j.jugador_id),
-      transferible_ara: j.transferible, en_plantilla: true });
+    // El DESERT no arriba ni ací: la consulta ja l'ha deixat fora. Un jugador que ha eixit a
+    // subhasta i ningú l'ha volgut NO torna a Vendes mai més —ni fitxa, ni píndola, ni
+    // missatge—: no és transferible i l'única cosa que se'n pot fer és despatxar-lo, que és
+    // una decisió de PLANTILLA. Del mercat, amb ell, ja no es parla.
     return { ...j, estat: j.estat || 'pendent', valor, puntuacio: punts[i] ?? null,
       tancament_previst: tancament(j.data_llistada), lesionat: esLesionat(j.lesio),
-      es_sobrant: esSobrant, desert,
-      despatxar: despatxable({ es_sobrant: esSobrant, desert }) };
+      es_sobrant: esSobrant };
   });
   // (4) FORA les marques de BUFFER («cobrix X — ven-lo l'últim»): doctrina morta amb la
   // liquidació. Una fitxa només pot estar en un d'estos estats, i els dona el MATEIX

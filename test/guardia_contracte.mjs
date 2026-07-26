@@ -29,6 +29,7 @@ import { costFlux, nivellPagable, planPersonal, decisioRenovacio,
 import { guanyJugador, admissibleJugador, deltaManteniment, estadiCaduc, admissibleEstadi,
   eficiencia, decisioEstoc } from '../lib/estoc.js';
 import { nivellAccio, agrupaAlertes, ordenaAgenda } from '../lib/informe.js';
+import { REGLES } from '../lib/regles.js';
 import { entrenamentPrescrit, desquadreEntrenament, placesEntrenament } from '../lib/entrenament_places.js';
 import { valorHabilitat as valorHab, valorEsperatDesconegut, ranquingJuvenil } from '../lib/ranquing_juvenil.js';
 import { esLesionat } from '../public/format.js';
@@ -196,11 +197,39 @@ const VERIFICADES = {
   },
 
   // ── PAS 7 / PAS 8 / PAS 9 ──
-  'P7.pregunta': () => {
+  'P7.desert': () => {
     assert.equal(subhastaDeserta({ transferible_abans: 1, transferible_ara: null, en_plantilla: true }), true,
       'estava llistat, ja no, i seguix a la plantilla → ningú l\'ha comprat');
     assert.equal(subhastaDeserta({ transferible_abans: 1, transferible_ara: null, en_plantilla: false }), false,
       'si ja no hi és, l\'han comprat: eixe és el camí del motiu de baixa');
+    // I ES DESA: la transició només es veu entre dues instantànies. `vendes.estat` té l'estat.
+    const chk = sqliteFix.prepare("SELECT sql FROM sqlite_master WHERE name='vendes'").get()?.sql || '';
+    assert.ok(/'desert'/.test(chk), 'el fet té on viure: `vendes.estat` admet «desert»');
+  },
+  'P7.venda_activa': () => {
+    // venda_activa(j) = motiu_venda ≠ ∅ I ¬desert(j). Un desert queda fora de TOT el mercat.
+    const jugadors = [{ jugador_id: 7, nom: 'D', categoria: 'venda', transferible: null, sou: 9000, edat_dies: 50 }];
+    const p = { urgencia: 70, dies_urgencia: 14, posicio_porter: 'PO' };
+    assert.ok(REGLES.ALR_LLISTAR_VENDA({ jugadors, any_dies: 112, deserts: new Set() }, p).length > 0,
+      'sense la marca es proposaria');
+    assert.deepEqual(REGLES.ALR_LLISTAR_VENDA({ jugadors, any_dies: 112, deserts: new Set([7]) }, p), [],
+      'amb la marca, cap acció de mercat');
+  },
+  'P7.despatxable': () => {
+    assert.equal(despatxable({ es_sobrant: true, desert: true }), true, 'sobrant desert → s\'acomiada');
+    assert.equal(despatxable({ es_sobrant: false, desert: true }), false,
+      'un retingut desert NO: és que el preu no era el bo, no un veredicte sobre el jugador');
+  },
+  'P8.obra_en_curs': () => {
+    // obra_en_curs = `estadi_obra_inici` ≠ ∅. Una obra COMENÇADA no és una decisió pendent, i
+    // com que l'estadi té prioritat absoluta, mentre estiga damunt de la taula no es proposa
+    // res més: sense esta declaració Tonico bloquejava tota la resta indefinidament.
+    const cols = sqliteFix.prepare('SELECT * FROM pragma_table_info(?)').all('finances').map((c) => c.name);
+    assert.ok(cols.includes('estadi_obra_inici'), 'té on declarar-se (invariant 17)');
+    const base = { cost: 50000, caixa: 100000, flux: 10000, delta_manteniment: 0, reserva_flux: 0 };
+    assert.equal(admissibleEstadi({ ...base }), true, 'sense obra en curs, admissible');
+    assert.equal(admissibleEstadi({ ...base, obra_en_curs: true }), false,
+      'amb l\'obra en marxa, no: ja s\'ha decidit i no es decidix dues vegades');
   },
   'P8.pregunta': () => {
     // Es DEMANA a l'inici de cada temporada, de la calculadora: els camps existixen i
@@ -538,13 +567,6 @@ const VERIFICADES = {
   },
 
   // PAS 7 — vendre. SENSE estimació de preu (v3.1): la subhasta decidix.
-  'P7.desti_2': () => {
-    // La subhasta deserta ja no es pregunta: es dedueix. El que en resulta és DESPATXABLE,
-    // i només per a qui sobra — un retingut desert no és un veredicte sobre ell.
-    assert.equal(despatxable({ es_sobrant: true, desert: true }), true);
-    assert.equal(despatxable({ es_sobrant: false, desert: true }), false,
-      'un retingut desert MAI s\'acomiada sol');
-  },
   'P7.urgent': () => {
     assert.equal(esUrgent(10, 14), true);
     assert.equal(esUrgent(20, 14), false);

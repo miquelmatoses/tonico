@@ -27,11 +27,12 @@ assert.equal(d.jugadors[0].especialitat, 'Ràpid');
 // això el decidix la subhasta (destiDeserta), no una previsió de quant en trauries.
 assert.equal(d.jugadors[0].preu_proposat, undefined, 'cap preu estimat a l\'eixida');
 assert.equal(d.jugadors[0].valor_net, undefined, 'cap valor net: depenia del preu estimat');
-assert.equal(d.jugadors[0].despatxar, false);
+assert.equal(d.jugadors[0].despatxar, undefined,
+  'ni el camp: despatxar és una decisió de PLANTILLA, no de la fitxa de venda');
 sqlite.exec('UPDATE instantanies_jugadors SET sou=70000 WHERE jugador_id=1');
 const dn = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
-assert.equal(dn.jugadors[0].despatxar, false,
-  'ni amb un sou desproporcionat: qui decidix acomiadar-lo és que la subhasta quede deserta');
+assert.equal(dn.jugadors[0].despatxar, undefined,
+  'ni amb un sou desproporcionat: la fitxa de venda no parla d\'acomiadar');
 sqlite.exec('UPDATE instantanies_jugadors SET sou=NULL WHERE jugador_id=1');   // restaura per a la resta del test
 
 // La fitxa només guarda el que mou el rellotge de la subhasta: data de llistat i estat. Un
@@ -43,11 +44,13 @@ assert.equal(d.jugadors[0].data_llistada, '2026-07-25');
 assert.equal(d.jugadors[0].preu_eixida, undefined, 'cap preu a l\'eixida, ni el que s\'ha enviat');
 assert.equal(sqlite.prepare('SELECT preu_eixida FROM vendes WHERE jugador_id=1').get().preu_eixida, null,
   'i tampoc s\'escriu a la BD: la porta està tancada, no només amagada');
-// Un LLISTAT (forçat) mai mostra despatxar — ara trivialment, perquè ja no es proposa mai.
-sqlite.exec('UPDATE instantanies_jugadors SET sou=70000 WHERE jugador_id=1');
-const dforcat = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
-assert.equal(dforcat.jugadors[0].despatxar, false);
-sqlite.exec('UPDATE instantanies_jugadors SET sou=NULL WHERE jugador_id=1');
+// UN DESERT NO TORNA MAI A VENDES. Va eixir a subhasta, ningú el va voler i ja no és
+// transferible: ni fitxa, ni píndola, ni missatge. L'única cosa que se'n pot fer és
+// despatxar-lo, i eixa decisió és de PLANTILLA.
+sqlite.exec("INSERT INTO vendes (jugador_id, usuari_id, estat) VALUES (1,1,'desert') ON CONFLICT(jugador_id) DO UPDATE SET estat='desert';");
+const dDesert = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
+assert.ok(!dDesert.jugadors.some((j) => j.jugador_id === 1), 'el desert desapareix de la llista');
+sqlite.exec("UPDATE vendes SET estat='pendent' WHERE jugador_id=1;");
 
 // La llista s'ordena per la PUNTUACIÓ de la categoria de venda (dada pròpia), no per cap preu.
 // Afegim un 2n venda amb més habilitat → més puntuació.

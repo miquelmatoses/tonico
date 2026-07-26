@@ -202,18 +202,27 @@ motiu_venda(j) = SI(j ∈ rotatius I temporada ≥ horitzo_eixida(j); "pic de va
     nivell_objectiu, que penja del flux: mentre el flux siga soroll, este motiu ho
     seria també. Els altres dos no en depenen —l'edat i l'estructura de plantilla— i
     seguixen funcionant]
-ordre_venda    = ORDENA(FILTRA(plantilla; motiu_venda ≠ ∅); sobrecost DESC)
+venda_activa(j)= motiu_venda(j) ≠ ∅  I  ¬desert(j)
+ordre_venda    = ORDENA(FILTRA(plantilla; venda_activa); sobrecost DESC)
 urgent(j)       = dies_aniversari(j) ≤ `dies_urgencia`
 destí(j) = SI(lesionat(j);                              AGENDA("llista'l en recuperar-se");
            SI(fase_mercat(hui + `dies_subhasta`) ≤ `depressio_profunda` I ¬urgent(j);
                                                        AGENDA("llista'l", dia_D);
                                                        ACCIÓ("llista'l HUI")))
    [`depressio_profunda` en FRACCIÓ, mateixes unitats que el modificador]
-PREGUNTA("¿venut per quant / deserta?")  quan transferible passa 1→buit sense venda
-destí(deserta) = SI(j ∈ sobrants; ACCIÓ("despatxa'l"); TRIA(`eixides_deserta`))
-   [ES LLISTA UNA VEGADA. Si va desert i el jugador SOBRA —no té lloc a cap dels dos
-    onzes— s'acomiada: rellistar-lo cada setmana és pagar `cost_llistat` per res.
-    Un retingut, un rotatiu o un cos MAI s'acomiaden per anar deserts]
+desert(j) = transferible(j, abans) = 1  I  transferible(j, ara) ≠ 1  I  j ∈ plantilla
+   [ES DEDUÏX, no es pregunta: si ja no és a la plantilla, l'han comprat.
+    I ES DESA (`vendes.estat` = "desert"), perquè la transició només es veu ENTRE DUES
+    instantànies: a la pujada següent les dues diuen «no transferible» i el fet
+    desapareixeria. Sense desar-lo, el jugador tornava a Vendes i ACCIÓ("llista'l")
+    el proposava un altre volta per la MATEIXA condició que l'hauria de descartar]
+
+   [ES LLISTA UNA VEGADA. Un desert no és transferible i no es rellista: rellistar
+    cada setmana és pagar `cost_llistat` per res. I un desert queda fora de TOT el
+    mercat, no només de l'ordre: ni fitxa, ni avís, ni agenda]
+despatxable(j) = desert(j) I j ∈ sobrants        → decisió de PLANTILLA, no de mercat
+   [Un retingut, un rotatiu o un cos MAI s'acomiaden per anar deserts: per a ells una
+    subhasta deserta no és un veredicte sobre el jugador, és que el preu no era el bo]
 caixa cobrada  = la `caixa` DECLARADA del període següent    → activa el PAS 8
    [l'import d'una venda NO s'apunta: no entra a cap fórmula. Es veu a la caixa]
 ```

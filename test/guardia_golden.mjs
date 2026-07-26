@@ -118,7 +118,7 @@ const igual = (vist, esperat, què) => { assert.deepEqual(vist, esperat, `golden
     igual(j.valor_net, undefined, `${j.nom}: cap valor net`);
     igual(j.preu_eixida, undefined, `${j.nom}: cap objectiu d'eixida`);
     igual(j.preu_venut, undefined, `${j.nom}: cap import venut`);
-    igual(j.despatxar, false, `${j.nom}: despatxar ja no ix d'una previsió`);
+    igual(j.despatxar, undefined, `${j.nom}: despatxar no és de la fitxa de venda, és de plantilla`);
     assert.ok(j.valor != null, `${j.nom}: sí que porta el valor de retenció, que és derivat`);
   }
 }

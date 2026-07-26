@@ -633,7 +633,9 @@ export async function mercat(main) {
 }
 
 // ── Fitxes de venda (Àrea E) ──
-const ESTATS_VENDA = ['pendent', 'llistat', 'venut', 'desert', 'despatxat'];
+// «desert» NO és a la llista: no es tria a mà, es deduïx de la transició del CSV i es desa. I
+// un jugador desert ja no arriba ací —la consulta el deixa fora—, així que tampoc caldria.
+const ESTATS_VENDA = ['pendent', 'llistat', 'venut', 'despatxat'];
 // La subhasta deserta ja NO es pregunta: es dedueix (si estava transferible, ja no ho està i
 // seguix a la plantilla, ningú l'ha comprat). El que queda és la marca de DESPATXABLE, i viu a
 // la fitxa, que és on es decidix qui es queda.
@@ -667,10 +669,6 @@ async function fitxesVenda(main) {
     propCell.append(el('div', { class: 'cobertura', text: j.estat_liquidacio === 'retingut'
       ? t('vendes.retingut_cobertura', { n: cobMin?.camp_minim ?? '?' })
       : t('vendes.estat_liq_' + (j.estat_liquidacio || 'llistable')) }));
-    // DESPATXABLE viu a la PLANTILLA, que és on es decidix qui es queda: ací és una fitxa de
-    // VENDA i el jugador ja ha passat pel mercat. El que sí que és del mercat és que la
-    // subhasta ha quedat deserta.
-    if (j.desert) propCell.append(el('div', { class: 'nota-peu', text: t('vendes.desert') }));
     return el('div', { class: 'graella-fila-d c-venda' },
       el('div', { class: 'fila-qui' },
         el('div', { class: posCls(j.posicio), text: j.posicio || '—' }),

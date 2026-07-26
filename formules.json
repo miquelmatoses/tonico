@@ -742,15 +742,28 @@
       "taules": []
     },
     {
+      "id": "P7.venda_activa",
+      "pas": "P7",
+      "pasTitol": "VENDRE (allibera sou i genera caixa)",
+      "clau": "venda_activa",
+      "linia": "venda_activa(j)= motiu_venda(j) ≠ ∅  I  ¬desert(j)",
+      "entrades": [
+        "desert",
+        "motiu_venda"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
       "id": "P7.ordre_venda",
       "pas": "P7",
       "pasTitol": "VENDRE (allibera sou i genera caixa)",
       "clau": "ordre_venda",
-      "linia": "ordre_venda    = ORDENA(FILTRA(plantilla; motiu_venda ≠ ∅); sobrecost DESC)",
+      "linia": "ordre_venda    = ORDENA(FILTRA(plantilla; venda_activa); sobrecost DESC)",
       "entrades": [
-        "motiu_venda",
         "plantilla",
-        "sobrecost"
+        "sobrecost",
+        "venda_activa"
       ],
       "poms": [],
       "taules": []
@@ -780,31 +793,27 @@
       "taules": []
     },
     {
-      "id": "P7.pregunta",
+      "id": "P7.desert",
       "pas": "P7",
       "pasTitol": "VENDRE (allibera sou i genera caixa)",
-      "clau": "PREGUNTA",
-      "linia": "PREGUNTA(\"¿venut per quant / deserta?\")  quan transferible passa 1→buit sense venda",
+      "clau": "desert",
+      "linia": "desert(j) = transferible(j, abans) = 1  I  transferible(j, ara) ≠ 1  I  j ∈ plantilla",
       "entrades": [
-        "buit",
-        "venda"
+        "plantilla"
       ],
       "poms": [],
       "taules": []
     },
     {
-      "id": "P7.desti_2",
+      "id": "P7.despatxable",
       "pas": "P7",
       "pasTitol": "VENDRE (allibera sou i genera caixa)",
-      "clau": "destí",
-      "linia": "destí(deserta) = SI(j ∈ sobrants; ACCIÓ(\"despatxa'l\"); TRIA(`eixides_deserta`))",
+      "clau": "despatxable",
+      "linia": "despatxable(j) = desert(j) I j ∈ sobrants        → decisió de PLANTILLA, no de mercat",
       "entrades": [
-        "ACCIÓ",
-        "despatxa"
+        "desert"
       ],
-      "poms": [
-        "eixides_deserta"
-      ],
+      "poms": [],
       "taules": []
     },
     {

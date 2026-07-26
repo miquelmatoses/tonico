@@ -6,7 +6,7 @@ import { temporadaOperativa } from '../../lib/calendari.js';
 import { avaluaPuntuacio } from '../../lib/classificador.js';
 import { carregaConfigPla } from '../../lib/config_pla.js';
 import { sqlCategoriaVigent } from '../../lib/categoria_vigent.js';
-import { subhastaDeserta, despatxable } from '../../lib/vendes.js';
+import { desertsDesats, despatxable } from '../../lib/vendes.js';
 
 export async function onRequestGet({ env, data }) {
   const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id = ? AND tipus = 'senior'")
@@ -37,17 +37,12 @@ export async function onRequestGet({ env, data }) {
   ).bind(inst.id).all();
 
   // DESPATXABLE viu ací i no a la fitxa de venda: és la decisió de qui es queda a la
-  // plantilla. Es DEDUÏX (estava llistat, ja no ho està i seguix a la plantilla → ningú l'ha
-  // comprat) i només val per als sobrants, que són els que no tenen lloc a cap dels dos onzes.
-  const instAbans = await env.DB.prepare('SELECT id FROM instantanies WHERE equip_id=? AND id<? ORDER BY data DESC, id DESC LIMIT 1').bind(equip.id, inst.id).first();
-  const transfAbans = new Map();
-  if (instAbans) {
-    const { results: ant } = await env.DB.prepare('SELECT jugador_id, transferible FROM instantanies_jugadors WHERE instantania_id=?').bind(instAbans.id).all();
-    for (const r of ant) transfAbans.set(r.jugador_id, r.transferible);
-  }
+  // plantilla. Ix del fet DESAT (va eixir a subhasta i ningú el va voler) i no d'una transició
+  // entre instantànies, que es perd a la pujada següent. Només val per als sobrants: per a un
+  // retingut, una subhasta deserta no és un veredicte sobre el jugador.
+  const deserts = await desertsDesats(env.DB, data.usuari.id);
   for (const j of jugadors) {
-    j.desert = subhastaDeserta({ transferible_abans: transfAbans.get(j.id),
-      transferible_ara: j.transferible, en_plantilla: true });
+    j.desert = deserts.has(j.id);
     j.despatxar = despatxable({ es_sobrant: j.categoria === 'venda', desert: j.desert });
   }
 
