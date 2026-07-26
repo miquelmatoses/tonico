@@ -11,10 +11,11 @@
       "pas": "V",
       "pasTitol": "VARIABLES BASE (una font cadascuna)",
       "clau": "config",
-      "linia": "config          = { estrategia, pais, divisio, sistema_juvenil, partits_setmana }",
+      "linia": "config          = { estrategia, pais, divisio, sistema_juvenil, n_cercapromeses, partits_setmana }",
       "entrades": [
         "divisio",
         "estrategia",
+        "n_cercapromeses",
         "pais",
         "partits_setmana"
       ],
@@ -167,11 +168,21 @@
       "pas": "P0",
       "pasTitol": "CONFIGURACIÓ (l'única entrada d'usuari inicial)",
       "clau": "pais",
-      "linia": "pais, divisio, sistema_juvenil ∈ {acadèmia, cercapromeses, cap}, partits_setmana ∈ {2,1}",
+      "linia": "pais, divisio, sistema_juvenil ∈ {academia, cercapromeses, cap}, partits_setmana ∈ {2,1}",
       "entrades": [
         "divisio",
         "partits_setmana"
       ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P0.n_cercapromeses",
+      "pas": "P0",
+      "pasTitol": "CONFIGURACIÓ (l'única entrada d'usuari inicial)",
+      "clau": "n_cercapromeses",
+      "linia": "n_cercapromeses ∈ {1,2,3}",
+      "entrades": [],
       "poms": [],
       "taules": []
     },
@@ -289,13 +300,51 @@
       "taules": []
     },
     {
+      "id": "P3.periode_setmanes",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "periode_setmanes",
+      "linia": "periode_setmanes = `setmanes_periode`                       [2: un partit a casa i un fora]",
+      "entrades": [],
+      "poms": [
+        "setmanes_periode"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P3.per_periode",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "per_periode",
+      "linia": "per_periode(x)   = x × `setmanes_periode`                   ← NORMALITZACIÓ",
+      "entrades": [],
+      "poms": [
+        "setmanes_periode"
+      ],
+      "taules": []
+    },
+    {
       "id": "P3.ingressos_recurrents",
       "pas": "P3",
       "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
       "clau": "ingressos_recurrents",
-      "linia": "ingressos_recurrents = taquilla + patrocini + premis        [declarats/derivats]",
-      "entrades": [],
+      "linia": "ingressos_recurrents = taquilla + per_periode(patrocini)",
+      "entrades": [
+        "per_periode"
+      ],
       "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P3.despesa_planter",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "despesa_planter",
+      "linia": "despesa_planter  = SI(sistema_juvenil = 'academia'; `cost_instalacions_juvenils`; 0)",
+      "entrades": [],
+      "poms": [
+        "cost_instalacions_juvenils"
+      ],
       "taules": []
     },
     {
@@ -303,8 +352,11 @@
       "pas": "P3",
       "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
       "clau": "despeses_fixes",
-      "linia": "despeses_fixes       = nòmina + manteniment_estadi + personal + planter",
-      "entrades": [],
+      "linia": "despeses_fixes   = per_periode(nòmina + manteniment_estadi + personal + despesa_planter)",
+      "entrades": [
+        "despesa_planter",
+        "per_periode"
+      ],
       "poms": [],
       "taules": []
     },
@@ -313,7 +365,7 @@
       "pas": "P3",
       "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
       "clau": "flux",
-      "linia": "flux                 = ingressos_recurrents − despeses_fixes",
+      "linia": "flux             = ingressos_recurrents − despeses_fixes",
       "entrades": [
         "despeses_fixes",
         "ingressos_recurrents"
@@ -322,17 +374,30 @@
       "taules": []
     },
     {
+      "id": "P3.reserva_flux",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "reserva_flux",
+      "linia": "reserva_flux     = `reserva_flux_pct` × ingressos_recurrents",
+      "entrades": [
+        "ingressos_recurrents"
+      ],
+      "poms": [
+        "reserva_flux_pct"
+      ],
+      "taules": []
+    },
+    {
       "id": "P3.sou_sostenible",
       "pas": "P3",
       "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
       "clau": "sou_sostenible",
-      "linia": "sou_sostenible       = MAX(0; flux + nòmina − `reserva_flux`)",
+      "linia": "sou_sostenible   = MAX(0; ingressos_recurrents − reserva_flux",
       "entrades": [
-        "flux"
-      ],
-      "poms": [
+        "ingressos_recurrents",
         "reserva_flux"
       ],
+      "poms": [],
       "taules": []
     },
     {
@@ -340,7 +405,7 @@
       "pas": "P3",
       "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
       "clau": "caixa",
-      "linia": "caixa                = saldo real declarat (mai projectat)",
+      "linia": "caixa            = saldo real declarat (mai projectat)",
       "entrades": [],
       "poms": [],
       "taules": []
@@ -350,7 +415,7 @@
       "pas": "P3",
       "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
       "clau": "caixa_disponible",
-      "linia": "caixa_disponible     = MAX(0; caixa − `reserva_caixa`)",
+      "linia": "caixa_disponible = MAX(0; caixa − `reserva_caixa`)",
       "entrades": [
         "caixa"
       ],
@@ -360,16 +425,30 @@
       "taules": []
     },
     {
+      "id": "P4.sou_sostenible_setmanal",
+      "pas": "P4",
+      "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
+      "clau": "sou_sostenible_setmanal",
+      "linia": "sou_sostenible_setmanal = sou_sostenible / `setmanes_periode`",
+      "entrades": [
+        "sou_sostenible"
+      ],
+      "poms": [
+        "setmanes_periode"
+      ],
+      "taules": []
+    },
+    {
       "id": "P4.pressupost_sou",
       "pas": "P4",
       "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
       "clau": "pressupost_sou",
-      "linia": "pressupost_sou(lloc)  = sou_sostenible × pes(lloc) / SUMA(pesos de tots els llocs)",
+      "linia": "pressupost_sou(lloc)  = sou_sostenible_setmanal × pes(lloc) / SUMA(pesos de tots els llocs)",
       "entrades": [
         "lloc",
         "llocs",
         "pes",
-        "sou_sostenible"
+        "sou_sostenible_setmanal"
       ],
       "poms": [],
       "taules": []
@@ -626,51 +705,13 @@
       "pas": "P7",
       "pasTitol": "VENDRE (allibera sou i genera caixa)",
       "clau": "ordre_venda",
-      "linia": "ordre_venda    = ORDENA(FILTRA(plantilla; motiu_venda ≠ ∅);",
+      "linia": "ordre_venda    = ORDENA(FILTRA(plantilla; motiu_venda ≠ ∅); sobrecost DESC)",
       "entrades": [
         "motiu_venda",
-        "plantilla"
+        "plantilla",
+        "sobrecost"
       ],
       "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P7.calibrat",
-      "pas": "P7",
-      "pasTitol": "VENDRE (allibera sou i genera caixa)",
-      "clau": "calibrat",
-      "linia": "calibrat        = COMPTA(vendes_reals ∪ comparables) ≥ `min_mostres`",
-      "entrades": [],
-      "poms": [
-        "min_mostres"
-      ],
-      "taules": []
-    },
-    {
-      "id": "P7.preu_esperat",
-      "pas": "P7",
-      "pasTitol": "VENDRE (allibera sou i genera caixa)",
-      "clau": "preu_esperat",
-      "linia": "preu_esperat(j) = SI(calibrat; estimació_comparables(j);",
-      "entrades": [
-        "calibrat"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P7.valor_net",
-      "pas": "P7",
-      "pasTitol": "VENDRE (allibera sou i genera caixa)",
-      "clau": "valor_net",
-      "linia": "valor_net(j)    = preu_esperat(j) − `cost_llistat` − sou(j) × setmanes_venda(j)",
-      "entrades": [
-        "preu_esperat",
-        "sou"
-      ],
-      "poms": [
-        "cost_llistat"
-      ],
       "taules": []
     },
     {
@@ -711,15 +752,108 @@
       "taules": []
     },
     {
-      "id": "P7.recalibra",
+      "id": "P7.desti_2",
       "pas": "P7",
       "pasTitol": "VENDRE (allibera sou i genera caixa)",
-      "clau": "recalibra",
-      "linia": "recalibra(estimació) A CADA venda real       → la caixa cobrada activa el PAS 8",
+      "clau": "destí",
+      "linia": "destí(deserta) = SI(j ∈ sobrants; ACCIÓ(\"despatxa'l\"); TRIA(`eixides_deserta`))",
       "entrades": [
-        "A",
-        "caixa",
-        "venda"
+        "ACCIÓ",
+        "despatxa"
+      ],
+      "poms": [
+        "eixides_deserta"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P7.venda_cobrada",
+      "pas": "P7",
+      "pasTitol": "VENDRE (allibera sou i genera caixa)",
+      "clau": "venda_cobrada",
+      "linia": "venda_cobrada  = import real declarat        → la caixa cobrada activa el PAS 8",
+      "entrades": [
+        "caixa"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P8.pregunta",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
+      "clau": "PREGUNTA",
+      "linia": "PREGUNTA a l'inici de cada temporada, de `url_calculadora_estadi` (configuració NRG):",
+      "entrades": [
+        "temporada"
+      ],
+      "poms": [
+        "url_calculadora_estadi"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P8.estadi_caduc",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
+      "clau": "estadi_caduc",
+      "linia": "estadi_caduc   = (hui − `estadi_data`) > `setmanes_caducitat_estadi` × 7",
+      "entrades": [
+        "hui"
+      ],
+      "poms": [
+        "estadi_data",
+        "setmanes_caducitat_estadi"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P8.accio",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
+      "clau": "ACCIÓ",
+      "linia": "ACCIÓ(\"torna a la calculadora i reinserix els números\")  SI estadi_caduc",
+      "entrades": [
+        "estadi_caduc"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P8.manteniment",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
+      "clau": "Δmanteniment",
+      "linia": "Δmanteniment   = `estadi_manteniment` − manteniment_actual",
+      "entrades": [],
+      "poms": [
+        "estadi_manteniment"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P8.admissible",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
+      "clau": "admissible",
+      "linia": "admissible(estadi) = `estadi_cost_obra` ≤ caixa_disponible",
+      "entrades": [
+        "caixa_disponible"
+      ],
+      "poms": [
+        "estadi_cost_obra"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P8.accio_2",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
+      "clau": "ACCIÓ",
+      "linia": "ACCIÓ(\"remodela l'estadi\")  SI admissible(estadi) I ¬estadi_caduc",
+      "entrades": [
+        "admissible",
+        "estadi_caduc"
       ],
       "poms": [],
       "taules": []
@@ -727,7 +861,7 @@
     {
       "id": "P8.candidat",
       "pas": "P8",
-      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "candidat",
       "linia": "candidat(lloc)  = jugador de mercat amb hab(habilitat_lloc) ≥ nivell_objectiu(lloc)",
       "entrades": [
@@ -743,7 +877,7 @@
     {
       "id": "P8.guany",
       "pas": "P8",
-      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "guany",
       "linia": "guany(jugador)  = mancança(lloc) × pes(lloc)",
       "entrades": [
@@ -757,19 +891,21 @@
     {
       "id": "P8.cost",
       "pas": "P8",
-      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "cost",
-      "linia": "cost(jugador)   = preu",
+      "linia": "cost(jugador)   = preu de mercat del candidat        [preu real llistat, no estimat]",
       "entrades": [
+        "candidat",
+        "llistat",
         "preu"
       ],
       "poms": [],
       "taules": []
     },
     {
-      "id": "P8.admissible",
+      "id": "P8.admissible_2",
       "pas": "P8",
-      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "admissible",
       "linia": "admissible      = preu ≤ caixa_disponible  I  sou ≤ pressupost_sou(lloc)",
       "entrades": [
@@ -783,93 +919,11 @@
       "taules": []
     },
     {
-      "id": "P8.pregunta",
-      "pas": "P8",
-      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
-      "clau": "PREGUNTA",
-      "linia": "PREGUNTA a l'inici de cada temporada, de `url_calculadora_estadi` (configuració NRG):",
-      "entrades": [
-        "temporada"
-      ],
-      "poms": [
-        "url_calculadora_estadi"
-      ],
-      "taules": []
-    },
-    {
-      "id": "P8.flux",
-      "pas": "P8",
-      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
-      "clau": "Δflux",
-      "linia": "Δflux(obra)          = manteniment_actual − `estadi_manteniment`",
-      "entrades": [],
-      "poms": [
-        "estadi_manteniment"
-      ],
-      "taules": []
-    },
-    {
-      "id": "P8.nivell_pagable",
-      "pas": "P8",
-      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
-      "clau": "Δnivell_pagable",
-      "linia": "Δnivell_pagable(lloc)= nivell_objectiu(lloc | sou_sostenible + Δflux)",
-      "entrades": [
-        "flux",
-        "lloc",
-        "nivell_objectiu",
-        "sou_sostenible",
-        "Δflux"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P8.guany_2",
-      "pas": "P8",
-      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
-      "clau": "guany",
-      "linia": "guany(estadi)  = SUMA(llocs amb mancança > 0:",
-      "entrades": [
-        "llocs",
-        "mancança"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P8.cost_2",
-      "pas": "P8",
-      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
-      "clau": "cost",
-      "linia": "cost(estadi)   = `estadi_cost_obra`",
-      "entrades": [],
-      "poms": [
-        "estadi_cost_obra"
-      ],
-      "taules": []
-    },
-    {
-      "id": "P8.admissible_2",
-      "pas": "P8",
-      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
-      "clau": "admissible",
-      "linia": "admissible     = cost ≤ caixa_disponible  I  flux + Δflux ≥ 0",
-      "entrades": [
-        "caixa_disponible",
-        "cost",
-        "flux",
-        "Δflux"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
       "id": "P8.eficiencia",
       "pas": "P8",
-      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "eficiència",
-      "linia": "eficiència(opció) = guany / cost",
+      "linia": "eficiència(jugador) = guany / cost",
       "entrades": [
         "cost",
         "guany"
@@ -878,11 +932,11 @@
       "taules": []
     },
     {
-      "id": "P8.accio",
+      "id": "P8.accio_3",
       "pas": "P8",
-      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "ACCIÓ",
-      "linia": "ACCIÓ = PRIMER(ORDENA(FILTRA(opcions; admissible); eficiència DESC))",
+      "linia": "ACCIÓ = PRIMER(ORDENA(FILTRA(candidats; admissible); eficiència DESC))",
       "entrades": [
         "admissible",
         "eficiència"
@@ -893,7 +947,7 @@
     {
       "id": "P8.capacitat_objectiu",
       "pas": "P8",
-      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "capacitat_objectiu",
       "linia": "capacitat_objectiu   = configuració NRG de `url_calculadora_estadi`   [declarada]",
       "entrades": [],
@@ -1072,7 +1126,7 @@
       "pas": "P10",
       "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
       "clau": "destí",
-      "linia": "destí(promo) = SI(util(promo); PROMOCIONA (entra com a rotatiu de l'11B);",
+      "linia": "destí(promo) = SI(util(promo); PROMOCIONA (entra com a rotatiu de l'11B); DESPATXA)",
       "entrades": [
         "B",
         "promo",
@@ -1162,13 +1216,11 @@
       "pas": "P11",
       "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
       "clau": "cost_flux",
-      "linia": "cost_flux(nivell) = `staff_cost_base` × 2^(nivell−1)",
+      "linia": "cost_flux(tipus, nivell) = base(tipus) × 2^(nivell−1)",
       "entrades": [
         "nivell"
       ],
-      "poms": [
-        "staff_cost_base"
-      ],
+      "poms": [],
       "taules": []
     },
     {
@@ -1176,13 +1228,13 @@
       "pas": "P11",
       "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
       "clau": "flux_lliure",
-      "linia": "flux_lliure       = MAX(0; flux + cost_personal_actual − `reserva_flux`)",
+      "linia": "flux_lliure       = MAX(0; flux + per_periode(cost_personal_actual) − reserva_flux)",
       "entrades": [
-        "flux"
-      ],
-      "poms": [
+        "flux",
+        "per_periode",
         "reserva_flux"
       ],
+      "poms": [],
       "taules": []
     },
     {
@@ -1202,7 +1254,7 @@
       "pas": "P11",
       "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
       "clau": "nivell",
-      "linia": "nivell(tipus) = MAX(n : cost_flux_acumulat(fins a tipus, n) ≤ flux_lliure)",
+      "linia": "nivell(tipus) = MAX(n : cost_flux_acumulat(tipus, n) ≤ flux_lliure)",
       "entrades": [
         "flux_lliure"
       ],

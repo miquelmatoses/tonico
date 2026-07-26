@@ -1,6 +1,6 @@
 // Tonico — JUVENILS del v3 (PAS 10): proveïdors de rotatius. node test/juvenil_v3.mjs
 import assert from 'node:assert/strict';
-import { util, valorNetPromo, destiPromocio, objectiuJuvenil, sobrants, reiniciCrida } from '../lib/juvenil_v3.js';
+import { util, destiPromocio, objectiuJuvenil, sobrants, reiniciCrida } from '../lib/juvenil_v3.js';
 
 // ── util(j): ¿arribarà al nivell que el lloc demana? ──
 assert.equal(util({ creativitat_potencial: 9 }, 'creativitat', 8), true);
@@ -10,14 +10,14 @@ assert.equal(util({ creativitat_potencial: 'desconegut' }, 'creativitat', 8), nu
 assert.equal(util({ creativitat_potencial: 9 }, 'creativitat', null), null,
   'sense nivell objectiu (economia sense dades) tampoc');
 
-// ── valor_net_promo i el destí ──
-assert.equal(valorNetPromo(300000, { cost_promocio: 20000, sou_estimat: 5000 }), 270000);
-assert.equal(valorNetPromo(null, {}), null);
-assert.equal(destiPromocio({ esUtil: true, valor_net_promo: -1 }), 'PROMOCIONA',
-  'si servix per al lloc, es promociona encara que vendre\'l no rendira');
-assert.equal(destiPromocio({ esUtil: false, valor_net_promo: 100 }), 'PROMOCIONA_I_LLISTA');
-assert.equal(destiPromocio({ esUtil: false, valor_net_promo: -100 }), 'DESPATXA');
-assert.equal(destiPromocio({ esUtil: false, valor_net_promo: null }), 'DESPATXA');
+// ── el destí: DOS branques, no tres (v3.1) ──
+// `PROMOCIONA_I_LLISTA` depenia d'una estimació de preu i era el juvenil-com-a-negoci que el
+// canvi 9 ja havia retirat: si no arriba al nivell del lloc, no servix, i no hi ha preu que
+// ho canvie.
+assert.equal(destiPromocio({ esUtil: true }), 'PROMOCIONA',
+  'si servix per al lloc, es promociona');
+assert.equal(destiPromocio({ esUtil: false }), 'DESPATXA',
+  'i si no servix, es despatxa: no hi ha branca de «promociona i ven-lo»');
 
 // ── objectiu_juvenil = onze legal + 1 (derivat) ──
 assert.equal(objectiuJuvenil(9), 10);

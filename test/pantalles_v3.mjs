@@ -6,7 +6,7 @@ import { nova } from './_d1shim.mjs';
 import * as mercat from '../functions/api/mercat.js';
 import * as personal from '../functions/api/personal.js';
 import * as vendes from '../functions/api/vendes.js';
-import { preguntaVenda, EIXIDES_DESERTA } from '../lib/preu.js';
+import { preguntaVenda, EIXIDES_DESERTA } from '../lib/vendes.js';
 
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`
@@ -31,17 +31,19 @@ assert.ok(m.estoc.caixa_disponible > 0, 'i la caixa disponible amb què compara'
 assert.ok(m.estoc.sou_sostenible > 0, 'i el sou que el flux sosté');
 assert.ok(Array.isArray(m.estoc.opcions), 'amb les opcions ordenades');
 assert.ok(Array.isArray(m.estoc.mancances), 'i les mancances que les justifiquen');
-assert.equal(m.estoc.estadi_declarat, false, 'sense números d\'estadi, l\'obra no competix');
+assert.equal(m.estoc.estadi_declarat, false, 'sense números d\'estadi, no hi ha obra a proposar');
 for (const o of m.estoc.opcions) assert.ok(o.motiu, 'cada opció porta el seu motiu DERIVAT');
 
-// Amb els números de la calculadora declarats, l'obra entra a la comparació.
-sqlite.prepare('UPDATE finances SET estadi_manteniment=?, estadi_cost_obra=? WHERE usuari_id=1').run(6000, 200000);
+// Amb els números de la calculadora declarats, l'obra entra — i VA PRIMER (v3.1).
+sqlite.prepare('UPDATE finances SET estadi_manteniment=?, estadi_cost_obra=?, despesa_estadi=? WHERE usuari_id=1').run(9000, 200000, 6000);
 const m2 = await (await mercat.onRequestGet(ctx)).json();
-assert.equal(m2.estoc.estadi_declarat, true, 'declarada, l\'obra ja competix');
+assert.equal(m2.estoc.estadi_declarat, true, 'declarada, l\'obra ja es pot proposar');
 const opEstadi = m2.estoc.opcions.find((o) => o.tipus === 'estadi');
 assert.ok(opEstadi, 'i apareix com a opció');
-assert.equal(opEstadi.delta_flux, 3000, 'amb el seu Δflux (9000 − 6000)');
-assert.ok(opEstadi.eficiencia != null, 'i la seua eficiència');
+assert.equal(opEstadi.delta_manteniment, 3000, 'amb el que AFIG de manteniment (9000 − 6000)');
+assert.equal(opEstadi.eficiencia, null,
+  'i SENSE eficiència: no es puntua, perquè la prioritat no es negocia');
+assert.equal(m2.estoc.opcions[0].tipus, 'estadi', 'l\'estadi va primer a la llista');
 
 // ── PERSONAL: el pla de flux arriba a la pantalla ──
 const pe = await (await personal.onRequestGet(ctx)).json();

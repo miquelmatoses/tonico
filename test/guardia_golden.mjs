@@ -15,16 +15,16 @@ import * as apiMercat from '../functions/api/mercat.js';
 import * as apiPersonal from '../functions/api/personal.js';
 import * as apiVendes from '../functions/api/vendes.js';
 import * as apiAlertes from '../functions/api/alertes.js';
-import { economia, souSostenible, caixaDisponible } from '../lib/economia.js';
+import { economia, souSostenible, caixaDisponible, reservaFlux, despesaPlanter } from '../lib/economia.js';
 import { nivellAccio } from '../lib/informe.js';
-import { costFlux } from '../lib/personal_v3.js';
+import { costFlux, baseTipus } from '../lib/personal_v3.js';
 import { eficiencia } from '../lib/estoc.js';
 import { normalitzaDivisio } from '../lib/divisio.js';
 
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`
   INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
-  INSERT INTO config_usuari (usuari_id, estrategia, pais, divisio, sistema_juvenil, partits_setmana) VALUES (1,'competitiva','ES','7','cap',2);
+  INSERT INTO config_usuari (usuari_id, estrategia, pais, divisio, sistema_juvenil, n_cercapromeses, partits_setmana) VALUES (1,'competitiva','ES','7','academia',3,2);
   INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'E','senior');
   INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (1,1,'2026-07-25',83,2);
@@ -32,8 +32,8 @@ sqlite.exec(`
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, sou, creativitat, defensa, porteria, anotacio, extrem, passades)
     VALUES (1,1,'MC',22,3000,5,1,1,1,1,1),(1,2,'DC',24,2000,1,6,1,1,1,1);
   INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (1,'core','auto'),(2,'titular','auto');
-  INSERT INTO finances (usuari_id, caixa, caixa_data, taquilla, patrocini, premis, despesa_planter, despesa_estadi, estadi_manteniment, estadi_cost_obra)
-    VALUES (1, 500000, '2026-07-25', 30000, 20000, 5000, 2000, 9000, 6000, 200000);
+  INSERT INTO finances (usuari_id, caixa, caixa_data, periode_data, taquilla, patrocini, despesa_estadi, estadi_manteniment, estadi_cost_obra, estadi_data)
+    VALUES (1, 500000, '2026-07-25', '2026-07-25', 21127, 40500, 7100, 9000, 200000, '2026-07-25');
   INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou, setmanes_contracte) VALUES (1,'especialista','metge',2,2040,4);
 `);
 const ctx = { env: { DB: db }, data: { usuari: { id: 1 } } };
@@ -44,14 +44,22 @@ const igual = (vist, esperat, què) => { assert.deepEqual(vist, esperat, `golden
 
 // ── ECONOMIA: cada xifra de la pantalla ix de l'avaluador ──
 {
-  const eco = await economia(db, 1);
+  const eco = await economia(db, 1, '2026-07-26');
   const vista = await json(apiEconomia);
   // El que la pantalla mostra com a caixa és el saldo DECLARAT, no una derivada.
   igual(vista.finances.caixa, eco.caixa, 'caixa de la pantalla = caixa de l\'avaluador');
-  igual(eco.ingressos_recurrents, 30000 + 20000 + 5000, 'ingressos = taquilla + patrocini + premis');
-  igual(eco.despeses_fixes, 5000 + 2000 + 9000 + 2040, 'despeses = nòmina + planter + estadi + personal');
+  // PERÍODE BI-SETMANAL: la taquilla ja ve per període; el patrocini és setmanal → × 2.
+  igual(eco.ingressos_recurrents, 21127 + 40500 * 2, 'ingressos = taquilla + per_periode(patrocini)');
+  igual(eco.planter_derivat, despesaPlanter('academia', 3, { cost_instalacions: 5000, cost_cercapromeses: 5000 }),
+    'el planter es DERIVA, no es declara');
+  igual(eco.despeses_fixes, (5000 + 20000 + 7100 + 2040) * 2,
+    'despeses = per_periode(nòmina + planter + estadi + personal)');
   igual(eco.flux, eco.ingressos_recurrents - eco.despeses_fixes, 'flux');
-  igual(eco.sou_sostenible, souSostenible(eco.flux, eco.nomina, eco.reserva_flux), 'sou sostenible');
+  igual(eco.reserva_flux, reservaFlux(eco.ingressos_recurrents, eco.reserva_flux_pct),
+    'la reserva és una FRACCIÓ dels ingressos');
+  igual(eco.sou_sostenible, souSostenible(eco.ingressos_recurrents, eco.despeses_fixes, eco.despeses.nomina, eco.reserva_flux), 'sou sostenible');
+  igual(eco.sou_sostenible_setmanal, eco.sou_sostenible / eco.setmanes_periode,
+    'l\'ÚNIC canvi d\'unitat, i el fa l\'economia');
   igual(eco.caixa_disponible, caixaDisponible(eco.caixa, eco.reserva_caixa), 'caixa disponible');
   // La divisió es va declarar en àrab: la pantalla NO pot mostrar el format cru.
   igual(eco.divisio, normalitzaDivisio('7'), 'divisió normalitzada, no el format declarat');
@@ -60,53 +68,51 @@ const igual = (vist, esperat, què) => { assert.deepEqual(vist, esperat, `golden
 // ── MERCAT: les opcions i la seua eficiència ──
 {
   const { estoc } = await json(apiMercat);
-  const eco = await economia(db, 1);
+  const eco = await economia(db, 1, '2026-07-26');
   igual(estoc.caixa_disponible, eco.caixa_disponible, 'la caixa amb què compara');
   igual(estoc.sou_sostenible, eco.sou_sostenible, 'el sou que sosté');
-  for (const o of estoc.opcions) {
-    igual(o.eficiencia, eficiencia(o.guany, o.cost), `eficiència de l'opció ${o.tipus} ${o.lloc ?? ''}`);
-    assert.ok(o.motiu, `l'opció ${o.tipus} porta motiu derivat`);
-  }
+  for (const o of estoc.opcions) assert.ok(o.motiu, `l'opció ${o.tipus} porta motiu derivat`);
   const est = estoc.opcions.find((o) => o.tipus === 'estadi');
-  igual(est.delta_flux, 9000 - 6000, 'Δflux de l\'obra = manteniment actual − declarat');
+  igual(est.delta_manteniment, 9000 - 7100, 'el que l\'obra AFIG de manteniment setmanal');
   igual(est.cost, 200000, 'el cost de l\'obra és el DECLARAT, no un modelat');
-  // La recomanada és la de més eficiència entre admissibles: cap altra tria.
-  const admis = estoc.opcions.filter((o) => o.admissible && o.eficiencia != null);
-  if (admis.length) {
-    igual(estoc.recomanada.eficiencia, Math.max(...admis.map((o) => o.eficiencia)), 'la recomanada és la de més rendiment');
+  igual(est.eficiencia, null, 'l\'obra NO es puntua: té prioritat absoluta (v3.1)');
+  // Cap opció de jugador porta cost inventat: sense candidat de mercat real, no hi ha preu.
+  for (const o of estoc.opcions.filter((x) => x.tipus === 'jugador')) {
+    igual(o.cost, null, `${o.lloc}: cap preu estimat`);
+    igual(o.eficiencia, null, `${o.lloc}: sense preu real no hi ha eficiència`);
   }
+  // La recomanada, si l'obra és admissible, és l'obra: abans que cap fitxatge.
+  if (est.admissible && !est.caduc) igual(estoc.recomanada.tipus, 'estadi', 'l\'estadi va primer');
 }
 
 // ── PERSONAL: el pla i els seus costos ──
 {
   const { pla_flux } = await json(apiPersonal);
-  const eco = await economia(db, 1);
+  const eco = await economia(db, 1, '2026-07-26');
   // F3: flux_lliure torna a sumar el cost del personal ACTUAL (ja va restat dins del flux).
   igual(pla_flux.flux_lliure, eco.flux_lliure, 'flux lliure de la font única');
   igual(eco.flux_lliure, Math.max(0, eco.flux + eco.despeses.personal - eco.reserva_flux),
-    'flux_lliure = MAX(0; flux + cost_personal_actual − reserva_flux)');
+    'flux_lliure = MAX(0; flux + per_periode(personal) − reserva_flux)');
   for (const x of pla_flux.pla) {
     if (x.exclos) { igual(x.cost, 0, 'un tipus exclòs no consumix flux'); continue; }
-    igual(x.cost, x.nivell ? costFlux(x.nivell, pla_flux.staff_cost_base) : 0, `cost de ${x.tipus}`);
+    // DUES bases (v3.1): la de l'entrenador no és la dels especialistes.
+    igual(x.cost, x.nivell ? costFlux(x.nivell, x.base) : 0, `cost de ${x.tipus}`);
     assert.ok(x.accio, `${x.tipus} porta acció derivada`);
   }
   const gastat = pla_flux.pla.reduce((a, x) => a + x.cost, 0);
   igual(gastat + pla_flux.flux_restant, pla_flux.flux_lliure, 'tot el flux queda comptat, res se\'n perd');
 }
 
-// ── VENDES: el preu i el valor net que la fitxa mostra ──
+// ── VENDES: la fitxa NO pot mostrar cap preu (v3.1) ──
 {
   sqlite.exec("INSERT INTO vendes (jugador_id, usuari_id, estat) VALUES (2,1,'pendent');");
   sqlite.exec("UPDATE categories_jugador SET categoria='venda' WHERE jugador_id=2;");
   const v = await json(apiVendes);
   for (const j of v.jugadors) {
-    // Sense calibrar (invariant 7) la pantalla NO pot mostrar valor net ni despatxar.
-    if (!j.calibrat) {
-      igual(j.valor_net, null, `${j.nom}: sense calibrar, cap valor net`);
-      igual(j.despatxar, false, `${j.nom}: sense calibrar, cap despatxar`);
-    }
-    if (j.preu_proposat != null) assert.ok(j.preu_estimacio_grossa || j.calibrat,
-      `${j.nom}: tot preu ve etiquetat (calibrat o estimació grossa)`);
+    igual(j.preu_proposat, undefined, `${j.nom}: cap preu estimat a la fitxa`);
+    igual(j.valor_net, undefined, `${j.nom}: cap valor net`);
+    igual(j.despatxar, false, `${j.nom}: despatxar ja no ix d'una previsió`);
+    assert.ok(j.valor != null, `${j.nom}: sí que porta el valor de retenció, que és derivat`);
   }
 }
 

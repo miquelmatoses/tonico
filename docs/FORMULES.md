@@ -1,6 +1,7 @@
 # FULL DE FÓRMULES DE TONICO
 
-> ⚖️ **CONTRACTE · FONT DE VERITAT.** Aprovat per Miquel (2026-07-24). Mana sobre
+> ⚖️ **CONTRACTE · FONT DE VERITAT.** Aprovat per Miquel (v3: 2026-07-24 · v3.1:
+> 2026-07-26). Mana sobre
 > qualsevol codi, doctrina o document anterior. El codi de Tonico és un avaluador
 > d'estes fórmules i res més. Mirall llegible per màquina:
 > [`formules.json`](../formules.json). Pla de reconstrucció:
@@ -13,7 +14,7 @@
 > (G1 contracte-full, G2 render-pur, G3 golden-pantalla) entren al CI: un commit que
 > els trenque no arriba a prod.
 
-**v3 · 2026-07-24 · Model competitiu-econòmic · APROVAT (Miquel)**
+**v3.1 · 2026-07-26 · Model competitiu-econòmic · APROVAT (Miquel)**
 
 Substituïx tota especificació anterior (i el model «fàbrica», retirat: una
 estratègia que no competix durant temporades no la tria ningú).
@@ -28,15 +29,15 @@ ARREDONIX.AMUNT, ∈, ∪, ∅.
    sou pots sostindre** → i d'ahí **quin nivell** pots tindre a cada lloc. L'*estoc*
    (caixa cobrada) decidix **què pots comprar hui**. Res s'anticipa: *ven, cobra,
    compra*, sempre en eixe orde.
-2. **Una sola mètrica.** `mancança(lloc) × pes(lloc)` ordena compres, vendes i
-   obres d'estadi. Tot competix pel mateix diner amb la mateixa unitat.
+2. **Una sola mètrica.** `mancança(lloc) × pes(lloc)` ordena compres i vendes.
+   L'estadi no hi competix: va primer, perquè és l'únic que mou el flux (canvi 6).
 
 ---
 
 ## V — VARIABLES BASE (una font cadascuna)
 
 ```
-config          = { estrategia, pais, divisio, sistema_juvenil, partits_setmana }
+config          = { estrategia, pais, divisio, sistema_juvenil, n_cercapromeses, partits_setmana }
 estrategia      ∈ { competitiva, cycle(WIP) }
 hores(pais)     = BUSCA(`hores_pais`; pais) → {economia_dia, economia_hora}
 plantilla       = instantània sènior vigent · juvenils = instantània juvenil vigent
@@ -56,10 +57,16 @@ horitzo_eixida(j) = temporada en què edat_d(j) assoleix `edat_pic_venda`×112
 
 ```
 estrategia      = TRIA(competitiva | cycle)      [cycle: WIP, sense contingut]
-pais, divisio, sistema_juvenil ∈ {acadèmia, cercapromeses, cap}, partits_setmana ∈ {2,1}
+pais, divisio, sistema_juvenil ∈ {academia, cercapromeses, cap}, partits_setmana ∈ {2,1}
+n_cercapromeses ∈ {1,2,3}
+   [el cercapromeses SEMPRE hi és; el mode només diu si hi ha acadèmia i si es crida.
+    `academia` = arriben jugadors de 15-17 anys i s'entrenen a cegues abans de pujar ·
+    `cercapromeses` = només el cercapromeses, i es crida cada setmana ·
+    `cap` = hi és, s'espera, i no es crida mai (i es paga igual: vore PAS 3)]
 ```
-Caixa, ingressos, despeses, personal i estadi es demanen a l'informe després de
-la primera pujada (mai a l'entrada).
+Caixa, ingressos, personal i estadi es demanen a l'informe després de la primera
+pujada (mai a l'entrada). Tot el que Tonico consumix i no pot derivar té finestra
+de declaració: sense finestra, la dada no es demana.
 
 ---
 
@@ -92,19 +99,39 @@ max_partits(j) = SI(pct(lloc(j)) < 100 O rol(j) ∈ {futur_entrenador, cos}; 2; 
 ## PAS 3 — ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)
 
 ```
-ingressos_recurrents = taquilla + patrocini + premis        [declarats/derivats]
-despeses_fixes       = nòmina + manteniment_estadi + personal + planter
-flux                 = ingressos_recurrents − despeses_fixes
-sou_sostenible       = MAX(0; flux + nòmina − `reserva_flux`)
-   [= tot el que pots dedicar a sous sense entrar en pèrdues]
-caixa                = saldo real declarat (mai projectat)
-caixa_disponible     = MAX(0; caixa − `reserva_caixa`)
+periode_setmanes = `setmanes_periode`                       [2: un partit a casa i un fora]
+   [en lliga la taquilla entra en setmanes ALTERNES, i HT mateix dona el «balanç
+    bisetmanal». Un flux calculat sobre una setmana val el doble o la meitat segons
+    quina toque, i eixa oscil·lació és més gran que el flux net.]
+per_periode(x)   = x × `setmanes_periode`                   ← NORMALITZACIÓ
+   [tot import SETMANAL es multiplica; només la taquilla ja ve per període]
+ingressos_recurrents = taquilla + per_periode(patrocini)
+   [NOMÉS els dos extrapolables. Club d'aficionats, comissions i vendes són PUNTUALS
+    i no entren al flux: no es poden extrapolar i marejarien el sostre de sou]
+despesa_planter  = SI(sistema_juvenil = 'academia'; `cost_instalacions_juvenils`; 0)
+                 + `cost_cercapromeses` × n_cercapromeses
+despeses_fixes   = per_periode(nòmina + manteniment_estadi + personal + despesa_planter)
+flux             = ingressos_recurrents − despeses_fixes
+reserva_flux     = `reserva_flux_pct` × ingressos_recurrents
+sou_sostenible   = MAX(0; ingressos_recurrents − reserva_flux
+                          − (despeses_fixes − per_periode(nòmina)))
+   [= les despeses recurrents no poden passar del (1 − `reserva_flux_pct`) dels
+    ingressos recurrents. La reserva és POLÍTICA DE RISC declarada, no mecànica]
+caixa            = saldo real declarat (mai projectat)
+   [= «Diners disponibles» de l'informe, no «diners al final de setmana»]
+caixa_disponible = MAX(0; caixa − `reserva_caixa`)
 ```
+De l'informe setmanal de HT es declaren **només dos coses**: els ingressos recurrents i la
+caixa. La nòmina ve del CSV i el personal de les seues fitxes; el planter es deriva. Una
+xifra, una font (invariant 1): si no hi ha dues fonts, no hi pot haver discrepància.
 
 ## PAS 4 — NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)
 
 ```
-pressupost_sou(lloc)  = sou_sostenible × pes(lloc) / SUMA(pesos de tots els llocs)
+sou_sostenible_setmanal = sou_sostenible / `setmanes_periode`
+   [`taula_salaris` va en €/setmana: ací es torna a unitats setmanals, i este és
+    l'ÚNIC punt on es fa el canvi d'unitat]
+pressupost_sou(lloc)  = sou_sostenible_setmanal × pes(lloc) / SUMA(pesos de tots els llocs)
 habilitat_lloc(lloc)  = BUSCA(`taula_habilitat_lloc`; lloc)   [POR→porteria,
                         DC/lateral→defensa, MC→creativitat, extrem→extrem, DAV→anotació]
 nivell_objectiu(lloc) = MAX(n : BUSCA(`taula_salaris`; habilitat_lloc(lloc), n)
@@ -146,54 +173,57 @@ venda     = plantilla − retinguts        [categoria sencera; cap marca dins]
 motiu_venda(j) = SI(j ∈ rotatius I temporada ≥ horitzo_eixida(j); "pic de valor";
                  SI(sobrecost(j) > 0;                              "sou desproporcionat";
                  SI(j ∈ venda;                                     "sobrant"; ∅)))
-ordre_venda    = ORDENA(FILTRA(plantilla; motiu_venda ≠ ∅);
-                        sobrecost DESC, preu_esperat DESC)
-calibrat        = COMPTA(vendes_reals ∪ comparables) ≥ `min_mostres`
-preu_esperat(j) = SI(calibrat; estimació_comparables(j);
-                     BUSCA(`base_preu_divisio`; divisio) × factor_habilitat(j))
-                  ← ÚNICA fórmula de preu del sistema
-valor_net(j)    = preu_esperat(j) − `cost_llistat` − sou(j) × setmanes_venda(j)
+ordre_venda    = ORDENA(FILTRA(plantilla; motiu_venda ≠ ∅); sobrecost DESC)
 urgent(j)       = dies_aniversari(j) ≤ `dies_urgencia`
 destí(j) = SI(lesionat(j);                              AGENDA("llista'l en recuperar-se");
-           SI(calibrat I valor_net(j) < `llindar_despatx`;  ACCIÓ("despatxa'l");
            SI(fase_mercat(hui + `dies_subhasta`) ≤ `depressio_profunda` I ¬urgent(j);
                                                        AGENDA("llista'l", dia_D);
-                                                       ACCIÓ("llista'l HUI", preu_esperat))))
+                                                       ACCIÓ("llista'l HUI")))
    [`depressio_profunda` en FRACCIÓ, mateixes unitats que el modificador]
 PREGUNTA("¿venut per quant / deserta?")  quan transferible passa 1→buit sense venda
-recalibra(estimació) A CADA venda real       → la caixa cobrada activa el PAS 8
+destí(deserta) = SI(j ∈ sobrants; ACCIÓ("despatxa'l"); TRIA(`eixides_deserta`))
+   [ES LLISTA UNA VEGADA. Si va desert i el jugador SOBRA —no té lloc a cap dels dos
+    onzes— s'acomiada: rellistar-lo cada setmana és pagar `cost_llistat` per res.
+    Un retingut, un rotatiu o un cos MAI s'acomiaden per anar deserts]
+venda_cobrada  = import real declarat        → la caixa cobrada activa el PAS 8
 ```
+**Cap estimació de preu.** Tonico no diu quant val un jugador: qui ho diu és el mercat, i
+el resultat entra com a **venda cobrada** (estoc). Un preu esperat era un número inventat
+que no canviava cap decisió — l'ordre el porta `sobrecost`, i «es ven o s'acomiada» el
+decidix la subhasta, no una previsió.
 
-## PAS 8 — COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)
+## PAS 8 — COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)
 
 ```
--- opció JUGADOR (per lloc amb mancança)
-candidat(lloc)  = jugador de mercat amb hab(habilitat_lloc) ≥ nivell_objectiu(lloc)
-guany(jugador)  = mancança(lloc) × pes(lloc)
-cost(jugador)   = preu
-admissible      = preu ≤ caixa_disponible  I  sou ≤ pressupost_sou(lloc)
-
 -- opció ESTADI (dades DECLARADES; la guia §10 delega en calculadores CHPP)
 PREGUNTA a l'inici de cada temporada, de `url_calculadora_estadi` (configuració NRG):
    `estadi_manteniment`  = manteniment setmanal de la configuració  → FLUX
    `estadi_cost_obra`    = total costs de l'obra                    → ESTOC
-   [maximum payout: no es demana, no entra a cap decisió]
-Δflux(obra)          = manteniment_actual − `estadi_manteniment`
-Δnivell_pagable(lloc)= nivell_objectiu(lloc | sou_sostenible + Δflux)
-                       − nivell_objectiu(lloc | sou_sostenible)
-guany(estadi)  = SUMA(llocs amb mancança > 0:
-                      pes(lloc) × MIN(mancança(lloc), Δnivell_pagable(lloc)))
-   [només compta on hi ha mancança — pujar el sostre d'un lloc ja cobert val 0]
-cost(estadi)   = `estadi_cost_obra`
-admissible     = cost ≤ caixa_disponible  I  flux + Δflux ≥ 0
+estadi_caduc   = (hui − `estadi_data`) > `setmanes_caducitat_estadi` × 7
+ACCIÓ("torna a la calculadora i reinserix els números")  SI estadi_caduc
+Δmanteniment   = `estadi_manteniment` − manteniment_actual
+admissible(estadi) = `estadi_cost_obra` ≤ caixa_disponible
+                   I  flux − per_periode(Δmanteniment) ≥ reserva_flux
+ACCIÓ("remodela l'estadi")  SI admissible(estadi) I ¬estadi_caduc
+   [PRIORITAT ABSOLUTA: abans que qualsevol fitxatge, sempre. L'estadi és l'única
+    compra que MOU EL FLUX — un fitxatge consumix el pressupost, l'estadi aixeca el
+    pressupost mateix i amb ell el nivell_objectiu de TOTS els llocs alhora.
+    Optimitzar dins de la restricció i relaxar la restricció no són del mateix rang:
+    comparar-los per eficiència era comparar coses incomparables.]
+   [NO es projecta el que l'obra ingressarà (invariant 3): no fa falta predir-ho,
+    s'OBSERVA al període següent quan es declara la taquilla nova]
 
--- decisió
-eficiència(opció) = guany / cost
-ACCIÓ = PRIMER(ORDENA(FILTRA(opcions; admissible); eficiència DESC))
+-- opció JUGADOR (només si l'estadi ja no demana res)
+candidat(lloc)  = jugador de mercat amb hab(habilitat_lloc) ≥ nivell_objectiu(lloc)
+guany(jugador)  = mancança(lloc) × pes(lloc)
+cost(jugador)   = preu de mercat del candidat        [preu real llistat, no estimat]
+admissible      = preu ≤ caixa_disponible  I  sou ≤ pressupost_sou(lloc)
+eficiència(jugador) = guany / cost
+ACCIÓ = PRIMER(ORDENA(FILTRA(candidats; admissible); eficiència DESC))
    SI cap opció admissible: cap compra; el sistema optimitza NOMÉS venent (PAS 7)
 capacitat_objectiu   = configuració NRG de `url_calculadora_estadi`   [declarada]
    [l'obra concreta —dimensió i repartiment de graderies— es delega a la
-    calculadora; Tonico només diu QUAN toca i si guanya la comparació]
+    calculadora; Tonico només diu QUAN toca]
 ```
 
 ## PAS 9 — ALINEACIONS
@@ -230,10 +260,10 @@ util(j)    = potencial(j, A) ≥ nivell_objectiu(MC)   ← ¿arribarà al nivell
 elegible(j)= edat_d ≥ 17×112 I estada ≥ 112
 promo      = PRIMER(ORDENA(FILTRA(juvenils; elegible); NIVELL DESC))
              [màx `promocio_max_setmana` = 1, fet del joc]
-destí(promo) = SI(util(promo); PROMOCIONA (entra com a rotatiu de l'11B);
-               SI(valor_net_promo(promo) > 0; PROMOCIONA_I_LLISTA; DESPATXA))
-   valor_net_promo(j) = preu_esperat(hab_visibles + `bonus_club_mare`)
-                        − `cost_promocio` − sou_estimat × 2
+destí(promo) = SI(util(promo); PROMOCIONA (entra com a rotatiu de l'11B); DESPATXA)
+   [dos branques, no tres. «Promociona i llista'l per a fer caixa» era el model del
+    juvenil com a NEGOCI, que el canvi 9 va retirar: els juvenils proveïxen rotatius.
+    Si no arriba al nivell del lloc, no serveix, i no hi ha preu que ho canvie]
 onze juvenil = mateixa fórmula del PAS 9 amb `taula_entrenament_juvenil`:
    cada lloc entrenable pren el juvenil lliure amb MÉS guany marginal per a ELL
    (només els components del lloc); guany ≈ 0 pertot → estructura; banqueta = el
@@ -248,14 +278,18 @@ reexecuta el PAS a CADA pujada (revelacions recalibren esperat_act)
 ## PAS 11 — PERSONAL (bucle de FLUX; el paral·lel del PAS 8)
 
 ```
-   [El personal consumix FLUX (sou setmanal), no estoc. Tot el personal cobra igual
-    siga quin siga el tipus: només compta el NIVELL. Per tant no es compara eficiència
-    entre tipus — es seguix una PRIORITAT fixa i cada tipus s'emporta el nivell més alt
-    que el flux encara sostinga.]
+   [El personal consumix FLUX (sou setmanal), no estoc. El cost NOMÉS depén del NIVELL
+    i de la BASE del tipus. Per tant no es compara eficiència entre tipus — es seguix
+    una PRIORITAT fixa i cada tipus s'emporta el nivell més alt que el flux sostinga.]
 
-cost_flux(nivell) = `staff_cost_base` × 2^(nivell−1)
-                    [1.020 · 2.040 · 4.080 · 8.160 · 16.320]
-flux_lliure       = MAX(0; flux + cost_personal_actual − `reserva_flux`)
+cost_flux(tipus, nivell) = base(tipus) × 2^(nivell−1)
+   base(tipus) = BUSCA(`prioritat_personal`; tipus) → base   [si no en declara: `staff_cost_base`]
+   [DUES bases, no una: 1.020 per als especialistes (1.020 · 2.040 · 4.080 · 8.160 ·
+    16.320) i 1.250 per a l'entrenador (1.250 · 2.500 · 5.000 · 10.000 · 20.000).
+    Mateixa progressió, base distinta: l'entrenador NO cobra com la resta d'empleats.
+    Verificat contra l'informe real: 2 assistents + metge de nivell 2 (3 × 2.040) +
+    entrenador de nivell 3 (5.000) = 11.120 €, la xifra exacta de HT.]
+flux_lliure       = MAX(0; flux + per_periode(cost_personal_actual) − reserva_flux)
    [el cost del personal que ja tens ja va restat dins del flux: si no se li torna a
     sumar, el bucle es veu sense marge just per tindre el personal que està valorant.
     Simètric amb sou_sostenible, que fa el mateix amb la nòmina.]
@@ -266,7 +300,7 @@ prioritat_personal = `prioritat_personal`   [orde fix, pom]
    3. metge       — assegurança de baixes
    4. psicòleg    — NOMÉS SI divisio ≤ `divisio_psicoleg`
 
-nivell(tipus) = MAX(n : cost_flux_acumulat(fins a tipus, n) ≤ flux_lliure)
+nivell(tipus) = MAX(n : cost_flux_acumulat(tipus, n) ≤ flux_lliure)
                 seguint prioritat_personal
    [el pressupost es gasta per orde: el que queda després dels anteriors]
 
@@ -275,8 +309,8 @@ AVÍS: compromet el flux `setmanes_contracte` setmanes (no es pot desfer)
 
 RENOVAR (única decisió reversible; NO existix acomiadar):
    PER membre amb 0 ≤ setmanes_restants ≤ `dies_avis_caducitat`:
-      SI(cost_flux(actual) ≤ flux_lliure;             ACCIÓ("renova")
-      SI(existix n < actual amb cost_flux(n) ≤ flux_lliure;
+      SI(cost_flux(tipus, actual) ≤ flux_lliure;      ACCIÓ("renova")
+      SI(existix n < actual amb cost_flux(tipus, n) ≤ flux_lliure;
                                                       ACCIÓ("renova al nivell n")
                                                       ACCIÓ("no renoves")))
    [el flux només es pot retallar al venciment: contractar és comprometre's]
@@ -335,6 +369,13 @@ Cap moviment derivat encadena efectes irreversibles.
     incomplet. Si falta `partits_setmana`, `pais` o `divisio`, el sistema INFORMA QUÈ
     FALTA I NO TOCA RES: no assigna rols, no genera moviments i no emet accions que en
     depenguen. Les fórmules que no en depenen (`N_core`, `titulars`) sí que s'avaluen.
+16. PERÍODE TANCAT: l'economia es declara SEMPRE del període ja tancat, mai de la setmana
+    en curs (no està consolidada). Tot import setmanal es normalitza amb `per_periode`
+    abans de barrejar-se amb la taquilla; l'ÚNIC pas a unitats setmanals és el PAS 4.
+17. FINESTRA DE DECLARACIÓ: si Tonico consumix una dada que no pot derivar, eixa dada té
+    finestra per a declarar-la. Cap dada demanada sense on posar-la, cap camp sense ús.
+18. DADES VELLES ≠ ABSENTS ≠ ZERO: passat `setmanes_avis_dades` sense declaració nova, el
+    sistema HO DIU i no seguix raonant en silenci sobre xifres velles.
 
 ---
 
@@ -349,18 +390,39 @@ Cap moviment derivat encadena efectes irreversibles.
    game over real).
 4. **Flux i estoc separats:** el flux fixa el nivell sostenible, l'estoc fixa la
    compra. Cap projecció dins d'una decisió.
-5. **Mètrica única `mancança × pes`** per a comprar, vendre i obrar l'estadi.
-6. **L'estadi entra al bucle de caixa** amb la mateixa unitat (guany/cost sobre
-   `setmanes_horitzo`).
+5. **Mètrica única `mancança × pes`** per a comprar i vendre.
+6. **L'estadi va PRIMER, no competix** (v3.1): és l'única compra que mou el flux, i
+   per tant no és comparable amb un fitxatge per eficiència.
 7. **El personal és bucle de flux** (contractar = comprometre setmanes;
    l'única decisió reversible és renovar o no al venciment: **acomiadar no
    existix**), amb la mateixa unitat guany/cost que jugadors i estadi.
 8. **Fora tota referència a Supporter** — no canvia cap decisió del sistema.
 9. **Els juvenils proveïxen rotatius** (`util` = arriba al nivell objectiu), no
    són un negoci a banda.
-10. Es mantenen del full anterior: calendari únic, preu_esperat únic,
-   `depressio_profunda` en fracció, llindes d'urgència com a poms, mecanisme
-   actua/informa/desfés, i els tres guardians.
+10. Es mantenen del full anterior: calendari únic, `depressio_profunda` en fracció,
+   llindes d'urgència com a poms, mecanisme actua/informa/desfés, i els tres guardians.
+
+## v3.1 · 2026-07-26 · CORRECCIONS SOBRE DADES REALS (aprovades per Miquel)
+
+Diagnosticades contra l'informe setmanal real de Benifotrem (T83). El registre complet,
+amb la demostració de cada error, a [`docs/FORATS.md`](FORATS.md).
+
+11. **L'economia és BI-SETMANAL** i es declara el període TANCAT (invariant 16). En lliga
+   es juga un partit a casa i un fora: un flux setmanal oscil·la més que el propi flux net.
+12. **`premis` ix del flux i entra a l'estoc**: és una prima de final de temporada, no un
+   ingrés recurrent. `ingressos_recurrents = taquilla + patrocini`, i prou: la resta no és
+   extrapolable i marejaria el sostre de sou.
+13. **La reserva és una FRACCIÓ, no un import**: les despeses recurrents no poden passar
+   del 95% dels ingressos recurrents (`reserva_flux_pct`).
+14. **`guany(estadi)` era impossible de ser positiu**: es calculava només des de l'estalvi
+   de manteniment, i ampliar sempre el puja. Cau sencer amb la prioritat absoluta (canvi 6).
+15. **Dues bases de personal**: l'entrenador no cobra com la resta (1.250 contra 1.020).
+16. **`despesa_planter` es deriva** de `sistema_juvenil` i `n_cercapromeses`; el
+   `manteniment_estadi` es declara i és constant fins a la remodelació.
+17. **Fora l'estimació de preu de venda**: no canviava cap decisió. L'ordre de venda el
+   porta `sobrecost` i «es ven o s'acomiada» el decidix la subhasta, no una previsió. Amb
+   ella cauen `valor_net`, `valor_net_promo` i la branca `PROMOCIONA_I_LLISTA` del PAS 10,
+   que era el juvenil-com-a-negoci que el canvi 9 ja havia retirat.
 
 ## PROCÉS
 

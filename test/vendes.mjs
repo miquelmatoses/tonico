@@ -1,15 +1,9 @@
-// Tonico — Àrea E: fitxes de venda amb preu d'eixida proposat des de comparables.
-// node test/vendes.mjs
+// Tonico — VENDES via API (contracte v3.1). SENSE preu proposat: Tonico no diu quant val un
+// jugador. Qui ordena la llista és la puntuació de la categoria, que és una dada pròpia, i qui
+// decidix si s'acomiada és la subhasta. node test/vendes.mjs
 import assert from 'node:assert/strict';
 import { nova } from './_d1shim.mjs';
-import { proposaPreuEixida } from '../lib/vendes.js';
 import * as vendes from '../functions/api/vendes.js';
-
-// Mediana per posició; fallback a tots.
-const comps = [{ posicio: 'MC', preu: 100000 }, { posicio: 'MC', preu: 200000 }, { posicio: 'DV', preu: 50000 }];
-assert.equal(proposaPreuEixida(comps, { posicio: 'MC' }), 150000, 'mediana dels MC');
-assert.equal(proposaPreuEixida(comps, { posicio: 'PO' }), 100000, 'sense la posició → mediana de tots');
-assert.equal(proposaPreuEixida([], { posicio: 'MC' }), null, 'sense comparables → null');
 
 // Integració via API
 const { sqlite, db } = nova(import.meta.url);
@@ -27,33 +21,31 @@ const ctx = (body) => ({ request: new Request('http://t', { method: 'POST', head
 
 let d = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 assert.equal(d.jugadors.length, 1, 'un jugador en venda');
-assert.equal(d.jugadors[0].preu_proposat, 200000, 'preu proposat = mediana MC (3 mostres: min_mostres=3)');
 assert.equal(d.jugadors[0].estat, 'pendent', 'estat per defecte');
 assert.equal(d.jugadors[0].especialitat, 'Ràpid');
-// Punt #10.6: valor_net = preu − cost_llistat(1000) − sou×setmanes(3). Sense sou → net alt.
-assert.equal(d.jugadors[0].valor_net, 200000 - 1000, 'valor net = preu − cost_llistat (sou nul)');
-assert.equal(d.jugadors[0].despatxar, false, 'valor net positiu → no despatxar');
-// Amb un sou alt, els sous meritats fins a la venda es mengen el preu → despatxar.
+// v3.1: NO hi ha preu proposat ni valor net. Un sou alt ja no fa aparéixer «despatxa'l»:
+// això el decidix la subhasta (destiDeserta), no una previsió de quant en trauries.
+assert.equal(d.jugadors[0].preu_proposat, undefined, 'cap preu estimat a l\'eixida');
+assert.equal(d.jugadors[0].valor_net, undefined, 'cap valor net: depenia del preu estimat');
+assert.equal(d.jugadors[0].despatxar, false);
 sqlite.exec('UPDATE instantanies_jugadors SET sou=70000 WHERE jugador_id=1');
 const dn = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
-assert.equal(dn.jugadors[0].valor_net, 200000 - 1000 - 70000 * 3, 'valor net compta els sous fins a la venda');
-assert.equal(dn.jugadors[0].despatxar, true, 'valor net negatiu → despatxar (llistar és tirar diners)');
+assert.equal(dn.jugadors[0].despatxar, false,
+  'ni amb un sou desproporcionat: qui decidix acomiadar-lo és que la subhasta quede deserta');
 sqlite.exec('UPDATE instantanies_jugadors SET sou=NULL WHERE jugador_id=1');   // restaura per a la resta del test
 
 await vendes.onRequestPost(ctx({ jugador_id: 1, preu_eixida: 250000, data_llistada: '2026-07-25', estat: 'llistat' }));
 d = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 assert.equal(d.jugadors[0].preu_eixida, 250000);
 assert.equal(d.jugadors[0].estat, 'llistat');
-// Punt #12.2b: els rellotges manen sobre el despatxar. Encara que el net siga negatiu,
-// un LLISTAT (forçat) MAI mostra despatxar.
+// Un LLISTAT (forçat) mai mostra despatxar — ara trivialment, perquè ja no es proposa mai.
 sqlite.exec('UPDATE instantanies_jugadors SET sou=70000 WHERE jugador_id=1');
 const dforcat = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
-assert.equal(dforcat.jugadors[0].calibrat, true, 'té comparable → calibrat');
-assert.equal(dforcat.jugadors[0].despatxar, false, '2b: un llistat (forçat) mai despatxar, encara amb net negatiu');
+assert.equal(dforcat.jugadors[0].despatxar, false);
 sqlite.exec('UPDATE instantanies_jugadors SET sou=NULL WHERE jugador_id=1');
 
-// Punt 7.3: SENSE comparables → estimació grossa ESCALADA per la puntuació relativa.
-// Afegim un 2n venda amb més habilitat (més puntuació de venda → més estimació).
+// La llista s'ordena per la PUNTUACIÓ de la categoria de venda (dada pròpia), no per cap preu.
+// Afegim un 2n venda amb més habilitat → més puntuació.
 sqlite.exec(`
   DELETE FROM preus_observats;
   INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (2,1,101,'Crack');
@@ -61,17 +53,11 @@ sqlite.exec(`
   INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (2,'venda','auto');
 `);
 const d2 = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
-const p = (nom) => d2.jugadors.find((j) => j.nom === nom).preu_proposat;
-assert.ok(d2.jugadors.every((j) => j.preu_estimacio_grossa), 'sense comparables → tots marcats estimació grossa');
-// Punt #12.2a: sense calibrar (cap comparable/venda real) → cap despatxar ni valor_net;
-// la fila mostra només l'estimació etiquetada.
-assert.ok(d2.jugadors.every((j) => j.calibrat === false && j.valor_net === null && j.despatxar === false), '2a: sense calibrar, cap recomanació de despatxar');
-assert.ok(p('Crack') > p('Venut'), `qui puntua més té més estimació (${p('Crack')} > ${p('Venut')})`);
-assert.notEqual(p('Venut'), p('Crack'), 'ja no és 150.000 pla per a tots');
-// Punt #11.5: la base és PER DIVISIÓ (VII per defecte = 2000, molt per davall dels
-// valors inflats). La mitjana de les estimacions ronda eixa base (escala relativa).
-const mitjana = d2.jugadors.reduce((a, j) => a + j.preu_proposat, 0) / d2.jugadors.length;
-assert.ok(Math.abs(mitjana - 2000) < 200, `la mitjana ronda la base de divisió VII: ${mitjana}`);
+const v = (nom) => d2.jugadors.find((j) => j.nom === nom).valor;
+assert.ok(d2.jugadors.every((j) => j.preu_proposat === undefined),
+  'cap preu estimat, ni amb comparables ni sense: la taula preus_observats ja no es llig');
+assert.ok(v('Crack') > v('Venut'), `qui puntua més va davant (${v('Crack')} > ${v('Venut')})`);
+assert.ok(d2.jugadors.every((j) => j.es_sobrant === true), 'tots dos són sobrants (categoria venda)');
 
 // (4) FORA LES MARQUES DE BUFFER: «cobrix X — ven-lo l'últim» és doctrina MORTA amb la
 // liquidació. Una fitxa només pot estar en un d'estos quatre estats, i els dona el MATEIX
@@ -87,13 +73,10 @@ sqlite.exec("UPDATE vendes SET estat='llistat', data_llistada='2026-07-30' WHERE
 const dforc = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 assert.equal(dforc.jugadors.find((j) => j.nom === 'Venut').estat_liquidacio, 'llistat', 'llistat → estat llistat');
 
-// (5) EL DESPLAÇAT SEMPRE AMB CÀLCUL: sense comparables el valor net no es pot calcular,
-// però la fila HO DIU (calibrat=false → «pendent de calibratge»), mai cel·la buida.
+// Tota fila porta el seu valor de retenció derivat: mai una cel·la buida sense motiu.
 sqlite.exec("UPDATE vendes SET estat='pendent', data_llistada=NULL WHERE jugador_id=1");
 const dcal = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 for (const j of dcal.jugadors) {
-  assert.ok(j.preu_proposat != null, `${j.nom}: sempre una estimació, mai buida`);
-  assert.ok(j.calibrat === true || j.valor_net === null, `${j.nom}: sense calibrar no s'inventa valor net`);
   assert.ok(j.valor != null, `${j.nom}: sempre un valor de venda per a la retenció`);
 }
 
@@ -102,4 +85,4 @@ sqlite.exec("UPDATE instantanies_jugadors SET lesio='2' WHERE jugador_id=1");
 const dl = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 assert.equal(dl.jugadors.find((j) => j.nom === 'Venut').lesionat, true, 'lesió del CSV → flag lesionat a vendes');
 
-console.log('OK — vendes: estimació grossa ESCALADA per puntuació (ordena coherent amb els punts)');
+console.log('OK — vendes v3.1: cap preu estimat, la puntuació ordena i la subhasta decidix');

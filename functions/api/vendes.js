@@ -1,6 +1,6 @@
 // Tonico — fitxes de venda (Àrea E). GET els jugadors en categoria 'venda' amb la
 // seua fitxa (preu d'eixida proposat/editat, data de llistada, estat); POST upsert.
-import { preuEsperat, valorNet as calcValorNet, habilitatMax, preguntaVenda, EIXIDES_DESERTA } from '../../lib/preu.js';
+import { habilitatMax, preguntaVenda, EIXIDES_DESERTA } from '../../lib/vendes.js';
 import { normalitzaDivisio } from '../../lib/divisio.js';
 import { avaluaPuntuacio } from '../../lib/classificador.js';
 import { carregaConfigPla } from '../../lib/config_pla.js';
@@ -31,7 +31,7 @@ export async function onRequestGet({ env, data }) {
     `SELECT j.id AS jugador_id, j.nom, j.especialitat, ij.posicio_ultim_partit AS posicio, ij.edat_anys,
             ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada,
             ij.lleialtat, ij.qualificacio_ultim_partit, ij.sou, ij.lesio,
-            v.preu_eixida, v.data_llistada, v.estat, v.preu_venut, v.resultat_pendent
+            v.preu_eixida, v.data_llistada, v.estat, v.preu_venut, v.resultat_pendent, c.categoria
        FROM instantanies_jugadors ij JOIN jugadors j ON j.id = ij.jugador_id
        JOIN ${sqlCategoriaVigent(['categoria'])} c
          ON c.jugador_id = j.id
@@ -39,18 +39,11 @@ export async function onRequestGet({ env, data }) {
       WHERE ij.instantania_id = ? AND c.categoria = 'venda'`
   ).bind(inst.id).all();
 
-  const { results: comparables } = await env.DB.prepare('SELECT posicio, edat, habilitat, preu FROM preus_observats WHERE usuari_id=?').bind(data.usuari.id).all();
-  // Sense comparables, el preu proposat cau a una estimació GROSSA del pom ESCALADA per la
-  // puntuació de venda relativa de cada jugador (proporció simple → la llista ordena coherent).
+  // v3.1: FORA l'estimació de preu. No es llegixen `preus_observats`, ni `base_preu_divisio`,
+  // ni `min_mostres`: Tonico no diu quant val un jugador, ho diu el mercat. Qui ordena la
+  // llista és la puntuació de la categoria de venda, que és una dada pròpia.
   const pla = await env.DB.prepare('SELECT plantilla FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
   const config = pla ? await carregaConfigPla(env.DB, pla.plantilla) : { categories: [], params: {} };
-  // 5a: base d'estimació PER DIVISIÓ. Pren la divisió declarada al pla; si no, el
-  // defecte (VII, molt per davall dels valors inflats). El recalibratge amb vendes
-  // reals (comparables) mana quan hi haja dades (5c).
-  const divRow = await env.DB.prepare('SELECT divisio AS div FROM config_usuari WHERE usuari_id=?').bind(data.usuari.id).first();
-  const divisio = normalitzaDivisio(divRow?.div) || (await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='divisio_defecte'").first())?.valor || 'VII';
-  const basePreuDivisio = JSON.parse((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='base_preu_divisio'").first())?.valor || '{}');
-  const minMostres = parseInt((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='min_mostres'").bind(config.plantilla ?? 'competitiva').first())?.valor || '1', 10);
   const habLloc = JSON.parse((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='taula_habilitat_lloc'").bind(config.plantilla ?? 'competitiva').first())?.valor || '{}');
   const vendaSpec = config.categories.find((c) => c.categoria === 'venda')?.parametres?.puntuacio;
   const punts = jugadors.map((j) => (vendaSpec ? avaluaPuntuacio(vendaSpec, j, config.params) : null));
@@ -60,13 +53,9 @@ export async function onRequestGet({ env, data }) {
   // La subhasta tanca a llistat + dies_subhasta (mecànica del tercer dia).
   const diesSubhasta = parseInt((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='dies_subhasta'").first())?.valor || '3', 10);
   const tancament = (dataLlistada) => (dataLlistada ? new Date(Date.parse(dataLlistada) + diesSubhasta * 86400000).toISOString().slice(0, 10) : null);
-  // Criteri econòmic de «despatxar» (6): valor_net = preu_esperat − cost_llistat − sous
-  // fins a la venda estimada. Si valor_net < llindar → llistar és tirar diners.
-  const pom = async (clau, def) => parseInt((await env.DB.prepare('SELECT valor FROM constants_joc WHERE clau=?').bind(clau).first())?.valor || String(def), 10);
-  const costLlistat = await pom('cost_llistat', 1000);
-  const despatxarLlindar = await pom('despatxar_llindar', 0);
-  const setmanesVenda = await pom('setmanes_venda_estimada', 3);
-  // Els RELLOTGES manen també sobre el despatxar (2b): un jugador amb venda FORÇADA
+  // v3.1: FORA el criteri econòmic de «despatxar» per `valor_net`. Es llista una vegada i qui
+  // decidix si s'acomiada és la SUBHASTA (lib/vendes.js → destiDeserta), no una previsió.
+  // Els RELLOTGES manen sobre el despatxar (2b): un jugador amb venda FORÇADA
   // (llistat/venut/despatxat, data de llistat activa o entrada d'agenda de llistat
   // vigent) MAI mostra «despatxar» ni buffer — mateixa doctrina.
   const { results: agListat } = await env.DB.prepare(
@@ -74,28 +63,23 @@ export async function onRequestGet({ env, data }) {
   ).bind(data.usuari.id).all();
   const forcadaAgenda = new Set(agListat.map((r) => r.jugador_id));
   const forcada = (j) => j.estat === 'llistat' || j.estat === 'venut' || j.estat === 'despatxat' || !!j.data_llistada || forcadaAgenda.has(j.jugador_id);
-  // El nivell de referència del factor d'habilitat: la millor habilitat MITJANA del propi
-  // grup (dada pròpia, no un número inventat).
-  const nivells = jugadors.map((j) => habilitatMax(j)).filter((v) => v > 0);
-  const nivellRef = nivells.length ? nivells.reduce((a, b) => a + b, 0) / nivells.length : null;
-
   const eixida = jugadors.map((j, i) => {
-    // LA fórmula de preu del sistema (PAS 7): la mateixa que consumix l'Economia.
-    const pe = preuEsperat(j, { comparables, min_mostres: minMostres, divisio,
-      base_preu_divisio: basePreuDivisio, nivell_referencia: nivellRef });
-    const preu_proposat = pe.preu;
-    const calibrat = pe.calibrat;
     const forc = forcada({ ...j, estat: j.estat || 'pendent' });
-    const valor_net = calibrat ? calcValorNet(preu_proposat, j, { cost_llistat: costLlistat, setmanes_venda: setmanesVenda }) : null;
     // El valor de venda mana en la retenció (1). MATEIXA vara que el motor d'alertes: la
-    // puntuació de la categoria (derivada, no la desada), amb l'estimació de reserva.
-    const valor = punts[i] ?? preu_proposat ?? 0;
-    return { ...j, estat: j.estat || 'pendent', preu_proposat, valor, puntuacio: punts[i] ?? null, preu_estimacio_grossa: pe.base === 'divisio',
-      tancament_previst: tancament(j.data_llistada), lesionat: esLesionat(j.lesio), calibrat,
+    // puntuació de la categoria (derivada, no la desada). Sense preu estimat, la puntuació és
+    // l'única vara — i és una dada pròpia, no una previsió.
+    const valor = punts[i] ?? 0;
+    // Un SOBRANT que va desert s'acomiada; un retingut, mai (destiDeserta del PAS 7). Ací
+    // tots ho són per construcció (la consulta filtra categoria='venda'), però es deriva del
+    // camp i no del filtre: si la consulta canvia, açò no ha de mentir en silenci.
+    const esSobrant = j.categoria === 'venda' || j.categoria === 'sobrant';
+    return { ...j, estat: j.estat || 'pendent', valor, puntuacio: punts[i] ?? null,
+      tancament_previst: tancament(j.data_llistada), lesionat: esLesionat(j.lesio),
+      es_sobrant: esSobrant,
       pregunta: preguntaVenda({ transferible_abans: transfAbans.get(j.jugador_id),
-        transferible_ara: j.transferible,
+        transferible_ara: j.transferible, es_sobrant: esSobrant,
         venda_apuntada: j.estat === 'venut' || j.estat === 'despatxat' }),
-      valor_net, despatxar: calibrat && valor_net != null && valor_net < despatxarLlindar && !forc };
+      despatxar: false };
   });
   // (4) FORA les marques de BUFFER («cobrix X — ven-lo l'últim»): doctrina morta amb la
   // liquidació. Una fitxa només pot estar en un d'estos estats, i els dona el MATEIX

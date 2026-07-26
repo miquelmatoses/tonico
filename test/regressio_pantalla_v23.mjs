@@ -14,12 +14,16 @@ import * as apiPersonal from '../functions/api/personal.js';
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`
   INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
-  INSERT INTO config_usuari (usuari_id, estrategia, pais, divisio, sistema_juvenil, partits_setmana)
-    VALUES (1,'competitiva','ES','VII','cap',2);
+  INSERT INTO config_usuari (usuari_id, estrategia, pais, divisio, sistema_juvenil, n_cercapromeses, partits_setmana)
+    VALUES (1,'competitiva','ES','VII','cap',1,2);
+  -- Els ingressos van en unitats del PERÍODE (bi-setmanal, v3.1): la nòmina d'estos 24
+  -- jugadors és de 105.000 €/setmana, o siga 210.000 € per període. Amb les xifres del model
+  -- setmanal antic el flux eixia negatiu i el pla de personal no proposava res, que no és el
+  -- que este test vol provar.
   INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'E','senior');
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (1,1,'2026-07-25',83,2);
-  INSERT INTO finances (usuari_id, caixa, caixa_data, taquilla, patrocini, premis)
-    VALUES (1, 900000, '2026-07-25', 90000, 40000, 8000);
+  INSERT INTO finances (usuari_id, caixa, caixa_data, periode_data, taquilla, patrocini)
+    VALUES (1, 900000, '2026-07-25', '2026-07-25', 150000, 80000);
 `);
 // La trampa: el millor defensa (9) és el que més cobra; el pitjor (1) el més barat.
 const N = 24;

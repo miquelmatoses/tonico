@@ -706,7 +706,8 @@ export async function economia(main) {
   }
   main.append(kpis);
   if (e.flux == null) main.append(el('p', { class: 'nota-peu', text: t('economia.sense_ingressos') }));
-  else if (!e.ingressos_desglossats) main.append(el('p', { class: 'nota-peu', text: t('economia.ingressos_sense_desglossar') }));
+  if (e.periode_data == null) main.append(el('p', { class: 'nota-peu', text: t('economia.sense_periode') }));
+  else if (e.dades_velles) main.append(el('p', { class: 'nota-peu', text: t('economia.dades_velles', { data: e.periode_data }) }));
 
   // Dues targetes de treball: declarar les xifres reals i apuntar moviments.
   const duo = el('div', { class: 'duo' });
@@ -733,22 +734,33 @@ export async function economia(main) {
 
 }
 
+// FINESTRA DE DECLARACIÓ (invariant 17). De l'informe de HT només es declaren els ingressos
+// recurrents BI-SETMANALS i la caixa; el planter es deriva i la nòmina ve del CSV. El
+// manteniment d'estadi i els números de la calculadora també tenen finestra, perquè Tonico
+// els consumix i no els pot derivar: cap dada demanada sense on posar-la.
 function formFinances(main, e) {
   const f = el('form', { class: 'card-cos' });
   const graella = el('div', { class: 'form-graella' });
   const camp = (clau, val, type = 'number') => { const i = el('input', { type, 'aria-label': t('economia.' + clau) }); if (val != null) i.value = val; return el('label', {}, t('economia.' + clau), i); };
-  const caixa = camp('caixa_real', e.caixaReal ? e.caixa : null);
+  const caixa = camp('caixa_real', e.caixa);
   const caixaData = camp('caixa_data', e.caixa_data, 'date');
-  const planter = camp('despesa_planter', e.despeses?.planter || null);
-  const estadi = camp('despesa_estadi', e.despeses?.estadi || null);
-  const ingres = camp('ingres_setmanal', e.ingres_setmanal);
-  graella.append(caixa, caixaData, planter, estadi, ingres);
+  const periodeData = camp('periode_data', e.periode_data, 'date');
+  const taquilla = camp('taquilla', e.taquilla);
+  const patrocini = camp('patrocini', e.patrocini);
+  const estadi = camp('despesa_estadi', e.manteniment_estadi || null);
+  const estadiMant = camp('estadi_manteniment', e.estadi_manteniment);
+  const estadiObra = camp('estadi_cost_obra', e.estadi_cost_obra);
+  const estadiData = camp('estadi_data', e.estadi_data, 'date');
+  graella.append(periodeData, taquilla, patrocini, caixa, caixaData, estadi,
+    estadiMant, estadiObra, estadiData);
   f.append(graella, el('button', { type: 'submit', class: 'b-prim', text: t('economia.finances_desa') }));
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const v = (l) => { const x = l.querySelector('input').value; return x === '' ? null : x; };
     await api('/api/finances', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      caixa: v(caixa), caixa_data: v(caixaData), despesa_planter: v(planter), despesa_estadi: v(estadi), ingres_setmanal: v(ingres) }) });
+      caixa: v(caixa), caixa_data: v(caixaData), periode_data: v(periodeData),
+      taquilla: v(taquilla), patrocini: v(patrocini), despesa_estadi: v(estadi),
+      estadi_manteniment: v(estadiMant), estadi_cost_obra: v(estadiObra), estadi_data: v(estadiData) }) });
     location.reload();
   });
   main.append(f);
@@ -796,6 +808,7 @@ export async function configuracio(main) {
     fila('pais', config?.pais),
     fila('divisio', config?.divisio),
     fila('sistema_juvenil', config ? t('sistema_juvenil.' + config.sistema_juvenil) : ''),
+    fila('n_cercapromeses', config?.n_cercapromeses != null ? String(config.n_cercapromeses) : ''),
     fila('partits_setmana', config?.partits_setmana != null ? String(config.partits_setmana) : ''));
   c.append(cos);
   main.append(c);
@@ -811,16 +824,20 @@ export async function configuracio(main) {
 
 // Formulari del PAS 0. Cap valor per defecte inventat: el buit es queda buit i es demana.
 function formConfig(main, config) {
-  const sel = (clau, opcions, valor) => el('select', { 'aria-label': t('configuracio.' + clau) },
+  // `etiqueta` permet opcions que no porten clau i18n pròpia (un número és el seu propi text).
+  const sel = (clau, opcions, valor, etiqueta = null) => el('select', { 'aria-label': t('configuracio.' + clau) },
     el('option', { value: '', text: '—' }),
     ...opcions.map((o) => {
-      const op = el('option', { value: o, text: t(clau === 'partits_setmana' ? 'configuracio.partits_' + o : `${clau === 'estrategia' ? 'estrategia' : 'sistema_juvenil'}.${o}`) });
+      const op = el('option', { value: o, text: etiqueta ? etiqueta(o) : t(clau === 'partits_setmana' ? 'configuracio.partits_' + o : `${clau === 'estrategia' ? 'estrategia' : 'sistema_juvenil'}.${o}`) });
       if (String(valor) === String(o)) op.setAttribute('selected', '');
       return op;
     }));
   const estrategia = sel('estrategia', ['competitiva', 'cycle'], config?.estrategia);
   const sistema = sel('sistema_juvenil', ['academia', 'cercapromeses', 'cap'], config?.sistema_juvenil);
   const partits = sel('partits_setmana', ['1', '2'], config?.partits_setmana);
+  // El cercapromeses SEMPRE hi és i n'hi pot haver 1..3 en QUALSEVOL mode: el mode diu si hi
+  // ha acadèmia i si es crida, no quants n'hi ha. D'ací ix `despesa_planter` (PAS 3).
+  const cerca = sel('n_cercapromeses', ['1', '2', '3'], config?.n_cercapromeses, (o) => o);
   const pais = el('input', { type: 'text', value: config?.pais || '', 'aria-label': t('configuracio.pais') });
   const divisio = el('input', { type: 'text', value: config?.divisio || '', 'aria-label': t('configuracio.divisio') });
   const b = el('button', { type: 'submit', class: 'b-prim', text: t('configuracio.desa') });
@@ -829,12 +846,14 @@ function formConfig(main, config) {
     el('label', {}, t('configuracio.pais'), pais),
     el('label', {}, t('configuracio.divisio'), divisio),
     el('label', {}, t('configuracio.sistema_juvenil'), sistema),
+    el('label', {}, t('configuracio.n_cercapromeses'), cerca),
     el('label', {}, t('configuracio.partits_setmana'), partits)), b);
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     await api('/api/config', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
       estrategia: estrategia.value || undefined, pais: pais.value.trim() || undefined,
       divisio: divisio.value.trim() || undefined, sistema_juvenil: sistema.value || undefined,
+      n_cercapromeses: cerca.value ? Number(cerca.value) : undefined,
       partits_setmana: partits.value ? Number(partits.value) : undefined }) });
     location.reload();
   });

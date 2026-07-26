@@ -14,20 +14,21 @@ import { valorPlaces } from '../lib/valor_placa.js';
 import { valorHabilitat, lecturaPromocio } from '../lib/ranquing_juvenil.js';
 import { fCalendari, temporadaOperativa } from '../lib/calendari.js';
 import { ESTRATEGIES, falten as confFalten, llocsPartit } from '../lib/config.js';
-import { souSostenible, caixaDisponible, fluxLliure } from '../lib/economia.js';
+import { souSostenible, caixaDisponible, fluxLliure, perPeriode, reservaFlux,
+  despesaPlanter, dadesVelles } from '../lib/economia.js';
 import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
 import { pesLloc, pressupostSou, nivellObjectiu, carregaConfigPesos } from '../lib/pesos.js';
 import { nivellActual, mancanca, exces, sobrecost, prioritat } from '../lib/mancanca.js';
 import { comptesNucli, maxPartits, construeixPlantilla } from '../lib/plantilla.js';
-import { calibrat as esCalibrat, estimacioComparables, preuEsperat, setmanesVenda, valorNet,
-  urgent as esUrgent, motiuVenda, ordreVenda, desti } from '../lib/preu.js';
+import { urgent as esUrgent, motiuVenda, ordreVenda, desti, destiDeserta } from '../lib/vendes.js';
 import { valorEn, alineaOnzes } from '../lib/onze.js';
-import { util as utilJuv, valorNetPromo, destiPromocio, objectiuJuvenil, sobrants, reiniciCrida } from '../lib/juvenil_v3.js';
-import { costFlux, nivellPagable, planPersonal, decisioRenovacio } from '../lib/personal_v3.js';
-import { guanyJugador, admissibleJugador, deltaFlux, guanyEstadi, admissibleEstadi,
+import { util as utilJuv, destiPromocio, objectiuJuvenil, sobrants, reiniciCrida } from '../lib/juvenil_v3.js';
+import { costFlux, nivellPagable, planPersonal, decisioRenovacio,
+  baseTipus as baseTipusG1 } from '../lib/personal_v3.js';
+import { guanyJugador, admissibleJugador, deltaManteniment, estadiCaduc, admissibleEstadi,
   eficiencia, decisioEstoc } from '../lib/estoc.js';
 import { nivellAccio, agrupaAlertes, ordenaAgenda } from '../lib/informe.js';
-import { preguntaVenda, EIXIDES_DESERTA } from '../lib/preu.js';
+import { preguntaVenda, EIXIDES_DESERTA } from '../lib/vendes.js';
 import { entrenamentPrescrit, desquadreEntrenament, placesEntrenament } from '../lib/entrenament_places.js';
 import { valorHabilitat as valorHab, valorEsperatDesconegut, ranquingJuvenil } from '../lib/ranquing_juvenil.js';
 import { esLesionat } from '../public/format.js';
@@ -218,33 +219,30 @@ const VERIFICADES = {
     const url = sqliteFix.prepare("SELECT valor, nota FROM constants_joc WHERE clau='url_calculadora_estadi'").get();
     assert.ok(/delega|declara/i.test(url.nota), 'queda escrit que es delega i es declara');
   },
-  'P7.recalibra': () => {
-    // «recalibra A CADA venda real»: una venda més mou la mediana.
-    const abans = estimacioComparables([{ posicio: 'MC', preu: 100 }, { posicio: 'MC', preu: 200 }], { posicio: 'MC' });
-    const despres = estimacioComparables([{ posicio: 'MC', preu: 100 }, { posicio: 'MC', preu: 200 }, { posicio: 'MC', preu: 900 }], { posicio: 'MC' });
-    assert.notEqual(abans, despres, 'apuntar una venda real recalibra l\'estimació');
-  },
   'P8.candidat': () => {
     // candidat(lloc) = de mercat amb hab(habilitat_lloc) ≥ nivell_objectiu(lloc)
     const cand = (j, hab, obj) => Number(j[hab] ?? 0) >= obj;
     assert.equal(cand({ creativitat: 9 }, 'creativitat', 8), true);
     assert.equal(cand({ creativitat: 7 }, 'creativitat', 8), false);
   },
-  'P8.nivell_pagable': () => {
-    const TS = { creativitat: { 1: 250, 2: 270, 3: 330, 4: 510, 5: 850 } };
-    const ara = nivellObjectiu('creativitat', 300, TS);
-    const desp = nivellObjectiu('creativitat', 900, TS);
-    assert.equal(desp - ara, 3, 'Δnivell_pagable = el que el Δflux desbloqueja');
-  },
-  'P8.cost_2': () => {
-    // cost(estadi) = `estadi_cost_obra`, dada DECLARADA
+  'P8.admissible': () => {
+    // admissible(estadi): cost DECLARAT (no modelat) contra caixa cobrada, i el flux ha de
+    // sostindre el manteniment nou deixant la reserva intacta.
     const cols = sqliteFix.prepare('SELECT * FROM pragma_table_info(?)').all('finances').map((c) => c.name);
-    assert.ok(cols.includes('estadi_cost_obra'), 'el cost d\'obra es declara, no es modela');
-    assert.ok(cols.includes('estadi_manteniment'));
+    assert.ok(cols.includes('estadi_cost_obra') && cols.includes('estadi_manteniment'),
+      'els dos números de l\'obra es declaren, no es modelen');
+    assert.equal(admissibleEstadi({ cost: 1, caixa_disponible: null, flux: 1, delta_manteniment: 0 }), false,
+      'sense caixa cobrada no hi ha obra');
   },
   'P8.accio': () => {
-    const t = decisioEstoc([{ id: 'a', admissible: true, eficiencia: 1 }, { id: 'b', admissible: true, eficiencia: 9 }]);
-    assert.equal(t.id, 'b', 'PRIMER(ORDENA(admissibles; eficiència DESC))');
+    const t = decisioEstoc([{ tipus: 'jugador', id: 'a', admissible: true, eficiencia: 1 },
+      { tipus: 'jugador', id: 'b', admissible: true, eficiencia: 9 }]);
+    assert.equal(t.id, 'b', 'entre jugadors: PRIMER(ORDENA(admissibles; eficiència DESC))');
+  },
+  'P8.estadi_caduc': () => {
+    assert.equal(estadiCaduc('2026-01-01', '2026-07-26', 10), true, 'passades 10 setmanes, caducs');
+    assert.equal(estadiCaduc('2026-07-01', '2026-07-26', 10), false);
+    assert.equal(estadiCaduc(null, '2026-07-26', 10), false, 'sense data no són caducs: falten');
   },
   'P9.llocs': () => {
     // «llocs ordenats per pes DESC, partit ASC»
@@ -397,20 +395,41 @@ const VERIFICADES = {
 
   // PAS 3 — el flux decidix el sou sostenible; l'estoc, la compra d'hui.
   'P3.ingressos_recurrents': () => {
-    const suma = (f) => [f.taquilla, f.patrocini, f.premis].reduce((a, v) => a + (v ?? 0), 0);
-    assert.equal(suma({ taquilla: 12000, patrocini: 9000, premis: 1000 }), 22000);
+    // v3.1: NOMÉS taquilla + per_periode(patrocini). `premis` és estoc, no flux.
+    assert.equal(21127 + perPeriode(40500, 2), 102127, 'el fixture real de Benifotrem');
+  },
+  'P3.per_periode': () => {
+    assert.equal(perPeriode(7100, 2), 14200, 'tot import setmanal es normalitza al període');
+    assert.equal(perPeriode(null, 2), null, 'sense dada no s\'inventa');
+  },
+  'P3.despesa_planter': () => {
+    const C = { cost_instalacions: 5000, cost_cercapromeses: 5000 };
+    assert.equal(despesaPlanter('academia', 3, C), 20000, 'el fixture real: acadèmia + 3 cercapromeses');
+    assert.equal(despesaPlanter('cercapromeses', 3, C), 15000, 'sense acadèmia, cap instal·lació');
+    assert.equal(despesaPlanter('cap', 1, C), 5000, '«cap» NO és cost zero: el cercapromeses es paga igual');
   },
   'P3.despeses_fixes': () => {
-    const d = { nomina: 5000, manteniment_estadi: 3000, personal: 2040, planter: 2000 };
-    assert.equal(d.nomina + d.manteniment_estadi + d.personal + d.planter, 12040);
+    const set = { nomina: 5000, manteniment_estadi: 7100, personal: 2040, planter: 20000 };
+    const per = Object.values(set).reduce((a, v) => a + perPeriode(v, 2), 0);
+    assert.equal(per, 68280, 'totes les despeses són setmanals → × setmanes_periode');
   },
-  'P3.flux': () => assert.equal(22000 - 12040, 9960),
+  'P3.flux': () => assert.equal(102127 - 68280, 33847),
+  'P3.reserva_flux': () => {
+    // v3.1: FRACCIÓ dels ingressos, no un import absolut.
+    assert.equal(reservaFlux(102127, 0.05), 5106);
+    assert.equal(reservaFlux(null, 0.05), null, 'sense ingressos no hi ha reserva calculable');
+  },
   'P3.sou_sostenible': () => {
-    // MAX(0; flux + nòmina − reserva_flux)
-    assert.equal(souSostenible(9960, 5000, 0), 14960);
-    assert.equal(souSostenible(9960, 5000, 4000), 10960);
-    assert.equal(souSostenible(-99999, 5000, 0), 0, 'MAX(0; …)');
-    assert.equal(souSostenible(null, 5000), null, 'sense flux, no se suposa');
+    // MAX(0; ingressos − reserva − (despeses_fixes − nòmina))
+    assert.equal(souSostenible(100000, 80000, 30000, 5000), 45000);
+    assert.equal(souSostenible(100000, 900000, 30000, 5000), 0, 'MAX(0; …)');
+    assert.equal(souSostenible(null, 80000, 30000, 5000), null, 'sense ingressos, no se suposa');
+    // PROPIETAT: més ingressos, mai menys sostre.
+    let previ = -1;
+    for (const i of [50000, 90000, 150000, 300000]) {
+      const v = souSostenible(i, 60000, 20000, reservaFlux(i, 0.05));
+      assert.ok(v >= previ, 'monotonia del sostre'); previ = v;
+    }
   },
   'P3.caixa': () => {
     // «saldo real declarat (mai projectat)»: la funció no en fabrica cap.
@@ -519,27 +538,12 @@ const VERIFICADES = {
     assert.ok(r.venda.every((j) => !r.rol[j.jugador_id]), 'cap marca de retenció dins de venda');
   },
 
-  // PAS 7 — vendre. UNA sola fórmula de preu, i la depressió profunda en FRACCIÓ.
-  'P7.calibrat': () => {
-    const c = [{ preu: 1 }, { preu: 2 }];
-    assert.equal(esCalibrat(c, 0, 3), false, 'dues mostres no arriben a min_mostres=3');
-    assert.equal(esCalibrat(c, 1, 3), true, 'una venda real també és mostra');
-  },
-  'P7.preu_esperat': () => {
-    const j = { posicio: 'MC', creativitat: 8 };
-    const comps = [{ posicio: 'MC', preu: 100000 }, { posicio: 'MC', preu: 120000 }, { posicio: 'MC', preu: 110000 }];
-    const cal = preuEsperat(j, { comparables: comps, min_mostres: 3, divisio: 'VII', base_preu_divisio: { VII: 2000 } });
-    assert.equal(cal.preu, estimacioComparables(comps, j), 'calibrat → mediana dels comparables');
-    const noCal = preuEsperat(j, { comparables: [], min_mostres: 3, divisio: 'VII', base_preu_divisio: { VII: 2000 }, nivell_referencia: 8 });
-    assert.equal(noCal.preu, 2000, 'sense mostres → base de la divisió × factor');
-    assert.equal(preuEsperat(j, { comparables: [] }).preu, null, 'sense divisió no s\'inventa preu');
-  },
-  'P7.valor_net': () => {
-    // valor_net = preu − cost_llistat − sou × setmanes_venda, i setmanes_venda = 1 si no
-    // està llistat, o el que queda fins al tancament si ja ho està.
-    assert.equal(setmanesVenda({ llistat: false }), 1);
-    assert.equal(setmanesVenda({ llistat: true }, 14), 2);
-    assert.equal(valorNet(110000, { sou: 1000 }, { cost_llistat: 1000, setmanes_venda: 2 }), 107000);
+  // PAS 7 — vendre. SENSE estimació de preu (v3.1): la subhasta decidix.
+  'P7.desti_2': () => {
+    assert.equal(destiDeserta({ es_sobrant: true }).accio, 'despatxa',
+      'un sobrant desert s\'acomiada: rellistar-lo és pagar la taxa per res');
+    assert.equal(destiDeserta({ es_sobrant: false }).accio, 'pregunta',
+      'un retingut desert MAI s\'acomiada sol');
   },
   'P7.urgent': () => {
     assert.equal(esUrgent(10, 14), true);
@@ -551,16 +555,19 @@ const VERIFICADES = {
     assert.equal(motiuVenda({}, { enVenda: true }), 'sobrant');
     assert.equal(motiuVenda({}, {}), null);
   },
+  // v3.1: NOMÉS sobrecost. El segon criteri era `preu_esperat DESC`, una xifra inventada.
   'P7.ordre_venda': () => assert.deepEqual(ordreVenda([
-    { id: 'a', sobrecost: 0, preu_esperat: 9 }, { id: 'b', sobrecost: 7, preu_esperat: 1 },
+    { id: 'a', sobrecost: 0 }, { id: 'b', sobrecost: 7 },
   ]).map((x) => x.id), ['b', 'a']),
   'P7.desti': () => {
     assert.equal(desti({}, { lesionat: true }).accio, 'agenda_llistar_en_recuperar');
-    assert.equal(desti({}, { calibrat: true, valor_net: -1, llindar_despatx: 0 }).accio, 'despatxa');
-    assert.equal(desti({}, { calibrat: false, valor_net: -1 }).accio, 'llista_hui', 'invariant 7');
     // El bug d'unitats que el full corregix: en enters, la branca era inassolible.
     assert.equal(desti({}, { modificador_tancament: -0.15, depressio_profunda: -20 }).accio, 'llista_hui');
     assert.equal(desti({}, { modificador_tancament: -0.25, depressio_profunda: -0.20 }).accio, 'agenda_llistar');
+    // Cap combinació proposa despatxar: això ja no el decidix una previsió de preu (v3.1).
+    for (const o of [{}, { urgent: true }, { modificador_tancament: -0.9, depressio_profunda: -0.2 }]) {
+      assert.notEqual(desti({}, o).accio, 'despatxa', 'el destí ja no despatxa per una estimació');
+    }
   },
 
   // PAS 9 — les alineacions, greedy per pes.
@@ -632,7 +639,7 @@ const VERIFICADES = {
     ordenaAgenda([{ data_accio: '2026-08-03' }, { data_accio: '2026-07-28' }]).map((x) => x.data_accio),
     ['2026-07-28', '2026-08-03'], 'per data'),
 
-  // PAS 8 — el bucle d'estoc: jugadors i estadi amb la MATEIXA unitat.
+  // PAS 8 — el bucle d'estoc: L'ESTADI VA PRIMER i no es puntua (v3.1).
   'P8.guany': () => assert.equal(guanyJugador(3, 1.5), 4.5, 'mancança × pes'),
   'P8.cost': () => assert.equal(eficiencia(4.5, 50000), 0.00009, 'guany/cost'),
   'P8.admissible': () => {
@@ -640,34 +647,46 @@ const VERIFICADES = {
     assert.equal(admissibleJugador({ preu: 150000 }, { caixa_disponible: 100000 }), false, 'cap compra amb diners no cobrats');
     assert.equal(admissibleJugador({ preu: 50000, sou: 5000 }, { caixa_disponible: 100000, pressupost_sou_lloc: 1000 }), false);
   },
-  'P8.flux': () => assert.equal(deltaFlux(9000, 6000), 3000, 'Δflux = manteniment actual − nou'),
-  'P8.guany_2': () => {
-    const TS = { creativitat: { 1: 250, 2: 270, 3: 330, 4: 510, 5: 850 } };
-    const PES = { mc: 1.5 };
-    const ambManc = { mc: { habilitat: 'creativitat', mancanca: 2 } };
-    assert.ok(guanyEstadi(ambManc, { sou_sostenible: 300, delta_flux: 3000, taula_salaris: TS, pesos: PES }) > 0);
-    const sense = { mc: { habilitat: 'creativitat', mancanca: 0 } };
-    assert.equal(guanyEstadi(sense, { sou_sostenible: 300, delta_flux: 3000, taula_salaris: TS, pesos: PES }), 0,
-      'pujar el sostre d\'un lloc ja cobert val 0');
-  },
+  'P8.manteniment': () => assert.equal(deltaManteniment(7100, 9000), 1900,
+    'Δmanteniment = el que l\'obra AFIG cada setmana'),
   'P8.admissible_2': () => {
-    assert.equal(admissibleEstadi({ cost: 50000, caixa_disponible: 100000, flux: 1000, delta_flux: 500 }), true);
-    assert.equal(admissibleEstadi({ cost: 50000, caixa_disponible: 100000, flux: 1000, delta_flux: -2000 }), false,
-      'cap obra que deixe el flux en negatiu');
+    assert.equal(admissibleEstadi({ cost: 50000, caixa_disponible: 100000, flux: 10000,
+      delta_manteniment: 1000, setmanes_periode: 2, reserva_flux: 5000 }), true);
+    assert.equal(admissibleEstadi({ cost: 50000, caixa_disponible: 100000, flux: 10000,
+      delta_manteniment: 3000, setmanes_periode: 2, reserva_flux: 5000 }), false,
+      'cap obra que es menge la reserva de flux');
+    // La propietat que el model anterior feia impossible: AMPLIAR (Δmanteniment > 0) ha de
+    // poder passar. Abans el guany de l'obra era 0 sempre que s'ampliara.
+    assert.equal(admissibleEstadi({ cost: 10000, caixa_disponible: 999999, flux: 100000,
+      delta_manteniment: 5000, setmanes_periode: 2, reserva_flux: 0 }), true,
+      'ampliar l\'estadi ha de poder ser admissible');
   },
-  'P8.eficiencia': () => {
+  'P8.accio_2': () => {
+    // PRIORITAT ABSOLUTA: l'estadi va abans que el millor fitxatge possible.
     const t = decisioEstoc([
-      { id: 'j', admissible: true, eficiencia: eficiencia(4.5, 50000) },
-      { id: 'e', admissible: true, eficiencia: eficiencia(3.0, 20000) },
+      { tipus: 'estadi', admissible: true, caduc: false, eficiencia: null },
+      { tipus: 'jugador', id: 'bo', admissible: true, eficiencia: 9e9, guany: 9 },
     ]);
-    assert.equal(t.id, 'e', 'guanya la millor relació guany/cost, no el guany més gran');
-    assert.equal(decisioEstoc([{ id: 'x', admissible: false, eficiencia: 1 }]), null,
+    assert.equal(t.tipus, 'estadi', 'l\'estadi no competix: va primer');
+    assert.equal(decisioEstoc([{ tipus: 'jugador', admissible: false, eficiencia: 1 }]), null,
       'sense opció admissible, cap compra: només es ven');
   },
 
-  // PAS 11 — el personal és bucle de FLUX: tots cobren igual, mana la prioritat.
-  'P11.cost_flux': () => assert.deepEqual([1, 2, 3, 4, 5].map((n) => costFlux(n, 1020)),
-    [1020, 2040, 4080, 8160, 16320], 'staff_cost_base × 2^(n−1)'),
+  // PAS 11 — el personal és bucle de FLUX: DUES bases (v3.1), mana la prioritat.
+  'P11.cost_flux': () => {
+    assert.deepEqual([1, 2, 3, 4, 5].map((n) => costFlux(n, 1020)),
+      [1020, 2040, 4080, 8160, 16320], 'especialistes: base 1.020');
+    assert.deepEqual([1, 2, 3, 4, 5].map((n) => costFlux(n, 1250)),
+      [1250, 2500, 5000, 10000, 20000], 'entrenador: base 1.250');
+    // El fixture real de HT: 3 especialistes de nivell 2 + entrenador de nivell 3 = 11.120 €.
+    assert.equal(costFlux(2, 1020) * 3 + costFlux(3, 1250), 11120,
+      'la xifra exacta de l\'informe — amb una sola base era impossible');
+  },
+  'P11.cost_flux#base': () => {
+    const pri = [{ tipus: 'assistent', quants: 2 }, { tipus: 'entrenador', base: 1250 }];
+    assert.equal(baseTipusG1('entrenador', pri, 1020), 1250, 'l\'entrenador porta la seua base');
+    assert.equal(baseTipusG1('assistent', pri, 1020), 1020, 'els altres, la de defecte');
+  },
   'P11.nivell': () => {
     assert.equal(nivellPagable(16320, 1020), 5);
     assert.equal(nivellPagable(16319, 1020), 4);
@@ -692,10 +711,10 @@ const VERIFICADES = {
     assert.equal(utilJuv({ creativitat_potencial: 9 }, 'creativitat', null), null);
   },
   'P10.desti': () => {
-    assert.equal(destiPromocio({ esUtil: true, valor_net_promo: -1 }), 'PROMOCIONA');
-    assert.equal(destiPromocio({ esUtil: false, valor_net_promo: 1 }), 'PROMOCIONA_I_LLISTA');
-    assert.equal(destiPromocio({ esUtil: false, valor_net_promo: -1 }), 'DESPATXA');
-    assert.equal(valorNetPromo(300000, { cost_promocio: 20000, sou_estimat: 5000 }), 270000);
+    // v3.1: DOS branques, no tres. `PROMOCIONA_I_LLISTA` depenia d'una estimació de preu i
+    // era el juvenil-com-a-negoci que el canvi 9 ja havia retirat.
+    assert.equal(destiPromocio({ esUtil: true }), 'PROMOCIONA');
+    assert.equal(destiPromocio({ esUtil: false }), 'DESPATXA');
   },
   'P10.sobra': () => {
     assert.equal(objectiuJuvenil(9), 10, 'objectiu = onze legal + 1');

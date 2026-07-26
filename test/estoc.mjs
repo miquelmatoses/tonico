@@ -1,7 +1,7 @@
-// Tonico — BUCLE D'ESTOC (contracte v3, PAS 8): jugadors i estadi competixen pel mateix
-// diner amb la mateixa unitat. node test/estoc.mjs
+// Tonico — BUCLE D'ESTOC (contracte v3.1, PAS 8): l'ESTADI VA PRIMER i no competix per
+// eficiència. node test/estoc.mjs
 import assert from 'node:assert/strict';
-import { guanyJugador, admissibleJugador, deltaFlux, guanyEstadi, admissibleEstadi,
+import { guanyJugador, admissibleJugador, deltaManteniment, admissibleEstadi, estadiCaduc,
   eficiencia, decisioEstoc } from '../lib/estoc.js';
 
 // ── Opció JUGADOR ──
@@ -15,40 +15,68 @@ assert.equal(admissibleJugador({ preu: 50000, sou: 5000 }, { caixa_disponible: 1
 assert.equal(admissibleJugador({ preu: 1 }, { caixa_disponible: null }), false,
   'sense caixa declarada no es compra res');
 
-// ── Opció ESTADI ──
-assert.equal(deltaFlux(9000, 6000), 3000, 'el manteniment que t\'estalvies cada setmana');
-assert.equal(deltaFlux(null, 6000), null);
+// ── Opció ESTADI: només admissibilitat, no es puntua ──
+assert.equal(deltaManteniment(7100, 9000), 1900, 'el que l\'obra AFIG de manteniment setmanal');
+assert.equal(deltaManteniment(null, 6000), null);
 
-const TS = { creativitat: { 1: 250, 2: 270, 3: 330, 4: 510, 5: 850 }, defensa: { 1: 250, 2: 270, 3: 310 } };
-const PESOS = { mc: 1.5, defensa: 0.7 };
-const MANC = {
-  mc: { habilitat: 'creativitat', mancanca: 2 },
-  defensa: { habilitat: 'defensa', mancanca: 0 },     // ja cobert: pujar-li el sostre val 0
-};
-const g = guanyEstadi(MANC, { sou_sostenible: 300, delta_flux: 3000, taula_salaris: TS, pesos: PESOS });
-assert.ok(g > 0, 'més flux desbloqueja nivell on hi ha mancança');
-const gSenseManc = guanyEstadi({ defensa: MANC.defensa }, { sou_sostenible: 300, delta_flux: 3000, taula_salaris: TS, pesos: PESOS });
-assert.equal(gSenseManc, 0, 'sense mancança, pujar el sostre no val res');
-assert.equal(guanyEstadi(MANC, { sou_sostenible: null, delta_flux: 3000, taula_salaris: TS, pesos: PESOS }), null,
-  'sense sou sostenible no es pot dir què desbloqueja');
-
-assert.equal(admissibleEstadi({ cost: 50000, caixa_disponible: 100000, flux: 1000, delta_flux: 500 }), true);
-assert.equal(admissibleEstadi({ cost: 150000, caixa_disponible: 100000, flux: 1000, delta_flux: 500 }), false,
+// L'obra es paga amb caixa cobrada I el flux la sosté deixant la reserva intacta. El
+// Δmanteniment és SETMANAL i el flux va per període: es normalitza (invariant 16).
+assert.equal(admissibleEstadi({ cost: 50000, caixa_disponible: 100000, flux: 10000,
+  delta_manteniment: 1000, setmanes_periode: 2, reserva_flux: 5000 }), true);
+assert.equal(admissibleEstadi({ cost: 150000, caixa_disponible: 100000, flux: 10000,
+  delta_manteniment: 0, setmanes_periode: 2, reserva_flux: 0 }), false,
   'l\'obra tampoc es paga amb diners que no tens');
-assert.equal(admissibleEstadi({ cost: 50000, caixa_disponible: 100000, flux: 1000, delta_flux: -2000 }), false,
-  'ni una obra que et deixe el flux en negatiu');
+assert.equal(admissibleEstadi({ cost: 50000, caixa_disponible: 100000, flux: 10000,
+  delta_manteniment: 3000, setmanes_periode: 2, reserva_flux: 5000 }), false,
+  'ni una obra el manteniment de la qual es menge la reserva (3000 × 2 = 6000 > 10000 − 5000)');
+assert.equal(admissibleEstadi({ cost: 1, caixa_disponible: 100, flux: null, delta_manteniment: 0 }), false,
+  'sense flux declarat no es decidix una obra');
 
-// ── La decisió: la mateixa unitat per a tot ──
+// PROPIETAT NOVA (v3.1): una AMPLIACIÓ (Δmanteniment > 0) pot ser admissible. Amb el model
+// anterior el guany de l'obra era 0 sempre que s'ampliara, i l'estadi no podia guanyar mai.
+assert.equal(admissibleEstadi({ cost: 10000, caixa_disponible: 999999, flux: 100000,
+  delta_manteniment: 5000, setmanes_periode: 2, reserva_flux: 0 }), true,
+  'ampliar l\'estadi ha de poder passar el filtre: abans era impossible');
+
+// ── Caducitat dels números de la calculadora ──
+assert.equal(estadiCaduc('2026-01-01', '2026-07-26', 10), true, 'passades 10 setmanes, caducs');
+assert.equal(estadiCaduc('2026-07-01', '2026-07-26', 10), false);
+assert.equal(estadiCaduc(null, '2026-07-26', 10), false, 'sense data no són caducs: és que falten');
+
+// ── La decisió: L'ESTADI VA PRIMER, sempre ──
 assert.equal(eficiencia(4.5, 50000), 0.00009);
 assert.equal(eficiencia(4.5, 0), null, 'sense cost no hi ha eficiència');
+
 const tria = decisioEstoc([
-  { id: 'jugador', admissible: true, eficiencia: eficiencia(4.5, 50000) },
-  { id: 'estadi', admissible: true, eficiencia: eficiencia(3.0, 20000) },
-  { id: 'car', admissible: true, eficiencia: eficiencia(9.0, 900000) },
+  { tipus: 'estadi', admissible: true, caduc: false, eficiencia: null, guany: null },
+  { tipus: 'jugador', id: 'bo', admissible: true, eficiencia: eficiencia(9, 10000), guany: 9 },
 ]);
-assert.equal(tria.id, 'estadi', 'guanya la millor relació guany/cost, no el guany més gran');
-assert.equal(decisioEstoc([{ id: 'x', admissible: false, eficiencia: 1 }]), null,
+assert.equal(tria.tipus, 'estadi',
+  'l\'estadi va abans que QUALSEVOL fitxatge, per bo que siga: és l\'únic que mou el flux');
+
+const senseEstadi = decisioEstoc([
+  { tipus: 'estadi', admissible: false, caduc: false },
+  { tipus: 'jugador', id: 'a', admissible: true, eficiencia: eficiencia(4.5, 50000), guany: 4.5 },
+  { tipus: 'jugador', id: 'b', admissible: true, eficiencia: eficiencia(3.0, 20000), guany: 3.0 },
+]);
+assert.equal(senseEstadi.id, 'b', 'si l\'estadi no demana res, entre jugadors manda l\'eficiència');
+
+const caduc = decisioEstoc([
+  { tipus: 'estadi', admissible: true, caduc: true },
+  { tipus: 'jugador', id: 'a', admissible: true, eficiencia: 1, guany: 1 },
+]);
+assert.equal(caduc.id, 'a', 'amb els números caducs l\'estadi no es recomana: es demana refer-los');
+
+// Sense candidat de mercat no hi ha preu (v3.1: fora l'estimació) → s'ordena pel guany, que
+// és la mètrica única, en compte d'inventar-se un cost.
+const senseCost = decisioEstoc([
+  { tipus: 'jugador', id: 'poc', admissible: true, eficiencia: null, guany: 1 },
+  { tipus: 'jugador', id: 'molt', admissible: true, eficiencia: null, guany: 7 },
+]);
+assert.equal(senseCost.id, 'molt', 'sense preu real, manda mancança × pes');
+
+assert.equal(decisioEstoc([{ tipus: 'jugador', admissible: false, eficiencia: 1 }]), null,
   'sense cap opció admissible, cap compra: només es ven');
 assert.equal(decisioEstoc([]), null);
 
-console.log('OK — bucle d\'estoc: jugadors i estadi amb la mateixa unitat');
+console.log('OK — bucle d\'estoc v3.1: l\'estadi va primer i una ampliació ja pot passar');

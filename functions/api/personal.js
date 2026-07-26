@@ -16,7 +16,7 @@ function compteEspecialistes(membres) {
   return c;
 }
 
-import { planPersonal, decisioRenovacio } from '../../lib/personal_v3.js';
+import { planPersonal, decisioRenovacio, baseTipus } from '../../lib/personal_v3.js';
 import { economia } from '../../lib/economia.js';
 import { llegixConfig } from '../../lib/config.js';
 import { normalitzaDivisio, divisioArab } from '../../lib/divisio.js';
@@ -63,7 +63,8 @@ async function plaFlux(db, usuariId) {
     const d = (perTipus.get(x.tipus) || [])[i] ?? null;      // la i-èsima plaça d'este tipus
     // RENOVAR només toca al VENCIMENT (0 ≤ setmanes_restants ≤ dies_avis_caducitat).
     const venç = d && d.setmanes_contracte != null && d.setmanes_contracte >= 0 && d.setmanes_contracte <= avis;
-    const renovacio = venç ? decisioRenovacio(d.nivell, fluxLliure, base) : null;
+    // La renovació es valora amb la base DEL SEU TIPUS: l'entrenador no cobra com la resta.
+    const renovacio = venç ? decisioRenovacio(d.nivell, fluxLliure, baseTipus(x.tipus, prioritat, base)) : null;
     let accio = 'res';
     if (x.exclos) accio = 'exclos';
     else if (d == null) accio = x.nivell > 0 ? 'contracta' : 'res';

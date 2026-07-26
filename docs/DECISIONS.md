@@ -1,5 +1,71 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · CONTRACTE v3.1 — SET CORRECCIONS SOBRE DADES REALS DE HT
+Diagnosticades contra l'informe setmanal real de Benifotrem (T83). El full manda i s'ha
+canviat primer (invariant 11); `formules.json` regenerat: **104 fórmules**. Registre de
+forats obert i podat a `docs/FORATS.md`. **63 suites verdes**, G1/G2/G3 inclosos.
+
+- **L'economia és BI-SETMANAL** (invariant 16 nou). En lliga es juga un partit a casa i un
+  fora, així que la taquilla entra en setmanes ALTERNES: al fixture real, 0 € una setmana i
+  21.127 € l'altra, sobre un flux net de milers. **L'oscil·lació era ~15× el senyal.** Es
+  declara sempre el període TANCAT: la setmana en curs no està consolidada.
+  Regla de normalització escrita al full perquè el factor 2 no s'esmunyisca en silenci: només
+  la taquilla ve per període, tot lo altre × `setmanes_periode`. L'ÚNIC canvi de tornada a
+  unitats setmanals és el PAS 4 (`taula_salaris` va en €/setmana) i **el fa l'economia, no
+  cada orquestrador** — dos llocs dividint és com tindre dues fonts per a la mateixa xifra.
+- **`premis` ix del flux i entra a l'estoc**: és una prima de final de temporada. I amb ell
+  tot el que no siga extrapolable (club d'aficionats, comissions): `ingressos_recurrents =
+  taquilla + patrocini`, i prou. Regla de Miquel: el que no es pot extrapolar només pot
+  marejar el sostre de sou.
+- **La reserva és una FRACCIÓ, no un import**: `reserva_flux_pct` = 0,05. Les despeses
+  recurrents no poden passar del 95% dels ingressos. Canvia la FORMA de `sou_sostenible`,
+  no el valor d'un pom.
+- **`guany(estadi)` era matemàticament impossible de ser positiu.** Es calculava només des de
+  l'estalvi de manteniment, i ampliar sempre el puja → Δflux < 0 → deltaNivell = 0 pertot →
+  guany = 0 SEMPRE. L'estadi només podia «guanyar» encongint-se. **Correcció: no s'afig un
+  número, s'esborra la comparació.** Amb prioritat absoluta, `guanyEstadi` i `deltaFlux`
+  sobren sencers; del PAS 8 de l'estadi només queda l'admissibilitat. I NO es declara la
+  taquilla esperada de l'obra: predir-la seria projectar dins d'una decisió (invariant 3), i
+  no cal — s'OBSERVA al període següent. Caducitat a 10 setmanes sobre `estadi_data`, que ja
+  existia: cap camp nou.
+- **L'estadi té PRIORITAT ABSOLUTA** (corregix el canvi 6 del v3). És l'única compra que MOU
+  EL FLUX: un fitxatge consumix el pressupost, l'estadi aixeca el pressupost mateix i amb ell
+  el `nivell_objectiu` de tots els llocs alhora. Optimitzar dins de la restricció i relaxar la
+  restricció no són del mateix rang; comparar-los per eficiència era l'error.
+- **DUES bases de personal.** El contracte deia «tot el personal cobra igual». Fals:
+  especialistes 1.020, entrenador 1.250. Demostració que ho va destapar: tota suma de nivells
+  amb base 1.020 és múltiple de 1.020, i els 5.000 € de l'informe no ho són (5.000/1.020 =
+  4,90). Ara el fixture es reconstruïx exacte — 3 especialistes de nivell 2 + entrenador de
+  nivell 3 = **11.120 €**, la xifra de HT — i valida també `prioritat_personal` sencer, amb el
+  psicòleg correctament absent (divisió VII < `divisio_psicoleg` = III). La base viu dins de
+  `prioritat_personal`, que ja dirigia el bucle → dades, no codi.
+- **`despesa_planter` es DERIVA**: instal·lacions si hi ha acadèmia + 5.000 × `n_cercapromeses`
+  (1..3 en QUALSEVOL mode). El `sistema_juvenil` són tres MANERES D'OPERAR, no tres coses que
+  tens: el cercapromeses sempre hi és, i mode `cap` **no vol dir cost zero**.
+- **FORA l'estimació de preu de venda** (`lib/preu.js` esborrat). No canviava cap decisió que
+  no es puga prendre millor amb el fet real: l'orde de venda el porta `sobrecost` (xifra
+  pròpia) i «es ven o s'acomiada» el decidix la SUBHASTA. Amb ella cauen `valor_net`,
+  `valor_net_promo` i la branca `PROMOCIONA_I_LLISTA` del PAS 10 — que era el
+  juvenil-com-a-negoci que el canvi 9 del v3 ja havia retirat. El PAS 10 queda amb dos
+  branques: si no arriba al nivell del lloc, no servix, i no hi ha preu que ho canvie.
+  El que sobreviu del PAS 7 (motiu, orde, destí, la pregunta de la subhasta) es muda a
+  `lib/vendes.js`.
+- **Invariant 17 (finestra de declaració):** si Tonico consumix una dada que no pot derivar,
+  eixa dada té finestra. Noves finestres: període tancat, taquilla, patrocinadors, els tres
+  números de la calculadora d'estadi i `n_cercapromeses`. Fora del formulari el planter (ara
+  derivat) i `ingres_setmanal` (amb el seu fallback i el flag `ingressos_desglossats`, que
+  eren la maquinària de tapar un buit que ja no existix).
+- **Invariant 18 (dada vella ≠ absent ≠ zero):** `ALR_DADES_VELLES` i `ALR_ESTADI_CADUC`.
+- **Balanç del diff:** se'n van `lib/preu.js` sencer, `guanyEstadi`, `deltaFlux`, el fallback
+  d'`ingres_setmanal`, el flag `ingressos_desglossats`, `valorNetPromo`, `PROMOCIONA_I_LLISTA`
+  i el pom mort `reserva_operativa`. S'afigen 6 poms, 2 camps i 2 regles. **No hem inflat el
+  sistema: sobretot l'hem corregit.**
+
+**PUNT DE PARADA (C-01):** els dos partits del fixture eren AMISTÓS i COPA, no de lliga. Encara
+**no tenim ni una dada de taquilla de lliga**, així que el codi està verificat contra els seus
+fixtures però **el model no està calibrat contra la realitat**. Cap número de flux és creïble
+fins que passe un període bi-setmanal amb lliga de veres.
+
 ## 2026-07-26 · CORRECCIONS DEL FULL (F1-F3) + SIS VIOLACIONS D'INVARIANT
 **Correccions del contracte, aprovades per Miquel:**
 - **F1 · Restricció 15**: cap derivació que depenga del PAS 0 s'executa amb el PAS 0

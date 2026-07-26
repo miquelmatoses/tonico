@@ -15,7 +15,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # 24 (LTS) i no 20: la suite munta la D1 en memòria amb `node:sqlite`
+          # (test/_d1shim.mjs), que no existix abans de Node 22.5 i que en 22 encara demanava
+          # `--experimental-sqlite`. Amb 20, `npm test` petava i `desplegar` no arrancava mai.
+          node-version: '24'
       - name: Provar (suite + guardians del full)
         run: npm test
 

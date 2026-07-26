@@ -163,3 +163,24 @@ console.log('OK — motor de regles: 7 regles, ordenació per urgència i setman
 console.log('OK — ALR_LESIO_VENDA: llistat lesionat avisa');
 // (La depreciació mecànica està plegada dins d'ALR_LLISTAR_VENDA com a rellotge d'urgència;
 
+
+// ── v3.1: DADA VELLA ≠ ABSENT ≠ ZERO (invariant 18), i la caducitat de l'estadi ──
+// Amb període bi-setmanal el sistema depén de que es declare cada període. Si no arriba, ho ha
+// de DIR: seguir raonant en silenci sobre xifres velles és el mode de fallar més car.
+{
+  const p = { urgencia: 68 };
+  assert.equal(REGLES.ALR_DADES_VELLES({ economia: null }, p).length, 0,
+    'sense economia no hi ha res a avisar');
+  assert.equal(REGLES.ALR_DADES_VELLES({ economia: { dades_velles: false } }, p).length, 0,
+    'amb dades fresques, Paco calla');
+  const velles = REGLES.ALR_DADES_VELLES({ economia: { dades_velles: true, periode_data: '2026-06-01' } }, p);
+  assert.equal(velles.length, 1, 'amb dades velles, avisa');
+  assert.equal(velles[0].missatge_clau, 'alerta.dades_velles');
+  assert.equal(velles[0].parametres.data, '2026-06-01', 'i diu de quan són');
+
+  assert.equal(REGLES.ALR_ESTADI_CADUC({ economia: { estadi_caduc: false } }, { urgencia: 55 }).length, 0);
+  const caduc = REGLES.ALR_ESTADI_CADUC({ economia: { estadi_caduc: true, estadi_data: '2026-01-01' } }, { urgencia: 55 });
+  assert.equal(caduc.length, 1, 'passades les setmanes de caducitat, es demanen números nous');
+  assert.equal(caduc[0].missatge_clau, 'alerta.estadi_caduc');
+}
+console.log('OK — v3.1: dades velles i estadi caduc avisen, i callen quan toca');
