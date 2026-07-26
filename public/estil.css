@@ -532,3 +532,7 @@ form.card-cos { display: block; }
 .obra-curs { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 /* El que hi ha posat a HT quan no és el prescrit. */
 .desquadre { color: #b8860b; font-weight: 700; }
+
+/* Una INSTRUCCIÓ («posa entrenament A: creativitat») no és una nota al peu: es llig com el
+   recordatori de tàctica, perquè és el mateix tipus de cosa. */
+.instruccio { font-weight: 700; }

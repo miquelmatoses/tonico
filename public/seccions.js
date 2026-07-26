@@ -376,7 +376,6 @@ export async function plantilla(main) {
 }
 
 // ── 5. Juvenils ──
-const HABS_ENTREN = ['porteria', 'defensa', 'creativitat', 'extrem', 'passades', 'anotacio', 'pilota_aturada'];
 export async function juvenils(main) {
   capcalera(main, 5, 'juvenils');
   const ESTATS = ['seguiment', 'elegit', 'cua_eixida'];
@@ -504,40 +503,20 @@ function onzeJuvenil(main, o) {
   main.append(sec);
 }
 
-// L'ENTRENAMENT JUVENIL ÉS PRESCRIT, no triable: ix del pipeline sènior (quines habilitats
-// alimenten els llocs que entrenen). Ací només es confirma què hi ha posat a HT, que és el que
-// pot no coincidir — i si no coincidix, ALR_ENTRENAMENT_JUVENIL ho diu.
+// L'ENTRENAMENT JUVENIL ÉS PRESCRIT: ix del pipeline sènior (quines habilitats alimenten els
+// llocs que entrenes). No es tria, no es confirma i no es desa res — es diu QUÈ HAS DE POSAR a
+// Hattrick, igual que el recordatori de tàctica diu que jugues amb joc d'especialitats.
+//
+// I es diu amb el nom de l'HABILITAT, no amb el del tipus de jugador: el catàleg `habilitat.*`
+// diu «migcampista» i «passador», que són tipus de jugador (serveixen per a «compra'm un
+// migcampista»), i entrenar-los no vol dir res. S'entrena creativitat i passades.
 function formEntrenamentJuvenil(main, d) {
-  const ej = d.entrenament_juvenil || {};
   const pr = d.pipeline;
   const sec = card(t('juvenils.entrenament_titol'), null, 'llima');
-  const sc = el('div', { class: 'card-cos' });
-  sc.append(el('p', {}, el('b', { text: t('juvenils.entrenament_prescrit_et') }), ' ',
-    el('span', { text: pr ? t('juvenils.entrenament_prescrit', { principal: t('habilitat.' + pr.principal), secundari: t('habilitat.' + pr.secundari) }) : t('juvenils.entrenament_sense_pipeline') })));
-  if (ej.principal) {
-    const quadra = pr && ej.principal === pr.principal && (ej.secundari || null) === (pr.secundari || null);
-    sc.append(el('p', { class: quadra ? 'nota-peu' : 'desquadre' },
-      t('juvenils.entrenament_actual', { principal: t('habilitat.' + ej.principal),
-        secundari: ej.secundari ? t('habilitat.' + ej.secundari) : '—' })));
-  }
-  sec.append(sc);
-  // CONFIRMAR el que hi ha posat a HT (no triar-lo): el prescrit ve precarregat, així que
-  // desar sense tocar res és dir «ho tinc com toca».
-  const opcs = (sel) => HABS_ENTREN.map((h) => { const o = el('option', { value: h, text: t('habilitat.' + h) }); if (sel === h) o.setAttribute('selected', ''); return o; });
-  const principal = el('select', { 'aria-label': t('juvenils.entrenament_principal') }, ...opcs(ej.principal ?? pr?.principal ?? null));   // precarrega
-  const secundari = el('select', { 'aria-label': t('juvenils.entrenament_secundari') }, el('option', { value: '', text: '—' }), ...opcs(ej.secundari ?? pr?.secundari ?? null));
-  const b = el('button', { type: 'submit', class: 'b-prim', text: t('juvenils.entrenament_desa') });
-  const f = el('form', { class: 'card-cos' },
-    el('p', { class: 'nota-peu', text: t('juvenils.entrenament_confirma') }),
-    el('div', { class: 'form-graella' },
-      el('label', {}, t('juvenils.entrenament_principal'), principal),
-      el('label', {}, t('juvenils.entrenament_secundari'), secundari)), b);
-  f.addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    await api('/api/pla', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ entrenament_juvenil: { principal: principal.value, secundari: secundari.value || null } }) });
-    location.reload();
-  });
-  sec.append(f);
+  sec.append(el('div', { class: 'card-cos' },
+    el('p', { class: 'instruccio', text: pr
+      ? t('juvenils.entrenament_posa', { principal: t('hab.' + pr.principal), secundari: t('hab.' + pr.secundari) })
+      : t('juvenils.entrenament_sense_pipeline') })));
   main.append(sec);
 }
 
