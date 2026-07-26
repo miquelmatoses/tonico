@@ -354,17 +354,25 @@ export async function plantilla(main) {
     const tarja = card(t('plantilla.onze_titular'), onze.length, 'llima');
     for (const l of onze) tarja.append(filaSegura(() => {
       const j = perId.get(l.jugador_id);
-      const et = el('div', { class: 'lloc-et' }, el('b', { text: l.lloc }),
-        el('span', { class: 'lloc-hab', text: t('hab.' + l.habilitat) }));
-      if (!j) return el('div', { class: 'fila buit' }, et,
-        el('div', { class: 'fila-nom', text: t('plantilla.lloc_buit') }));
-      return el('div', { class: 'fila' }, et,
+      // LA MATEIXA FILA que les altres targetes: cinc cel·les i el xip de posició amb el seu
+      // color. El xip porta la SIGLA DEL LLOC, que és una posició i per tant té color propi
+      // (PO groc · DC roig · MC verd · EX blau · DV lila); el codi del lloc va a la meta, que
+      // és on van els qualificadors. L'última cel·la queda buida —ací no hi ha categoria que
+      // canviar— però hi és, perquè si no la graella es desquadra.
+      const sigla = BUCKET_SIGLA[l.bucket] || l.bucket;
+      const meta = el('div', { class: 'fila-meta' }, el('span', { class: 'pill', text: l.lloc }));
+      if (j) {
+        meta.append(el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` }));
+        if (esLesionat(j.lesio)) meta.append(el('span', { class: 'pill perill', text: t('comu.lesionat_durada', { n: duradaLesio(j.lesio) ?? '?' }) }));
+      }
+      return el('div', { class: j ? 'fila' : 'fila buit' },
         el('div', { class: 'fila-qui' },
-          el('div', { class: posCls(j.posicio), text: j.posicio || '—' }),
-          el('div', {}, el('div', { class: 'fila-nom', text: j.nom }),
-            el('div', { class: 'fila-meta' }, el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` })))),
-        el('div', { class: 'punts', text: decimal(j.puntuacio) }),
-        el('div', { class: 'skills', text: hab(j) }));
+          el('div', { class: posCls(sigla), text: sigla }),
+          el('div', {}, el('div', { class: 'fila-nom', text: j ? j.nom : t('plantilla.lloc_buit') }), meta)),
+        el('div', { class: 'punts', text: j ? decimal(j.puntuacio) : '—' }),
+        el('div', { class: 'tsi', text: j ? 'TSI ' + (j.tsi ?? '—') : '' }),
+        el('div', { class: 'skills', text: j ? hab(j) : '' }),
+        el('div', { class: 'cel-cat' }));
     }, 1));
     main.append(tarja);
   }

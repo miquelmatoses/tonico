@@ -131,6 +131,47 @@ assert.ok(/if \(!files \|\| !files\.length\) return null;/.test(vista),
   const sense = [...classes].filter((c) => pistes(c) == null);
   assert.deepEqual(sense, [], `classes de fila sense grid-template-columns: ${sense.join(', ')}`);
 
+  // LES FILES DE `.fila` HAN DE TINDRE LES CINC CEL·LES DE LA GRAELLA. Al muntar l'onze
+  // titular vaig fer una fila de quatre amb una etiqueta pel davant: la graella es desquadra i
+  // el codi de colors del xip de posició es perd. Es busca cada `class: 'fila'` de la vista i
+  // es compten els fills de primer nivell fins a tancar la crida a `el(`.
+  {
+    const pistes = (classe) => {
+      const m = css.match(new RegExp(`\\.${classe}\\s*\\{[^}]*grid-template-columns:\\s*([^;]+);`));
+      return m ? m[1].replace(/minmax\([^)]*\)/g, 'M').split(/\s+/).filter(Boolean).length : null;
+    };
+    const nPistes = pistes('fila');
+    assert.ok(nPistes, '`.fila` declara les seues columnes al CSS');
+    const dolentes = [];
+    let vistes = 0;
+    for (const m of vista.matchAll(/class: (?:'fila'|[\w.?: ]*'fila'[\w.?: ']*)\s*\}/g)) {
+      // Des del `}` dels atributs fins al `)` que tanca eixe `el(`: les comes de nivell 0 (fora
+      // de parèntesis i de cadenes) separen els fills.
+      // Es TALLA en trossos per les comes de nivell 0 i es conten els NO BUITS. Comptar comes
+      // no valia: una coma sobrant («…, );») deixava el compte igual que amb el fill posat, i
+      // per tant la fila escapçada passava el guardià.
+      let prof = 0, dins = null, tros = '';
+      const fills = [];
+      let i = vista.indexOf('}', m.index) + 1;
+      for (; i < vista.length; i++) {
+        const c = vista[i];
+        if (dins) { tros += c; if (c === dins && vista[i - 1] !== '\\') dins = null; continue; }
+        if (c === "'" || c === '"' || c === '`') { dins = c; tros += c; continue; }
+        if (c === '(' || c === '{' || c === '[') prof++;
+        else if (c === '}' || c === ']') prof--;
+        else if (c === ')') { if (prof === 0) break; prof--; }
+        else if (c === ',' && prof === 0) { fills.push(tros); tros = ''; continue; }
+        tros += c;
+      }
+      fills.push(tros);
+      const cel = fills.filter((x) => x.trim() && x.trim() !== '...').length;
+      vistes++;
+      if (cel !== nPistes) dolentes.push(`${cel} cel·les contra ${nPistes} pistes`);
+    }
+    assert.ok(vistes >= 2, `la comprovació ha de vore les files de \`.fila\` (n'ha vist ${vistes})`);
+    assert.deepEqual(dolentes, [], `files de \`.fila\` desquadrades:\n  ${dolentes.join('\n  ')}`);
+  }
+
   // I cap pista pot tindre un mínim FIX més ample que un telèfon estret (360 − 40 de marges):
   // la pista no encongix per davall del seu mínim i la pàgina es desplaça de costat. L'idioma
   // segur és `minmax(min(Npx, 100%), 1fr)`.

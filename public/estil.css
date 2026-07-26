@@ -540,7 +540,7 @@ form.card-cos { display: block; }
 /* Els dos estats de l'obra: es marquen on es proposa, no al final d'un formulari. */
 .obra-botons { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 4px; }
 
-/* L'onze titular: cada fila és un LLOC del pla, amb la seua habilitat, i qui l'ocupa. */
-.lloc-et { display: flex; flex-direction: column; gap: 2px; min-width: 62px; }
-.lloc-hab { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--gris); }
-.fila.buit { color: var(--gris); font-style: italic; }
+/* L'onze titular gasta la MATEIXA fila que la resta de targetes: només es matisa el lloc que
+   no té ningú, que ha de cridar l'atenció sense trencar la graella. */
+.fila.buit .fila-nom { color: var(--roig); font-style: italic; font-weight: 700; }
+.fila.buit .pos { opacity: .45; }
