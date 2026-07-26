@@ -536,7 +536,9 @@ function bucleEstoc(main, e) {
     cos.append(el('p', { class: 'nota-peu', text: t('estoc.sense_caixa') }));
   } else {
     cos.append(el('p', { class: 'nota-peu', text: t('estoc.capçal', {
-      disponible: diners(e.caixa), sostenible: e.sou_sostenible == null ? '—' : diners(e.sou_sostenible) }) }));
+      // El sostenible es dona SETMANAL: és el que es compara amb el sou d'un jugador.
+      disponible: diners(e.caixa),
+      sostenible: e.sou_sostenible_setmanal == null ? '—' : diners(Math.round(e.sou_sostenible_setmanal)) }) }));
   }
   if (e.recomanada) {
     cos.append(el('p', {}, el('b', { text: t('estoc.recomanada') }), ' ',
@@ -676,6 +678,14 @@ export async function economia(main) {
   // Les xifres del PAS 3: ESTOC (la caixa) i FLUX (i el sou que sosté). Ja no hi ha targeta
   // de «disponible per a comprar»: sense reserva d'estoc era la caixa dita dues vegades.
   // Cap aritmètica ací: tot ve calculat de l'avaluador (invariant 12, render pur).
+  // La UNITAT ix de l'avaluador (`e.unitats`), no d'un text fix a l'etiqueta: així una
+  // etiqueta no pot mentir sobre la periodicitat de la xifra que acompanya.
+  const unitat = (camp) => {
+    const u = e.unitats?.[camp];
+    if (u === 'periode') return tp('unitat.periode', e.setmanes_periode, { n: e.setmanes_periode });
+    if (u === 'setmana') return t('unitat.setmana');
+    return null;                                   // estoc: un saldo no té periodicitat
+  };
   const kpis = el('div', { class: 'eco-kpis' });
   kpis.append(el('div', { class: 'eco-card fosc' },
     el('div', { class: 'eco-et', text: t('economia.caixa_et') }),
@@ -685,13 +695,18 @@ export async function economia(main) {
     kpis.append(el('div', { class: 'eco-card' },
       el('div', { class: 'eco-et', text: t('economia.flux_et') }),
       el('div', { class: e.flux_negatiu ? 'eco-xifra neg' : 'eco-xifra', text: diners(e.flux) }),
+      el('div', { class: 'eco-unitat', text: unitat('flux') }),
       el('div', { class: 'eco-nota', text: t('economia.despeses_detall', eur(e.despeses, 'nomina', 'planter', 'manteniment_estadi', 'personal')) })));
   }
   if (e.sou_sostenible != null) {
     kpis.append(el('div', { class: 'eco-card' },
       el('div', { class: 'eco-et', text: t('economia.sou_sostenible_et') }),
       el('div', { class: 'eco-xifra', text: diners(e.sou_sostenible) }),
-      el('div', { class: 'eco-nota', text: t('economia.sou_sostenible_nota') })));
+      el('div', { class: 'eco-unitat', text: unitat('sou_sostenible') }),
+      // El setmanal és el que es compara amb el sou d'un jugador i amb la taula de salaris:
+      // per això va al costat i no obliga ningú a dividir de cap.
+      el('div', { class: 'eco-nota', text: t('economia.sou_sostenible_nota', {
+        setmanal: diners(Math.round(e.sou_sostenible_setmanal)) }) })));
   }
   main.append(kpis);
   if (e.flux == null) main.append(el('p', { class: 'nota-peu', text: t('economia.sense_ingressos') }));

@@ -1,5 +1,34 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · LA UNITAT D'UNA XIFRA ES DECLARA, no s'escriu a l'etiqueta
+**Símptoma de Miquel:** *«però com dius que entren més de 100.000 € cada setmana, això com
+és?»* No entraven: eren DUES setmanes (102.127 € = 51.064 €/setmana, i el gruix és el
+patrocini, 40.500 €/setmana). Però l'app li donava la raó, perquè la targeta deia literalment
+**«Flux setmanal»** damunt d'una xifra de període.
+
+**Causa:** al lot del període bi-setmanal es va canviar el CÀLCUL i no l'ETIQUETA. Cap prova
+mirava la coherència entre les dues coses, així que va anar a producció i va estar-hi fins que
+Miquel va preguntar. **És la segona vegada que una unitat mal dita passa desapercebuda** (la
+primera va ser `depressio_profunda` en enters contra fraccions).
+
+**Decisió — la mateixa medicina que ja funcionava per a altres coses:** qui calcula, declara.
+Igual que una alerta declara quins paràmetres són `diners` i quin porta el `compte`, ara
+l'economia declara **la unitat de cada xifra** (`UNITATS` a `lib/economia.js`): `periode` ·
+`setmana` · `estoc` (un saldo no té periodicitat). La vista pinta la unitat des d'`e.unitats`,
+i **les etiquetes deixen de dir-la**. Amb la unitat com a dada, una etiqueta no pot mentir
+perquè ja no afirma res.
+
+Les caselles d'ENTRADA sí que poden dir-la (`Manteniment d'estadi (€/setm)`): allí la
+periodicitat descriu el que Miquel escriu, no afirma res sobre una xifra calculada.
+
+**De passada:** el sou sostenible ara ensenya també el **setmanal** al costat (10.291 €), que
+és el número que es compara amb el sou d'un jugador i amb la taula de salaris. Ningú hauria de
+dividir de cap. I `estoc.capçal` passa a dir el setmanal pel mateix motiu.
+
+**Guardià nou (`test/unitats.mjs`):** tota xifra pintada ha de tindre unitat declarada, cap
+etiqueta de xifra calculada pot contindre una periodicitat, i la vista ha de llegir-la de
+l'avaluador. **Verificat reintroduint «Flux setmanal» a mà: el test peta.**
+
 ## 2026-07-26 · LA PANTALLA D'ECONOMIA: dos setmanes, i el rellotge de Paco arreglat
 Tres coses demanades per Miquel, i la tercera amagava dos bugs.
 

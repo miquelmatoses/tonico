@@ -462,3 +462,7 @@ form.card-cos { display: block; }
 .decl-bloc.ample { grid-column: 1 / -1; }
 .decl-bloc.ample .decl-camps { display: grid; gap: 10px;
   grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); }
+/* La UNITAT d'una xifra econòmica: ve de l'avaluador, no del text de l'etiqueta. */
+.eco-unitat { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--gris); margin-top: -2px; }
+.eco-card.fosc .eco-unitat { color: var(--verd-suau); }
