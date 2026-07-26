@@ -115,7 +115,7 @@
   "element.metge": "Doctor",
   "element.psicoleg": "Psychologist",
   "alerta.crida_juvenil": "With the expected promotions ({promocionen}), the youth squad will drop to {futur} and the minimum is {minim}. Schedule a call-up now.",
-  "fotrem.titol": "Academy (youth)",
+  "fotrem.titol": "Youth",
   "fotrem.edat": "Age",
   "fotrem.col_jugador": "Player",
   "fotrem.col_edat": "Age",
@@ -540,6 +540,5 @@
   "habilitat.pilota_aturada": "Set pieces",
   "personal.entrenament_senior": "Senior training",
   "personal.entrenament_senior_nota": "Changing it recalculates the training positions, the percentages, the cover and the line-ups.",
-  "vendes.retencio_resum": "{n} retained for minimum cover ({camp} outfield + {porters} keepers); the squad stays above {minim}.",
-  "hdr.caixa_falta": "⚠ fill it in"
+  "vendes.retencio_resum": "{n} retained for minimum cover ({camp} outfield + {porters} keepers); the squad stays above {minim}."
 }

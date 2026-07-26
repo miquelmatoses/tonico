@@ -1,5 +1,33 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · CONTRACTE v3: TRES CORRECCIONS DEL FULL ABANS DE RECONSTRUIR
+**Autoritzat per Miquel** (respostes a la parada per ambigüitat). El full es corregix, no
+s'interpreta: `docs/FORMULES.md` actualitzat i `formules.json` regenerat abans de tocar codi.
+
+- **1 `pes(lloc)` — la mètrica central.** El full demanava un escalar (`BUSCA(taula_aportacio;
+  lloc)`), però la guia §4 dona una **matriu** (posició × sector) i no publica el pes dels
+  sectors. **Decisió:** `pes(lloc) = SUMA(sectors: aportacio(lloc,sector) × pes_sector)`, amb
+  `aportacio` de §4 (mecànica) i `pes_sector` de la **distribució d'ocasions de §5**:
+  central 0,36 · bandes 0,255 cada costat · mig = `pes_mig` (pom; el mig decidix QUI té
+  l'ocasió, no on cau). *Conseqüència:* la frase «mig > bandes > defensa > atac» del full era
+  una pista descriptiva i queda **substituïda per la fórmula**; amb els pesos de §5 l'orde real
+  que ix és mig > bandes > atac > defensa.
+- **2 Personal (PAS 11) — reescrit.** No hi ha taula de sous de personal a la guia i 3 de les 4
+  «monedes» de guany no tenen números. **Decisió de Miquel:** tot el personal cobra igual, només
+  compta el nivell → `cost_flux(nivell) = staff_cost_base × 2^(nivell−1)` (1.020 · 2.040 · 4.080
+  · 8.160 · 16.320). **Desapareix la comparació per eficiència**: se seguix una **prioritat fixa**
+  (assistents → entrenador → metge → psicòleg, este últim només si `divisio ≤ divisio_psicoleg`)
+  i cada tipus s'emporta el nivell més alt que el flux restant sostinga. Cap número inventat.
+- **3 Estadi (PAS 8) — dades declarades.** La guia §10 delega en calculadores CHPP. **Decisió:**
+  l'usuari declara, a l'inici de cada temporada, els valors de la configuració NRG de
+  `url_calculadora_estadi`: manteniment (→ flux) i total costs (→ estoc). El *maximum payout* no
+  es demana perquè no entra a cap decisió. `capacitat_objectiu` deixa de calcular-se
+  (`assistencia_esperada × marge` fora): la configuració la dona la calculadora. Δflux =
+  manteniment_actual − manteniment_nou.
+- **Seeds amb origen verificat:** `taula_salaris` (guia §8, 16 nivells × 6 habilitats),
+  eficiència d'entrenador (§7), distribució d'ocasions (§5), aportació per posició (§4).
+  Únic pom no calibrat que en resulta: `pes_mig`.
+
 ## 2026-07-22 · COBERTURA LEAN v3 + PROTECCIÓ DE PORTERS + SALVATELLA (fet verificat)
 **Autoritzat per Miquel.** Migració 055. Principi LEAN nou a PRINCIPIS §6.
 - **Doctrina (també a `classificacio.md`):** la plantilla mínima **no és estalvi de sous** —

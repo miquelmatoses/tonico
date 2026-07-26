@@ -5,7 +5,22 @@ on:
     branches: [main]
 
 jobs:
+  # Els guardians del contracte (G1 contracte-full, G2 render-pur, G3 golden) + la resta de
+  # la suite. Un commit que els trenque NO arriba a prod (desplegar depén d'este job).
+  provar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Provar (suite + guardians del full)
+        run: npm test
+
   desplegar:
+    needs: provar
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -6,6 +6,14 @@ res d'IA. Puges les dades de la setmana i l'app et diu què fer.
 > Repositori **públic**. Cap dada real de jugadors ni cap secret ací dins:
 > les dades viuen a D1, els secrets a variables d'entorn de Cloudflare.
 
+> ⚖️ **El contracte és el full de fórmules.** [`docs/FORMULES.md`](docs/FORMULES.md) (mirall
+> màquina: [`formules.json`](formules.json)) és la font de veritat: el codi n'és l'avaluador.
+> **REGLA DE PROCÉS:** tot arreglament de símptoma modifica `formules.json` o l'avaluador —
+> MAI una secció de presentació. Tres guardians al CI ho fan complir (un commit que els
+> trenque no arriba a prod): **G1** contracte-full (`avaluador = referència`), **G2**
+> render-pur (cap lògica de domini a la vista), **G3** golden-pantalla (render = avaluador).
+> El pla de reconstrucció viu a [`docs/DIFF_FORMULES.md`](docs/DIFF_FORMULES.md).
+
 ## Estat: Fase 0 completa
 
 Esquelet + ingesta CSV → D1, login, i18n i les tres primeres pantalles.
@@ -70,3 +78,16 @@ demana el nom del primer equip i del juvenil abans de deixar pujar dades.
   `configuracio_app`, ara `false`). Activar-la requerix un **proveïdor de
   correu extern** (p.ex. Resend): implementar `enviarCorreuVerificacio` a
   `lib/verificacio.js` (ara és un stub) i un endpoint de confirmació de token.
+
+## CHPP — connexió amb l'API oficial de Hattrick
+
+La capa d'ingesta és **abstracta** («Font de dades»): avui la font és el CSV
+setmanal, però l'arquitectura ja preveu la **CHPP** (API oficial de Hattrick)
+com una **font nova**, no un canvi d'arquitectura. Amb la CHPP, part del residu
+manual desapareix (plantilla, transferències, comparables de mercat i, sobretot,
+els **minuts jugats** reals, que avui no dóna el CSV). L'inventari complet del
+residu i què n'aporta la CHPP està a [`docs/ENTRADES_MANUALS.md`](docs/ENTRADES_MANUALS.md).
+
+El text preparat per sol·licitar l'accés CHPP (descripció, ús de l'API i
+endpoints) està a [`docs/CHPP_SOLICITUD.md`](docs/CHPP_SOLICITUD.md), llest
+perquè Miquel el presente.

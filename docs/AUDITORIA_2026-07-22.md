@@ -1,3 +1,7 @@
+> ⚠️ **SUPERAT** per l'auditoria nova [docs/FORMULES_ACTUALS.md](FORMULES_ACTUALS.md)
+> (estat del sistema HUI) i pel contracte [docs/FORMULES.md](FORMULES.md) (2026-07-24).
+> Es conserva com a context històric.
+
 # Auditoria del sistema — 2026-07-22
 
 Revisió **només lectura** de tot el sistema (regles, constants, fórmules, alertes,

@@ -1,0 +1,1373 @@
+{
+  "_meta": {
+    "font": "docs/FORMULES.md",
+    "generat": "scripts/genera_formules.mjs",
+    "contracte": true,
+    "nota": "Mirall fidel per construcció. Paritat verificada per test/formules_paritat.mjs."
+  },
+  "formules": [
+    {
+      "id": "V.config",
+      "pas": "V",
+      "pasTitol": "VARIABLES BASE (una font cadascuna)",
+      "clau": "config",
+      "linia": "config          = { estrategia, pais, divisio, sistema_juvenil, partits_setmana }",
+      "entrades": [
+        "divisio",
+        "estrategia",
+        "pais",
+        "partits_setmana"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "V.estrategia",
+      "pas": "V",
+      "pasTitol": "VARIABLES BASE (una font cadascuna)",
+      "clau": "estrategia",
+      "linia": "estrategia      ∈ { competitiva, cycle(WIP) }",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "V.hores",
+      "pas": "V",
+      "pasTitol": "VARIABLES BASE (una font cadascuna)",
+      "clau": "hores",
+      "linia": "hores(pais)     = BUSCA(`hores_pais`; pais) → {economia_dia, economia_hora}",
+      "entrades": [
+        "pais"
+      ],
+      "poms": [],
+      "taules": [
+        "hores_pais"
+      ]
+    },
+    {
+      "id": "V.plantilla",
+      "pas": "V",
+      "pasTitol": "VARIABLES BASE (una font cadascuna)",
+      "clau": "plantilla",
+      "linia": "plantilla       = instantània sènior vigent · juvenils = instantània juvenil vigent",
+      "entrades": [
+        "juvenils"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "V.llocs_partit",
+      "pas": "V",
+      "pasTitol": "VARIABLES BASE (una font cadascuna)",
+      "clau": "llocs_partit",
+      "linia": "llocs_partit    = 11 × partits_setmana",
+      "entrades": [
+        "partits_setmana"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "V.temporada_setmana",
+      "pas": "V",
+      "pasTitol": "VARIABLES BASE (una font cadascuna)",
+      "clau": "(temporada, setmana)",
+      "linia": "(temporada, setmana) = f_calendari(data, `ancora`)      ← ÚNICA funció del sistema",
+      "entrades": [],
+      "poms": [
+        "ancora"
+      ],
+      "taules": []
+    },
+    {
+      "id": "V.llistat",
+      "pas": "V",
+      "pasTitol": "VARIABLES BASE (una font cadascuna)",
+      "clau": "llistat",
+      "linia": "llistat(j)      = csv.transferible(j) = 1  O  fitxa.llistada(j)",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "V.lesionat",
+      "pas": "V",
+      "pasTitol": "VARIABLES BASE (una font cadascuna)",
+      "clau": "lesionat",
+      "linia": "lesionat(j)     = csv.lesio(j) ≥ 1                      [font: buit | N setmanes]",
+      "entrades": [
+        "buit"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "V.sancionat",
+      "pas": "V",
+      "pasTitol": "VARIABLES BASE (una font cadascuna)",
+      "clau": "sancionat",
+      "linia": "sancionat(j)    = csv.amonestacions(j) ≥ `amonestacions_suspensio`   [3; només lliga]",
+      "entrades": [],
+      "poms": [
+        "amonestacions_suspensio"
+      ],
+      "taules": []
+    },
+    {
+      "id": "V.edat_d",
+      "pas": "V",
+      "pasTitol": "VARIABLES BASE (una font cadascuna)",
+      "clau": "edat_d",
+      "linia": "edat_d(j)       = anys(j)×112 + dies(j)   ·   dies_aniversari(j) = 112 − dies(j)",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "V.fase_mercat",
+      "pas": "V",
+      "pasTitol": "VARIABLES BASE (una font cadascuna)",
+      "clau": "fase_mercat",
+      "linia": "fase_mercat(d)  = BUSCA(`fases_mercat`; setmana(d)) → modificador (FRACCIÓ, mai enter)",
+      "entrades": [],
+      "poms": [],
+      "taules": [
+        "fases_mercat"
+      ]
+    },
+    {
+      "id": "V.horitzo_eixida",
+      "pas": "V",
+      "pasTitol": "VARIABLES BASE (una font cadascuna)",
+      "clau": "horitzo_eixida",
+      "linia": "horitzo_eixida(j) = temporada en què edat_d(j) assoleix `edat_pic_venda`×112",
+      "entrades": [
+        "edat_d",
+        "temporada"
+      ],
+      "poms": [
+        "edat_pic_venda"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P0.estrategia",
+      "pas": "P0",
+      "pasTitol": "CONFIGURACIÓ (l'única entrada d'usuari inicial)",
+      "clau": "estrategia",
+      "linia": "estrategia      = TRIA(competitiva | cycle)      [cycle: WIP, sense contingut]",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P0.pais",
+      "pas": "P0",
+      "pasTitol": "CONFIGURACIÓ (l'única entrada d'usuari inicial)",
+      "clau": "pais",
+      "linia": "pais, divisio, sistema_juvenil ∈ {acadèmia, cercapromeses, cap}, partits_setmana ∈ {2,1}",
+      "entrades": [
+        "divisio",
+        "partits_setmana"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P1.a_b",
+      "pas": "P1",
+      "pasTitol": "ENTRENAMENT (prescrit, no triable)",
+      "clau": "(A, B)",
+      "linia": "(A, B) = (creativitat, passades)   · intensitat 100% · resistència `resistencia_pct`",
+      "entrades": [],
+      "poms": [
+        "resistencia_pct"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P1.accio",
+      "pas": "P1",
+      "pasTitol": "ENTRENAMENT (prescrit, no triable)",
+      "clau": "ACCIÓ",
+      "linia": "ACCIÓ(\"canvia l'entrenament a HT\")  SI configurat_HT ≠ prescrit",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P2.pos_a",
+      "pas": "P2",
+      "pasTitol": "LLOCS I PESOS",
+      "clau": "pos_A",
+      "linia": "pos_A(pct) = FILTRA(`taula_entrenament`; habilitat = A)     → MC 100%, extrem 50%",
+      "entrades": [
+        "A"
+      ],
+      "poms": [],
+      "taules": [
+        "taula_entrenament"
+      ]
+    },
+    {
+      "id": "P2.pos_b",
+      "pas": "P2",
+      "pasTitol": "LLOCS I PESOS",
+      "clau": "pos_B",
+      "linia": "pos_B      = FILTRA(`taula_entrenament`; habilitat = B)",
+      "entrades": [
+        "B"
+      ],
+      "poms": [],
+      "taules": [
+        "taula_entrenament"
+      ]
+    },
+    {
+      "id": "P2.entrenable",
+      "pas": "P2",
+      "pasTitol": "LLOCS I PESOS",
+      "clau": "entrenable",
+      "linia": "entrenable(lloc) = lloc ∈ pos_A",
+      "entrades": [
+        "lloc",
+        "pos_A"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P2.pes",
+      "pas": "P2",
+      "pasTitol": "LLOCS I PESOS",
+      "clau": "pes",
+      "linia": "pes(lloc)  = SUMA(sectors: aportacio(lloc, sector) × pes_sector(sector))",
+      "entrades": [
+        "lloc"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P2.n_core",
+      "pas": "P2",
+      "pasTitol": "LLOCS I PESOS",
+      "clau": "N_core",
+      "linia": "N_core     = COMPTA(pos_A)                     [5: 3 MC + 2 extrems]",
+      "entrades": [
+        "pos_A"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P2.n_rotatius",
+      "pas": "P2",
+      "pasTitol": "LLOCS I PESOS",
+      "clau": "N_rotatius",
+      "linia": "N_rotatius = SUMA(pos_A amb pct=100: partits_setmana − 1)   [3: els MC del bloc B]",
+      "entrades": [
+        "B",
+        "partits_setmana",
+        "pos_A"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P2.max_partits",
+      "pas": "P2",
+      "pasTitol": "LLOCS I PESOS",
+      "clau": "max_partits",
+      "linia": "max_partits(j) = SI(pct(lloc(j)) < 100 O rol(j) ∈ {futur_entrenador, cos}; 2; 1)",
+      "entrades": [
+        "lloc"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P3.ingressos_recurrents",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "ingressos_recurrents",
+      "linia": "ingressos_recurrents = taquilla + patrocini + premis        [declarats/derivats]",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P3.despeses_fixes",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "despeses_fixes",
+      "linia": "despeses_fixes       = nòmina + manteniment_estadi + personal + planter",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P3.flux",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "flux",
+      "linia": "flux                 = ingressos_recurrents − despeses_fixes",
+      "entrades": [
+        "despeses_fixes",
+        "ingressos_recurrents"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P3.sou_sostenible",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "sou_sostenible",
+      "linia": "sou_sostenible       = MAX(0; flux + nòmina − `reserva_flux`)",
+      "entrades": [
+        "flux"
+      ],
+      "poms": [
+        "reserva_flux"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P3.caixa",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "caixa",
+      "linia": "caixa                = saldo real declarat (mai projectat)",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P3.caixa_disponible",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "caixa_disponible",
+      "linia": "caixa_disponible     = MAX(0; caixa − `reserva_caixa`)",
+      "entrades": [
+        "caixa"
+      ],
+      "poms": [
+        "reserva_caixa"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P4.pressupost_sou",
+      "pas": "P4",
+      "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
+      "clau": "pressupost_sou",
+      "linia": "pressupost_sou(lloc)  = sou_sostenible × pes(lloc) / SUMA(pesos de tots els llocs)",
+      "entrades": [
+        "lloc",
+        "llocs",
+        "pes",
+        "sou_sostenible"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P4.habilitat_lloc",
+      "pas": "P4",
+      "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
+      "clau": "habilitat_lloc",
+      "linia": "habilitat_lloc(lloc)  = BUSCA(`taula_habilitat_lloc`; lloc)   [POR→porteria,",
+      "entrades": [
+        "lloc"
+      ],
+      "poms": [],
+      "taules": [
+        "taula_habilitat_lloc"
+      ]
+    },
+    {
+      "id": "P4.nivell_objectiu",
+      "pas": "P4",
+      "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
+      "clau": "nivell_objectiu",
+      "linia": "nivell_objectiu(lloc) = MAX(n : BUSCA(`taula_salaris`; habilitat_lloc(lloc), n)",
+      "entrades": [
+        "habilitat_lloc",
+        "lloc"
+      ],
+      "poms": [],
+      "taules": [
+        "taula_salaris"
+      ]
+    },
+    {
+      "id": "P5.ocupant",
+      "pas": "P5",
+      "pasTitol": "MANCANÇA (la mètrica única)",
+      "clau": "ocupant",
+      "linia": "ocupant(lloc)   = el jugador assignat al lloc (PAS 8) o ∅",
+      "entrades": [
+        "jugador",
+        "lloc"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P5.nivell_actual",
+      "pas": "P5",
+      "pasTitol": "MANCANÇA (la mètrica única)",
+      "clau": "nivell_actual",
+      "linia": "nivell_actual(lloc) = SI(ocupant ≠ ∅; hab(ocupant, habilitat_lloc(lloc)); 0)",
+      "entrades": [
+        "hab",
+        "habilitat_lloc",
+        "lloc",
+        "ocupant"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P5.mancanca",
+      "pas": "P5",
+      "pasTitol": "MANCANÇA (la mètrica única)",
+      "clau": "mancança",
+      "linia": "mancança(lloc)  = MAX(0; nivell_objectiu(lloc) − nivell_actual(lloc))",
+      "entrades": [
+        "lloc",
+        "nivell_actual",
+        "nivell_objectiu"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P5.exces",
+      "pas": "P5",
+      "pasTitol": "MANCANÇA (la mètrica única)",
+      "clau": "excés",
+      "linia": "excés(j)        = MAX(0; hab(j, habilitat_lloc(lloc(j))) − nivell_objectiu(lloc(j)))",
+      "entrades": [
+        "hab",
+        "habilitat_lloc",
+        "lloc",
+        "nivell_objectiu"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P5.sobrecost",
+      "pas": "P5",
+      "pasTitol": "MANCANÇA (la mètrica única)",
+      "clau": "sobrecost",
+      "linia": "sobrecost(j)    = MAX(0; sou(j) − BUSCA(`taula_salaris`; habilitat_lloc(lloc(j));",
+      "entrades": [
+        "habilitat_lloc",
+        "lloc",
+        "sou"
+      ],
+      "poms": [],
+      "taules": [
+        "taula_salaris"
+      ]
+    },
+    {
+      "id": "P5.prioritat",
+      "pas": "P5",
+      "pasTitol": "MANCANÇA (la mètrica única)",
+      "clau": "prioritat",
+      "linia": "prioritat(lloc) = mancança(lloc) × pes(lloc)",
+      "entrades": [
+        "lloc",
+        "mancança",
+        "pes"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P6.core",
+      "pas": "P6",
+      "pasTitol": "PLANTILLA (qui es queda, derivat)",
+      "clau": "core",
+      "linia": "core      = PRIMERS(N_core;  ORDENA(FILTRA(plantilla; hab(j,A) ≥ `core_a_min`);",
+      "entrades": [
+        "A",
+        "N_core",
+        "hab",
+        "plantilla"
+      ],
+      "poms": [
+        "core_a_min"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P6.rotatius",
+      "pas": "P6",
+      "pasTitol": "PLANTILLA (qui es queda, derivat)",
+      "clau": "rotatius",
+      "linia": "rotatius  = PRIMERS(N_rotatius; ORDENA(FILTRA(plantilla − core;",
+      "entrades": [
+        "N_rotatius",
+        "core",
+        "plantilla"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P6.titulars",
+      "pas": "P6",
+      "pasTitol": "PLANTILLA (qui es queda, derivat)",
+      "clau": "titulars",
+      "linia": "titulars  = PER lloc ∉ pos_A: PRIMER(ORDENA(FILTRA(plantilla − core − rotatius;",
+      "entrades": [
+        "core",
+        "lloc",
+        "plantilla",
+        "pos_A",
+        "rotatius"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P6.porters_n",
+      "pas": "P6",
+      "pasTitol": "PLANTILLA (qui es queda, derivat)",
+      "clau": "porters_n",
+      "linia": "porters_n = 1 × partits_setmana",
+      "entrades": [
+        "partits_setmana"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P6.cossos_n",
+      "pas": "P6",
+      "pasTitol": "PLANTILLA (qui es queda, derivat)",
+      "clau": "cossos_n",
+      "linia": "cossos_n  = ARREDONIX.AMUNT((llocs_partit − llocs_ocupats(core, rotatius, titulars,",
+      "entrades": [
+        "core",
+        "llocs_partit",
+        "rotatius",
+        "titulars"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P6.cossos",
+      "pas": "P6",
+      "pasTitol": "PLANTILLA (qui es queda, derivat)",
+      "clau": "cossos",
+      "linia": "cossos    = PRIMERS(cossos_n; ORDENA(plantilla restant; sou ASC))",
+      "entrades": [
+        "cossos_n",
+        "plantilla",
+        "sou"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P6.retinguts",
+      "pas": "P6",
+      "pasTitol": "PLANTILLA (qui es queda, derivat)",
+      "clau": "retinguts",
+      "linia": "retinguts = core ∪ rotatius ∪ titulars ∪ porters ∪ cossos",
+      "entrades": [
+        "core",
+        "cossos",
+        "rotatius",
+        "titulars"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P6.venda",
+      "pas": "P6",
+      "pasTitol": "PLANTILLA (qui es queda, derivat)",
+      "clau": "venda",
+      "linia": "venda     = plantilla − retinguts        [categoria sencera; cap marca dins]",
+      "entrades": [
+        "plantilla",
+        "retinguts"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P7.motiu_venda",
+      "pas": "P7",
+      "pasTitol": "VENDRE (allibera sou i genera caixa)",
+      "clau": "motiu_venda",
+      "linia": "motiu_venda(j) = SI(j ∈ rotatius I temporada ≥ horitzo_eixida(j); \"pic de valor\";",
+      "entrades": [
+        "horitzo_eixida",
+        "rotatius",
+        "temporada",
+        "valor"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P7.ordre_venda",
+      "pas": "P7",
+      "pasTitol": "VENDRE (allibera sou i genera caixa)",
+      "clau": "ordre_venda",
+      "linia": "ordre_venda    = ORDENA(FILTRA(plantilla; motiu_venda ≠ ∅);",
+      "entrades": [
+        "motiu_venda",
+        "plantilla"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P7.calibrat",
+      "pas": "P7",
+      "pasTitol": "VENDRE (allibera sou i genera caixa)",
+      "clau": "calibrat",
+      "linia": "calibrat        = COMPTA(vendes_reals ∪ comparables) ≥ `min_mostres`",
+      "entrades": [],
+      "poms": [
+        "min_mostres"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P7.preu_esperat",
+      "pas": "P7",
+      "pasTitol": "VENDRE (allibera sou i genera caixa)",
+      "clau": "preu_esperat",
+      "linia": "preu_esperat(j) = SI(calibrat; estimació_comparables(j);",
+      "entrades": [
+        "calibrat"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P7.valor_net",
+      "pas": "P7",
+      "pasTitol": "VENDRE (allibera sou i genera caixa)",
+      "clau": "valor_net",
+      "linia": "valor_net(j)    = preu_esperat(j) − `cost_llistat` − sou(j) × setmanes_venda(j)",
+      "entrades": [
+        "preu_esperat",
+        "sou"
+      ],
+      "poms": [
+        "cost_llistat"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P7.urgent",
+      "pas": "P7",
+      "pasTitol": "VENDRE (allibera sou i genera caixa)",
+      "clau": "urgent",
+      "linia": "urgent(j)       = dies_aniversari(j) ≤ `dies_urgencia`",
+      "entrades": [],
+      "poms": [
+        "dies_urgencia"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P7.desti",
+      "pas": "P7",
+      "pasTitol": "VENDRE (allibera sou i genera caixa)",
+      "clau": "destí",
+      "linia": "destí(j) = SI(lesionat(j);                              AGENDA(\"llista'l en recuperar-se\");",
+      "entrades": [
+        "lesionat"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P7.pregunta",
+      "pas": "P7",
+      "pasTitol": "VENDRE (allibera sou i genera caixa)",
+      "clau": "PREGUNTA",
+      "linia": "PREGUNTA(\"¿venut per quant / deserta?\")  quan transferible passa 1→buit sense venda",
+      "entrades": [
+        "buit",
+        "venda"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P7.recalibra",
+      "pas": "P7",
+      "pasTitol": "VENDRE (allibera sou i genera caixa)",
+      "clau": "recalibra",
+      "linia": "recalibra(estimació) A CADA venda real       → la caixa cobrada activa el PAS 8",
+      "entrades": [
+        "A",
+        "caixa",
+        "venda"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P8.candidat",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "clau": "candidat",
+      "linia": "candidat(lloc)  = jugador de mercat amb hab(habilitat_lloc) ≥ nivell_objectiu(lloc)",
+      "entrades": [
+        "hab",
+        "habilitat_lloc",
+        "jugador",
+        "lloc",
+        "nivell_objectiu"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P8.guany",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "clau": "guany",
+      "linia": "guany(jugador)  = mancança(lloc) × pes(lloc)",
+      "entrades": [
+        "lloc",
+        "mancança",
+        "pes"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P8.cost",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "clau": "cost",
+      "linia": "cost(jugador)   = preu",
+      "entrades": [
+        "preu"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P8.admissible",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "clau": "admissible",
+      "linia": "admissible      = preu ≤ caixa_disponible  I  sou ≤ pressupost_sou(lloc)",
+      "entrades": [
+        "caixa_disponible",
+        "lloc",
+        "pressupost_sou",
+        "preu",
+        "sou"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P8.pregunta",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "clau": "PREGUNTA",
+      "linia": "PREGUNTA a l'inici de cada temporada, de `url_calculadora_estadi` (configuració NRG):",
+      "entrades": [
+        "temporada"
+      ],
+      "poms": [
+        "url_calculadora_estadi"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P8.flux",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "clau": "Δflux",
+      "linia": "Δflux(obra)          = manteniment_actual − `estadi_manteniment`",
+      "entrades": [],
+      "poms": [
+        "estadi_manteniment"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P8.nivell_pagable",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "clau": "Δnivell_pagable",
+      "linia": "Δnivell_pagable(lloc)= nivell_objectiu(lloc | sou_sostenible + Δflux)",
+      "entrades": [
+        "flux",
+        "lloc",
+        "nivell_objectiu",
+        "sou_sostenible",
+        "Δflux"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P8.guany_2",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "clau": "guany",
+      "linia": "guany(estadi)  = SUMA(llocs amb mancança > 0:",
+      "entrades": [
+        "llocs",
+        "mancança"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P8.cost_2",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "clau": "cost",
+      "linia": "cost(estadi)   = `estadi_cost_obra`",
+      "entrades": [],
+      "poms": [
+        "estadi_cost_obra"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P8.admissible_2",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "clau": "admissible",
+      "linia": "admissible     = cost ≤ caixa_disponible  I  flux + Δflux ≥ 0",
+      "entrades": [
+        "caixa_disponible",
+        "cost",
+        "flux",
+        "Δflux"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P8.eficiencia",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "clau": "eficiència",
+      "linia": "eficiència(opció) = guany / cost",
+      "entrades": [
+        "cost",
+        "guany"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P8.accio",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "clau": "ACCIÓ",
+      "linia": "ACCIÓ = PRIMER(ORDENA(FILTRA(opcions; admissible); eficiència DESC))",
+      "entrades": [
+        "admissible",
+        "eficiència"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P8.capacitat_objectiu",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; jugadors i estadi competixen)",
+      "clau": "capacitat_objectiu",
+      "linia": "capacitat_objectiu   = configuració NRG de `url_calculadora_estadi`   [declarada]",
+      "entrades": [],
+      "poms": [
+        "url_calculadora_estadi"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P9.llocs",
+      "pas": "P9",
+      "pasTitol": "ALINEACIONS",
+      "clau": "llocs",
+      "linia": "llocs ordenats per pes DESC, partit ASC",
+      "entrades": [
+        "pes"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P9.disponible",
+      "pas": "P9",
+      "pasTitol": "ALINEACIONS",
+      "clau": "disponible",
+      "linia": "disponible(j, lloc) = j ∈ retinguts I ¬llistat(j) I ¬lesionat(j)",
+      "entrades": [
+        "lesionat",
+        "llistat",
+        "retinguts"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P9.valor",
+      "pas": "P9",
+      "pasTitol": "ALINEACIONS",
+      "clau": "valor",
+      "linia": "valor(j, lloc)  = SI(entrenable(lloc) I j ∈ core ∪ rotatius; `pes_entrenament`;",
+      "entrades": [
+        "core",
+        "entrenable",
+        "lloc",
+        "rotatius"
+      ],
+      "poms": [
+        "pes_entrenament"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P9.jugador",
+      "pas": "P9",
+      "pasTitol": "ALINEACIONS",
+      "clau": "jugador",
+      "linia": "jugador(lloc)   = PRIMER(ORDENA(FILTRA(retinguts; disponible); valor DESC,",
+      "entrades": [
+        "disponible",
+        "retinguts",
+        "valor"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P9.buit",
+      "pas": "P9",
+      "pasTitol": "ALINEACIONS",
+      "clau": "buit",
+      "linia": "buit(lloc) = ∅ → juga amb un menys; excepció declarada si cal moure un entrenable",
+      "entrades": [
+        "entrenable"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P9.comptabilitat",
+      "pas": "P9",
+      "pasTitol": "ALINEACIONS",
+      "clau": "comptabilitat",
+      "linia": "comptabilitat(j) = SUMA(pct dels llocs assignats)",
+      "entrades": [
+        "llocs"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.esperat_act",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "clau": "esperat_act",
+      "linia": "esperat_act(h) = MITJANA(revelacions pròpies de h)   [∅ → `esperat_defecte`]",
+      "entrades": [],
+      "poms": [
+        "esperat_defecte"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P10.valor",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "clau": "valor",
+      "linia": "valor(j,h) = SI(act I pot coneguts; act + (pot−act)×`f_marge`;",
+      "entrades": [
+        "act",
+        "pot"
+      ],
+      "poms": [
+        "f_marge"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P10.nivell",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "clau": "NIVELL",
+      "linia": "NIVELL(j)  = `pes_A`×valor(j,A) + `pes_B`×valor(j,B)",
+      "entrades": [
+        "A",
+        "B"
+      ],
+      "poms": [
+        "pes_A",
+        "pes_B"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P10.util",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "clau": "util",
+      "linia": "util(j)    = potencial(j, A) ≥ nivell_objectiu(MC)   ← ¿arribarà al nivell del lloc?",
+      "entrades": [
+        "A",
+        "lloc",
+        "nivell",
+        "nivell_objectiu"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.elegible",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "clau": "elegible",
+      "linia": "elegible(j)= edat_d ≥ 17×112 I estada ≥ 112",
+      "entrades": [
+        "edat_d"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.promo",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "clau": "promo",
+      "linia": "promo      = PRIMER(ORDENA(FILTRA(juvenils; elegible); NIVELL DESC))",
+      "entrades": [
+        "NIVELL",
+        "elegible",
+        "juvenils"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.desti",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "clau": "destí",
+      "linia": "destí(promo) = SI(util(promo); PROMOCIONA (entra com a rotatiu de l'11B);",
+      "entrades": [
+        "B",
+        "promo",
+        "util"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.onze",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "clau": "onze",
+      "linia": "onze juvenil = mateixa fórmula del PAS 9 amb `taula_entrenament_juvenil`:",
+      "entrades": [],
+      "poms": [
+        "taula_entrenament_juvenil"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P10.sobra",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "clau": "sobra",
+      "linia": "sobra = COMPTA(juvenils) − `objectiu_juvenil`   [`objectiu_juvenil` = onze legal + 1]",
+      "entrades": [
+        "juvenils",
+        "onze"
+      ],
+      "poms": [
+        "objectiu_juvenil"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P10.despatxa",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "clau": "despatxa",
+      "linia": "despatxa PRIMERS(sobra; ORDENA(juvenils; NIVELL ASC, n_revelacions ASC))",
+      "entrades": [
+        "NIVELL",
+        "juvenils",
+        "sobra"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.reinici_crida",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "clau": "reinici_crida",
+      "linia": "reinici_crida = pròxim (hores(pais).economia_dia, economia_hora + 1h)",
+      "entrades": [
+        "hores",
+        "pais"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.accio",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "clau": "ACCIÓ",
+      "linia": "ACCIÓ(\"fes la crida al cercapromeses\", caduca)  SI crida_disponible",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.reexecuta",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "clau": "reexecuta",
+      "linia": "reexecuta el PAS a CADA pujada (revelacions recalibren esperat_act)",
+      "entrades": [
+        "esperat_act"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P11.el",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "El",
+      "linia": "El personal consumix FLUX (sou setmanal), no estoc. Tot el personal cobra igual siga",
+      "entrades": [
+        "sou"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P11.quin",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "quin",
+      "linia": "quin siga el tipus: només compta el NIVELL. Per tant no es compara eficiència entre",
+      "entrades": [
+        "NIVELL",
+        "eficiència",
+        "tipus"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P11.tipus",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "tipus",
+      "linia": "tipus — es seguix una PRIORITAT fixa i cada tipus s'emporta el nivell més alt que el",
+      "entrades": [
+        "nivell"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P11.flux",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "flux",
+      "linia": "flux encara sostinga.",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P11.cost_flux",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "cost_flux",
+      "linia": "cost_flux(nivell) = `staff_cost_base` × 2^(nivell−1)",
+      "entrades": [
+        "nivell"
+      ],
+      "poms": [
+        "staff_cost_base"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P11.flux_lliure",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "flux_lliure",
+      "linia": "flux_lliure       = flux − `reserva_flux`",
+      "entrades": [
+        "flux"
+      ],
+      "poms": [
+        "reserva_flux"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P11.prioritat_personal",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "prioritat_personal",
+      "linia": "prioritat_personal = `prioritat_personal`   [orde fix, pom]",
+      "entrades": [],
+      "poms": [
+        "prioritat_personal"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P11.nivell",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "nivell",
+      "linia": "nivell(tipus) = MAX(n : cost_flux_acumulat(fins a tipus, n) ≤ flux_lliure)",
+      "entrades": [
+        "flux_lliure",
+        "tipus"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P11.accio",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "ACCIÓ",
+      "linia": "ACCIÓ(\"contracta/puja de nivell\", tipus, nivell, cost_flux)  SI nivell(tipus) > declarat",
+      "entrades": [
+        "cost_flux",
+        "nivell",
+        "tipus"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P11.avis",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "AVÍS:",
+      "linia": "AVÍS: compromet el flux `setmanes_contracte` setmanes (no es pot desfer)",
+      "entrades": [
+        "flux",
+        "pot"
+      ],
+      "poms": [
+        "setmanes_contracte"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P11.renovar",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "RENOVAR",
+      "linia": "RENOVAR (única decisió reversible; NO existix acomiadar):",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P12.caducitats",
+      "pas": "P12",
+      "pasTitol": "INFORME I AGENDA",
+      "clau": "CADUCITATS",
+      "linia": "CADUCITATS (contractes de personal i altres dates declarades):",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P12.urgencia",
+      "pas": "P12",
+      "pasTitol": "INFORME I AGENDA",
+      "clau": "urgencia",
+      "linia": "urgencia(acció) = BUSCA(`urgencia_tipus`; tipus(acció))      [pom; MAI a la vista]",
+      "entrades": [
+        "tipus"
+      ],
+      "poms": [],
+      "taules": [
+        "urgencia_tipus"
+      ]
+    },
+    {
+      "id": "P12.nivell",
+      "pas": "P12",
+      "pasTitol": "INFORME I AGENDA",
+      "clau": "nivell",
+      "linia": "nivell(acció)   = SI(urgencia ≥ `llindar_urgent`; \"urgent\";",
+      "entrades": [
+        "urgencia",
+        "urgent"
+      ],
+      "poms": [
+        "llindar_urgent"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P12.alertes",
+      "pas": "P12",
+      "pasTitol": "INFORME I AGENDA",
+      "clau": "alertes",
+      "linia": "alertes = AGRUPA(ACCIONS amb data = HUI; tipus) ORDENA per urgencia DESC",
+      "entrades": [
+        "tipus",
+        "urgencia"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P12.agenda",
+      "pas": "P12",
+      "pasTitol": "INFORME I AGENDA",
+      "clau": "agenda",
+      "linia": "agenda  = ORDENA(ACCIONS amb data > HUI; data)",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P12.res",
+      "pas": "P12",
+      "pasTitol": "INFORME I AGENDA",
+      "clau": "res",
+      "linia": "res més és alerta; «de moment res» = informació de secció",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    }
+  ]
+}

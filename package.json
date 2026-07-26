@@ -6,6 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "test": "for t in test/*.mjs; do node \"$t\" || exit 1; done",
     "dev": "wrangler pages dev public --d1=DB",
     "deploy": "wrangler pages deploy public",
     "db:local": "wrangler d1 execute tonico --local --file",

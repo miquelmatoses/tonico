@@ -1,3 +1,8 @@
+> ⚠️ **SUPERAT (parcialment) PER [docs/FORMULES.md](FORMULES.md) — contracte 2026-07-24.**
+> On este document contradiga el full de fórmules, **mana el full**. Es conserva com
+> a context històric; els principis segueixen vigents com a esperit, però la veritat
+> numèrica i les fórmules viuen al full i a `formules.json`.
+
 # Tonico — principis formals de disseny
 
 Els principis que governen el producte, al costat dels contractes protegits. Dos

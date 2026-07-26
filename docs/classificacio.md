@@ -1,3 +1,8 @@
+> ⚠️ **SUPERAT PER [docs/FORMULES.md](FORMULES.md) — contracte 2026-07-24.**
+> La classificació ara es defineix als PASSOS 4–9 del full (entrenables, fe, porters,
+> cossos, sobrants). On este document contradiga el full, **mana el full**. Es conserva
+> com a context històric.
+
 # Classificador automàtic — doctrina (Fase 1, F1-B)
 
 > Font de veritat del comportament del motor. La **lògica** viu al codi; els

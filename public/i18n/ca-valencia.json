@@ -115,7 +115,7 @@
   "element.metge": "Metge",
   "element.psicoleg": "Psicòleg",
   "alerta.crida_juvenil": "Amb les promocions previstes ({promocionen}), el juvenil es quedarà en {futur} i el mínim és {minim}. Programa una crida al cercapromeses ja.",
-  "fotrem.titol": "Acadèmia (juvenil)",
+  "fotrem.titol": "Juvenils",
   "fotrem.edat": "Edat",
   "fotrem.col_jugador": "Jugador",
   "fotrem.col_edat": "Edat",
@@ -540,6 +540,5 @@
   "habilitat.pilota_aturada": "Pilota aturada",
   "personal.entrenament_senior": "Entrenament sènior",
   "personal.entrenament_senior_nota": "En canviar-lo, es recalculen les places que entrenen, els %, la cobertura i les alineacions.",
-  "vendes.retencio_resum": "Es retenen {n} per cobertura mínima ({camp} de camp + {porters} de porteria); la plantilla no baixa de {minim}.",
-  "hdr.caixa_falta": "⚠ emplena-la"
+  "vendes.retencio_resum": "Es retenen {n} per cobertura mínima ({camp} de camp + {porters} de porteria); la plantilla no baixa de {minim}."
 }

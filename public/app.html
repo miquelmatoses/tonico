@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/estil.css">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <title>Tonico</title>
 </head>
 <body>
@@ -72,14 +73,10 @@
       const [eco, pla] = await Promise.all([
         api('/api/economia').catch(() => null), api('/api/pla').catch(() => null),
       ]);
-      const caixaEl = document.getElementById('hdr-caixa');
-      if (eco && eco.caixa != null) { caixaEl.textContent = diners(eco.caixa); }
-      else {
-        // Sense caixa declarada: no un blanc mut, sinó una acció per a emplenar-la.
-        caixaEl.textContent = '';
-        const a = el('a', { href: '#economia', class: 'hdr-caixa-falta', text: t('hdr.caixa_falta') });
-        caixaEl.append(a);
-      }
+      // La caixa a la capçalera és NOMÉS informativa: si no està declarada, s'amaga el
+      // bloc (no un blanc mut). Qui demana emplenar-la és Paco a l'informe (falten), no ací.
+      if (eco && eco.caixa != null) document.getElementById('hdr-caixa').textContent = diners(eco.caixa);
+      else document.querySelector('.hdr-caixa')?.remove();
       if (pla && !pla.error && pla.temporadaActual != null) {
         document.getElementById('hdr-fase').textContent = `T${pla.temporadaActual} · ${t('fase.' + pla.fase_actual)}`;
       }
