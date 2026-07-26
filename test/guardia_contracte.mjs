@@ -20,7 +20,8 @@ import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
 import { pesLloc, pressupostSou, nivellObjectiu, carregaConfigPesos } from '../lib/pesos.js';
 import { nivellActual, mancanca, exces, sobrecost, prioritat } from '../lib/mancanca.js';
 import { comptesNucli, maxPartits, construeixPlantilla } from '../lib/plantilla.js';
-import { urgent as esUrgent, motiuVenda, ordreVenda, desti, destiDeserta } from '../lib/vendes.js';
+import { urgent as esUrgent, motiuVenda, ordreVenda, desti, despatxable,
+  subhastaDeserta } from '../lib/vendes.js';
 import { valorEn, alineaOnzes } from '../lib/onze.js';
 import { util as utilJuv, destiPromocio, objectiuJuvenil, sobrants, reiniciCrida } from '../lib/juvenil_v3.js';
 import { costFlux, nivellPagable, planPersonal, decisioRenovacio,
@@ -28,7 +29,6 @@ import { costFlux, nivellPagable, planPersonal, decisioRenovacio,
 import { guanyJugador, admissibleJugador, deltaManteniment, estadiCaduc, admissibleEstadi,
   eficiencia, decisioEstoc } from '../lib/estoc.js';
 import { nivellAccio, agrupaAlertes, ordenaAgenda } from '../lib/informe.js';
-import { preguntaVenda, EIXIDES_DESERTA } from '../lib/vendes.js';
 import { entrenamentPrescrit, desquadreEntrenament, placesEntrenament } from '../lib/entrenament_places.js';
 import { valorHabilitat as valorHab, valorEsperatDesconegut, ranquingJuvenil } from '../lib/ranquing_juvenil.js';
 import { esLesionat } from '../public/format.js';
@@ -197,13 +197,10 @@ const VERIFICADES = {
 
   // ── PAS 7 / PAS 8 / PAS 9 ──
   'P7.pregunta': () => {
-    // PREGUNTA quan transferible passa 1→buit sense venda apuntada, amb les 4 eixides.
-    assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: null })?.pregunta, 'venut_o_deserta');
-    assert.deepEqual(preguntaVenda({ transferible_abans: 1, transferible_ara: null }).eixides, EIXIDES_DESERTA);
-    assert.deepEqual(EIXIDES_DESERTA, ['rebaixar', 'rellistar', 'despatxar', 'un_euro']);
-    assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: null, venda_apuntada: true }), null,
-      'si ja sabem què va passar, no es pregunta');
-    assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: 1 }), null, 'mentres seguix llistat, tampoc');
+    assert.equal(subhastaDeserta({ transferible_abans: 1, transferible_ara: null, en_plantilla: true }), true,
+      'estava llistat, ja no, i seguix a la plantilla → ningú l\'ha comprat');
+    assert.equal(subhastaDeserta({ transferible_abans: 1, transferible_ara: null, en_plantilla: false }), false,
+      'si ja no hi és, l\'han comprat: eixe és el camí del motiu de baixa');
   },
   'P8.pregunta': () => {
     // Es DEMANA a l'inici de cada temporada, de la calculadora: els camps existixen i
@@ -542,9 +539,10 @@ const VERIFICADES = {
 
   // PAS 7 — vendre. SENSE estimació de preu (v3.1): la subhasta decidix.
   'P7.desti_2': () => {
-    assert.equal(destiDeserta({ es_sobrant: true }).accio, 'despatxa',
-      'un sobrant desert s\'acomiada: rellistar-lo és pagar la taxa per res');
-    assert.equal(destiDeserta({ es_sobrant: false }).accio, 'pregunta',
+    // La subhasta deserta ja no es pregunta: es dedueix. El que en resulta és DESPATXABLE,
+    // i només per a qui sobra — un retingut desert no és un veredicte sobre ell.
+    assert.equal(despatxable({ es_sobrant: true, desert: true }), true);
+    assert.equal(despatxable({ es_sobrant: false, desert: true }), false,
       'un retingut desert MAI s\'acomiada sol');
   },
   'P7.urgent': () => {

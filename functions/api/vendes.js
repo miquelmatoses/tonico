@@ -1,6 +1,6 @@
 // Tonico — fitxes de venda (Àrea E). GET els jugadors en categoria 'venda' amb la
 // seua fitxa (preu d'eixida proposat/editat, data de llistada, estat); POST upsert.
-import { habilitatMax, preguntaVenda, EIXIDES_DESERTA } from '../../lib/vendes.js';
+import { habilitatMax, subhastaDeserta, despatxable } from '../../lib/vendes.js';
 import { normalitzaDivisio } from '../../lib/divisio.js';
 import { avaluaPuntuacio } from '../../lib/classificador.js';
 import { carregaConfigPla } from '../../lib/config_pla.js';
@@ -54,7 +54,7 @@ export async function onRequestGet({ env, data }) {
   const diesSubhasta = parseInt((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='dies_subhasta'").first())?.valor || '3', 10);
   const tancament = (dataLlistada) => (dataLlistada ? new Date(Date.parse(dataLlistada) + diesSubhasta * 86400000).toISOString().slice(0, 10) : null);
   // v3.1: FORA el criteri econòmic de «despatxar» per `valor_net`. Es llista una vegada i qui
-  // decidix si s'acomiada és la SUBHASTA (lib/vendes.js → destiDeserta), no una previsió.
+  // decidix si s'acomiada és la SUBHASTA (lib/vendes.js → despatxable), no una previsió.
   // Els RELLOTGES manen sobre el despatxar (2b): un jugador amb venda FORÇADA
   // (llistat/venut/despatxat, data de llistat activa o entrada d'agenda de llistat
   // vigent) MAI mostra «despatxar» ni buffer — mateixa doctrina.
@@ -69,17 +69,19 @@ export async function onRequestGet({ env, data }) {
     // puntuació de la categoria (derivada, no la desada). Sense preu estimat, la puntuació és
     // l'única vara — i és una dada pròpia, no una previsió.
     const valor = punts[i] ?? 0;
-    // Un SOBRANT que va desert s'acomiada; un retingut, mai (destiDeserta del PAS 7). Ací
-    // tots ho són per construcció (la consulta filtra categoria='venda'), però es deriva del
-    // camp i no del filtre: si la consulta canvia, açò no ha de mentir en silenci.
+    // Un SOBRANT que va desert es despatxa; un retingut, mai. Ací tots són sobrants per
+    // construcció (la consulta filtra categoria='venda'), però es deriva del camp i no del
+    // filtre: si la consulta canvia, açò no ha de mentir en silenci.
     const esSobrant = j.categoria === 'venda' || j.categoria === 'sobrant';
+    // LA SUBHASTA DESERTA ES DEDUÏX, no es pregunta: si estava transferible, ja no ho està i
+    // SEGUIX A LA PLANTILLA, és que ningú l'ha comprat. Preguntar-ho era demanar-li a Miquel
+    // una cosa que el sistema ja sap.
+    const desert = subhastaDeserta({ transferible_abans: transfAbans.get(j.jugador_id),
+      transferible_ara: j.transferible, en_plantilla: true });
     return { ...j, estat: j.estat || 'pendent', valor, puntuacio: punts[i] ?? null,
       tancament_previst: tancament(j.data_llistada), lesionat: esLesionat(j.lesio),
-      es_sobrant: esSobrant,
-      pregunta: preguntaVenda({ transferible_abans: transfAbans.get(j.jugador_id),
-        transferible_ara: j.transferible, es_sobrant: esSobrant,
-        venda_apuntada: j.estat === 'venut' || j.estat === 'despatxat' }),
-      despatxar: false };
+      es_sobrant: esSobrant, desert,
+      despatxar: despatxable({ es_sobrant: esSobrant, desert }) };
   });
   // (4) FORA les marques de BUFFER («cobrix X — ven-lo l'últim»): doctrina morta amb la
   // liquidació. Una fitxa només pot estar en un d'estos estats, i els dona el MATEIX

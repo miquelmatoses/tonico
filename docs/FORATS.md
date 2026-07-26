@@ -18,18 +18,6 @@ tests: `test/flux_estoc.mjs` i `test/guardia_golden.mjs` reprodueixen els seus n
 
 # OBERTS
 
-## N-02 · EL SUPÒSIT DEL COST D'INSTAL·LACIONS JUVENILS NO ESTÀ VERIFICAT
-
-**OBERT · gravetat: baixa · afecta PAS 3**
-
-`despesa_planter` es deriva amb `cost_instalacions_juvenils` = 5.000 € plans, i al fixture quadra
-(5.000 + 5.000 × 3 = 20.000 ✓). Però **no s'ha comprovat que eixe cost no escale** amb el nivell de
-l'acadèmia: val exactament el mateix que un cercapromeses, cosa que fa sospitar que és
-coincidència. Si escala, `cost_instalacions_juvenils` ha de ser **taula**, no pom.
-
-Es veurà a la primera pujada en què Miquel toque l'acadèmia: si el planter declarat a l'informe no
-quadra amb el derivat, este és el sospitós.
-
 ## N-07 · EL PAS 8 NO TÉ CANDIDATS DE MERCAT REALS
 
 **OBERT · gravetat: mitjana · afecta PAS 8 · nou 2026-07-26**

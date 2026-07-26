@@ -1,8 +1,8 @@
 // Tonico — VENDRE (contracte v3.1, PAS 7). SENSE estimació de preu: l'orde el porta
 // `sobrecost` i «es ven o s'acomiada» el decidix la SUBHASTA. node test/venda_desti.mjs
 import assert from 'node:assert/strict';
-import { motiuVenda, ordreVenda, urgent, desti, preguntaVenda, destiDeserta,
-  EIXIDES_DESERTA, habilitatMax } from '../lib/vendes.js';
+import { motiuVenda, ordreVenda, urgent, desti, subhastaDeserta, despatxable,
+  habilitatMax } from '../lib/vendes.js';
 
 const j = { creativitat: 8, passades: 6, sou: 500 };
 
@@ -50,23 +50,25 @@ for (const o of [{}, { modificador_tancament: -0.9, depressio_profunda: -0.2 }, 
   assert.notEqual(desti(j, o).accio, 'despatxa', 'el destí ja no despatxa per una estimació');
 }
 
-// ── LA PREGUNTA i el destí de la subhasta deserta ──
-assert.deepEqual(EIXIDES_DESERTA, ['rebaixar', 'rellistar', 'despatxar', 'un_euro']);
-assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: null })?.pregunta, 'venut_o_deserta',
-  'el dispar és la transició entre INSTANTÀNIES, no l\'estat de la fitxa');
-assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: null, venda_apuntada: true }), null,
-  'si ja sabem què va passar, no es pregunta');
-assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: 1 }), null,
-  'mentres seguix llistat, no es pregunta');
+// ── LA SUBHASTA DESERTA ES DEDUÏX, NO ES PREGUNTA ──────────────────────────────────────
+// Si un jugador estava transferible, ja no ho està i SEGUIX A LA PLANTILLA, ningú l'ha
+// comprat. Preguntar-ho era demanar-li a Miquel una cosa que el sistema ja sap: era la
+// pantalla dient «Lizer Castelló ha eixit, què va passar?» d'algú que no s'havia venut.
+assert.equal(subhastaDeserta({ transferible_abans: 1, transferible_ara: null, en_plantilla: true }), true,
+  'estava llistat, ja no, i seguix ací → deserta');
+assert.equal(subhastaDeserta({ transferible_abans: 1, transferible_ara: null, en_plantilla: false }), false,
+  'si ja no és a la plantilla, l\'han comprat: eixe és el camí del motiu de baixa');
+assert.equal(subhastaDeserta({ transferible_abans: 1, transferible_ara: 1, en_plantilla: true }), false,
+  'mentres seguix llistat, la subhasta encara no ha acabat');
+assert.equal(subhastaDeserta({ transferible_abans: null, transferible_ara: null }), false,
+  'qui no estava llistat no pot quedar desert');
 
-// ES LLISTA UNA VEGADA: un SOBRANT desert s'acomiada; un retingut, mai.
-assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: null, es_sobrant: true }).recomanada,
-  'despatxar', 'per a un sobrant, la recomanada és despatxar-lo');
-assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: null, es_sobrant: false }).recomanada,
-  null, 'per a un retingut no es recomana res: que decidisca Miquel');
-assert.equal(destiDeserta({ es_sobrant: true }).accio, 'despatxa',
-  'rellistar un sobrant cada setmana és pagar la taxa per res');
-assert.equal(destiDeserta({ es_sobrant: false }).accio, 'pregunta',
-  'un retingut desert no és un veredicte: és que el preu no era el bo');
+// I el que en resulta: DESPATXABLE només si a més sobra.
+assert.equal(despatxable({ es_sobrant: true, desert: true }), true,
+  'sobrant + ningú el vol → despatxa\'l');
+assert.equal(despatxable({ es_sobrant: false, desert: true }), false,
+  'un retingut desert MAI: no és un veredicte sobre ell, és que el preu no era el bo');
+assert.equal(despatxable({ es_sobrant: true, desert: false }), false,
+  'i un sobrant que encara no s\'ha llistat tampoc');
 
 console.log('OK — PAS 7 v3.1: sense estimació de preu, la subhasta decidix');

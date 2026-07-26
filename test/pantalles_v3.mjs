@@ -6,7 +6,7 @@ import { nova } from './_d1shim.mjs';
 import * as mercat from '../functions/api/mercat.js';
 import * as personal from '../functions/api/personal.js';
 import * as vendes from '../functions/api/vendes.js';
-import { preguntaVenda, EIXIDES_DESERTA } from '../lib/vendes.js';
+import { subhastaDeserta, despatxable } from '../lib/vendes.js';
 
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`
@@ -59,25 +59,8 @@ assert.equal(pe.pla_flux.pla[0].tipus, 'assistent', 'i l\'orde és el del contra
 assert.ok(pe.pla_flux.pla.some((x) => x.tipus === 'psicoleg'), 'el psicòleg entra a la quarta plaça');
 assert.equal(pe.pla_flux.pla.length, 4, 'i les places són les 4 de la quota del joc');
 
-// ── VENDA: la PREGUNTA amb les quatre eixides ──
-assert.deepEqual(EIXIDES_DESERTA, ['rebaixar', 'rellistar', 'despatxar', 'un_euro']);
-assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: null })?.pregunta, 'venut_o_deserta',
-  'la transició 1 → buit sense venda apuntada dispara la pregunta');
-assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: null, venda_apuntada: true }), null,
-  'si ja sabem què va passar, no es pregunta');
-assert.equal(preguntaVenda({ transferible_abans: 1, transferible_ara: 1 }), null, 'mentres seguix llistat, no es pregunta');
-
-// I la tria es pot desar: cada eixida deixa la fitxa en un estat concret.
-sqlite.exec("INSERT INTO vendes (jugador_id, usuari_id, estat) VALUES (1,1,'llistat');");
-const post = (cos) => vendes.onRequestPost({ request: new Request('http://t', { method: 'POST',
-  headers: { 'content-type': 'application/json' }, body: JSON.stringify(cos) }), ...ctx });
-await post({ jugador_id: 1, eixida_deserta: 'despatxar' });
-assert.equal(sqlite.prepare('SELECT estat FROM vendes WHERE jugador_id=1').get().estat, 'despatxat');
-// `un_euro` era un override del PREU; ara és NOMÉS un estat (rellistar-lo a la baixa). Cap
-// import: Tonico no guarda preus perquè cap preu entra a cap fórmula.
-await post({ jugador_id: 1, eixida_deserta: 'un_euro' });
-const v = sqlite.prepare('SELECT estat, preu_eixida FROM vendes WHERE jugador_id=1').get();
-assert.equal(v.estat, 'llistat', 'l\'1 € torna la fitxa al mercat');
-assert.equal(v.preu_eixida, null, 'i no escriu cap import: el preu ja no és cosa de Tonico');
+// ── VENDA: la subhasta deserta es DEDUÏX ──
+assert.equal(subhastaDeserta({ transferible_abans: 1, transferible_ara: null, en_plantilla: true }), true);
+assert.equal(despatxable({ es_sobrant: true, desert: true }), true);
 
 console.log('OK — pantalles: el bucle d\'estoc, el pla de flux i la pregunta de venda arriben a la vista');

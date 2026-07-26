@@ -16,11 +16,12 @@ export function capcalera(main, num, clau) {
 }
 
 // Targeta amb capçalera (patró de contenidor del disseny).
-const card = (titol, compte, variant) => {
+const card = (titol, compte, variant, accio = null) => {
   const c = el('section', { class: 'card' });
   if (titol != null) {
     const cap = el('div', { class: 'card-cap' + (variant ? ' ' + variant : '') }, el('h3', { class: 'card-titol', text: titol }));
     if (compte != null) cap.append(el('span', { class: 'card-compte', text: String(compte) }));
+    if (accio) cap.append(accio);                 // acció a la dreta: p. ex. el llapis d'editar
     c.append(cap);
   }
   return c;
@@ -557,13 +558,17 @@ function bucleEstoc(main, e) {
   } else {
     cos.append(el('p', { class: 'nota-peu', text: t('estoc.cap_opcio') }));
   }
+  // Les columnes «cost» i «rendiment» eren SEMPRE buides: l'estadi no es puntua (té prioritat
+  // absoluta) i els jugadors no tenen preu fins que hi haja un candidat de mercat real. Una
+  // taula de guions no és informació. El que sí que val és l'ORDRE de les mancances i quin
+  // nivell demana cada lloc.
   const g = graellaAmbFiles('c-estoc',
-    ['col_opcio', 'col_guany', 'col_cost', 'col_eficiencia'].map((k) => t('estoc.' + k)),
-    e.opcions.map((o) => el('div', { class: 'graella-fila-d c-estoc' + (o.admissible ? '' : ' inadmissible') },
+    ['col_opcio', 'col_nivell', 'col_mancanca', 'col_guany'].map((k) => t('estoc.' + k)),
+    e.opcions.map((o) => el('div', { class: 'graella-fila-d c-estoc' + (o.tipus === 'estadi' ? ' destacada' : '') },
       el('span', { text: o.tipus === 'estadi' ? t('estoc.estadi') : t('estoc.lloc', { lloc: o.lloc }) }),
-      el('span', { text: o.guany == null ? '—' : decimal(o.guany) }),
-      el('span', { text: o.cost == null ? '—' : diners(o.cost) }),
-      el('span', { class: 'graella-val', text: rendiment(o.eficiencia) }))));
+      el('span', { text: o.nivell_objectiu ? t('nivell_ht.' + o.nivell_objectiu) : '—' }),
+      el('span', { text: o.mancanca == null ? '—' : decimal(o.mancanca) }),
+      el('span', { class: 'graella-val', text: o.guany == null ? '—' : decimal(o.guany) }))));
   if (g) cos.append(g);
   if (!e.estadi_declarat) cos.append(el('p', { class: 'nota-peu', text: t('estoc.estadi_falta') }));
   c.append(cos); main.append(c);
@@ -578,11 +583,34 @@ export async function mercat(main) {
     ? t('mercat.filtre_core', { posicions: (f.posicions || []).join('/'), edat_max: f.edat_max, creativitat_min: f.creativitat_min, pressupost: pres(f.pressupost), falten: f.falten })
     : t('mercat.filtre_cos', { bucket: f.bucket, posicions: (f.posicions || []).join('/'), habilitat: f.habilitat ? `${f.habilitat.camp} ${f.habilitat.op} ${f.habilitat.valor}` : '', pressupost: pres(f.pressupost), falten: f.falten })
       + (f.previsio_venda ? t('mercat.filtre_previsio', { noms: f.previsio_venda.join(', ') }) : '');
+  // ELS FILTRES SÓN INSTRUCCIONS, no una llista. Miquel se'ls ha de copiar al cercador de HT,
+  // així que cada camp va etiquetat i separat en compte d'amagat dins d'una frase.
   const utils = filtres.filter((f) => f.falten > 0);
   const cf = card(t('mercat.filtres_titol'), utils.length, 'llima');
   const cfc = el('div', { class: 'card-cos' });
-  if (utils.length) for (const f of utils) cfc.append(el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }), el('span', { class: 'mov-text', text: textFiltre(f) })));
-  else cfc.append(el('p', { class: 'nota-peu', text: t('mercat.sense_filtres') }));
+  if (utils.length) {
+    for (const f of utils) {
+      const camps = el('div', { class: 'filtre-camps' });
+      const camp = (clau, valor) => { if (valor == null || valor === '') return;
+        camps.append(el('div', { class: 'filtre-camp' },
+          el('span', { class: 'filtre-et', text: t('mercat.camp_' + clau) }),
+          el('b', { text: String(valor) }))); };
+      camp('posicions', (f.posicions || []).join(' / '));
+      if (f.rol === 'core') {
+        camp('edat_max', f.edat_max);
+        camp('creativitat_min', f.creativitat_min);
+      } else if (f.habilitat) {
+        camp('habilitat', `${t('habilitat.' + f.habilitat.camp)} ${f.habilitat.op} ${f.habilitat.valor}`);
+      }
+      camp('pressupost', pres(f.pressupost));
+      cfc.append(el('div', { class: 'filtre' },
+        el('div', { class: 'filtre-cap' },
+          el('b', { text: t('mercat.filtre_rol_' + f.rol) }),
+          el('span', { class: 'filtre-falten', text: tp('mercat.filtre_falten', f.falten, { n: f.falten }) })),
+        camps,
+        ...(f.previsio_venda ? [el('p', { class: 'nota-peu', text: t('mercat.filtre_previsio', { noms: f.previsio_venda.join(', ') }) })] : [])));
+    }
+  } else cfc.append(el('p', { class: 'nota-peu', text: t('mercat.sense_filtres') }));
   cf.append(cfc); main.append(cf);
   const cp = card(t('mercat.preus_titol'), preus.length);
   if (!preus.length) cp.append(cos(el('p', { class: 'nota-peu', text: t('mercat.buit') })));
@@ -600,21 +628,9 @@ export async function mercat(main) {
 
 // ── Fitxes de venda (Àrea E) ──
 const ESTATS_VENDA = ['pendent', 'llistat', 'venut', 'desert', 'despatxat'];
-// Les quatre eixides d'una subhasta deserta (PAS 7). El motiu el dona l'avaluador.
-const EIXIDES_DESERTA = ['rebaixar', 'rellistar', 'despatxar', 'un_euro'];
-function preguntaDeserta(jugador) {
-  const p = el('div', { class: 'tip' });
-  p.append(el('b', { text: t('vendes.pregunta_deserta', { nom: jugador.nom }) }));
-  const opcions = el('div', { class: 'accions' });
-  for (const eixida of EIXIDES_DESERTA) {
-    const b = el('button', { type: 'button', class: 'b-xic', text: t('vendes.eixida_' + eixida) });
-    b.addEventListener('click', () => api('/api/vendes', { method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ jugador_id: jugador.jugador_id, eixida_deserta: eixida }) }).then(() => location.reload()).catch(() => {}));
-    opcions.append(b);
-  }
-  p.append(opcions);
-  return p;
-}
+// La subhasta deserta ja NO es pregunta: es dedueix (si estava transferible, ja no ho està i
+// seguix a la plantilla, ningú l'ha comprat). El que queda és la marca de DESPATXABLE, i viu a
+// la fitxa, que és on es decidix qui es queda.
 async function fitxesVenda(main) {
   const { jugadors, cobertura: cobMin } = await api('/api/vendes');
   const sec = card(t('vendes.titol'), jugadors.length);
@@ -639,17 +655,15 @@ async function fitxesVenda(main) {
       jugador_id: j.jugador_id, data_llistada: dataL.value || null, estat: estat.value }) }).catch(() => {});
     for (const c of [dataL, estat]) c.addEventListener('change', desar);
     const propCell = el('div', {});
-    // La subhasta d'un llistat ha acabat sense venda apuntada → pregunta el resultat (tria a Estat).
-    if (j.resultat_pendent) propCell.append(el('div', { class: 'nota-peu', text: t('vendes.resultat_pregunta') }));
     // Estat de liquidació (mateixa font que l'alerta agregada): llistat / retingut per
     // cobertura (amb el càlcul) / lesionat (llistable en recuperar) / llistable ara.
     // Fora les marques de buffer: amb la liquidació, «ven-lo l'últim» ja no existix.
     propCell.append(el('div', { class: 'cobertura', text: j.estat_liquidacio === 'retingut'
       ? t('vendes.retingut_cobertura', { n: cobMin?.camp_minim ?? '?' })
       : t('vendes.estat_liq_' + (j.estat_liquidacio || 'llistable')) }));
-    // PAS 7: si la fitxa ha eixit del mercat i no sabem com, es PREGUNTA amb les quatre
-    // eixides del full. La pregunta la deriva l'avaluador, no la vista.
-    if (j.pregunta) propCell.append(preguntaDeserta(j));
+    // DESPATXABLE: sobrant + subhasta deserta. Ningú el vol i no té lloc a cap dels dos onzes.
+    if (j.despatxar) propCell.append(el('div', { class: 'despatxar', text: t('vendes.despatxable') }));
+    else if (j.desert) propCell.append(el('div', { class: 'nota-peu', text: t('vendes.desert') }));
     return el('div', { class: 'graella-fila-d c-venda' },
       el('div', { class: 'fila-qui' },
         el('div', { class: posCls(j.posicio), text: j.posicio || '—' }),
@@ -697,22 +711,29 @@ export async function economia(main) {
     el('div', { class: 'eco-et', text: t('economia.caixa_et') }),
     el('div', { class: 'eco-xifra', text: e.caixa == null ? '—' : diners(e.caixa) }),
     el('div', { class: 'eco-nota', text: e.caixa == null ? t('economia.caixa_falta') : (e.caixa_data || '') })));
-  if (e.flux != null) {
+  // INGRESSOS: la mitjana setmanal de taquilla + patrocinadors, que és el que entra de veres.
+  if (e.mitjana_setmanal != null) {
+    kpis.append(el('div', { class: 'eco-card' },
+      el('div', { class: 'eco-et', text: t('economia.ingressos_et') }),
+      el('div', { class: 'eco-xifra', text: diners(Math.round(e.mitjana_setmanal)) }),
+      el('div', { class: 'eco-unitat', text: unitat('mitjana_setmanal') }),
+      el('div', { class: 'eco-nota', text: tp('economia.ingressos_nota', e.setmanes_declarades, { n: e.setmanes_declarades }) })));
+  }
+  if (e.flux_setmanal != null) {
     kpis.append(el('div', { class: 'eco-card' },
       el('div', { class: 'eco-et', text: t('economia.flux_et') }),
-      el('div', { class: e.flux_negatiu ? 'eco-xifra neg' : 'eco-xifra', text: diners(e.flux) }),
-      el('div', { class: 'eco-unitat', text: unitat('flux') }),
-      el('div', { class: 'eco-nota', text: t('economia.despeses_detall', eur(e.despeses, 'nomina', 'planter', 'manteniment_estadi', 'personal')) })));
+      el('div', { class: e.flux_negatiu ? 'eco-xifra neg' : 'eco-xifra', text: diners(Math.round(e.flux_setmanal)) }),
+      el('div', { class: 'eco-unitat', text: unitat('flux_setmanal') }),
+      el('div', { class: 'eco-nota', text: t('economia.despeses_detall',
+        eur(Object.fromEntries(Object.entries(e.despeses_setmanals).map(([k, v]) => [k, Math.round(v)])),
+          'nomina', 'planter', 'manteniment_estadi', 'personal')) })));
   }
-  if (e.sou_sostenible != null) {
+  if (e.sou_sostenible_setmanal != null) {
     kpis.append(el('div', { class: 'eco-card' },
       el('div', { class: 'eco-et', text: t('economia.sou_sostenible_et') }),
-      el('div', { class: 'eco-xifra', text: diners(e.sou_sostenible) }),
-      el('div', { class: 'eco-unitat', text: unitat('sou_sostenible') }),
-      // El setmanal és el que es compara amb el sou d'un jugador i amb la taula de salaris:
-      // per això va al costat i no obliga ningú a dividir de cap.
-      el('div', { class: 'eco-nota', text: t('economia.sou_sostenible_nota', {
-        setmanal: diners(Math.round(e.sou_sostenible_setmanal)) }) })));
+      el('div', { class: 'eco-xifra', text: diners(Math.round(e.sou_sostenible_setmanal)) }),
+      el('div', { class: 'eco-unitat', text: unitat('sou_sostenible_setmanal') }),
+      el('div', { class: 'eco-nota', text: t('economia.sou_sostenible_nota') })));
   }
   main.append(kpis);
   if (e.flux == null) main.append(el('p', { class: 'nota-peu', text: t('economia.sense_ingressos') }));
@@ -814,9 +835,11 @@ export async function configuracio(main) {
   capcalera(main, 8, 'configuracio');
   const { config, falten } = await api('/api/config');
 
-  // L'estratègia activa i el PAS 0. El pla per temporades era del model fàbrica i s'ha
-  // retirat: ací només hi ha el que el contracte v3 reconeix.
-  const c = card(t('configuracio.titol'));
+  // UN LLAPIS, no un segon panell. El formulari repetia les mateixes sis dades just davall de
+  // la llista: dos vegades el mateix a la pantalla. Ara s'obri des de la capçalera.
+  const llapis = el('button', { type: 'button', class: 'b-icona', title: t('configuracio.edita'),
+    'aria-label': t('configuracio.edita'), text: '✎' });
+  const c = card(t('configuracio.titol'), null, null, llapis);
   const cos = el('div', { class: 'card-cos' });
   const fila = (clau, valor) => el('div', { class: 'graella-fila' },
     el('b', { text: t('configuracio.' + clau) }),
@@ -833,7 +856,16 @@ export async function configuracio(main) {
   if (falten && falten.length) {
     main.append(el('p', { class: 'nota-peu', text: t('configuracio.falten', { camps: falten.map((f) => t('falten.config_' + f)).join(' · ') }) }));
   }
-  formConfig(main, config);
+
+  // El formulari va dins de la mateixa targeta i comença amagat: el llapis el mostra.
+  const editor = el('div', { class: 'card-editor amagat' });
+  formConfig(editor, config);
+  c.append(editor);
+  llapis.addEventListener('click', () => {
+    const obert = editor.classList.toggle('amagat');
+    llapis.classList.toggle('actiu', !obert);
+    if (!obert) editor.querySelector('input,select')?.focus();
+  });
 
   // Punt 3a: activar l'acadèmia després si no en tens.
   const eq = await opc(api('/api/equips'));
@@ -875,8 +907,7 @@ function formConfig(main, config) {
       partits_setmana: partits.value ? Number(partits.value) : undefined }) });
     location.reload();
   });
-  const c = card(t('configuracio.edita'));
-  c.append(f); main.append(c);
+  main.append(f);
 }
 
 function formActivaAcademia(main) {
@@ -905,14 +936,18 @@ function plaFlux(main, p) {
   } else {
     cos.append(el('p', { class: 'nota-peu', text: t('flux.capçal', {
       pressupost: diners(Math.round(p.pressupost)), quota: percent(p.quota), restant: diners(Math.round(p.flux_restant)) }) }));
-    const g = graellaAmbFiles('c-flux',
-      ['col_tipus', 'col_nivell', 'col_cost', 'col_accio'].map((k) => t('flux.' + k)),
-      p.pla.map((x) => el('div', { class: 'graella-fila-d c-flux' },
-        el('span', { text: t('element.' + x.tipus) }),
-        el('span', { text: x.exclos ? '—' : String(x.nivell) }),
-        el('span', { text: x.cost ? diners(x.cost) : '—' }),
-        el('span', { class: 'graella-val', text: t('flux.accio_' + x.accio) }))));
-    if (g) cos.append(g);
+    // FITXES, no taula: són quatre places i cada una és un tipus, un nivell i una acció. Una
+    // graella de quatre columnes els donava aire de full de càlcul per a quatre files.
+    const places = el('div', { class: 'places' });
+    for (const x of p.pla) {
+      const buida = x.accio === 'contracta';
+      places.append(el('div', { class: buida ? 'placa buida' : 'placa' },
+        el('div', { class: 'placa-tipus', text: t('element.' + x.tipus) }),
+        el('div', { class: 'placa-niv', text: x.nivell ? t('nivell_ht.' + x.nivell) : '—' }),
+        el('div', { class: 'placa-sou', text: x.cost ? t('flux.sou_setmana', ambXifres({ sou: x.cost }, ['sou'])) : '—' }),
+        el('div', { class: 'placa-accio', text: t('flux.accio_' + x.accio) })));
+    }
+    cos.append(places);
     cos.append(el('p', { class: 'nota-peu', text: t('flux.avis_compromis') }));
   }
   c.append(cos); main.append(c);

@@ -481,3 +481,41 @@ form.card-cos { display: block; }
 .b-enllac { background: none; border: 0; padding: 0; cursor: pointer; font-size: 12px; font-weight: 700;
   color: var(--verd-fosc); text-decoration: underline; font-family: inherit; }
 .b-enllac:hover { color: var(--llima-fosc, #1a9c4a); }
+
+/* ── 3 · Els onzes són blocs alts amb fons propi: sense aire, la comptabilitat d'entrenament
+   semblava part de l'onze de la dreta en compte d'una secció a banda. */
+.onzes { margin-bottom: 22px; }
+
+/* ── 4a · L'obra d'estadi té prioritat absoluta al PAS 8: la fila ho ha de dir. */
+.graella-fila-d.destacada { background: var(--llima-suau, #f2ffd6); font-weight: 700; }
+
+/* ── 7 · El pla de personal: les quatre places són poques i curtes, i una taula de quatre
+   columnes els donava aire de full de càlcul. Fitxes, i l'acció on es llig. */
+.places { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: 10px; margin: 12px 0; }
+.placa { border: 2px solid var(--tinta); border-radius: 12px; padding: 12px 14px; background: var(--blanc);
+  display: flex; flex-direction: column; gap: 4px; }
+.placa.buida { border-style: dashed; background: #fbf8ee; }
+.placa-tipus { font-family: var(--font-titol); font-size: 13px; text-transform: uppercase; letter-spacing: .4px; }
+.placa-niv { font-size: 20px; font-weight: 800; font-family: var(--font-titol); }
+.placa-sou { font-size: 11px; color: var(--gris); }
+.placa-accio { margin-top: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .04em; color: var(--verd-fosc); }
+.placa.buida .placa-accio { color: #b8860b; }
+
+/* ── 6 · El llapis d'editar a la capçalera de la targeta, i el formulari plegat davall. */
+.b-icona { margin-left: auto; background: none; border: 2px solid currentColor; color: inherit;
+  width: 28px; height: 28px; border-radius: 8px; cursor: pointer; font-size: 14px; line-height: 1;
+  display: grid; place-items: center; padding: 0; }
+.b-icona:hover, .b-icona.actiu { background: var(--llima); color: var(--verd-fosc); border-color: var(--verd-fosc); }
+.card-editor { border-top: 2px solid var(--tinta); }
+.card-editor.amagat { display: none; }
+
+/* ── 4b · Un filtre de cerca és una INSTRUCCIÓ per a copiar a HT: cada camp etiquetat i
+   separat, no amagat dins d'una frase. */
+.filtre { border: 2px solid var(--tinta); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; background: var(--blanc); }
+.filtre-cap { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.filtre-falten { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #b8860b; }
+.filtre-camps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 8px; }
+.filtre-camp { display: flex; flex-direction: column; gap: 2px; background: #fbf8ee; border-radius: 8px; padding: 6px 10px; }
+.filtre-et { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--gris); }

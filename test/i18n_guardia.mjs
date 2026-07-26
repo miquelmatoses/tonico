@@ -76,10 +76,9 @@ function motiusDelCodi() {
 
 const families = {
   'habilitat': ['porteria','defensa','creativitat','passades','extrem','anotacio','pilota_aturada'],
-  'vendes.eixida_': ['rebaixar','rellistar','despatxar','un_euro'],
   'flux.accio_': ['contracta','puja','puja_al_venciment','renova','renova_al_nivell','no_renoves','res','exclos'],
   'flux': ['col_tipus','col_nivell','col_cost','col_accio'],
-  'estoc': ['col_opcio','col_guany','col_cost','col_eficiencia'],
+  'estoc': ['col_opcio', 'col_nivell', 'col_mancanca', 'col_guany'],
   'categoria': ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'],
   // Els 16 nivells d'habilitat, pel NOM de Hattrick. L'escala de Tonico compta des d'on el sou
   // deixa de ser el mínim: nivell 1 = «Insuficient» (HT 5), o siga Tonico n = HT n+4.
