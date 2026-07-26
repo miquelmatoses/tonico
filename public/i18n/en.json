@@ -89,7 +89,6 @@
   "nav.mercat": "Market",
   "nav.fotrem": "Academy",
   "nav.personal": "Staff",
-  "alerta.personal_fase": "The staff doesn't match the phase, boss: {detall}. Sort it when you can.",
   "personal.titol": "Staff and training",
   "personal.esperat_titol": "Expected staff (current phase)",
   "personal.declarat_titol": "What you have now (declare it)",

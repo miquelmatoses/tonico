@@ -23,6 +23,7 @@ import { calibrat as esCalibrat, estimacioComparables, preuEsperat, setmanesVend
   urgent as esUrgent, motiuVenda, ordreVenda, desti } from '../lib/preu.js';
 import { valorEn, compatible, alineaOnzes } from '../lib/onze.js';
 import { util as utilJuv, valorNetPromo, destiPromocio, objectiuJuvenil, sobrants, reiniciCrida } from '../lib/juvenil_v3.js';
+import { costFlux, nivellPagable, planPersonal, decisioRenovacio } from '../lib/personal_v3.js';
 
 const arrel = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { formules } = JSON.parse(readFileSync(join(arrel, 'formules.json'), 'utf8'));
@@ -305,6 +306,27 @@ const VERIFICADES = {
     const r = alineaOnzes([{ jugador_id: 1, categoria: 'core', extrem: 5 }], LL,
       [{ id: 'A', competitiu: true }, { id: 'B' }], { pes_entrenament: 1000 });
     assert.equal(r.comptabilitat.find((c) => c.jugador_id === 1).total, 100);
+  },
+
+  // PAS 11 — el personal és bucle de FLUX: tots cobren igual, mana la prioritat.
+  'P11.cost_flux': () => assert.deepEqual([1, 2, 3, 4, 5].map((n) => costFlux(n, 1020)),
+    [1020, 2040, 4080, 8160, 16320], 'staff_cost_base × 2^(n−1)'),
+  'P11.nivell': () => {
+    assert.equal(nivellPagable(16320, 1020), 5);
+    assert.equal(nivellPagable(16319, 1020), 4);
+    assert.equal(nivellPagable(1019, 1020), 0, 'si no arriba al primer, cap');
+  },
+  'P11.prioritat_personal': () => {
+    const p = [{ tipus: 'assistent', quants: 2 }, { tipus: 'entrenador' }, { tipus: 'metge' }, { tipus: 'psicoleg' }];
+    const r = planPersonal(30000, 1020, p);
+    assert.deepEqual(r.pla.map((x) => x.nivell), [5, 4, 3, 1, 0],
+      'cada tipus agafa el més alt que el flux restant encara paga, per orde');
+    assert.ok(r.flux_restant >= 0, 'mai es compromet més flux del que hi ha');
+  },
+  'P11.renovar': () => {
+    assert.deepEqual(decisioRenovacio(3, 5000, 1020), { accio: 'renova', nivell: 3 });
+    assert.deepEqual(decisioRenovacio(4, 5000, 1020), { accio: 'renova_al_nivell', nivell: 3 });
+    assert.deepEqual(decisioRenovacio(2, 100, 1020), { accio: 'no_renoves', nivell: null });
   },
 
   'P10.util': () => {

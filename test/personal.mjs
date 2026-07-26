@@ -16,8 +16,8 @@ assert.equal(cl.cost_total, 430000);
 assert.equal(cl.personal.length, 1);
 
 // Regla
-assert.equal(REGLES.ALR_PERSONAL_FASE({ personal: { desquadres: [{ clau: 'metge', esperat: 1, declarat: 0 }] } }, { urgencia: 52 }).length, 1);
-assert.equal(REGLES.ALR_PERSONAL_FASE({ personal: { desquadres: [] } }, { urgencia: 52 }).length, 0);
+// v3 (PAS 11): el personal esperat per FASE ha desaparegut. El que mana és el flux: la
+// prioritat fixa i el nivell que el flux sostinga. Es prova a test/personal_v3.mjs.
 
 // Integració via API
 const { sqlite, db } = nova(import.meta.url);

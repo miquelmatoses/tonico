@@ -89,7 +89,6 @@
   "nav.mercat": "Mercat",
   "nav.fotrem": "Acadèmia",
   "nav.personal": "Personal",
-  "alerta.personal_fase": "El personal no quadra amb la fase, cap: {detall}. Ajusta-ho quan pugues.",
   "personal.titol": "Personal i entrenament",
   "personal.esperat_titol": "Personal esperat (fase actual)",
   "personal.declarat_titol": "El que tens ara (declara-ho)",
