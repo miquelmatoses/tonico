@@ -7,7 +7,7 @@ import { nivellAccio } from '../../lib/informe.js';
 
 export async function onRequestGet({ env, data }) {
   const { results } = await env.DB.prepare(
-    `SELECT a.id, a.missatge_clau, a.parametres, a.urgencia, a.estat, a.diners, j.nom AS jugador
+    `SELECT a.id, a.missatge_clau, a.parametres, a.urgencia, a.estat, a.diners, a.compte, j.nom AS jugador
        FROM alertes a LEFT JOIN jugadors j ON j.id = a.jugador_id
       WHERE a.usuari_id = ? AND a.estat = 'nova'
       ORDER BY a.urgencia DESC, a.id`
@@ -37,7 +37,7 @@ export async function onRequestGet({ env, data }) {
 
   return json({
     alertes: results.map((a) => ambNivell({ ...a, parametres: a.parametres ? JSON.parse(a.parametres) : {},
-      diners: a.diners ? JSON.parse(a.diners) : null })),
+      diners: a.diners ? JSON.parse(a.diners) : null, compte: a.compte ?? null })),
     agenda, revisat, instantania,
   });
 }

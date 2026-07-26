@@ -98,6 +98,30 @@ if (process.env.ACTUALITZA_BASELINE) {
 
 assert.ok(existsSync(BASE), 'falta test/guardia_render_base.json — genera\'l amb ACTUALITZA_BASELINE=1');
 const baseline = JSON.parse(readFileSync(BASE, 'utf8'));
+// ── V8 (regla, no cas): cap xifra FRACCIONÀRIA s'interpola crua dins d'un text.
+// Un enter cru es llig; un fraccionari ix «3.4000000000000004». Les magnituds fraccionàries
+// del contracte estan nomenades: si una d'elles entra a un `t(clau, {…})` sense passar per
+// `ambXifres` (o per un formatador explícit), el text les pintarà crues.
+{
+  const FRACCIONARIES = /^(mancanca|guany|eficiencia|rendiment|puntuacio|pes|delta|sobrecost|exces|util|valor_net)$/;
+  const FORMATAT = /\b(ambXifres|eur|diners|milers|decimal|percent|rendiment)\s*\(/;
+  const vista2 = readFileSync(new URL('../public/seccions.js', import.meta.url), 'utf8');
+  const re = /t\('([\w.]+)',\s*(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}|ambXifres\([\s\S]{0,400}?\))\)/g;
+  const crues = [];
+  let m;
+  while ((m = re.exec(vista2))) {
+    if (FORMATAT.test(m[2].slice(0, 12))) continue;            // ja ve formatat de fora
+    const linia = vista2.slice(0, m.index).split('\n').length;
+    for (const parell of m[2].split(/,(?![^()]*\))/)) {
+      const p = parell.match(/([\w_]+)\s*:\s*([\s\S]+)/);
+      if (!p || !FRACCIONARIES.test(p[1]) || FORMATAT.test(p[2])) continue;
+      crues.push(`${linia}: ${m[1]} → ${p[1]}`);
+    }
+  }
+  assert.deepEqual(crues, [],
+    `magnituds fraccionàries interpolades crues (${crues.join('; ')}): passa els paràmetres per ambXifres()`);
+}
+
 const conegudes = new Set(baseline.violacions.map(sig));
 
 const noves = actuals.filter((v) => !conegudes.has(sig(v)));

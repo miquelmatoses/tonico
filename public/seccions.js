@@ -2,7 +2,7 @@
 // funció fa el seu fetch i pinta dins del seu contenidor. Els errors s'aïllen
 // per secció (una que falla no tomba la pàgina). HTML semàntic, reset mínim.
 import { api, el, t, tp, filaSegura } from '/comu.js';
-import { diners, milers, decimal, percent, edat, notes, esLesionat, duradaLesio } from '/format.js';
+import { diners, milers, decimal, percent, edat, notes, esLesionat, duradaLesio, ambXifres, rendiment } from '/format.js';
 
 const SIGLA = { porteria: 'PO', defensa: 'DF', creativitat: 'CR', extrem: 'EX', passades: 'PA', anotacio: 'AN', pilota_aturada: 'PP' };
 const opc = async (p) => { try { return await p; } catch { return null; } };
@@ -121,7 +121,7 @@ export async function esta_setmana(main) {
   // KPIs derivats (res decoratiu): accions de hui i línies d'agenda.
   const kpis = el('div', { class: 'kpis' });
   const kpi = (n, clau, alerta) => el('div', { class: 'kpi' + (alerta ? ' alerta' : '') },
-    el('div', { class: 'kpi-xifra', text: String(n) }), el('div', { class: 'kpi-etiqueta', text: t(clau) }));
+    el('div', { class: 'kpi-xifra', text: milers(n) }), el('div', { class: 'kpi-etiqueta', text: t(clau) }));
   kpis.append(kpi(alertes.length, 'esta_setmana.kpi_urgents', alertes.length > 0));
   kpis.append(kpi((agenda || []).length, 'esta_setmana.kpi_agenda'));
   capçalera.append(el('div', { class: 'hdr-buit' }), kpis);
@@ -153,11 +153,13 @@ export async function esta_setmana(main) {
   // formaten ací, al render — les regles no barregen presentació amb lògica.
   // Les unitats les DECLARA l'avaluador (`diners` a l'alerta), no les endevina la vista pel
   // nom del paràmetre. Endevinar-les formatava «objectiu: 8 jugadors» com si fóra un import.
-  const ambDiners = (par, claus) => {
-    const o = { ...par };
-    for (const k of (claus || [])) if (typeof o[k] === 'number') o[k] = diners(o[k]);
-    return o;
-  };
+  // La resta de números també passen pel formatador (enters amb milers, fraccionaris amb
+  // coma): dins d'un text d'alerta una xifra crua es veu igual de mal que a una cel·la.
+  // El text d'una alerta: si declara COMPTADOR, la clau és una base i la variant la tria el
+  // nombre (`tp`); si no, és una clau directa. Les xifres sempre passen pel formatador.
+  const textAlerta = (a, par) => (a.compte
+    ? tp(a.missatge_clau, Number(par[a.compte]), ambXifres(par, a.diners))
+    : t(a.missatge_clau, ambXifres(par, a.diners)));
   if (alertes.length) {
     const graella = el('ul', { class: 'targetes' });
     for (const a of alertes) {
@@ -167,7 +169,7 @@ export async function esta_setmana(main) {
         el('div', { class: 'targeta-cap' },
           el('span', { class: 'tag', text: t('urgencia.' + niv) }),
           el('span', { class: 'targeta-nom', text: par.nom || t('esta_setmana.accio') })),
-        el('p', { text: t(a.missatge_clau, ambDiners(par, a.diners)) }));
+        el('p', { text: textAlerta(a, par) }));
       const accions = el('div', { class: 'targeta-accions' });
       for (const [estatNou, clau, cls] of [['vista', 'esta_setmana.vista', 'b-prim'], ['ignorada', 'esta_setmana.ignora', 'b-sec']]) {
         const b = el('button', { type: 'button', class: cls, text: t(clau) });
@@ -318,10 +320,10 @@ export async function alineacio(main) {
   for (const e of d.experiencia || []) main.append(el('p', { text: t('alineacio.experiencia_nota', { nom: e.nom }) }));
   if (d.copa) main.append(el('p', { text: t('alineacio.copa_nota') }));
   if (d.avisos.length) {
-    const av = d.avisos.map((v) => v.tipus === 'cobertura' ? t('alineacio.cobertura', v)
+    const av = d.avisos.map((v) => v.tipus === 'cobertura' ? tp('alineacio.cobertura', v.entrenen, v)
       : v.tipus === 'una_alineacio' ? t('alineacio.una_alineacio')
         : v.tipus === 'entrenament_perdut' ? t('alineacio.perdut', { nom: v.nom, motiu: t('motiu.' + v.motiu) })
-          : v.tipus === 'llocs_buits' ? t('alineacio.llocs_buits', { n: v.n })
+          : v.tipus === 'llocs_buits' ? tp('alineacio.llocs_buits', v.n)
             : '');
     main.append(el('section', {}, el('h3', { text: t('alineacio.avisos_titol') }), el('ul', {}, ...av.map((x) => el('li', { text: x })))));
   }
@@ -420,7 +422,7 @@ export async function fotrem(main) {
           el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` }),
           el('span', { class: 'skills', text: hab(j) }))),
       el('div', { class: 'rank-dreta' },
-        el('b', { text: j.dies_restants_promocio != null ? t('fotrem.dies', { dies: j.dies_restants_promocio }) : '—' }),
+        el('b', { text: j.dies_restants_promocio != null ? tp('fotrem.dies', j.dies_restants_promocio, { dies: j.dies_restants_promocio }) : '—' }),
         el('span', { text: j.aterratge?.data || (typeof j.aterratge === 'string' ? j.aterratge : '—') }), ' ', sel));
     const perque = pipeTxt(j); if (perque) fila.setAttribute('title', perque);   // detall per fila
     return fila;
@@ -538,9 +540,11 @@ function bucleEstoc(main, e) {
   if (e.recomanada) {
     cos.append(el('p', {}, el('b', { text: t('estoc.recomanada') }), ' ',
       el('span', { text: e.recomanada.tipus === 'estadi'
-        ? t('estoc.opcio_estadi', { cost: diners(e.recomanada.cost), guany: e.recomanada.guany, delta: diners(e.recomanada.delta_flux) })
-        : t('estoc.opcio_jugador', { lloc: e.recomanada.lloc, habilitat: t('habilitat.' + e.recomanada.habilitat),
-            nivell: e.recomanada.nivell_objectiu, mancanca: e.recomanada.mancanca, cost: diners(e.recomanada.cost) }) })));
+        ? t('estoc.opcio_estadi', ambXifres({ cost: e.recomanada.cost, guany: e.recomanada.guany,
+            delta: e.recomanada.delta_flux }, ['cost', 'delta']))
+        : tp('estoc.opcio_jugador', e.recomanada.mancanca,
+            ambXifres({ lloc: e.recomanada.lloc, habilitat: t('habilitat.' + e.recomanada.habilitat),
+              nivell: e.recomanada.nivell_objectiu, mancanca: e.recomanada.mancanca, cost: e.recomanada.cost }, ['cost'])) })));
   } else {
     cos.append(el('p', { class: 'nota-peu', text: t('estoc.cap_opcio') }));
   }
@@ -548,9 +552,9 @@ function bucleEstoc(main, e) {
     ['col_opcio', 'col_guany', 'col_cost', 'col_eficiencia'].map((k) => t('estoc.' + k)),
     e.opcions.map((o) => el('div', { class: 'graella-fila-d c-estoc' + (o.admissible ? '' : ' inadmissible') },
       el('span', { text: o.tipus === 'estadi' ? t('estoc.estadi') : t('estoc.lloc', { lloc: o.lloc }) }),
-      el('span', { text: String(o.guany ?? '—') }),
+      el('span', { text: o.guany == null ? '—' : decimal(o.guany) }),
       el('span', { text: o.cost == null ? '—' : diners(o.cost) }),
-      el('span', { class: 'graella-val', text: o.eficiencia == null ? '—' : String(o.eficiencia) }))));
+      el('span', { class: 'graella-val', text: rendiment(o.eficiencia) }))));
   if (g) cos.append(g);
   if (!e.estadi_declarat) cos.append(el('p', { class: 'nota-peu', text: t('estoc.estadi_falta') }));
   c.append(cos); main.append(c);
@@ -609,9 +613,9 @@ async function fitxesVenda(main) {
   const nota = notes();   // qualificadors repetits (estimació…) → asterisc + llegenda única
   // UNA SOLA FONT: la retenció per cobertura, amb el mínim derivat visible.
   if (cobMin && (cobMin.retinguts_camp || cobMin.retinguts_porters)) {
-    sec.append(el('div', { class: 'card-cos' }, el('p', { class: 'nota-peu', text: t('vendes.retencio_resum', {
-      n: (cobMin.retinguts_camp || 0) + (cobMin.retinguts_porters || 0),
-      camp: cobMin.retinguts_camp || 0, porters: cobMin.retinguts_porters || 0, minim: cobMin.total }) })));
+    const nRet = (cobMin.retinguts_camp || 0) + (cobMin.retinguts_porters || 0);
+    sec.append(el('div', { class: 'card-cos' }, el('p', { class: 'nota-peu', text: tp('vendes.retencio_resum', nRet, {
+      n: nRet, camp: cobMin.retinguts_camp || 0, porters: cobMin.retinguts_porters || 0, minim: cobMin.total }) })));
   }
   // Sense fitxes, no es pinta la taula (ni la capçalera).
   if (jugadors.length) sec.append(el('div', { class: 'graella-cap c-venda' },
@@ -671,7 +675,7 @@ const graellaAmbFiles = (classe, capçaleres, files) => {
   return g;
 };
 
-const eur = (obj, ...keys) => { const o = { ...obj }; for (const k of keys) if (o[k] != null) o[k] = diners(o[k]); return o; };
+const eur = (obj, ...keys) => ambXifres(obj, keys);   // àlies curt: els noms de clau són els diners
 export async function economia(main) {
   capcalera(main, 7, 'economia');
   const { transaccions, economia: e } = await api('/api/transaccions');
@@ -1054,7 +1058,7 @@ export async function comparador(main) {
   const c = card(t('comparador.canvis_titol'));
   const cs = el('div', { class: 'card-cos' });
   if (!d.comparable) { cs.append(el('p', { class: 'nota-peu', text: t('comparador.sense') })); c.append(cs); main.append(c); return; }
-  cs.append(el('p', { class: 'nota-peu', text: t('comparador.parella', { b: d.b.data, a: d.a.data, dies: d.dies }) + (d.canvi_temporada ? ` (${t('comparador.canvi_temporada')})` : '') }));
+  cs.append(el('p', { class: 'nota-peu', text: tp('comparador.parella', d.dies, { b: d.b.data, a: d.a.data, dies: d.dies }) + (d.canvi_temporada ? ` (${t('comparador.canvi_temporada')})` : '') }));
   if (d.pops.length) {
     for (const p of d.pops) cs.append(el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
       el('span', { class: 'mov-text', text: p.nom }), el('span', { class: 'skills', text: p.habilitats.map((h) => SIGLA[h]).join(' ') })));

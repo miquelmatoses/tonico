@@ -58,3 +58,25 @@ export function notes() {
     llegendes() { return vistes.map((t, i) => `${'*'.repeat(i + 1)} ${t}`); },
   };
 }
+
+// RENDIMENT: una raó menuda (guany per unitat de cost) que només servix per a ORDENAR. Amb
+// `decimal` eixiria «0,0» per a tot i amb `String` eixiria «0.000012299999999». Es mostra amb
+// tres xifres significatives, que és el que la fa comparable a colp d'ull.
+export const rendiment = (n) => (n == null || n === '' || Number.isNaN(Number(n))
+  ? '—' : Number(Number(n).toPrecision(3)).toString().replace('.', ','));
+
+// PARÀMETRES D'UN TEXT, formatats d'un colp. Cap secció pot interpolar un número cru: un
+// enter ha de dur el separador de milers i un fraccionari la coma valenciana (si no, ix
+// «3.4000000000000004» per pantalla). Els que són DINERS els declara qui produïx el text
+// (`claus_diners`), perquè cap regla els pot endevinar pel nom.
+//   ambXifres({ cost: 131978, mancanca: 3.4, nom: 'X' }, ['cost'])
+//     → { cost: '131 978 €', mancanca: '3,4', nom: 'X' }
+export function ambXifres(par, clausDiners) {
+  const o = { ...(par || {}) };
+  const sonDiners = new Set(clausDiners || []);
+  for (const [k, v] of Object.entries(o)) {
+    if (typeof v !== 'number' || Number.isNaN(v)) continue;
+    o[k] = sonDiners.has(k) ? diners(v) : Number.isInteger(v) ? milers(v) : decimal(v);
+  }
+  return o;
+}

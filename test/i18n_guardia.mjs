@@ -8,7 +8,10 @@ const dir = new URL('../public/i18n/', import.meta.url);
 const carrega = (f) => JSON.parse(readFileSync(new URL(f, dir), 'utf8'));
 const ca = carrega('ca-valencia.json');
 const en = carrega('en.json');
-const te = (k) => Object.prototype.hasOwnProperty.call(ca, k);
+// Una clau existix si hi és, o si hi és la seua PARELLA DE PLURAL (`_1` i `_n`): quan un text
+// porta comptador, el missatge_clau és la base i la variant la tria el nombre.
+const hiEs = (k) => Object.prototype.hasOwnProperty.call(ca, k);
+const te = (k) => hiEs(k) || (hiEs(`${k}_1`) && hiEs(`${k}_n`));
 
 // ── 0. PARITAT: tota clau d'una llengua ha d'existir a l'altra ──
 const clausCa = Object.keys(ca), clausEn = Object.keys(en);
@@ -138,7 +141,9 @@ for (const d of dirs) {
     for (const m of src.matchAll(/['"](alerta\.[a-z0-9_]+|agenda\.[a-z0-9_]+)['"]/g)) emeses.add(m[1]);
   }
 }
-const orfenes = clausCa.filter((k) => /^(alerta|agenda)\./.test(k) && !emeses.has(k) && !EXCEPCIONS_ORFENES.includes(k));
+// Una variant de plural la emet el codi per la seua BASE (`tp` hi afig el sufix).
+const emesa = (k) => emeses.has(k) || (/_(1|n)$/.test(k) && emeses.has(k.replace(/_(1|n)$/, '')));
+const orfenes = clausCa.filter((k) => /^(alerta|agenda)\./.test(k) && !emesa(k) && !EXCEPCIONS_ORFENES.includes(k));
 assert.deepEqual(orfenes, [], `claus i18n òrfenes (al catàleg però mai emeses): ${orfenes.join(', ')}`);
 
 // ── 6. GUARDIÀ LINGÜÍSTIC (valencià de la casa): formes VETADES al catàleg ca. Vore
@@ -156,4 +161,51 @@ const infraccions = [];
 for (const [k, v] of Object.entries(ca)) for (const [re, msg] of VETATS) if (re.test(v)) infraccions.push(`${k}: ${msg}  ·  «${v}»`);
 assert.deepEqual(infraccions, [], `formes vetades al catàleg ca:\n  ${infraccions.join('\n  ')}`);
 
-console.log(`OK — guardià i18n: ${clausCa.length} claus, paritat ca↔en, literals, òrfenes i formes vetades`);
+// ── 6b. V9 · CATÀLEG SENCER: intentat i DESCARTAT com a guardià automàtic.
+// La vista compon les claus de mil maneres (t('pre.' + k), t(clau + '.titol'), plantilles amb
+// prefix I sufix variables, `${CAMPS_JUSTIF}.${categoria}`), i un detector per expressions
+// regulars dona ~145 falsos positius sobre 580 claus: un guardià que crida el llop cada dia
+// no es mira. Per a fer-ho bé cal recórrer l'AST de la vista o instrumentar `t()` en execució.
+// Passada MANUAL feta el 2026-07-26: cinc textos morts de la fàbrica esborrats
+// (pujada.exit, economia.capital_coixi_sou, comparador.velocitat, fotrem.onze_descobriments,
+// esta_setmana.alineacio_resum). El control automàtic de `alerta.*`/`agenda.*` (pas 5) es
+// queda, que és on el text mort fa més mal: eixes claus les emet el codi, no la vista.
+
+// ── 7. V7 · CONCORDANÇA DE NOMBRE: cap text pot interpolar un COMPTADOR seguit d'un nom o
+// verb en plural fix. «{n} llocs» es llig malament quan n = 1, i el sistema diu números d'1
+// contínuament (1 dia, 1 setmana, 1 juvenil). Qui du comptador es partix en `_1` / `_n` i
+// es crida amb `tp`. Les EXEMPCIONS són textos on el número no concorda amb res (una raó,
+// una abreviatura, una etiqueta amb el compte entre parèntesis).
+const EXEMPTS_PLURAL = new Set([
+  'comu.lesionat_durada',              // «🤕 {n} setm.» — abreviatura invariable
+  'alerta.lesio_venda',                // «({setmanes} setm.)» — idem
+  'alerta.llistar_lesionat',           // idem
+  'moviments.historial',               // «Historial ({n})» — compte entre parèntesis
+  'alineacio.onze_sub',                // «{n} entrenant» — gerundi invariable
+  'fotrem.onze_repartiment',           // comptes + gerundis, cap plural que concorde
+  'vendes.retingut_cobertura',         // «{n} de camp» — sense nom en plural
+  'fotrem.onze_no_viable',             // «només {en_camp} en camp» — idem
+  'mercat.filtre_core', 'mercat.filtre_cos',   // «Falten: {falten}.» — etiqueta de llista
+  'alerta.crida_juvenil',              // «es quedarà en {futur}» — no compta res
+]);
+{
+  const bases = new Set(clausCa.filter((k) => /_(1|n)$/.test(k)).map((k) => k.replace(/_(1|n)$/, '')));
+  // Nom o verb en plural just darrere d'un comptador. Es limita als noms/verbs que el
+  // sistema usa de veritat: així no cal endevinar la morfologia del valencià sencera.
+  const PLURAL = /\{(n|dies|setmanes|total|actuals|falten|sobren|disponibles|entrenen|descobriments|mancanca|nous|jugarien)\}(?:\/\{\w+\})?\s+(dies|setmanes|jugadors|juvenils|migs|llocs|nivells|pops|entrenen|esperen)\b/;
+  const nus = [];
+  for (const k of clausCa) {
+    if (/_(1|n)$/.test(k) || bases.has(k) || EXEMPTS_PLURAL.has(k)) continue;
+    const m = ca[k].match(PLURAL);
+    if (m) nus.push(`${k} («${m[0]}»)`);
+  }
+  assert.deepEqual(nus, [],
+    `comptadors sense concordança de nombre: ${nus.join(', ')}\n` +
+    '→ partix el text en «_1» i «_n» i crida\'l amb tp(); si el número no concorda amb res, ' +
+    'apunta la clau a EXEMPTS_PLURAL amb el motiu.');
+  // Que les exempcions no es tornen un calaix: cap pot ser d'una clau que ja no existix.
+  const mortes = [...EXEMPTS_PLURAL].filter((k) => !clausCa.includes(k));
+  assert.deepEqual(mortes, [], `exempcions de plural per a claus que ja no hi són: ${mortes.join(', ')}`);
+}
+
+console.log(`OK — guardià i18n: ${clausCa.length} claus, paritat ca↔en, literals, òrfenes, formes vetades i concordança de nombre`);
