@@ -19,6 +19,8 @@ import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
 import { pesLloc, pressupostSou, nivellObjectiu } from '../lib/pesos.js';
 import { nivellActual, mancanca, exces, sobrecost, prioritat } from '../lib/mancanca.js';
 import { comptesNucli, maxPartits, construeixPlantilla } from '../lib/plantilla.js';
+import { calibrat as esCalibrat, estimacioComparables, preuEsperat, setmanesVenda, valorNet,
+  urgent as esUrgent, motiuVenda, ordreVenda, desti } from '../lib/preu.js';
 
 const arrel = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { formules } = JSON.parse(readFileSync(join(arrel, 'formules.json'), 'utf8'));
@@ -213,6 +215,50 @@ const VERIFICADES = {
     const tots = [...r.retinguts, ...r.venda].map((j) => j.jugador_id).sort();
     assert.deepEqual(tots, [1, 2, 3], 'retinguts ∪ venda = plantilla');
     assert.ok(r.venda.every((j) => !r.rol[j.jugador_id]), 'cap marca de retenció dins de venda');
+  },
+
+  // PAS 7 — vendre. UNA sola fórmula de preu, i la depressió profunda en FRACCIÓ.
+  'P7.calibrat': () => {
+    const c = [{ preu: 1 }, { preu: 2 }];
+    assert.equal(esCalibrat(c, 0, 3), false, 'dues mostres no arriben a min_mostres=3');
+    assert.equal(esCalibrat(c, 1, 3), true, 'una venda real també és mostra');
+  },
+  'P7.preu_esperat': () => {
+    const j = { posicio: 'MC', creativitat: 8 };
+    const comps = [{ posicio: 'MC', preu: 100000 }, { posicio: 'MC', preu: 120000 }, { posicio: 'MC', preu: 110000 }];
+    const cal = preuEsperat(j, { comparables: comps, min_mostres: 3, divisio: 'VII', base_preu_divisio: { VII: 2000 } });
+    assert.equal(cal.preu, estimacioComparables(comps, j), 'calibrat → mediana dels comparables');
+    const noCal = preuEsperat(j, { comparables: [], min_mostres: 3, divisio: 'VII', base_preu_divisio: { VII: 2000 }, nivell_referencia: 8 });
+    assert.equal(noCal.preu, 2000, 'sense mostres → base de la divisió × factor');
+    assert.equal(preuEsperat(j, { comparables: [] }).preu, null, 'sense divisió no s\'inventa preu');
+  },
+  'P7.valor_net': () => {
+    // valor_net = preu − cost_llistat − sou × setmanes_venda, i setmanes_venda = 1 si no
+    // està llistat, o el que queda fins al tancament si ja ho està.
+    assert.equal(setmanesVenda({ llistat: false }), 1);
+    assert.equal(setmanesVenda({ llistat: true }, 14), 2);
+    assert.equal(valorNet(110000, { sou: 1000 }, { cost_llistat: 1000, setmanes_venda: 2 }), 107000);
+  },
+  'P7.urgent': () => {
+    assert.equal(esUrgent(10, 14), true);
+    assert.equal(esUrgent(20, 14), false);
+  },
+  'P7.motiu_venda': () => {
+    assert.equal(motiuVenda({}, { esRotatiu: true, temporada: 86, horitzo_eixida: 85 }), 'pic_de_valor');
+    assert.equal(motiuVenda({}, { sobrecost: 500 }), 'sou_desproporcionat');
+    assert.equal(motiuVenda({}, { enVenda: true }), 'sobrant');
+    assert.equal(motiuVenda({}, {}), null);
+  },
+  'P7.ordre_venda': () => assert.deepEqual(ordreVenda([
+    { id: 'a', sobrecost: 0, preu_esperat: 9 }, { id: 'b', sobrecost: 7, preu_esperat: 1 },
+  ]).map((x) => x.id), ['b', 'a']),
+  'P7.desti': () => {
+    assert.equal(desti({}, { lesionat: true }).accio, 'agenda_llistar_en_recuperar');
+    assert.equal(desti({}, { calibrat: true, valor_net: -1, llindar_despatx: 0 }).accio, 'despatxa');
+    assert.equal(desti({}, { calibrat: false, valor_net: -1 }).accio, 'llista_hui', 'invariant 7');
+    // El bug d'unitats que el full corregix: en enters, la branca era inassolible.
+    assert.equal(desti({}, { modificador_tancament: -0.15, depressio_profunda: -20 }).accio, 'llista_hui');
+    assert.equal(desti({}, { modificador_tancament: -0.25, depressio_profunda: -0.20 }).accio, 'agenda_llistar');
   },
 
   // P10.valor casos (a)(b)(c): coincidixen amb valorHabilitat. El cas (d) NO — vore DIVERGENTS.

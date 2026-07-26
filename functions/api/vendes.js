@@ -1,6 +1,7 @@
 // Tonico — fitxes de venda (Àrea E). GET els jugadors en categoria 'venda' amb la
 // seua fitxa (preu d'eixida proposat/editat, data de llistada, estat); POST upsert.
-import { proposaPreuEixida } from '../../lib/vendes.js';
+import { preuEsperat, valorNet as calcValorNet, habilitatMax } from '../../lib/preu.js';
+import { normalitzaDivisio } from '../../lib/divisio.js';
 import { avaluaPuntuacio } from '../../lib/classificador.js';
 import { carregaConfigPla } from '../../lib/config_pla.js';
 import { esLesionat } from '../../public/format.js';
@@ -39,9 +40,10 @@ export async function onRequestGet({ env, data }) {
   // defecte (VII, molt per davall dels valors inflats). El recalibratge amb vendes
   // reals (comparables) mana quan hi haja dades (5c).
   const divRow = await env.DB.prepare('SELECT divisio AS div FROM config_usuari WHERE usuari_id=?').bind(data.usuari.id).first();
-  const divisio = divRow?.div || (await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='divisio_defecte'").first())?.valor || 'VII';
-  const mapaDiv = JSON.parse((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='estimacio_per_divisio'").first())?.valor || '{}');
-  const valorDefecte = mapaDiv[divisio] ?? (parseInt(String(config.params?.valor_estimat_defecte ?? ''), 10) || null);
+  const divisio = normalitzaDivisio(divRow?.div) || (await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='divisio_defecte'").first())?.valor || 'VII';
+  const basePreuDivisio = JSON.parse((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='base_preu_divisio'").first())?.valor || '{}');
+  const minMostres = parseInt((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='min_mostres'").bind(config.plantilla ?? 'competitiva').first())?.valor || '1', 10);
+  const habLloc = JSON.parse((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='taula_habilitat_lloc'").bind(config.plantilla ?? 'competitiva').first())?.valor || '{}');
   const vendaSpec = config.categories.find((c) => c.categoria === 'venda')?.parametres?.puntuacio;
   const punts = jugadors.map((j) => (vendaSpec ? avaluaPuntuacio(vendaSpec, j, config.params) : null));
   const positius = punts.filter((p) => p != null && p > 0);
@@ -64,25 +66,23 @@ export async function onRequestGet({ env, data }) {
   ).bind(data.usuari.id).all();
   const forcadaAgenda = new Set(agListat.map((r) => r.jugador_id));
   const forcada = (j) => j.estat === 'llistat' || j.estat === 'venut' || j.estat === 'despatxat' || !!j.data_llistada || forcadaAgenda.has(j.jugador_id);
+  // El nivell de referència del factor d'habilitat: la millor habilitat MITJANA del propi
+  // grup (dada pròpia, no un número inventat).
+  const nivells = jugadors.map((j) => habilitatMax(j)).filter((v) => v > 0);
+  const nivellRef = nivells.length ? nivells.reduce((a, b) => a + b, 0) / nivells.length : null;
+
   const eixida = jugadors.map((j, i) => {
-    const comp = proposaPreuEixida(comparables, j);
-    let preu_proposat = comp;
-    if (comp == null && valorDefecte != null) {
-      // Escala pel valor relatiu (2c): qui puntua més, més estimació (mitjana ≈ base de
-      // divisió). L'escalat opera també sense calibrar — cap llosa plana.
-      preu_proposat = (mitjana && punts[i] != null && punts[i] > 0)
-        ? Math.max(0, Math.round(valorDefecte * punts[i] / mitjana)) : valorDefecte;
-    }
-    // 2a: el despatxar NO decidix amb números no calibrats. CALIBRAT = hi ha comparable
-    // (venda real/mercat) per a este jugador. Sense calibrar: cap valor_net ni despatxar
-    // — la fila mostra només l'estimació etiquetada.
-    const calibrat = comp != null;
+    // LA fórmula de preu del sistema (PAS 7): la mateixa que consumix l'Economia.
+    const pe = preuEsperat(j, { comparables, min_mostres: minMostres, divisio,
+      base_preu_divisio: basePreuDivisio, nivell_referencia: nivellRef });
+    const preu_proposat = pe.preu;
+    const calibrat = pe.calibrat;
     const forc = forcada({ ...j, estat: j.estat || 'pendent' });
-    const valor_net = calibrat ? preu_proposat - costLlistat - (j.sou || 0) * setmanesVenda : null;
+    const valor_net = calibrat ? calcValorNet(preu_proposat, j, { cost_llistat: costLlistat, setmanes_venda: setmanesVenda }) : null;
     // El valor de venda mana en la retenció (1). MATEIXA vara que el motor d'alertes: la
     // puntuació de la categoria (derivada, no la desada), amb l'estimació de reserva.
     const valor = punts[i] ?? preu_proposat ?? 0;
-    return { ...j, estat: j.estat || 'pendent', preu_proposat, valor, puntuacio: punts[i] ?? null, preu_estimacio_grossa: comp == null && preu_proposat != null,
+    return { ...j, estat: j.estat || 'pendent', preu_proposat, valor, puntuacio: punts[i] ?? null, preu_estimacio_grossa: pe.base === 'divisio',
       tancament_previst: tancament(j.data_llistada), lesionat: esLesionat(j.lesio), calibrat,
       valor_net, despatxar: calibrat && valor_net != null && valor_net < despatxarLlindar && !forc };
   });

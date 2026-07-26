@@ -1,5 +1,25 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · RECONSTRUCCIÓ v3 · L7 (fet i verificat a prod)
+- **L7 — vendre** (migració 061, desplegada en el mateix lot). `lib/preu.js` és ara la
+  **ÚNICA fórmula de preu del sistema**: Vendes, l'Economia i el bucle d'estoc la consumixen.
+  **Decisions no trivials:**
+  1. **`depressio_profunda` passa a FRACCIÓ (−0,20).** Estava en enters (−20) contra un
+     modificador que no baixa de −0,15: **la branca d'ajornar per depressió no s'activava
+     MAI**. Verificat a prod. El test fixa les dues unitats perquè no torne a passar.
+  2. **`min_mostres` = 3, declarat.** Abans «calibrat» era implícitament ≥1 comparable. És
+     política de prudència, no mecànica: va com a pom.
+  3. **`factor_habilitat` es mesura amb la MILLOR habilitat.** El full no en qualifica cap
+     («com de bo és el jugador»), i el mercat mira la millor. Amb el mapatge per lloc no
+     diferenciava res. **I «desconegut» val 1 (el preu base), no 0**: no saber-ho no és
+     que el jugador no valga res.
+  4. **La clàusula de porter valuós desapareix d'`urgent(j)`.** El v3 el reduïx a
+     l'aniversari; la depreciació de porter la governava la Junta, retirada a L0.
+  5. `estimacio_per_divisio` → `base_preu_divisio` (nom del contracte), i `lib/vendes.js`
+     queda com a simple reexport de la font única perquè cap punt de decisió es faça la
+     seua pròpia fórmula de preu.
+
+
 ## 2026-07-26 · RECONSTRUCCIÓ v3 · L6 CABLAT (fet i verificat a prod)
 - **El PAS 6 mana ara a l'app** (migració 060, desplegada en el mateix lot).
   `classificaEquip` deixa de cridar el classificador de categories i construïx la plantilla

@@ -30,7 +30,7 @@ const codis = (a) => a.map((x) => x.regla_codi);
   assert.equal(rec.urgencia, 55, 'sense rellotge d\'urgència');
   // Rellotge de depreciació: porter NOTABLE (porteria >= ctx.porter_notable_min=7) → urgent.
   const depoK = REGLES.ALR_LLISTAR_VENDA({ ...base, jugadors: [{ jugador_id: 1, nom: 'PO7', categoria: 'venda', posicio: 'PO', porteria: 7, edat_dies: 40, edat_anys: 24 }], mercat: { depressio: false, modificador: 0 } }, p)[0];
-  assert.equal(depoK.urgencia, 72, 'porter notable (7) → depreciació urgent');
+  assert.equal(depoK.urgencia, 55, 'v3: un porter valuós NO fa urgent la venda (només l\'aniversari)');
   // PO6 NO és notable (llindar únic = 7) → urgència normal.
   const depoNo = REGLES.ALR_LLISTAR_VENDA({ ...base, jugadors: [{ jugador_id: 1, nom: 'PO6', categoria: 'venda', posicio: 'PO', porteria: 6, edat_dies: 40, edat_anys: 24 }], mercat: { depressio: false, modificador: 0 } }, p)[0];
   assert.equal(depoNo.urgencia, 55, 'PO6 no és notable → normal');
@@ -73,17 +73,9 @@ const codis = (a) => a.map((x) => x.regla_codi);
   assert.equal(a.filter((x) => x.missatge_clau === 'alerta.llistar_lesionat').length, 1, 'el lesionat, avís propi d\'ajornament');
 }
 
-// UN CONCEPTE, UN LLINDAR: ctx.porter_notable_min governa el rellotge de depreciació.
-// (La Junta va caure amb el model fàbrica; el v3 no la contempla.)
-{
-  const jDep = [{ jugador_id: 1, nom: 'PO6', categoria: 'venda', posicio: 'PO', porteria: 6, edat_dies: 40, edat_anys: 24 }];
-  const pD = { urgencia: 72, urgencia_normal: 55, posicio_porter: 'PO', dies_aniversari: 14, depressio_profunda: -20 };
-  const mNoDep = { depressio: false, modificador: 0 };
-  // Amb el llindar a 6, PO6 és notable.
-  assert.equal(REGLES.ALR_LLISTAR_VENDA({ ...ctxBase, porter_notable_min: 6, dataInstantania: '2026-07-21', jugadors: jDep, mercat: mNoDep }, pD)[0].urgencia, 72, 'llindar 6 → depreciació urgent PO6');
-  // Amb el llindar a 7, PO6 deixa de ser notable.
-  assert.equal(REGLES.ALR_LLISTAR_VENDA({ ...ctxBase, porter_notable_min: 7, dataInstantania: '2026-07-21', jugadors: jDep, mercat: mNoDep }, pD)[0].urgencia, 55, 'llindar 7 → depreciació normal PO6');
-}
+// v3 (PAS 7): urgent(j) = NOMÉS l'aniversari. La depreciació de porter valuós era del
+// model retirat i el full no la contempla, així que ni la Junta ni el rellotge de porter
+// governen res ací.
 
 // ALR_NUCLI_INCOMPLET: menys d'objectiu
 {
@@ -170,4 +162,4 @@ console.log('OK — motor de regles: 7 regles, ordenació per urgència i setman
 }
 console.log('OK — ALR_LESIO_VENDA: llistat lesionat avisa');
 // (La depreciació mecànica està plegada dins d'ALR_LLISTAR_VENDA com a rellotge d'urgència;
-//  el llindar «porter notable» és ctx.porter_notable_min, compartit amb la Junta.)
+

@@ -19,15 +19,15 @@ sqlite.exec(`
   INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (1,1,'2026-07-25',83,1);
   INSERT INTO jugadors (id, equip_id, id_hattrick, nom, especialitat) VALUES (1,1,100,'Venut','Ràpid');
-  INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys) VALUES (1,1,'MC',25);
+  INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, creativitat, defensa, passades, extrem, anotacio, pilota_aturada, porteria) VALUES (1,1,'MC',25,5,4,4,3,3,3,1);
   INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (1,'venda','auto');
-  INSERT INTO preus_observats (usuari_id, posicio, edat, habilitat, preu, data) VALUES (1,'MC',25,7,100000,'2026-07-18'),(1,'MC',25,7,300000,'2026-07-18');
+  INSERT INTO preus_observats (usuari_id, posicio, edat, habilitat, preu, data) VALUES (1,'MC',25,7,100000,'2026-07-18'),(1,'MC',25,7,200000,'2026-07-18'),(1,'MC',25,7,300000,'2026-07-18');
 `);
 const ctx = (body) => ({ request: new Request('http://t', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }), env: { DB: db }, data: { usuari: { id: 1 } } });
 
 let d = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 assert.equal(d.jugadors.length, 1, 'un jugador en venda');
-assert.equal(d.jugadors[0].preu_proposat, 200000, 'preu proposat = mediana MC');
+assert.equal(d.jugadors[0].preu_proposat, 200000, 'preu proposat = mediana MC (3 mostres: min_mostres=3)');
 assert.equal(d.jugadors[0].estat, 'pendent', 'estat per defecte');
 assert.equal(d.jugadors[0].especialitat, 'Ràpid');
 // Punt #10.6: valor_net = preu − cost_llistat(1000) − sou×setmanes(3). Sense sou → net alt.
