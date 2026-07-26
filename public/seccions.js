@@ -306,9 +306,10 @@ export async function alineacio(main) {
   if (d.copa) main.append(el('p', { text: t('alineacio.copa_nota') }));
   if (d.avisos.length) {
     const av = d.avisos.map((v) => v.tipus === 'cobertura' ? t('alineacio.cobertura', v)
-      : v.tipus === 'una_alineacio' ? t('alineacio.una_alineacio', { partits: v.partits })
+      : v.tipus === 'una_alineacio' ? t('alineacio.una_alineacio')
         : v.tipus === 'entrenament_perdut' ? t('alineacio.perdut', { nom: v.nom, motiu: t('motiu.' + v.motiu) })
-          : t('alineacio.incomplet', { partit: curt(v.partit), buits: v.buits }));
+          : v.tipus === 'llocs_buits' ? t('alineacio.llocs_buits', { n: v.n })
+            : '');
     main.append(el('section', {}, el('h3', { text: t('alineacio.avisos_titol') }), el('ul', {}, ...av.map((x) => el('li', { text: x })))));
   }
 }

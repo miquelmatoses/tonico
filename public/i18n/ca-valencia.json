@@ -8,7 +8,7 @@
   "rol.onze_a": "Alineació A — competitiva",
   "rol.onze_b": "Alineació B — només entrenament",
   "alineacio.experiencia_nota": "{nom} juga per experiència, no entrena.",
-  "alineacio.una_alineacio": "Esta setmana només hi ha un partit: els extrems entrenen al 50%.",
+  "alineacio.una_alineacio": "Esta setmana només hi ha un partit, així que els llocs que entrenen al 50% no completen la setmana.",
   "alineacio.col_slot": "Posició",
   "alineacio.col_jugador": "Jugador",
   "alineacio.col_motiu": "Motiu",
@@ -29,7 +29,6 @@
   "alineacio.avisos_titol": "Avisos de cobertura",
   "alineacio.cobertura": "{entrenen}/{total} entrenen.",
   "alineacio.perdut": "{nom} no entrena ({motiu}).",
-  "alineacio.incomplet": "{partit}: {buits} posicions sense cobrir.",
   "alineacio.tot_cobert": "Els dos onzes complets i tot el nucli al 100%.",
   "motiu.lesionat": "lesionat",
   "motiu.sancionat": "sancionat",
@@ -526,5 +525,6 @@
   "classif.venda": "Sobrant: no entra en cap lloc que calga cobrir.",
   "classif.futur_entrenador": "Futur entrenador: acumula experiència.",
   "alineacio.motiu_titular": "Titular del lloc",
-  "motiu_baixa.despatx": "Despatxat"
+  "motiu_baixa.despatx": "Despatxat",
+  "alineacio.llocs_buits": "Queden {n} llocs sense cobrir: es juga amb un menys."
 }

@@ -1,5 +1,26 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · RECONSTRUCCIÓ v3 · L8 (fet i verificat a prod)
+- **L8 — alineacions per PES** (migració 062, desplegada en el mateix lot). `lib/onze.js`
+  substituïx `lib/alineacio.js` (retirat): l'onze es munta greedy pels llocs de més pes,
+  amb `valor(j,lloc)`, `disponible(j,lloc)` i `max_partits` del contracte.
+  **Decisions no trivials:**
+  1. **`max_partits(j)` depén del LLOC QUE OCUPA, no del lloc candidat.** Avaluant-lo per
+     candidat, un del nucli ja col·locat en un lloc al 100% podia doblar en un altre al 50%
+     i «robar» la setmana d'un rotatiu. El full diu `pct(lloc(j))`: el lloc que ja té.
+  2. **El futur entrenador ja NO té llocs regalats.** El model vell el posava de davanter
+     als dos partits; el v3 només li permet doblar (`max_partits`=2) i ha de guanyar el
+     lloc pel seu valor.
+  3. **`pes_entrenament` declarat i etiquetat** (1000). És el que val ENTRENAR en un lloc
+     que entrena, contra l'habilitat que aportaria un altre. Va alt a posta: protegir la
+     setmana del nucli és el que el model vol. NO és mecànica de joc.
+  4. **En una setmana d'un sol partit, un lloc al 50% no es compta com a entrenament
+     perdut**: no pot arribar al 100% i no és culpa de ningú.
+  5. Tests: les propietats del motor (exclusions, doblatge, compatibilitat, llocs buits,
+     fixats) passen a `test/onze.mjs`; `test/alineacio.mjs` es queda amb la integració amb
+     la BD. Els blocs que cridaven el motor retirat s'han retirat amb ell.
+
+
 ## 2026-07-26 · RECONSTRUCCIÓ v3 · L7 (fet i verificat a prod)
 - **L7 — vendre** (migració 061, desplegada en el mateix lot). `lib/preu.js` és ara la
   **ÚNICA fórmula de preu del sistema**: Vendes, l'Economia i el bucle d'estoc la consumixen.

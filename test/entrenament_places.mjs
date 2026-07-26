@@ -3,7 +3,7 @@
 // res cablejat. node test/entrenament_places.mjs
 import assert from 'node:assert/strict';
 import { placesEntrenament, aplicaEntrenament } from '../lib/entrenament_places.js';
-import { alinea } from '../lib/alineacio.js';
+import { alineaOnzes } from '../lib/onze.js';
 import { cobertura } from '../lib/cobertura.js';
 
 const TAULA = { porteria: ['porter'], defensa: ['defensa'], creativitat: ['mc'], passades: ['mc', 'extrem', 'davanter'], extrem: ['extrem'], anotacio: ['davanter'], pilota_aturada: ['porter'] };
@@ -43,12 +43,15 @@ assert.notEqual(cobCrea.entrenables_objectiu, cobDef.entrenables_objectiu, 'canv
 
 // ── 4. L'ALINEACIÓ es deriva: amb defensa, entrenen els DEFENSES, no els MC ──
 const squad = Array.from({ length: 8 }, (_, i) => ({ jugador_id: i + 1, nom: 'E' + i, posicio: 'DC', categoria: 'core' }));
-const rCrea = alinea(squad, { slots: slotsCrea, buckets: { porter: ['PO'], defensa: ['DC'], mc: ['MC'], extrem: ['ED'], davanter: ['DV'] }, rols });
+const llocsDe = (slots) => slots.map((sl, i) => ({ lloc: `${sl.bucket}${i + 1}`, bucket: sl.bucket,
+  entrena: !!sl.entrena, pct: sl.pct ?? 100, habilitat: { porter: 'porteria', defensa: 'defensa',
+  mc: 'creativitat', extrem: 'extrem', davanter: 'anotacio' }[sl.bucket], pes: 1 }));
+const rCrea = alineaOnzes(squad, llocsDe(slotsCrea), rols, { pes_entrenament: 1000 });
 const entrenaEn = (r, bucket) => ['A', 'B'].reduce((n, k) => n + r.onze[k].filter((s) => s.bucket === bucket && s.jugador && s.entrena).length, 0);
 assert.ok(entrenaEn(rCrea, 'mc') > 0, 'creativitat: hi ha entrenables entrenant d\'MC');
 assert.equal(entrenaEn(rCrea, 'defensa'), 0, 'creativitat: cap entrenable entrena de defensa');
 
-const rDef = alinea(squad, { slots: slotsDef, buckets: { porter: ['PO'], defensa: ['DC'], mc: ['MC'], extrem: ['ED'], davanter: ['DV'] }, rols });
+const rDef = alineaOnzes(squad, llocsDe(slotsDef), rols, { pes_entrenament: 1000 });
 assert.ok(entrenaEn(rDef, 'defensa') > 0, 'defensa: ara els entrenables entrenen de DEFENSA');
 assert.equal(entrenaEn(rDef, 'mc'), 0, 'defensa: ja NINGÚ entrena d\'MC');
 // I la comptabilitat reflectix el 100% en un sol partit (buckets al 100%, no doblen).

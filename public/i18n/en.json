@@ -8,7 +8,7 @@
   "rol.onze_a": "Lineup A — competitive",
   "rol.onze_b": "Lineup B — training only",
   "alineacio.experiencia_nota": "{nom} plays for experience, doesn't train.",
-  "alineacio.una_alineacio": "Only one match this week: the wingers train at 50%.",
+  "alineacio.una_alineacio": "Only one match this week, so slots training at 50% can't complete the week.",
   "alineacio.col_slot": "Position",
   "alineacio.col_jugador": "Player",
   "alineacio.col_motiu": "Reason",
@@ -29,7 +29,6 @@
   "alineacio.avisos_titol": "Coverage warnings",
   "alineacio.cobertura": "{entrenen}/{total} training.",
   "alineacio.perdut": "{nom} isn't training ({motiu}).",
-  "alineacio.incomplet": "{partit}: {buits} positions unfilled.",
   "alineacio.tot_cobert": "Both lineups complete and all trainees at 100%.",
   "motiu.lesionat": "injured",
   "motiu.sancionat": "suspended",
@@ -526,5 +525,6 @@
   "classif.venda": "Surplus: doesn't fit any slot we must cover.",
   "classif.futur_entrenador": "Future coach: building experience.",
   "alineacio.motiu_titular": "Slot starter",
-  "motiu_baixa.despatx": "Released"
+  "motiu_baixa.despatx": "Released",
+  "alineacio.llocs_buits": "{n} slots left uncovered: you play a man short."
 }

@@ -21,6 +21,7 @@ import { nivellActual, mancanca, exces, sobrecost, prioritat } from '../lib/manc
 import { comptesNucli, maxPartits, construeixPlantilla } from '../lib/plantilla.js';
 import { calibrat as esCalibrat, estimacioComparables, preuEsperat, setmanesVenda, valorNet,
   urgent as esUrgent, motiuVenda, ordreVenda, desti } from '../lib/preu.js';
+import { valorEn, compatible, alineaOnzes } from '../lib/onze.js';
 
 const arrel = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { formules } = JSON.parse(readFileSync(join(arrel, 'formules.json'), 'utf8'));
@@ -259,6 +260,50 @@ const VERIFICADES = {
     // El bug d'unitats que el full corregix: en enters, la branca era inassolible.
     assert.equal(desti({}, { modificador_tancament: -0.15, depressio_profunda: -20 }).accio, 'llista_hui');
     assert.equal(desti({}, { modificador_tancament: -0.25, depressio_profunda: -0.20 }).accio, 'agenda_llistar');
+  },
+
+  // PAS 9 — les alineacions, greedy per pes.
+  'P9.valor': () => {
+    const lloc = { entrena: true, pct: 100, habilitat: 'creativitat' };
+    assert.equal(valorEn({ categoria: 'core', creativitat: 5 }, lloc, 1000), 1000,
+      'en un lloc que entrena, el nucli hi va pel pes d\'entrenament');
+    assert.equal(valorEn({ categoria: 'cos', creativitat: 5 }, lloc, 1000), 5,
+      'la resta val el que val la seua habilitat');
+  },
+  'P9.disponible': () => {
+    const LL = [{ lloc: 'a', entrena: false, habilitat: 'defensa', pes: 1 }];
+    const P = [{ id: 'A', competitiu: true }, { id: 'B' }];
+    const base = { jugador_id: 1, categoria: 'cos', defensa: 5, sou: 1 };
+    const cap = (extra) => alineaOnzes([{ ...base, ...extra }], LL, P, {}).onze.A[0].jugador;
+    assert.equal(cap({}).jugador_id, 1);
+    assert.equal(cap({ llistat: true }), null, 'llistat no juga');
+    assert.equal(cap({ lesionat: true }), null, 'lesionat no s\'alinea');
+    const sanc = alineaOnzes([{ ...base, sancionat: true }], LL, P, { partit_lliga: 'A' });
+    assert.equal(sanc.onze.A[0].jugador, null, 'sancionat: fora de la lliga');
+    assert.equal(sanc.onze.B[0].jugador.jugador_id, 1, 'però juga l\'altre partit');
+    assert.equal(compatible({ categoria: 'porter' }, { habilitat: 'defensa' }), false);
+  },
+  'P9.jugador': () => {
+    // ORDENA(valor DESC, partits_assignats ASC, sou ASC)
+    const LL = [{ lloc: 'a', entrena: false, habilitat: 'defensa', pes: 1 }];
+    const r = alineaOnzes([
+      { jugador_id: 1, categoria: 'cos', defensa: 5, sou: 900 },
+      { jugador_id: 2, categoria: 'cos', defensa: 5, sou: 100 },
+    ], LL, [{ id: 'A', competitiu: true }], {});
+    assert.equal(r.onze.A[0].jugador.jugador_id, 2, 'a igual valor, el més barat');
+  },
+  'P9.buit': () => {
+    const LL = [{ lloc: 'a', entrena: false, habilitat: 'defensa', pes: 1 }];
+    const r = alineaOnzes([], LL, [{ id: 'A', competitiu: true }], {});
+    assert.equal(r.onze.A[0].jugador, null, 'sense ningú, el lloc queda buit');
+    assert.equal(r.buits.length, 1, 'i el buit es declara');
+  },
+  'P9.comptabilitat': () => {
+    // SUMA(pct dels llocs assignats): 50 + 50 = la setmana feta.
+    const LL = [{ lloc: 'e1', entrena: true, pct: 50, habilitat: 'extrem', pes: 1 }];
+    const r = alineaOnzes([{ jugador_id: 1, categoria: 'core', extrem: 5 }], LL,
+      [{ id: 'A', competitiu: true }, { id: 'B' }], { pes_entrenament: 1000 });
+    assert.equal(r.comptabilitat.find((c) => c.jugador_id === 1).total, 100);
   },
 
   // P10.valor casos (a)(b)(c): coincidixen amb valorHabilitat. El cas (d) NO — vore DIVERGENTS.
