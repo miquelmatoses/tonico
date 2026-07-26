@@ -206,12 +206,17 @@ console.log('OK — cobertura mínima derivada de l\'entrenament (2 configs), re
   const { valorHabilitat } = await import('../lib/ranquing_juvenil.js');
   const { alineaJuvenil } = await import('../lib/alineacio_juvenil.js');
   const o = { valor_esperat_desconegut: 5, marge_esperat: 3, f_marge: 0.5 };
-  const potAlt = { jugador_id: 1, nom: 'PotAlt', creativitat_actual: 'desconegut', creativitat_potencial: 8 };
+  const potAlt = { jugador_id: 1, nom: 'PotAlt', creativitat_actual: 'desconegut', creativitat_potencial: 9 };
   const totDesc = { jugador_id: 2, nom: 'TotDesc', creativitat_actual: 'desconegut' };
   const vAlt = valorHabilitat(potAlt, 'creativitat', o);
   const vDesc = valorHabilitat(totDesc, 'creativitat', o);
+  // `marge_ple` és el marge que se SUPOSA a un desconegut (3): un potencial conegut només
+  // el bat si promet MÉS que això. Amb esperat 5 i marge_ple 3, el punt d'empat és 8.
   assert.ok(vAlt > vDesc, `potencial conegut alt ha de valdre MÉS que el tot desconegut (${vAlt} vs ${vDesc})`);
-  assert.equal(vAlt, 6.5, 'min(esperat,potencial)=5 + (8−5)×0.5 = 6.5 — marge REAL, no 0');
+  assert.equal(vAlt, 7, 'min(esperat,potencial)=5 + (9−5)×0.5 = 7 — marge REAL, no 0');
+  assert.equal(vDesc, 6.5, 'tot desconegut = esperat + marge_ple×f_marge = 5 + 1,5');
+  assert.equal(valorHabilitat({ creativitat_actual: 'desconegut', creativitat_potencial: 8 }, 'creativitat', o), vDesc,
+    'un potencial de 8 empata amb el desconegut: és exactament el marge que se li suposa');
   // Un potencial conegut BAIX val MENYS que el tot desconegut (informació dolenta és dolenta).
   assert.ok(valorHabilitat({ jugador_id: 3, creativitat_actual: 'desconegut', creativitat_potencial: 3 }, 'creativitat', o) < vDesc,
     'potencial conegut BAIX val menys que el desconegut');

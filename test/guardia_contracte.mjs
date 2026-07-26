@@ -22,6 +22,7 @@ import { comptesNucli, maxPartits, construeixPlantilla } from '../lib/plantilla.
 import { calibrat as esCalibrat, estimacioComparables, preuEsperat, setmanesVenda, valorNet,
   urgent as esUrgent, motiuVenda, ordreVenda, desti } from '../lib/preu.js';
 import { valorEn, compatible, alineaOnzes } from '../lib/onze.js';
+import { util as utilJuv, valorNetPromo, destiPromocio, objectiuJuvenil, sobrants, reiniciCrida } from '../lib/juvenil_v3.js';
 
 const arrel = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { formules } = JSON.parse(readFileSync(join(arrel, 'formules.json'), 'utf8'));
@@ -306,7 +307,35 @@ const VERIFICADES = {
     assert.equal(r.comptabilitat.find((c) => c.jugador_id === 1).total, 100);
   },
 
-  // P10.valor casos (a)(b)(c): coincidixen amb valorHabilitat. El cas (d) NO — vore DIVERGENTS.
+  'P10.util': () => {
+    assert.equal(utilJuv({ creativitat_potencial: 9 }, 'creativitat', 8), true);
+    assert.equal(utilJuv({ creativitat_potencial: 7 }, 'creativitat', 8), false);
+    assert.equal(utilJuv({ creativitat_potencial: 9 }, 'creativitat', null), null);
+  },
+  'P10.desti': () => {
+    assert.equal(destiPromocio({ esUtil: true, valor_net_promo: -1 }), 'PROMOCIONA');
+    assert.equal(destiPromocio({ esUtil: false, valor_net_promo: 1 }), 'PROMOCIONA_I_LLISTA');
+    assert.equal(destiPromocio({ esUtil: false, valor_net_promo: -1 }), 'DESPATXA');
+    assert.equal(valorNetPromo(300000, { cost_promocio: 20000, sou_estimat: 5000 }), 270000);
+  },
+  'P10.sobra': () => {
+    assert.equal(objectiuJuvenil(9), 10, 'objectiu = onze legal + 1');
+    assert.equal(objectiuJuvenil(null), null);
+  },
+  'P10.despatxa': () => {
+    const j = [{ jugador_id: 1, nivell: 8, n_revelacions: 1 }, { jugador_id: 2, nivell: 4, n_revelacions: 3 },
+      { jugador_id: 3, nivell: 4, n_revelacions: 0 }];
+    assert.deepEqual(sobrants(j, 2).map((x) => x.jugador_id), [3], 'NIVELL ASC, revelacions ASC');
+  },
+  'P10.reinici_crida': () => {
+    const r = reiniciCrida('2026-07-26T12:00:00Z', { economia_dia: 6, economia_hora: 2 });
+    assert.equal(new Date(r).getUTCDay(), 6);
+    assert.equal(new Date(r).getUTCHours(), 3, 'l\'hora SÍ que compta (abans s\'ignorava)');
+    assert.equal(reiniciCrida('2026-07-26T12:00:00Z', null), null);
+  },
+
+  // P10.valor: els QUATRE casos del full coincidixen amb valorHabilitat (el cas (d) es va
+  // corregir a L9: un desconegut també té marge).
   'P10.valor': () => {
     const o = optsMarge();
     const ea = MARGE.esperat_defecte;
@@ -314,6 +343,7 @@ const VERIFICADES = {
       { act: 6, pot: 9, esperat: 6 + (9 - 6) * MARGE.f_marge },                    // (a)
       { act: 6, pot: null, esperat: 6 + MARGE.marge_ple * MARGE.f_marge },         // (b)
       { act: null, pot: 9, esperat: Math.min(ea, 9) + (9 - Math.min(ea, 9)) * MARGE.f_marge }, // (c)
+      { act: null, pot: null, esperat: ea + MARGE.marge_ple * MARGE.f_marge },                 // (d)
     ];
     for (const { act, pot, esperat } of casos) {
       const y = { [`${A}_actual`]: act, [`${A}_potencial`]: pot };
@@ -343,17 +373,8 @@ const VERIFICADES = {
 // DIVERGÈNCIES CONFIRMADES: el codi actual NO fa el que diu el full. Cada entrada assegura
 // que la divergència SEGUIX vigent; quan un lot la corregisca, este test avisarà que cal
 // promoure-la a VERIFICADES. Així la divergència no es dilueix entre les pendents.
-const DIVERGENTS = {
-  // Full: valor(j,h) amb act i pot desconeguts = esperat_act + marge_ple × f_marge.
-  // Codi: torna esperat_act pelat, sense el marge (lib/ranquing_juvenil.js:24).
-  'P10.valor#cas_d': () => {
-    const segonsFull = MARGE.esperat_defecte + MARGE.marge_ple * MARGE.f_marge;   // 6,5
-    const segonsCodi = valorHabilitat({ [`${A}_actual`]: null, [`${A}_potencial`]: null }, A, optsMarge());
-    assert.notEqual(segonsCodi, segonsFull,
-      'la divergència P10.valor cas (d) ja NO existix → promou-la a VERIFICADES');
-    return `esperat full=${segonsFull} · codi=${segonsCodi}`;
-  },
-};
+// DIVERGÈNCIES CONFIRMADES: el codi no fa el que diu el full. Cap vigent ara mateix.
+const DIVERGENTS = {};
 
 // Una fórmula pot tindre més d'una comprovació: `id#aspecte`. El compte va per fórmula.
 const base = (id) => id.split('#')[0];
