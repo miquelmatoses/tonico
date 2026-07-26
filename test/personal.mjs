@@ -41,6 +41,11 @@ await personal.onRequestPost(ctx({ rol: 'entrenador', tipus: 'entrenador', sou: 
 d = await get();
 assert.equal(d.pla_flux.places, 4, 'l\'entrenador no consumix cap de les 4 places');
 assert.ok(!d.pla_flux.pla.some((x) => x.tipus === 'entrenador'), 'ni apareix al pla de personal');
+// NI COM A «FORA DEL PLA». Els declarats que no casen amb cap plaça es pinten igual, i
+// l'entrenador hi queia: una píndola amb el nivell buit, sense contracte i sense acció, perquè
+// no cobra per esta escala ni té contracte de 16 setmanes. No és personal: va a Entrenament.
+assert.ok(!(d.pla_flux.membres_fora || []).some((x) => x.tipus === 'entrenador'),
+  'l\'entrenador no és personal, ni tan sols com a sobrant del pla');
 
 // ── 3. Declarant-ne tres, la quarta segueix eixint com a «contracta» ──
 for (const t of ['assistent', 'assistent', 'metge']) {

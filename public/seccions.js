@@ -508,8 +508,8 @@ function onzeJuvenil(main, o) {
 // Hattrick, igual que el recordatori de tàctica diu que jugues amb joc d'especialitats.
 //
 // I es diu amb el nom de l'HABILITAT, no amb el del tipus de jugador: el catàleg `habilitat.*`
-// diu «migcampista» i «passador», que són tipus de jugador (serveixen per a «compra'm un
-// migcampista»), i entrenar-los no vol dir res. S'entrena creativitat i passades.
+// diu «mig centre» i «passador», que són tipus de jugador (serveixen per a «compra'm un mig
+// centre»), i entrenar-los no vol dir res. S'entrena creativitat i passades.
 function formEntrenamentJuvenil(main, d) {
   const pr = d.pipeline;
   const sec = card(t('juvenils.entrenament_titol'), null, 'llima');
@@ -943,7 +943,7 @@ const ESPECIALISTES = ['assistent', 'metge', 'psicoleg', 'forma', 'tactic', 'fin
 // mateixes quatre coses —el pla ací i un formulari sempre obert davall— i el nivell que es
 // llegia era el del PLA, no el declarat: es llegia com «tens personal de nivell 1» quan el que
 // tens és de nivell 2 i el que el flux sosté és 1.
-function placa(x, dies_avis) {
+function placa(x) {
   const nivD = x.nivell_declarat ?? null;
   const lliure = x.membre_id == null;
   const pill = el('div', { class: lliure ? 'placa buida' : 'placa' });
@@ -961,13 +961,13 @@ function placa(x, dies_avis) {
   if (!lliure) pill.append(el('div', { class: x.venciment ? 'placa-contracte venç' : 'placa-contracte',
     text: x.dies_contracte == null ? t('personal.contracte_sense_data')
       : tp('personal.contracte_dies', x.dies_contracte, { n: x.dies_contracte }) }));
-  // ACCIÓ només quan n'hi ha una de possible: plaça lliure, o dins de la finestra de venciment.
+  // ACCIÓ només quan n'hi ha una de possible: plaça lliure, o dins de la finestra de
+  // venciment. Fora d'això NO ES DIU RES: ni «res a fer», ni «deixa'l com està». Explicar
+  // cada setmana per què no hi ha res a fer és soroll amb un altre nom — l'espai es queda buit.
   if (x.accio && x.accio !== 'res') {
     pill.append(el('div', { class: 'placa-accio', text: x.accio_nivell
       ? t('flux.accio_' + x.accio + '_n', { paraula: t('nivell_ht.' + x.accio_nivell), n: x.accio_nivell })
       : t('flux.accio_' + x.accio) }));
-  } else if (!lliure) {
-    pill.append(el('div', { class: 'placa-accio cap', text: tp('flux.accio_res', dies_avis ?? 0, { dies: dies_avis ?? '?' }) }));
   }
   if (llapis) {
     const ed = editorMembre(x);
@@ -1025,9 +1025,9 @@ function plaFlux(main, p) {
       gastat: diners(Math.round(p.gastat)),
       restant: diners(Math.round(p.flux_restant)) }) }));
     const places = el('div', { class: 'places' });
-    for (const x of p.pla) places.append(placa(x, p.dies_avis));
+    for (const x of p.pla) places.append(placa(x));
     // Els declarats que no caben en cap plaça del pla: existixen i cobren, així que es veuen.
-    for (const x of p.membres_fora || []) places.append(placa({ ...x, accio: 'res', venciment: false }, p.dies_avis));
+    for (const x of p.membres_fora || []) places.append(placa({ ...x, accio: 'res', venciment: false }));
     cos.append(places);
     cos.append(el('p', { class: 'nota-peu', text: t('flux.avis_compromis') }));
   }
@@ -1038,57 +1038,17 @@ export async function personal(main) {
   capcalera(main, 9, 'personal');
   const d = await api('/api/personal');
   if (d.error) { main.append(el('p', { text: t('personal.sense_config') })); return; }
-  // El pla de places és l'ÚNICA llista de personal: cada píndola porta el seu llapis. Abans
-  // el pla anava dalt i just davall hi havia una segona llista amb les mateixes quatre coses i
-  // els camps sempre oberts — dos vegades el mateix, com passava a Configuració.
+  // El pla de places és l'ÚNICA llista de personal: cada píndola porta el seu llapis.
+  //
+  // ACÍ NO HI HA ENTRENAMENT. L'entrenament es PRESCRIU (ix del pipeline), o siga que un
+  // panell per a triar-lo era oferir una decisió que no existix. I l'ENTRENADOR tampoc: no és
+  // especialista, no gasta plaça, no té contracte de 16 setmanes i no cobra per l'escala del
+  // personal — barrejat ací només feia bolic. Tots dos van a la secció d'Entrenament, quan hi
+  // siga. El seu sou segueix comptant al flux: això no ha canviat.
   if (d.pla_flux) plaFlux(main, d.pla_flux);
-
-  const duo = el('div', { class: 'duo' });
-  if (d.entrenament?.prescrit) formEntrenament(duo, d.entrenament);
   const secM = card(t('personal.afig_titol'));
-  if (!d.membres.length) secM.append(cos(el('p', { class: 'nota-peu', text: t('personal.cap_membre') })));
   formMembre(secM);
-  duo.append(secM);
-  main.append(duo);
-}
-
-function formEntrenament(main, ent) {
-  const pr = ent.prescrit, co = ent.confirmat || {};
-  const sec = card(t('personal.entrenament_titol'), null, 'llima');
-
-  // ENTRENAMENT SÈNIOR TRIABLE: en canviar-lo, es deriven de nou les places que
-  // entrenen, els %, la cobertura, les alineacions i els anells del camp (guia §6).
-  if (ent.opcions && ent.opcions.length) {
-    const selT = el('select', { 'aria-label': t('personal.entrenament_senior') },   // precarrega
-      ...ent.opcions.map((h) => { const o = el('option', { value: h, text: t('habilitat.' + h) }); if (h === ent.senior) o.setAttribute('selected', ''); return o; }));
-    selT.addEventListener('change', async () => {
-      await api('/api/pla', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ entrenament_senior: selT.value }) });
-      location.reload();   // recalcula alineació, cobertura i anells amb el nou entrenament
-    });
-    sec.append(el('div', { class: 'card-cos' },
-      el('label', {}, t('personal.entrenament_senior'), selT),
-      el('p', { class: 'nota-peu', text: t('personal.entrenament_senior_nota') })));
-  }
-
-  const f = el('form', { class: 'card-cos' },
-    el('p', { class: 'nota-peu', text: t('personal.entrenament_prescrit', pr) }),
-    el('p', { class: 'nota-peu', text: t('personal.entrenament_confirma') }));
-  const graella = el('div', { class: 'form-graella' });
-  const tipus = el('input', { type: 'text', 'aria-label': t('personal.ent_tipus'), value: co.tipus ?? '' });
-  const inten = el('input', { type: 'number', 'aria-label': t('personal.ent_intensitat') }); if (co.intensitat != null) inten.value = co.intensitat;
-  const resis = el('input', { type: 'number', 'aria-label': t('personal.ent_resistencia') }); if (co.resistencia != null) resis.value = co.resistencia;
-  const b = el('button', { type: 'submit', class: 'b-prim', text: t('personal.entrenament_desa') });
-  graella.append(el('label', {}, t('personal.ent_tipus'), tipus), el('label', {}, t('personal.ent_intensitat'), inten),
-    el('label', {}, t('personal.ent_resistencia'), resis));
-  f.append(graella, b);
-  f.addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    await api('/api/pla', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      entrenament_confirmat: { tipus: tipus.value || null, intensitat: inten.value ? Number(inten.value) : null, resistencia: resis.value ? Number(resis.value) : null } }) });
-    location.reload();
-  });
-  sec.append(f);
-  main.append(sec);
+  main.append(secM);
 }
 
 // El nom visible d'un tipus de personal. Si el catàleg no el té, val el nom cru abans que un
@@ -1098,20 +1058,19 @@ const lblElement = (k) => { const v = t('element.' + k); return v === t('comu.te
 function formMembre(main) {
   const f = el('form', { class: 'card-cos' });
   const graella = el('div', { class: 'form-graella' });
-  const rol = el('select', { 'aria-label': t('personal.rol') }, ...['entrenador', 'especialista'].map((r) => el('option', { value: r, text: t('personal.rol_' + r) })));
   const tipus = el('select', { 'aria-label': t('personal.tipus') }, ...ESPECIALISTES.map((x) => el('option', { value: x, text: lblElement(x) })));
   const nivell = el('input', { type: 'number', 'aria-label': t('personal.nivell') });   // crea
   const sou = el('input', { type: 'number', 'aria-label': t('personal.sou') });   // crea
   const fi = el('input', { type: 'date', 'aria-label': t('personal.data_fi_contracte') });   // crea
   const b = el('button', { type: 'submit', class: 'b-prim', text: t('personal.afig') });
-  graella.append(el('label', {}, t('personal.rol'), rol), el('label', {}, t('personal.tipus'), tipus),
+  graella.append(el('label', {}, t('personal.tipus'), tipus),
     el('label', {}, t('personal.nivell'), nivell), el('label', {}, t('personal.sou'), sou),
     el('label', {}, t('personal.data_fi_contracte'), fi));
   f.append(graella, b);
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     await api('/api/personal', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      rol: rol.value, tipus: rol.value === 'especialista' ? tipus.value : rol.value,
+      rol: 'especialista', tipus: tipus.value,
       nivell: nivell.value || null, sou: sou.value || null, data_fi_contracte: fi.value || null }) });
     location.reload();
   });

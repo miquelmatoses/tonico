@@ -12,7 +12,7 @@ INSERT INTO constants_joc (clau, valor, tipus, nota) VALUES
   ('calendari_ancora_hora',    '15:00',      'text', 'Primer partit T83 (hora)'),
   -- ── Entrenament (percentatges de la guia) ──
   ('entrenament_extrem_pct',   '50',         'int',  'L''extrem entrena al 50%'),
-  ('entrenament_mc_pct',       '100',        'int',  'El migcampista entrena al 100%');
+  ('entrenament_mc_pct',       '100',        'int',  'El mig centre entrena al 100%');
 
 -- ── Configuració de l'app (identitat parametritzada) ──
 INSERT INTO configuracio_app (clau, valor, nota) VALUES

@@ -66,7 +66,7 @@ substituiran; ací van amb dades de Benifotrem:
   > oblidar-te de traure'l.»
 
 - **Nucli incomplet** — `ALR_NUCLI_INCOMPLET`
-  > «Anem justos, míster: 7 entrenables actius, i en volem 8. Falta un migcampista
+  > «Anem justos, míster: 7 entrenables actius, i en volem 8. Falta un mig centre
   > jove per a omplir la fàbrica. Mira't el mercat abans de dissabte.»
 
 - **Llistar un jugador de venda (el valor no espera)** — `ALR_LLISTAR_VENDA`

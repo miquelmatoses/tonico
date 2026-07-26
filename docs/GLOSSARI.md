@@ -67,3 +67,22 @@ lingüístic (`test/i18n_guardia.mjs`) les rebutja perquè no tornen a colar-se:
 | `aquest/-a` | `este/esta` | demostratiu valencià |
 | `sortir` | `eixir` | verb valencià |
 | `meva/teva/seva` | `meua/teua/seua` | possessiu valencià |
+| `migcampista` | `mig centre` | és el nom del TIPUS DE JUGADOR a Hattrick |
+
+## Habilitat ≠ tipus de jugador
+
+Dos vocabularis distints que compartien un catàleg, i d'ací va eixir «vols que confirme que
+entrene migcampista i passador?»:
+
+| Camp | Habilitat (què s'ENTRENA) | Tipus de jugador (què es COMPRA) |
+|---|---|---|
+| `porteria` | porteria | porter |
+| `defensa` | defensa | defensa |
+| `creativitat` | creativitat | **mig centre** |
+| `extrem` | extrem | extrem |
+| `passades` | passades | passador |
+| `anotacio` | anotació | davanter |
+| `pilota_aturada` | pilota aturada | llançador |
+
+Al catàleg: `hab.*` per a l'habilitat, `habilitat.*` per al tipus. «Posa entrenament A:
+**creativitat**» i «compra'm un **mig centre** per al lloc MC3» — mai al revés.

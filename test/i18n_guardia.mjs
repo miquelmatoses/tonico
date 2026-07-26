@@ -79,7 +79,9 @@ const families = {
   // Les accions que el pla POT proposar. Fora `puja`/`puja_al_venciment`/`exclos`: pujar de
   // nivell fora del venciment no és una acció possible (és acomiadar), i el pla ja no exclou
   // ningú. Les formes `_n` porten el nivell concret que el flux sosté.
-  'flux.accio_': ['contracta','contracta_n','renova','renova_al_nivell_n','no_renoves','res'],
+  // «res» fora: quan no hi ha res a fer NO ES DIU RES. Explicar cada setmana per què no toca
+  // moure el nivell és soroll amb un altre nom; l'espai de la píndola es queda buit.
+  'flux.accio_': ['contracta','contracta_n','renova','renova_al_nivell_n','no_renoves'],
   'estoc': ['col_opcio', 'col_nivell', 'col_mancanca', 'col_guany'],
   'categoria': ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'],
   // Els 16 nivells d'habilitat, pel NOM de Hattrick. L'escala de Tonico compta des d'on el sou
@@ -93,7 +95,6 @@ const families = {
   'configuracio.partits_': ['1', '2'],
   'estrategia': ['competitiva', 'cycle'],
   'sistema_juvenil': ['academia', 'cercapromeses', 'cap'],
-  'personal.rol_': ['entrenador', 'especialista'],
   // «desert» fora: no es tria a mà (es deduïx de la transició del CSV i es desa) i un jugador
   // desert ja no arriba a la fitxa de venda.
   'vendes.estat_': ['pendent', 'llistat', 'venut', 'despatxat'],
@@ -106,7 +107,7 @@ const families = {
   // Els sis tipus d'especialista de la guia + l'entrenador principal (que no gasta plaça).
   'element': ['assistent', 'metge', 'psicoleg', 'forma', 'tactic', 'financer', 'entrenador'],
   // Columnes construïdes des d'arrays (t('prefix.' + k)):
-  'personal': ['rol', 'tipus', 'nivell', 'sou', 'data_fi_contracte'],
+  'personal': ['tipus', 'nivell', 'sou', 'data_fi_contracte'],
   'juvenils': ['col_jugador', 'col_nivell', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_potencial', 'col_promocio', 'col_aterratge', 'col_estat'],
   'plantilla': ['col_jugador', 'col_posicio', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_tsi', 'col_puntuacio', 'col_categoria'],
   'jugador': ['col_data', 'col_temporada', 'col_edat', 'col_tsi', 'col_sou', 'col_habilitats', 'col_pops', 'col_categoria', 'col_origen', 'col_puntuacio'],
@@ -162,7 +163,18 @@ const VETATS = [
   [/\baquest[ao]?s?\b/i, 'aquest/-a → «este/esta»'],
   [/\bsorti[rmt]/i, 'sortir → «eixir»'],
   [/\b(?:me|te|se)va\b/i, 'meva/teva/seva → «meua/teua/seua»'],
+  [/\bmigcampista/i, 'migcampista → «mig centre» (és el nom del tipus de jugador)'],
 ];
+
+// CLAUS VETADES: text que no ha d'existir perquè la decisió és NO DIR RES. Una clau «no hi ha
+// res a fer» sempre acaba pintada per algú, i explicar cada setmana per què no toca fer res és
+// soroll amb un altre nom.
+const CLAUS_VETADES = ['flux.accio_res', 'flux.accio_res_1', 'flux.accio_res_n'];
+for (const cat of [ca, en]) {
+  const revivides = CLAUS_VETADES.filter((k) => Object.prototype.hasOwnProperty.call(cat, k));
+  assert.deepEqual(revivides, [], `claus vetades que han tornat: ${revivides.join(', ')}\n` +
+    '→ quan no hi ha acció possible, la píndola es queda BUIDA.');
+}
 const infraccions = [];
 for (const [k, v] of Object.entries(ca)) for (const [re, msg] of VETATS) if (re.test(v)) infraccions.push(`${k}: ${msg}  ·  «${v}»`);
 assert.deepEqual(infraccions, [], `formes vetades al catàleg ca:\n  ${infraccions.join('\n  ')}`);
