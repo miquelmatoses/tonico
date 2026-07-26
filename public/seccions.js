@@ -766,6 +766,12 @@ function formFinances(main, e) {
   };
   // L'històric ve del més recent al més antic: [0] és esta setmana i [1] la passada.
   const s2 = e.setmanes?.[0] || {}, s1 = e.setmanes?.[1] || {};
+  // LA DATA DE CADA SETMANA. D'ella el servidor deriva temporada i setmana pel calendari, i
+  // per això sense data la declaració es descarta («.filter(x => x.data)»). Estos dos camps
+  // s'usaven i no existien: la secció petava en pintar-se i, amb ella, l'única finestra per a
+  // declarar taquilla i patrocini. Ve precarregada amb la de l'històric.
+  const d1 = camp('data_setmana', s1.data, 'date');
+  const d2 = camp('data_setmana', s2.data, 'date');
   const tq1 = camp('taquilla', s1.taquilla);
   const pt1 = camp('patrocini', s1.patrocini);
   const tq2 = camp('taquilla', s2.taquilla);
@@ -927,7 +933,10 @@ function formActivaAcademia(main) {
 
 
 // ── 9. Personal ──
-const ESPECIALISTES = ['assistents', 'metge', 'psicoleg'];
+// ELS SIS TIPUS DE LA GUIA, i en SINGULAR: el desplegable deia «assistents» i eixe era el
+// valor que es desava, però la prioritat del pla diu «assistent». Un assistent afegit des
+// d'ací no s'aparellava amb cap plaça i quedava fora del pla. I en faltaven tres.
+const ESPECIALISTES = ['assistent', 'metge', 'psicoleg', 'forma', 'tactic', 'financer'];
 // PAS 11: el pla que el FLUX sosté, per prioritat. La vista només interpola.
 // EL PLA DE PERSONAL: quatre places, i cada una és una PÍNDOLA amb el que hi ha declarat, el
 // que li queda de contracte i el llapis per a editar-ho. Abans hi havia dues llistes de les
@@ -1081,6 +1090,10 @@ function formEntrenament(main, ent) {
   sec.append(f);
   main.append(sec);
 }
+
+// El nom visible d'un tipus de personal. Si el catàleg no el té, val el nom cru abans que un
+// «—»: es va perdre la definició i la crida es va quedar, i Personal petava en pintar-se.
+const lblElement = (k) => { const v = t('element.' + k); return v === t('comu.text_indisponible') ? k : v; };
 
 function formMembre(main) {
   const f = el('form', { class: 'card-cos' });

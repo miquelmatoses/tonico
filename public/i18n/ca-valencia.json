@@ -589,5 +589,6 @@
   "hab.pilota_aturada": "pilota aturada",
   "juvenils.entrenament_posa": "Posa entrenament A: {principal}. Entrenament B: {secundari}.",
   "estoc.obra_fent": "Ja l'estic fent",
-  "estoc.obra_feta": "Ja està feta"
+  "estoc.obra_feta": "Ja està feta",
+  "economia.data_setmana": "Un dia d'eixa setmana"
 }

@@ -589,5 +589,6 @@
   "hab.pilota_aturada": "set pieces",
   "juvenils.entrenament_posa": "Set training A: {principal}. Training B: {secundari}.",
   "estoc.obra_fent": "Already building it",
-  "estoc.obra_feta": "It's finished"
+  "estoc.obra_feta": "It's finished",
+  "economia.data_setmana": "Any day of that week"
 }
