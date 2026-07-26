@@ -173,9 +173,11 @@ button { font-family: var(--font); cursor: pointer; }
 .pos.dv { background: var(--lila); color: #fff; }
 .fila-nom { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fila-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px; font-size: 11px; color: var(--gris-clar); }
-.punts { font-family: var(--font-titol); font-size: 15px; color: var(--verd-fosc); }
+.punts { font-family: var(--font-titol); font-size: 15px; color: var(--verd-fosc);
+  text-align: right; font-variant-numeric: tabular-nums; }
 .punts.alt { color: var(--ok); } .punts.baix { color: var(--roig); }
-.tsi { font-size: 11px; color: var(--gris); white-space: nowrap; }
+.tsi { font-size: 11px; color: var(--gris); white-space: nowrap;
+  text-align: right; font-variant-numeric: tabular-nums; }
 .skills { font-family: var(--mono); font-size: 11px; color: var(--gris); letter-spacing: -.3px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cel-cat { font-size: 11px; }
@@ -256,7 +258,8 @@ td.num, th.num { text-align: right; }
 .graella-fila { display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 8px 12px; background: var(--paper); border-radius: 10px; font-size: 13px; }
 .graella-fila b { font-weight: 700; }
-.graella-val { font-family: var(--font-titol); font-size: 14px; color: var(--verd-fosc); }
+.graella-val { font-family: var(--font-titol); font-size: 14px; color: var(--verd-fosc);
+  text-align: right; font-variant-numeric: tabular-nums; }
 
 /* ══ FORMULARIS ══ */
 form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin: 0 0 16px; }
@@ -539,6 +542,10 @@ form.card-cos { display: block; }
 
 /* Els dos estats de l'obra: es marquen on es proposa, no al final d'un formulari. */
 .obra-botons { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 4px; }
+
+/* La VARA de cada lloc: contra quina habilitat es mesura i quin nivell paga el flux. */
+.vara { display: flex; flex-direction: column; gap: 1px; text-align: right; white-space: nowrap; }
+.vara-hab { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--gris); }
 
 /* L'onze titular gasta la MATEIXA fila que la resta de targetes: només es matisa el lloc que
    no té ningú, que ha de cridar l'atenció sense trencar la graella. */

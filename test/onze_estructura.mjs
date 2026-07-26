@@ -85,6 +85,20 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   assert.equal(onze.length + sobrants.length, 14, 'tots els jugadors estan comptats: onze i residu');
   const ids = onze.map((l) => l.jugador?.id).filter(Boolean);
   assert.equal(new Set(ids).size, ids.length, 'i cap repetit');
+
+  // ── 6. LA VARA VIU A LA MATEIXA FILA: contra quina habilitat es mesura el lloc i quin
+  // nivell paga el flux. Sense el sostre de sou no se n'inventa cap.
+  const ambVara = await onzeEstructura(db, 1, plantilla, 10291);
+  for (const l of ambVara.onze) {
+    assert.ok(l.habilitat, `${l.bucket}: el lloc diu contra què es mesura`);
+    assert.ok(l.nivell_objectiu > 0, `${l.bucket}: i quin nivell paga el flux`);
+  }
+  // Els davanters pesen més que els defenses (2-5-3), o siga que no poden demanar menys.
+  const niv = (b) => ambVara.onze.find((l) => l.bucket === b).nivell_objectiu;
+  assert.ok(niv('davanter') >= niv('defensa'),
+    'amb 3 davanters i 2 defenses, l\'atac no pot quedar per davall de la defensa');
+  const sense = await onzeEstructura(db, 1, plantilla, null);
+  assert.equal(sense.onze[0].nivell_objectiu, null, 'sense sostre de sou, cap objectiu inventat');
 }
 
 console.log('OK — l\'onze d\'estructura: tots els jugadors, lloc a lloc, un jugador un lloc');

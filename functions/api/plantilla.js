@@ -8,6 +8,7 @@ import { carregaConfigPla } from '../../lib/config_pla.js';
 import { sqlCategoriaVigent } from '../../lib/categoria_vigent.js';
 import { desertsDesats, despatxable } from '../../lib/vendes.js';
 import { onzeEstructura } from '../../lib/onze_estructura.js';
+import { economia } from '../../lib/economia.js';
 
 export async function onRequestGet({ env, data }) {
   const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id = ? AND tipus = 'senior'")
@@ -71,11 +72,13 @@ export async function onRequestGet({ env, data }) {
   // L'ONZE TITULAR: tots els jugadors col·locats lloc a lloc, no una categoria decidida abans.
   // Els llocs es recorren per pes i cada jugador n'ocupa un: els que sobren són el residu, no
   // una classificació. Ací només es mostra; qui el gastarà per a mesurar és el PAS 5.
-  const est = await onzeEstructura(env.DB, data.usuari.id, jugadors);
+  const eco = await economia(env.DB, data.usuari.id);
+  const est = await onzeEstructura(env.DB, data.usuari.id, jugadors, eco.sou_sostenible_setmanal);
 
   return json({ instantania: inst, jugadors, intercanvis, valor_especialitats: valorEsp,
-    onze_titular: est ? est.onze.map((l) => ({ lloc: l.lloc, bucket: l.bucket, habilitat: l.habilitat,
-      entrena: !!l.entrena, jugador_id: l.jugador?.id ?? null })) : null });
+    onze_titular: est ? est.onze.map((l) => ({ bucket: l.bucket, habilitat: l.habilitat,
+      entrena: !!l.entrena, nivell_objectiu: l.nivell_objectiu,
+      jugador_id: l.jugador?.id ?? null })) : null });
 }
 
 const json = (obj, status = 200) =>

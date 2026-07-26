@@ -172,6 +172,15 @@ assert.ok(/if \(!files \|\| !files\.length\) return null;/.test(vista),
     assert.deepEqual(dolentes, [], `files de \`.fila\` desquadrades:\n  ${dolentes.join('\n  ')}`);
   }
 
+  // ELS NÚMEROS D'UNA COLUMNA S'ALINEEN PER LES UNITATS. Sense xifres de la mateixa amplària
+  // («tabular-nums») i sense alinear a la dreta, un 7 i un 128 no comparteixen la vertical i la
+  // columna es llig com si els números estigueren tirats on siga.
+  for (const classe of ['punts', 'tsi', 'graella-val']) {
+    const regla = css.match(new RegExp(`\\.${classe}\\s*\\{([^}]*)\\}`))?.[1] || '';
+    assert.ok(/tabular-nums/.test(regla), `.${classe}: falta font-variant-numeric: tabular-nums`);
+    assert.ok(/text-align:\s*right/.test(regla), `.${classe}: els números van alineats a la dreta`);
+  }
+
   // I cap pista pot tindre un mínim FIX més ample que un telèfon estret (360 − 40 de marges):
   // la pista no encongix per davall del seu mínim i la pàgina es desplaça de costat. L'idioma
   // segur és `minmax(min(Npx, 100%), 1fr)`.

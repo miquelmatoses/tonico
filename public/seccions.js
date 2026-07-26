@@ -359,12 +359,20 @@ export async function plantilla(main) {
       // (PO groc · DC roig · MC verd · EX blau · DV lila); el codi del lloc va a la meta, que
       // és on van els qualificadors. L'última cel·la queda buida —ací no hi ha categoria que
       // canviar— però hi és, perquè si no la graella es desquadra.
+      // Fora la píndola del lloc: deia «defensa3», «mc4» — el bucket amb l'índex de la
+      // formació, un identificador intern. El xip ja diu quina posició és i la fila ja va en
+      // l'orde de la formació, o siga que el número no afegia res.
       const sigla = BUCKET_SIGLA[l.bucket] || l.bucket;
-      const meta = el('div', { class: 'fila-meta' }, el('span', { class: 'pill', text: l.lloc }));
+      const meta = el('div', { class: 'fila-meta' });
       if (j) {
         meta.append(el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` }));
         if (esLesionat(j.lesio)) meta.append(el('span', { class: 'pill perill', text: t('comu.lesionat_durada', { n: duradaLesio(j.lesio) ?? '?' }) }));
       }
+      // L'última cel·la: contra QUÈ es mesura este lloc i quin nivell paga el flux. És la vara,
+      // i va a la mateixa fila que l'ocupant per a poder-los llegir d'un colp d'ull.
+      const vara = el('div', { class: 'vara' },
+        el('span', { class: 'vara-hab', text: t('hab.' + l.habilitat) }),
+        el('b', { text: l.nivell_objectiu ? t('nivell_ht.' + l.nivell_objectiu) : '—' }));
       return el('div', { class: j ? 'fila' : 'fila buit' },
         el('div', { class: 'fila-qui' },
           el('div', { class: posCls(sigla), text: sigla }),
@@ -372,7 +380,7 @@ export async function plantilla(main) {
         el('div', { class: 'punts', text: j ? decimal(j.puntuacio) : '—' }),
         el('div', { class: 'tsi', text: j ? 'TSI ' + (j.tsi ?? '—') : '' }),
         el('div', { class: 'skills', text: j ? hab(j) : '' }),
-        el('div', { class: 'cel-cat' }));
+        vara);
     }, 1));
     main.append(tarja);
   }
