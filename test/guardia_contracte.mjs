@@ -17,6 +17,7 @@ import { ESTRATEGIES, falten as confFalten, llocsPartit } from '../lib/config.js
 import { souSostenible, caixaDisponible } from '../lib/economia.js';
 import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
 import { pesLloc, pressupostSou, nivellObjectiu } from '../lib/pesos.js';
+import { nivellActual, mancanca, exces, sobrecost, prioritat } from '../lib/mancanca.js';
 
 const arrel = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { formules } = JSON.parse(readFileSync(join(arrel, 'formules.json'), 'utf8'));
@@ -154,6 +155,31 @@ const VERIFICADES = {
     assert.equal(nivellObjectiu('creativitat', 329, ts), 2);
     assert.equal(nivellObjectiu('creativitat', 100, ts), 0, 'no arriba ni al primer');
     assert.equal(nivellObjectiu('creativitat', null, ts), null);
+  },
+
+  // PAS 5 — la mètrica única. Tot competix pel mateix diner amb la mateixa unitat.
+  'P5.ocupant': () => assert.equal(nivellActual(null, 'creativitat'), 0, 'lloc buit → ocupant ∅'),
+  'P5.nivell_actual': () => {
+    assert.equal(nivellActual({ creativitat: 7 }, 'creativitat'), 7);
+    assert.equal(nivellActual(null, 'creativitat'), 0);
+  },
+  'P5.mancanca': () => {
+    assert.equal(mancanca(9, 6), 3);
+    assert.equal(mancanca(6, 9), 0, 'MAX(0; …)');
+    assert.equal(mancanca(null, 6), null);
+  },
+  'P5.exces': () => {
+    assert.equal(exces({ creativitat: 9 }, 'creativitat', 6), 3);
+    assert.equal(exces({ creativitat: 5 }, 'creativitat', 6), 0, 'MAX(0; …)');
+  },
+  'P5.sobrecost': () => {
+    const ts = { creativitat: { 3: 330 } };
+    assert.equal(sobrecost({ sou: 900 }, 'creativitat', 3, ts), 570);
+    assert.equal(sobrecost({ sou: 300 }, 'creativitat', 3, ts), 0, 'MAX(0; …)');
+  },
+  'P5.prioritat': () => {
+    assert.equal(prioritat(3, 1.5), 4.5, 'mancança × pes');
+    assert.equal(prioritat(0, 1.5), 0);
   },
 
   // P10.valor casos (a)(b)(c): coincidixen amb valorHabilitat. El cas (d) NO — vore DIVERGENTS.
