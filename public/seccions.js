@@ -336,18 +336,43 @@ export async function alineacio(main) {
 export async function plantilla(main) {
   capcalera(main, 4, 'plantilla');
   // Vocabulari del contracte v3 (invariant 14). No hi ha «entrenable» ni «farciment».
-  const ORDRE = ['core', 'rotatiu', 'titular', 'porter', 'futur_entrenador', 'cos', 'venda'];
+  // «core» se'n va de la llista de categories: el seu lloc el pren l'ONZE TITULAR, que no és
+  // una categoria decidida abans sinó el resultat de col·locar TOTS els jugadors lloc a lloc.
+  const ORDRE = ['rotatiu', 'titular', 'porter', 'futur_entrenador', 'cos', 'venda'];
   const CATS = ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'];
-  const { instantania, jugadors, valor_especialitats: valorEsp = [] } = await api('/api/plantilla');
+  const { instantania, jugadors, valor_especialitats: valorEsp = [], onze_titular: onze } = await api('/api/plantilla');
   if (!instantania) { main.append(el('p', { text: t('plantilla.buit') })); return; }
   main.append(el('p', { text: t('plantilla.instantania', { temporada: instantania.temporada, setmana: instantania.setmana_temporada, data: instantania.data }) }));
   const hab = (j) => `PO${j.porteria} DF${j.defensa} CR${j.creativitat} EX${j.extrem} PA${j.passades} AN${j.anotacio} PP${j.pilota_aturada}`;
   // Especialitat + prima de mercat (G.14): a Venda, si l'especialitat és valuosa.
   const cellaEsp = (j, c) => el('td', { text: (j.especialitat || '—') + (j.especialitat && c === 'venda' && valorEsp.includes(j.especialitat) ? ' ' + t('plantilla.prima') : '') });
+  // L'ONZE TITULAR va primer i porta els seus ONZE LLOCS, buits inclosos: un lloc sense ningú
+  // és el senyal més fort que hi ha. Els qui hi entren no es repetixen a les altres targetes.
+  const enOnze = new Set((onze || []).map((l) => l.jugador_id).filter((x) => x != null));
+  if (onze) {
+    const perId = new Map(jugadors.map((j) => [j.id, j]));
+    const tarja = card(t('plantilla.onze_titular'), onze.length, 'llima');
+    for (const l of onze) tarja.append(filaSegura(() => {
+      const j = perId.get(l.jugador_id);
+      const et = el('div', { class: 'lloc-et' }, el('b', { text: l.lloc }),
+        el('span', { class: 'lloc-hab', text: t('hab.' + l.habilitat) }));
+      if (!j) return el('div', { class: 'fila buit' }, et,
+        el('div', { class: 'fila-nom', text: t('plantilla.lloc_buit') }));
+      return el('div', { class: 'fila' }, et,
+        el('div', { class: 'fila-qui' },
+          el('div', { class: posCls(j.posicio), text: j.posicio || '—' }),
+          el('div', {}, el('div', { class: 'fila-nom', text: j.nom }),
+            el('div', { class: 'fila-meta' }, el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` })))),
+        el('div', { class: 'punts', text: decimal(j.puntuacio) }),
+        el('div', { class: 'skills', text: hab(j) }));
+    }, 1));
+    main.append(tarja);
+  }
+
   // Una targeta per categoria, amb files denses (el disseny: xip de posició, nom,
   // meta amb píndoles, punts, TSI i habilitats en monoespai).
   for (const c of ORDRE) {
-    const grup = jugadors.filter((j) => j.categoria === c);
+    const grup = jugadors.filter((j) => j.categoria === c && !enOnze.has(j.id));
     if (!grup.length) continue;
     const tarja = card(t('categoria.' + c), grup.length, c === 'core' ? 'llima' : c === 'venda' ? 'roig' : null);
     for (const j of grup) tarja.append(filaSegura(() => {
