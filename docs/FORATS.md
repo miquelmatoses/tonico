@@ -64,6 +64,19 @@ posat (`test/economia.mjs` §2b), no valia res. Vore [[verificacio-per-mutacio]]
 
 ---
 
+# DECIDIT QUE NO ÉS FORAT (no ho tornes a traure)
+
+## D-01 · el pressupost de sou es reparteix entre 11 llocs, no entre els jugadors pagats
+
+PAS 4 gasta el 100% de `sou_sostenible` en els onze llocs del camp, però la plantilla que
+prescriu PAS 6 en paga uns setze (3 rotatius del bloc B, 2n porter, cossos, i els de venda fins
+que se'n van). L'onze ideal, per tant, ix més car del que el sostre aguanta de veres.
+
+**Miquel ho ha vist i ho deixa així (2026-07-27):** «la plantilla seran sobretot eixos 11 i la
+resta poden viure un poc de crèdit». És una decisió, no un descuit.
+
+---
+
 # CORRECCIONS DEL MEU PROPI DIAGNÒSTIC (es queden com a avís)
 
 ## C-01 · CAP NÚMERO DE FLUX ÉS CREÏBLE ENCARA
