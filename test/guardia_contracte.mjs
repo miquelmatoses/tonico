@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { valorPlaces } from '../lib/valor_placa.js';
 import { valorHabilitat, lecturaPromocio } from '../lib/ranquing_juvenil.js';
+import { fCalendari, temporadaOperativa } from '../lib/calendari.js';
 
 const arrel = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { formules } = JSON.parse(readFileSync(join(arrel, 'formules.json'), 'utf8'));
@@ -53,6 +54,26 @@ const VERIFICADES = {
       assert.equal(referencia, avaluador, `entrenable(${lloc})`);
     }
   },
+  // V.(temporada,setmana) = f_calendari(data, `ancora`) — LA funció única. Es verifica
+  // que la posició derivada de la data coincidix amb la regla operativa, i que els punts
+  // de decisió (pla, alertes, economia) ja no en porten cap còpia inline.
+  'V.temporada_setmana': () => {
+    const ancora = { data: '2026-07-25', temporada: 83, anyDies: 112 };
+    const tempSetmanes = 16;
+    // Dia 0 de l'àncora → temporada de l'àncora, setmana 1.
+    assert.deepEqual(fCalendari('2026-07-25', ancora, tempSetmanes).crua, { temporada: 83, setmana: 1 });
+    // Una temporada exacta després → la següent, setmana 1.
+    assert.deepEqual(fCalendari('2026-11-14', ancora, tempSetmanes).crua, { temporada: 84, setmana: 1 });
+    // Setmana final (>= tempSetmanes) → operativament ja és pretemporada de la següent.
+    const finalT = fCalendari('2026-11-07', ancora, tempSetmanes);          // setmana 16
+    assert.equal(finalT.crua.setmana, 16);
+    assert.equal(finalT.temporada, finalT.crua.temporada + 1, 'setmana final → temporada següent');
+    assert.equal(finalT.setmana, 0, 'setmana final → pretemporada (0)');
+    // La regla operativa és la MATEIXA que consumixen pla/alertes/economia.
+    assert.deepEqual(temporadaOperativa(83, 16, 16), { temporada: 84, setmana: 0 });
+    assert.deepEqual(temporadaOperativa(83, 15, 16), { temporada: 83, setmana: 15 });
+  },
+
   // P10.valor casos (a)(b)(c): coincidixen amb valorHabilitat. El cas (d) NO — vore DIVERGENTS.
   'P10.valor': () => {
     const o = optsMarge();
