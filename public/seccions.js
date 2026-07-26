@@ -598,33 +598,34 @@ const eur = (obj, ...keys) => { const o = { ...obj }; for (const k of keys) if (
 export async function economia(main) {
   capcalera(main, 7, 'economia');
   const { transaccions, economia: e } = await api('/api/transaccions');
-  // Tres xifres grans (el disseny): caixa, objectiu amb barra de progrés, i balanç.
+  // Les xifres del PAS 3: ESTOC (caixa disponible) i FLUX (i el sou que sosté).
+  // Cap aritmètica ací: tot ve calculat de l'avaluador (invariant 12, render pur).
   const kpis = el('div', { class: 'eco-kpis' });
   kpis.append(el('div', { class: 'eco-card fosc' },
     el('div', { class: 'eco-et', text: t('economia.caixa_et') }),
-    el('div', { class: 'eco-xifra', text: diners(e.caixa) }),
-    el('div', { class: 'eco-nota', text: e.caixaReal && e.caixa_data ? e.caixa_data : t('economia.caixa_derivada') })));
-  const pr = e.projeccio;
-  if (pr) {
-    const pct = Math.max(0, Math.min(100, pr.percentatge ?? 0));
-    const barra = el('div', { class: 'barra' }, el('i'));
-    barra.firstChild.style.width = pct + '%';
+    el('div', { class: 'eco-xifra', text: e.caixa == null ? '—' : diners(e.caixa) }),
+    el('div', { class: 'eco-nota', text: e.caixa == null ? t('economia.caixa_falta') : (e.caixa_data || '') })));
+  if (e.caixa_disponible != null) {
     kpis.append(el('div', { class: 'eco-card' },
-      el('div', { class: 'eco-et', text: t('economia.objectiu_et') }),
-      el('div', { class: 'eco-xifra', text: diners(pr.objectiu) }), barra,
-      el('div', { class: 'eco-nota', text: t('economia.falta_nota', { falta: diners(pr.falta), pct }) })));
+      el('div', { class: 'eco-et', text: t('economia.disponible_et') }),
+      el('div', { class: 'eco-xifra', text: diners(e.caixa_disponible) }),
+      el('div', { class: 'eco-nota', text: t('economia.disponible_nota', eur(e, 'reserva_caixa')) })));
   }
-  if (e.balanc_setmanal != null) {
+  if (e.flux != null) {
     kpis.append(el('div', { class: 'eco-card' },
-      el('div', { class: 'eco-et', text: t('economia.balanc_et') }),
-      el('div', { class: 'eco-xifra' + (e.balanc_setmanal < 0 ? ' neg' : ''), text: diners(e.balanc_setmanal) }),
-      el('div', { class: 'eco-nota', text: t('economia.despeses_detall', eur({ ...e.despeses, ingres: e.ingres_setmanal }, 'nomina', 'planter', 'estadi', 'personal', 'ingres')) })));
+      el('div', { class: 'eco-et', text: t('economia.flux_et') }),
+      el('div', { class: e.flux_negatiu ? 'eco-xifra neg' : 'eco-xifra', text: diners(e.flux) }),
+      el('div', { class: 'eco-nota', text: t('economia.despeses_detall', eur(e.despeses, 'nomina', 'planter', 'manteniment_estadi', 'personal')) })));
+  }
+  if (e.sou_sostenible != null) {
+    kpis.append(el('div', { class: 'eco-card' },
+      el('div', { class: 'eco-et', text: t('economia.sou_sostenible_et') }),
+      el('div', { class: 'eco-xifra', text: diners(e.sou_sostenible) }),
+      el('div', { class: 'eco-nota', text: t('economia.sou_sostenible_nota') })));
   }
   main.append(kpis);
-  if (pr && pr.estimat) capitalEstimat(main, pr);
-  else if (!pr) main.append(el('p', { class: 'nota-peu', text: t('economia.sense_objectiu') }));
-  if (pr && pr.sense_dades_venda) main.append(el('p', { class: 'nota-peu', text: t('economia.trajectoria_informativa', eur(pr, 'objectiu')) }));
-  else if (pr && pr.arriba != null) main.append(el('p', { class: 'nota-peu', text: t(pr.arriba ? 'economia.trajectoria_arriba' : 'economia.trajectoria_no', eur(pr, 'caixa_projectada', 'ingres_estimat')) }));
+  if (e.flux == null) main.append(el('p', { class: 'nota-peu', text: t('economia.sense_ingressos') }));
+  else if (!e.ingressos_desglossats) main.append(el('p', { class: 'nota-peu', text: t('economia.ingressos_sense_desglossar') }));
 
   // Dues targetes de treball: declarar les xifres reals i apuntar moviments.
   const duo = el('div', { class: 'duo' });
@@ -695,57 +696,75 @@ function formMoviment(main) {
   main.append(f);
 }
 
-// Capital d'inflexió estimat (desglossat): Paco el proposa; un clic l'accepta o
-// s'edita (i aleshores passa a manual). No es pregunta en fred.
-function capitalEstimat(main, pr) {
-  main.append(el('p', { text: t('economia.capital_estimat', eur(pr, 'objectiu', 'caixa', 'falta')) }));
-  const ul = el('ul');
-  for (const d of pr.desglossament || []) {
-    const clau = d.concepte === 'fitxatges'
-      ? t('economia.capital_fitxatges', eur({ ...d, font: t('font.' + d.font) }, 'sostre', 'import'))
-      : t('economia.capital_' + d.concepte, eur(d, 'import', 'nomina'));
-    ul.append(el('li', { text: clau }));
-  }
-  main.append(ul);
-  const fixa = async (valor) => { await api('/api/pla', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ capital_objectiu: valor }) }); location.reload(); };
-  const accepta = el('button', { type: 'button', text: t('economia.capital_accepta') });
-  accepta.addEventListener('click', () => fixa(pr.objectiu));
-  const inp = el('input', { type: 'number', value: pr.objectiu, min: '0' });
-  const desa = el('button', { type: 'button', text: t('economia.capital_desa') });
-  desa.addEventListener('click', () => fixa(parseInt(inp.value, 10)));
-  main.append(el('p', {}, accepta), el('p', {}, el('label', { text: t('economia.capital_edita') + ' ' }, inp), ' ', desa));
-}
 
 // ── 8. Pla mestre ──
-export async function pla(main) {
-  capcalera(main, 8, 'pla');
-  const d = await api('/api/pla');
-  if (d.error) { main.append(el('p', { text: t('pla.sense_pla') })); return; }
-  main.append(el('p', { class: 'nota-peu', text: `${t('pla.fase_actual')}: ${d.fase_actual ? t('fase.' + d.fase_actual) : '—'} · ${t('pla.temporada_actual')}: ${d.temporadaActual != null ? 'T' + d.temporadaActual : '—'}` }));
-  const c = card(t('pla.titol'), d.temporades.length);
-  c.append(el('div', { class: 'graella-cap c-pla' },
-    ...['col_temporada', 'col_mode', 'col_accions', 'col_estat'].map((k) => el('span', { text: t('pla.' + k) }))));
-  for (const tp of d.temporades) {
-    const accions = [...(tp.accions.events || []), ...(tp.retard.length ? [t('pla.retard', { detall: tp.retard.join('; ') })] : [])];
-    c.append(el('div', { class: 'graella-fila-d c-pla' },
-      el('div', { class: 'nivell' + (tp.estat === 'actual' ? ' top' : ''), text: 'T' + tp.temporada }),
-      el('span', { class: 'pill', text: tp.divisio_prevista || '—' }),
-      el('div', {}, el('div', { class: 'fila-nom', text: tp.mode || '—' }),
-        el('div', { class: 'fila-meta' }, el('span', { text: accions.join(' · ') || '—' }))),
-      el('span', { class: 'pill ' + (tp.estat === 'actual' ? 'ok' : tp.estat === 'passada' ? '' : 'info'), text: t('pla.estat_' + tp.estat) })));
-  }
+export async function configuracio(main) {
+  capcalera(main, 8, 'configuracio');
+  const { config, falten } = await api('/api/config');
+
+  // L'estratègia activa i el PAS 0. El pla per temporades era del model fàbrica i s'ha
+  // retirat: ací només hi ha el que el contracte v3 reconeix.
+  const c = card(t('configuracio.titol'));
+  const cos = el('div', { class: 'card-cos' });
+  const fila = (clau, valor) => el('div', { class: 'graella-fila' },
+    el('b', { text: t('configuracio.' + clau) }),
+    el('span', { class: 'graella-val', text: valor || '—' }));
+  cos.append(
+    fila('estrategia', config ? t('estrategia.' + config.estrategia) : ''),
+    fila('pais', config?.pais),
+    fila('divisio', config?.divisio),
+    fila('sistema_juvenil', config ? t('sistema_juvenil.' + config.sistema_juvenil) : ''),
+    fila('partits_setmana', config?.partits_setmana != null ? String(config.partits_setmana) : ''));
+  c.append(cos);
   main.append(c);
-  formEstructura(main, d.parametres || {});
+  if (falten && falten.length) {
+    main.append(el('p', { class: 'nota-peu', text: t('configuracio.falten', { camps: falten.map((f) => t('falten.config_' + f)).join(' · ') }) }));
+  }
+  formConfig(main, config);
+
   // Punt 3a: activar l'acadèmia després si no en tens.
   const eq = await opc(api('/api/equips'));
   if (eq && eq.equips && !eq.equips.some((e) => e.tipus === 'juvenil')) formActivaAcademia(main);
 }
 
+// Formulari del PAS 0. Cap valor per defecte inventat: el buit es queda buit i es demana.
+function formConfig(main, config) {
+  const sel = (clau, opcions, valor) => el('select', { 'aria-label': t('configuracio.' + clau) },
+    el('option', { value: '', text: '—' }),
+    ...opcions.map((o) => {
+      const op = el('option', { value: o, text: t(clau === 'partits_setmana' ? 'configuracio.partits_' + o : `${clau === 'estrategia' ? 'estrategia' : 'sistema_juvenil'}.${o}`) });
+      if (String(valor) === String(o)) op.setAttribute('selected', '');
+      return op;
+    }));
+  const estrategia = sel('estrategia', ['competitiva', 'cycle'], config?.estrategia);
+  const sistema = sel('sistema_juvenil', ['academia', 'cercapromeses', 'cap'], config?.sistema_juvenil);
+  const partits = sel('partits_setmana', ['1', '2'], config?.partits_setmana);
+  const pais = el('input', { type: 'text', value: config?.pais || '', 'aria-label': t('configuracio.pais') });
+  const divisio = el('input', { type: 'text', value: config?.divisio || '', 'aria-label': t('configuracio.divisio') });
+  const b = el('button', { type: 'submit', class: 'b-prim', text: t('configuracio.desa') });
+  const f = el('form', { class: 'card-cos' }, el('div', { class: 'graella' },
+    el('label', {}, t('configuracio.estrategia'), estrategia),
+    el('label', {}, t('configuracio.pais'), pais),
+    el('label', {}, t('configuracio.divisio'), divisio),
+    el('label', {}, t('configuracio.sistema_juvenil'), sistema),
+    el('label', {}, t('configuracio.partits_setmana'), partits)), b);
+  f.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    await api('/api/config', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
+      estrategia: estrategia.value || undefined, pais: pais.value.trim() || undefined,
+      divisio: divisio.value.trim() || undefined, sistema_juvenil: sistema.value || undefined,
+      partits_setmana: partits.value ? Number(partits.value) : undefined }) });
+    location.reload();
+  });
+  const c = card(t('configuracio.edita'));
+  c.append(f); main.append(c);
+}
+
 function formActivaAcademia(main) {
-  const nom = el('input', { type: 'text', 'aria-label': t('pla.academia_nom') });
-  const b = el('button', { type: 'submit', class: 'b-prim', text: t('pla.academia_desa') });
-  const c = card(t('pla.activa_academia'));
-  const f = el('form', { class: 'card-cos' }, el('label', {}, t('pla.academia_nom'), nom), b);
+  const nom = el('input', { type: 'text', 'aria-label': t('configuracio.academia_nom') });
+  const b = el('button', { type: 'submit', class: 'b-prim', text: t('configuracio.academia_desa') });
+  const c = card(t('configuracio.activa_academia'));
+  const f = el('form', { class: 'card-cos' }, el('label', {}, t('configuracio.academia_nom'), nom), b);
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     if (!nom.value.trim()) return;
@@ -755,26 +774,6 @@ function formActivaAcademia(main) {
   c.append(f); main.append(c);
 }
 
-// Estructura i calendari: divisió actual, tipus de setmana de partits, Supporter.
-function formEstructura(main, params) {
-  const c = card(t('pla.estructura_titol'));
-  const f = el('form', { class: 'card-cos' });
-  const graella = el('div', { class: 'form-graella' });
-  const divisio = el('input', { type: 'text', 'aria-label': t('pla.divisio_actual') });
-  if (params.divisio_actual) divisio.value = params.divisio_actual;
-  const setmana = el('select', { 'aria-label': t('pla.tipus_setmana') }, ...['ab', 'un', 'copa'].map((x) => {
-    const o = el('option', { value: x, text: t('pla.setmana_' + x) }); if ((params.tipus_setmana || 'ab') === x) o.setAttribute('selected', ''); return o; }));
-  const b = el('button', { type: 'submit', class: 'b-prim', text: t('pla.desa') });
-  graella.append(el('label', {}, t('pla.divisio_actual'), divisio), el('label', {}, t('pla.tipus_setmana'), setmana));
-  f.append(graella, b);
-  f.addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    await api('/api/pla', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      divisio_actual: divisio.value || '', tipus_setmana: setmana.value }) });
-    location.reload();
-  });
-  c.append(f); main.append(c);
-}
 
 // ── 9. Personal ──
 const ESPECIALISTES = ['assistents', 'metge', 'psicoleg'];
@@ -782,8 +781,7 @@ const lblElement = (k) => { const v = t('element.' + k); return v === t('comu.te
 export async function personal(main) {
   capcalera(main, 9, 'personal');
   const d = await api('/api/personal');
-  if (d.error) { main.append(el('p', { text: t('pla.sense_pla') })); return; }
-  main.append(el('p', { class: 'nota-peu', text: t('personal.fase_actual', { fase: t('fase.' + d.fase_actual) }) }));
+  if (d.error) { main.append(el('p', { text: t('personal.sense_config') })); return; }
 
   const duo = el('div', { class: 'duo' });
   // Entrenament sènior: prescrit per la fase + confirmació del que hi ha a HT

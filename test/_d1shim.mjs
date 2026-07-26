@@ -78,5 +78,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/055_cobertura_lean.sql'));
   sqlite.exec(src('../schema/056_retirada_fabrica.sql'));
   sqlite.exec(src('../schema/057_config_v3.sql'));
+  sqlite.exec(src('../schema/058_economia_v3.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

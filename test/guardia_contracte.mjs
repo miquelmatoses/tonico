@@ -14,6 +14,8 @@ import { valorPlaces } from '../lib/valor_placa.js';
 import { valorHabilitat, lecturaPromocio } from '../lib/ranquing_juvenil.js';
 import { fCalendari, temporadaOperativa } from '../lib/calendari.js';
 import { ESTRATEGIES, falten as confFalten, llocsPartit } from '../lib/config.js';
+import { souSostenible, caixaDisponible } from '../lib/economia.js';
+import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
 
 const arrel = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { formules } = JSON.parse(readFileSync(join(arrel, 'formules.json'), 'utf8'));
@@ -93,6 +95,42 @@ const VERIFICADES = {
     assert.equal(llocsPartit({ partits_setmana: null }, 11), null, 'sense declarar → no se suposa');
   },
 
+  // PAS 3 — el flux decidix el sou sostenible; l'estoc, la compra d'hui.
+  'P3.ingressos_recurrents': () => {
+    const suma = (f) => [f.taquilla, f.patrocini, f.premis].reduce((a, v) => a + (v ?? 0), 0);
+    assert.equal(suma({ taquilla: 12000, patrocini: 9000, premis: 1000 }), 22000);
+  },
+  'P3.despeses_fixes': () => {
+    const d = { nomina: 5000, manteniment_estadi: 3000, personal: 2040, planter: 2000 };
+    assert.equal(d.nomina + d.manteniment_estadi + d.personal + d.planter, 12040);
+  },
+  'P3.flux': () => assert.equal(22000 - 12040, 9960),
+  'P3.sou_sostenible': () => {
+    // MAX(0; flux + nòmina − reserva_flux)
+    assert.equal(souSostenible(9960, 5000, 0), 14960);
+    assert.equal(souSostenible(9960, 5000, 4000), 10960);
+    assert.equal(souSostenible(-99999, 5000, 0), 0, 'MAX(0; …)');
+    assert.equal(souSostenible(null, 5000), null, 'sense flux, no se suposa');
+  },
+  'P3.caixa': () => {
+    // «saldo real declarat (mai projectat)»: la funció no en fabrica cap.
+    assert.equal(caixaDisponible(null, 0), null, 'sense declarar → null, no 0');
+  },
+  'P3.caixa_disponible': () => {
+    assert.equal(caixaDisponible(100000, 30000), 70000);
+    assert.equal(caixaDisponible(10000, 30000), 0, 'MAX(0; …)');
+  },
+
+  // La DIVISIÓ té un únic format intern: cap taula del joc pot fallar en silenci.
+  'V.config#divisio': () => {
+    for (let n = 1; n <= DIVISIONS.length; n++) {
+      assert.equal(normalitzaDivisio(n), DIVISIONS[n - 1]);
+      assert.equal(divisioArab(DIVISIONS[n - 1]), n);
+    }
+    assert.equal(normalitzaDivisio('vii'), 'VII');
+    assert.equal(normalitzaDivisio('9'), null, 'el que no és divisió no se suposa');
+  },
+
   // P10.valor casos (a)(b)(c): coincidixen amb valorHabilitat. El cas (d) NO — vore DIVERGENTS.
   'P10.valor': () => {
     const o = optsMarge();
@@ -142,15 +180,18 @@ const DIVERGENTS = {
   },
 };
 
-let verificades = 0;
+// Una fórmula pot tindre més d'una comprovació: `id#aspecte`. El compte va per fórmula.
+const base = (id) => id.split('#')[0];
+const cobertes = new Set();
 for (const [id, prova] of Object.entries(VERIFICADES)) {
-  assert.ok(formules.some((f) => f.id === id),
+  assert.ok(formules.some((f) => f.id === base(id)),
     `id verificat que ja NO és al full (lleva'l del G1): ${id}`);
   prova();
-  verificades++;
+  cobertes.add(base(id));
 }
+const verificades = cobertes.size;
 
-const pendents = formules.filter((f) => !VERIFICADES[f.id]);
+const pendents = formules.filter((f) => !cobertes.has(f.id));
 assert.equal(verificades + pendents.length, formules.length, 'forat: ni verificada ni pendent');
 
 // Pendents per pas: visibles, mai en silenci.

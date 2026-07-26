@@ -1,4 +1,4 @@
-// Tonico — economia (Fase 5): signe, caixa, projecció i
+// Tonico — economia: signe, caixa declarada i
 // alerta de transacció pendent. node test/economia.mjs
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -31,11 +31,13 @@ await classificaEquip(db, 1, 1, 'competitiva');
 await tx.onRequestPost(ctx({ tipus: 'venda', import: 200000, data: '2026-07-19' }));
 await tx.onRequestPost(ctx({ tipus: 'compra', import: 50000, data: '2026-07-19' }));
 
-const e = await economia(db, 1);
-assert.equal(e.caixa, 150000, 'caixa = 200000 venda − 50000 compra');
+let e = await economia(db, 1);
+assert.equal(e.caixa, null, 'v3: amb moviments però sense declarar-la, la caixa és null');
 assert.ok(e.nomina > 0, 'nòmina setmanal automàtica des dels sous');
-assert.equal(e.projeccio.objectiu, 430000);
-assert.equal(e.projeccio.falta, 280000);
+// La caixa és la DECLARADA: quan s'apunta, apareix (i no és la suma dels moviments).
+sqlite.exec("INSERT INTO finances (usuari_id, caixa, caixa_data) VALUES (1, 90000, '2026-07-25');");
+e = await economia(db, 1);
+assert.equal(e.caixa, 90000, 'mana el saldo real declarat');
 
 // ALR_TRANSACCIO_PENDENT: un jugador que desapareix sense venda apuntada
 const sr2 = senior.filter((c) => c[3] !== '900000001');   // en llevem un
@@ -50,4 +52,4 @@ await tx.onRequestPost(ctx({ tipus: 'venda', import: 90000, jugador_id: foraId, 
 await generaAlertes(db, 1);
 assert.equal(pendent(), 0, 'apuntada la venda → alerta resolta');
 
-console.log('OK — economia: signe, caixa, projecció i transacció pendent');
+console.log('OK — economia: signe, caixa declarada i transacció pendent');

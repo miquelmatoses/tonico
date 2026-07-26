@@ -46,16 +46,16 @@ const families = {
   'motiu_baixa': ['venda', 'alliberament', 'promocio', 'altres'],
   'tipus': ['compra', 'venda', 'sou_setmanal', 'ingres_patrocini', 'taquilla', 'personal', 'estadi', 'taxa_llistat', 'altres'],
   'font': ['comparables', 'pom'],
-  'economia.capital_': ['reconversio', 'fitxatges', 'coixi_sou'],
   'fotrem.estat_': ['seguiment', 'elegit', 'cua_eixida'],
-  'pla.estat_': ['passada', 'actual', 'futura'],
-  'pla.setmana_': ['ab', 'un', 'copa'],
+  'configuracio.partits_': ['1', '2'],
+  'estrategia': ['competitiva', 'cycle'],
+  'sistema_juvenil': ['academia', 'cercapromeses', 'cap'],
   'personal.rol_': ['entrenador', 'especialista'],
   'vendes.estat_': ['pendent', 'llistat', 'venut', 'desert', 'despatxat'],
   'vendes': ['col_jugador', 'col_posicio', 'col_especialitat', 'col_proposat', 'col_preu', 'col_data', 'col_tancament', 'col_estat', 'col_venut'],
   'fotrem.joc_motiu_': ['revelar', 'dud', 'entrena', 'sense_pipeline'],
   'fotrem.onze_m_': ['entrena', 'estructura', 'recanvi'],
-  'falten': ['caixa', 'personal', 'capital_objectiu'],
+  'falten': ['caixa', 'personal', 'config_pais', 'config_divisio', 'config_partits_setmana', 'config_estrategia'],
   'dia': ['0', '1', '2', '3', '4', '5', '6'],   // noms de dia per a l'agenda
   'agenda': ['llistar'],                          // etiquetes curtes d'acció (missatge_clau del servidor)
   'element': ['assistents', 'metge', 'psicoleg'],
@@ -63,7 +63,6 @@ const families = {
   'personal': ['rol', 'tipus', 'nivell', 'sou', 'setmanes_contracte'],
   'fotrem': ['col_jugador', 'col_nivell', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_potencial', 'col_promocio', 'col_aterratge', 'col_estat'],
   'plantilla': ['col_jugador', 'col_posicio', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_tsi', 'col_puntuacio', 'col_categoria'],
-  'pla': ['col_temporada', 'col_divisio', 'col_mode', 'col_accions', 'col_estat'],
   'economia': ['col_compres', 'col_vendes', 'col_marge', 'col_data', 'col_tipus', 'col_import', 'col_jugador', 'col_nota'],
   'jugador': ['col_data', 'col_temporada', 'col_edat', 'col_tsi', 'col_sou', 'col_habilitats', 'col_pops', 'col_categoria', 'col_origen', 'col_puntuacio'],
 };

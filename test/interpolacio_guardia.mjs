@@ -32,11 +32,10 @@ sqlite.exec(`
   INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_planter, despesa_estadi, ingres_setmanal) VALUES (1,100000,'2026-07-25',2000,3000,10000);
   INSERT INTO preus_observats (usuari_id, posicio, edat, habilitat, preu, data) VALUES (1,'MC',20,7,120000,'2026-07-18');
 `);
-const pr = (await economia(db, 1)).projeccio;
-// La secció passa l'objecte projeccio sencer a estes claus: no ha de quedar cap {…}.
-for (const k of ['economia.trajectoria_arriba', 'economia.trajectoria_no', 'economia.projeccio']) {
-  assert.equal(fuga(interpola(ca[k], pr)), false, `fuga d'interpolació a «${k}» amb la projecció real`);
-}
-assert.ok('caixa_projectada' in pr && 'data_inflexio' in pr, 'la projeccio porta els camps que les claus referencien');
+const e = await economia(db, 1);
+// La secció passa objectes de l'avaluador a estes claus: no ha de quedar cap {…}.
+assert.equal(fuga(interpola(ca['economia.despeses_detall'], e.despeses)), false, 'despeses_detall amb les despeses reals');
+assert.equal(fuga(interpola(ca['economia.disponible_nota'], e)), false, 'disponible_nota amb l\'economia real');
+assert.ok('manteniment_estadi' in e.despeses && 'reserva_caixa' in e, 'els camps que les claus referencien existixen');
 
-console.log('OK — guardià d\'interpolació: paritat de paràmetres i projecció real sense {…} sense resoldre');
+console.log('OK — guardià d\'interpolació: paritat de paràmetres i economia real sense {…} sense resoldre');

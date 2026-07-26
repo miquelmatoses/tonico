@@ -1,5 +1,34 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · RECONSTRUCCIÓ v3 · L3 (fet i verificat a prod)
+- **L3 — economia flux/estoc** (migració 058, desplegada en el mateix lot).
+  `ingressos_recurrents` (taquilla+patrocini+premis), `despeses_fixes`, `flux`,
+  `sou_sostenible = MAX(0; flux+nòmina−reserva_flux)`, `caixa_disponible = MAX(0;
+  caixa−reserva_caixa)`.
+  **Decisions no trivials:**
+  1. **La caixa deixa de tindre fallback silenciós.** Abans, si no estava declarada, requeia
+     a `SUM(transaccions)` i una derivada es feia passar per saldo real. Ara torna `null` i
+     Paco la demana. Mateix criteri per al flux: sense ingressos declarats no hi ha flux, i
+     es diu, en compte de fabricar un zero.
+  2. **Ingressos: el total heretat es respecta.** No es podia repartir `ingres_setmanal` en
+     taquilla/patrocini/premis sense inventar-ho, i tampoc es podia llançar la dada de
+     l'usuari. S'usa el total mentre no hi haja desglossament i es marca
+     `ingressos_desglossats:false` perquè Paco el demane.
+  3. **Cau tot el subsistema de projecció**: `capital.js`, l'objectiu de capital,
+     la trajectòria, ALR_TRAJECTORIA_INFLEXIO i els poms `inflexio_*`. El v3 no projecta
+     dins d'una decisió (invariant 3).
+  4. **DIVISIÓ NORMALITZADA JA** (punt 1 de l'orde): `lib/divisio.js` amb format intern
+     romà, conversió en els dos sentits i test propi. La divisió de l'usuari estava
+     declarada com a `"7"` i les taules del joc van en romà: **l'estimació de preu queia
+     en silenci al valor per defecte**. Migrada a `VII` i verificada a prod.
+  5. **La secció «Pla mestre» es retira** (punt 2 de l'orde). Estava òrfena des que va caure
+     `plans_temporades`. La substituïx **Configuració**: estratègia activa i el PAS 0, amb
+     el que falta marcat. Cap pantalla buida ni mig viva. Les claus `pla.*` i `fase.*` es
+     retiren de l'i18n.
+  6. `reserva_flux` i `reserva_caixa` són **política de risc declarada**, no mecànica de
+     joc: defecte 0 i etiquetades com a tals.
+
+
 ## 2026-07-26 · RECONSTRUCCIÓ v3 · L0–L2 (fet i verificat a prod)
 **Autoritzat per Miquel** (orde de reconstrucció completa L0–L12). Branca `v3-reconstruccio`.
 
