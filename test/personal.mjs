@@ -82,8 +82,26 @@ assert.equal(REGLES.ALR_CONTRACTE_PERSONAL({ personal: { membres: [
   assert.equal(Math.round(p.pressupost),
     Math.min(Math.round(p.flux_repartible_setmanal * p.quota), p.sostre),
     'el pressupost és la quota del repartible, acotada pel sostre');
-  assert.equal(Math.round(p.gastat + p.flux_restant), Math.round(p.pressupost),
-    'el que es gasta més el que sobra és el pressupost: la frase quadra');
+  // LA XIFRA DEL MIG ÉS LA DE VERES, no la simulació. La pantalla deia «el pla en gasta
+  // 4 080 €» (4 places al nivell uniforme) quan els tres especialistes declarats en cobren
+  // 6 120: el sobrant que anunciava no existia. `pagat` ix dels SOUS DECLARATS.
+  const sous = [...p.pla.filter((x) => x.membre_id != null), ...p.membres_fora]
+    .reduce((a, x) => a + (x.sou_declarat ?? 0), 0);
+  assert.equal(p.pagat, sous, 'el que es paga és la suma dels sous declarats');
+  assert.notEqual(p.pagat, p.cost_pla, 'i no és el que costaria el pla: són dues coses');
+  assert.equal(Math.round(p.pagat + p.restant), Math.round(p.pressupost),
+    'el que pagues més el que et queda és el pressupost: la frase quadra');
+  assert.equal(p.excedit, 0, 'amb 6 120 sota un pressupost de 6 564 no hi ha excés');
+}
+
+// ── 6b. UN SOU QUE NO S'HA DECLARAT NO ÉS ZERO (invariant 18). Sumar-lo com a zero seria dir
+// que eixe membre és gratis, i la frase «et queden X per a jugadors» passaria a mentir. ──
+{
+  await personal.onRequestPost(ctx({ rol: 'especialista', tipus: 'forma', nivell: 1, data_fi_contracte: '2026-11-04' }));
+  const q = (await get()).pla_flux;
+  assert.equal(q.sense_sou, 1, 'es compta quants sous falten, i es diu');
+  assert.equal(q.pagat, 6120, 'i el que falta NO se suma com a zero: la xifra és la dels declarats');
+  sqlite.exec("DELETE FROM personal_membres WHERE tipus='forma';");
 }
 
 // ── 7. EL NIVELL QUE ES MOSTRA ÉS EL DECLARAT. Es llegia «tens personal de nivell 1» quan el

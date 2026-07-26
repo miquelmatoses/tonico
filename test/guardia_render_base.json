@@ -1,41 +1,30 @@
 {
-  "_nota": "Deute conegut i EXCEPCIONS DECLARADES del render-pur (G2). Cada línia porta la seua justificació: totes són comprovacions de presència («n'hi ha o no») o de flux, no llindes de domini. Les llindes de domini reals (urgència, pct d'entrenament) ja han passat a l'avaluador.",
+  "_nota": "Deute conegut de render-pur (G2). Es BUIDA amb la reconstrucció; mai creix.",
   "violacions": [
     {
       "fitxer": "public/seccions.js",
-      "linia": 119,
-      "text": "kpis.append(kpi(alertes.length, 'esta_setmana.kpi_urgents', alertes.length > 0));",
-      "justificacio": "recompte d'una llista, no una llinda de domini"
+      "linia": 126,
+      "text": "kpis.append(kpi(alertes.length, '', alertes.length > 0));"
     },
     {
       "fitxer": "public/seccions.js",
-      "linia": 136,
-      "text": "const falten = revisat ? await opc(api('/api/falten')) : null;",
-      "justificacio": "booleà de flux (s'ha revisat o no), no domini"
+      "linia": 476,
+      "text": "info.append(el('', { text: o.descobriments > 0"
     },
     {
       "fitxer": "public/seccions.js",
-      "linia": 458,
-      "text": "info.append(el('p', { text: o.descobriments > 0",
-      "justificacio": "«n'hi ha o no n'hi ha»: tria de text, no llinda"
+      "linia": 479,
+      "text": "if (o.descobriments > 0) info.append(el('', { class: '', text: t('', { minuts: o.revelacio_minuts }) }));"
     },
     {
       "fitxer": "public/seccions.js",
-      "linia": 461,
-      "text": "if (o.descobriments > 0) info.append(el('p', { class: 'nota-peu', text: t('juvenils.onze_mecanica', { minuts: o.revelacio_minuts }) }));",
-      "justificacio": "«n'hi ha o no n'hi ha»: tria de text, no llinda"
+      "linia": 600,
+      "text": "const pres = (v) => (v > 0 ? diners(v) : t(''));"
     },
     {
       "fitxer": "public/seccions.js",
-      "linia": 519,
-      "text": "const pres = (v) => (v > 0 ? diners(v) : t('mercat.sense_pressupost'));",
-      "justificacio": "«hi ha xifra o no»: tria entre número i text"
-    },
-    {
-      "fitxer": "public/seccions.js",
-      "linia": 524,
-      "text": "const utils = filtres.filter((f) => f.falten > 0);",
-      "justificacio": "«en falta algun o no»: filtre de presència, no llinda"
+      "linia": 603,
+      "text": "const utils = filtres.filter((f) => f.falten > 0);"
     }
   ]
 }

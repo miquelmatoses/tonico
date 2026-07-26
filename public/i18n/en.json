@@ -530,7 +530,7 @@
   "element.tactic": "Tactical assistant",
   "element.financer": "Financial director",
   "element.entrenador": "Head coach",
-  "flux.capçal": "Of the distributable flow ({repartible} a week) staff gets {quota}: {pressupost}. The plan spends {gastat} and the remaining {restant} goes to players.",
+  "flux.capçal": "Of the distributable flow ({repartible} a week) staff gets {quota}: {pressupost}. You currently pay {pagat}, leaving {restant} for players.",
   "flux.sense_flux": "Without declared income I can't tell you what staff you can support.",
   "flux.sou_setmana": "{sou} per week",
   "flux.accio_contracta": "Hire them",
@@ -567,5 +567,8 @@
   "juvenils.entrenament_posa": "Set training A: {principal}. Training B: {secundari}.",
   "estoc.obra_fent": "Already building it",
   "estoc.obra_feta": "It's finished",
-  "economia.data_setmana": "Any day of that week"
+  "economia.data_setmana": "Any day of that week",
+  "flux.passat": "You are {excedit} over what the flow sustains for staff: drop a level when the contracts expire.",
+  "flux.sense_sou_1": "You haven't told me 1 member's wage, so that total is incomplete.",
+  "flux.sense_sou_n": "You haven't told me {n} members' wages, so that total is incomplete."
 }

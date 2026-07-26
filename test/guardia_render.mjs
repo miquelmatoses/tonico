@@ -53,7 +53,9 @@ function escaneja(rel) {
 const CAMPS_IMPORT = ['sou', 'preu', 'caixa', 'cost', 'flux', 'import', 'valor_net', 'pressupost',
   'sou_sostenible', 'caixa_disponible', 'estadi_cost_obra', 'estadi_manteniment', 'flux_lliure',
   'flux_restant', 'despeses_fixes', 'ingressos_recurrents', 'nomina', 'preu_esperat',
-  'preu_proposat', 'delta_flux', 'sou_total', 'marge'];
+  'preu_proposat', 'delta_flux', 'sou_total', 'marge',
+  // El pla de personal: el que es paga, el que en queda, el que passa i el que costaria el pla.
+  'pagat', 'restant', 'excedit', 'cost_pla', 'sou_declarat'];
 
 function escanejaImports(rel) {
   const out = [];

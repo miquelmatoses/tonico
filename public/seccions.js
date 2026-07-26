@@ -1017,15 +1017,19 @@ function plaFlux(main, p) {
   if (p.falten && p.falten.length) {
     cos.append(el('p', { class: 'nota-peu', text: t('flux.sense_flux') }));
   } else {
-    // D'ON IX EL PRESSUPOST, en una frase que es pot seguir: el repartible, la part que li toca
-    // al personal, el que el pla en gasta i on va el que sobra. Abans deia «(0% del flux
-    // repartible)» —`percent()` arrodonia 0,40 a zero— i «en queden 2 484 €» sense dir de què.
+    // D'ON IX EL PRESSUPOST i QUÈ EN PAGUES. La xifra del mig ha de ser la de veres —la suma
+    // dels sous declarats—, no el que costaria el pla: deia «el pla en gasta 4 080 €» quan els
+    // tres especialistes en cobren 6 120, i el sobrant que anunciava no existia.
     cos.append(el('p', { class: 'nota-peu', text: t('flux.capçal', {
       repartible: diners(Math.round(p.flux_repartible_setmanal)),
       quota: percent(p.quota_pct),
       pressupost: diners(Math.round(p.pressupost)),
-      gastat: diners(Math.round(p.gastat)),
-      restant: diners(Math.round(p.flux_restant)) }) }));
+      pagat: diners(Math.round(p.pagat)),
+      restant: diners(Math.round(p.restant)) }) }));
+    // Si el pressupost no arriba, es diu: el sobrant seria negatiu i «que sobren» mentiria.
+    if (p.excedit) cos.append(el('p', { class: 'desquadre', text: t('flux.passat', { excedit: diners(Math.round(p.excedit)) }) }));
+    // I si falta algun sou declarat, la suma està coixa i no es pot fer passar per completa.
+    if (p.sense_sou) cos.append(el('p', { class: 'nota-peu', text: tp('flux.sense_sou', p.sense_sou, { n: p.sense_sou }) }));
     const places = el('div', { class: 'places' });
     for (const x of p.pla) places.append(placa(x));
     // Els declarats que no caben en cap plaça del pla: existixen i cobren, així que es veuen.
