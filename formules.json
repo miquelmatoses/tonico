@@ -861,6 +861,18 @@
       "taules": []
     },
     {
+      "id": "P8.obra_en_curs",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
+      "clau": "obra_en_curs",
+      "linia": "obra_en_curs   = `estadi_obra_inici` ≠ ∅            [declarada: l'obra ja s'està fent]",
+      "entrades": [],
+      "poms": [
+        "estadi_obra_inici"
+      ],
+      "taules": []
+    },
+    {
       "id": "P8.manteniment",
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
@@ -877,13 +889,11 @@
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "admissible",
-      "linia": "admissible(estadi) = `estadi_cost_obra` ≤ caixa",
+      "linia": "admissible(estadi) = ¬obra_en_curs",
       "entrades": [
-        "caixa"
+        "obra_en_curs"
       ],
-      "poms": [
-        "estadi_cost_obra"
-      ],
+      "poms": [],
       "taules": []
     },
     {

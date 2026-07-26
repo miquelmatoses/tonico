@@ -125,7 +125,9 @@ assert.ok(/if \(!files \|\| !files\.length\) return null;/.test(vista),
   // vinga de `graellaAmbFiles` (hi ha taules que la munten a mà).
   const classes = new Set([...vista.matchAll(/graella-fila-d (c-[\w-]+)/g)].map((m) => m[1]));
   for (const m of vista.matchAll(/graella-fila-d (c-[\w-]+)' \+/g)) classes.add(m[1]);
-  assert.ok(classes.size >= 3, `la comprovació ha de vore diverses taules (${[...classes].join(', ')})`);
+  // CANARI: si el regex deixa de casar, la comprovació passaria en buit sense dir res. En
+  // queden dues taules de veres (`c-estoc` i `c-venda`): la de personal ha passat a píndoles.
+  assert.ok(classes.size >= 2, `la comprovació ha de vore diverses taules (${[...classes].join(', ')})`);
   const sense = [...classes].filter((c) => pistes(c) == null);
   assert.deepEqual(sense, [], `classes de fila sense grid-template-columns: ${sense.join(', ')}`);
 

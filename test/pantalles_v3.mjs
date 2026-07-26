@@ -47,6 +47,23 @@ assert.equal(opEstadi.eficiencia, null,
   'i SENSE eficiència: no es puntua, perquè la prioritat no es negocia');
 assert.equal(m2.estoc.opcions[0].tipus, 'estadi', 'l\'estadi va primer a la llista');
 
+// I si l'obra JA S'ESTÀ FENT, deixa de ser una proposta: la decisió està presa i no es pot
+// prendre dues vegades. Tonico la repetia cada setmana perquè no tenia manera de saber-ho.
+sqlite.prepare("UPDATE finances SET estadi_obra_inici='2026-07-20' WHERE usuari_id=1").run();
+const m3 = await (await mercat.onRequestGet(ctx)).json();
+const enCurs = m3.estoc.opcions.find((o) => o.tipus === 'estadi');
+assert.equal(enCurs.obra_en_curs, true, 'la pantalla sap que l\'obra està en marxa');
+assert.equal(enCurs.admissible, false, 'i per tant no és una opció admissible');
+assert.equal(enCurs.motiu, 'obra_en_curs', 'i el motiu ho diu, derivat');
+assert.notEqual(m3.estoc.recomanada?.tipus, 'estadi', 'no es recomana el que ja s\'està fent');
+sqlite.prepare('UPDATE finances SET estadi_obra_inici=NULL WHERE usuari_id=1').run();
+
+// L'edat de compra és un RANG: el cercador de HT demana els dos extrems, no un sostre.
+for (const f of m3.filtres.filter((x) => x.rol === 'core')) {
+  assert.ok(f.edat_min != null && f.edat_max != null, 'el filtre porta els dos extrems d\'edat');
+  assert.ok(f.edat_min <= f.edat_max, 'i en este ordre');
+}
+
 // ── PERSONAL: el pla de flux arriba a la pantalla ──
 const pe = await (await personal.onRequestGet(ctx)).json();
 assert.ok(pe.pla_flux, 'el personal serveix el pla de flux');

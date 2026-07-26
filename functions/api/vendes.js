@@ -30,7 +30,7 @@ export async function onRequestGet({ env, data }) {
   const { results: jugadors } = await env.DB.prepare(
     `SELECT j.id AS jugador_id, j.nom, j.especialitat, ij.posicio_ultim_partit AS posicio, ij.edat_anys,
             ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada,
-            ij.lleialtat, ij.qualificacio_ultim_partit, ij.sou, ij.lesio,
+            ij.lleialtat, ij.qualificacio_ultim_partit, ij.sou, ij.lesio, ij.transferible,
             v.data_llistada, v.estat, v.resultat_pendent, c.categoria
        FROM instantanies_jugadors ij JOIN jugadors j ON j.id = ij.jugador_id
        JOIN ${sqlCategoriaVigent(['categoria'])} c

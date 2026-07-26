@@ -52,13 +52,42 @@ assert.equal(psic.accio, 'contracta', 'la plaça lliure és la que es proposa om
 assert.ok(d.pla_flux.pla.filter((x) => x.tipus !== 'psicoleg').every((x) => x.accio !== 'contracta'),
   'i les ocupades no es tornen a proposar');
 
-// ── 4. Pujar de nivell NOMÉS al venciment: a mitjan contracte, acomiadar costa 2× l'estalvi ──
-assert.ok(!d.pla_flux.pla.some((x) => x.accio === 'puja'),
-  'cap «puja» a seques: si toca, és «puja_al_venciment»');
+// ── 4. Fora del venciment NO hi ha acció. Pujar a mitjan contracte és acomiadar, i acomiadar
+// costa 2× l'estalvi: una plaça ocupada i lluny del venciment no té cap acció possible, i
+// dir-ne una era proposar-li a Miquel una cosa que eixe dia no podia fer.
+assert.ok(d.pla_flux.pla.filter((x) => x.membre_id != null && !x.venciment).every((x) => x.accio === 'res'),
+  'ocupada i lluny del venciment → cap acció');
 
-// ── 5. L'alerta de contracte va per la data, derivada ──
+// ── 5. L'alerta de contracte va per la data, derivada, i en DIES: el pom sempre ha sigut de
+// dies i es comparava contra setmanes, així que la frontera no volia dir res.
 assert.equal(REGLES.ALR_CONTRACTE_PERSONAL({ personal: { membres: [
-  { tipus: 'metge', setmanes_contracte: 1 }, { tipus: 'assistent', setmanes_contracte: 9 },
-] } }, { setmanes_avis: 2, urgencia: 58 }).length, 1, 'només el que venç dins del llindar');
+  { tipus: 'metge', dies_contracte: 9 }, { tipus: 'assistent', dies_contracte: 40 },
+] } }, { dies_avis: 15, urgencia: 58 }).length, 1, 'només el que venç dins del llindar');
+assert.equal(REGLES.ALR_CONTRACTE_PERSONAL({ personal: { membres: [
+  { tipus: 'metge', dies_contracte: -3 },
+] } }, { dies_avis: 15, urgencia: 58 }).length, 0, 'ja caducat no és un avís de venciment');
+
+// ── 6. EL PRESSUPOST ES POT SEGUIR AMB ELS DITS. La pantalla deia «6 564 € (0% del flux
+// repartible) · en queden 2 484 €»: el 0% era `percent()` arrodonint 0,40 a zero, i «en
+// queden» no deia de què. Ara la quota va en base 100 i la resta quadra amb el repartible.
+{
+  const p = d.pla_flux;
+  assert.equal(p.quota_pct, 40, 'la quota es dona en base 100: la vista no pot multiplicar');
+  assert.ok(p.flux_repartible_setmanal > 0, 'el repartible es diu, que és d\'on ix el pressupost');
+  assert.equal(Math.round(p.pressupost),
+    Math.min(Math.round(p.flux_repartible_setmanal * p.quota), p.sostre),
+    'el pressupost és la quota del repartible, acotada pel sostre');
+  assert.equal(Math.round(p.gastat + p.flux_restant), Math.round(p.pressupost),
+    'el que es gasta més el que sobra és el pressupost: la frase quadra');
+}
+
+// ── 7. EL NIVELL QUE ES MOSTRA ÉS EL DECLARAT. Es llegia «tens personal de nivell 1» quan el
+// declarat és 2 i l'1 era el que el flux sosté: dues coses distintes amb el mateix nom.
+{
+  const met = d.pla_flux.pla.find((x) => x.tipus === 'metge');
+  assert.equal(met.nivell_declarat, 2, 'el declarat es diu tal qual');
+  assert.equal(met.sou_declarat, 2040, 'i el sou que cobra de veres, no el del pla');
+  assert.ok(met.dies_contracte > 0, 'i els dies que li queden, derivats de la data');
+}
 
 console.log('OK — personal: quota de 4, ordre de prioritat, nivell uniforme i timing de contracte');

@@ -76,8 +76,10 @@ function motiusDelCodi() {
 
 const families = {
   'habilitat': ['porteria','defensa','creativitat','passades','extrem','anotacio','pilota_aturada'],
-  'flux.accio_': ['contracta','puja','puja_al_venciment','renova','renova_al_nivell','no_renoves','res','exclos'],
-  'flux': ['col_tipus','col_nivell','col_cost','col_accio'],
+  // Les accions que el pla POT proposar. Fora `puja`/`puja_al_venciment`/`exclos`: pujar de
+  // nivell fora del venciment no és una acció possible (és acomiadar), i el pla ja no exclou
+  // ningú. Les formes `_n` porten el nivell concret que el flux sosté.
+  'flux.accio_': ['contracta','contracta_n','renova','renova_al_nivell_n','no_renoves','res'],
   'estoc': ['col_opcio', 'col_nivell', 'col_mancanca', 'col_guany'],
   'categoria': ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'],
   // Els 16 nivells d'habilitat, pel NOM de Hattrick. L'escala de Tonico compta des d'on el sou
@@ -102,7 +104,7 @@ const families = {
   // Els sis tipus d'especialista de la guia + l'entrenador principal (que no gasta plaça).
   'element': ['assistent', 'metge', 'psicoleg', 'forma', 'tactic', 'financer', 'entrenador'],
   // Columnes construïdes des d'arrays (t('prefix.' + k)):
-  'personal': ['rol', 'tipus', 'nivell', 'sou', 'setmanes_contracte'],
+  'personal': ['rol', 'tipus', 'nivell', 'sou', 'data_fi_contracte'],
   'juvenils': ['col_jugador', 'col_nivell', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_potencial', 'col_promocio', 'col_aterratge', 'col_estat'],
   'plantilla': ['col_jugador', 'col_posicio', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_tsi', 'col_puntuacio', 'col_categoria'],
   'jugador': ['col_data', 'col_temporada', 'col_edat', 'col_tsi', 'col_sou', 'col_habilitats', 'col_pops', 'col_categoria', 'col_origen', 'col_puntuacio'],
@@ -187,7 +189,6 @@ const EXEMPTS_PLURAL = new Set([
   'juvenils.onze_repartiment',           // comptes + gerundis, cap plural que concorde
   'vendes.retingut_cobertura',         // «{n} de camp» — sense nom en plural
   'juvenils.onze_no_viable',             // «només {en_camp} en camp» — idem
-  'mercat.filtre_core', 'mercat.filtre_cos',   // «Falten: {falten}.» — etiqueta de llista
   'alerta.crida_juvenil',              // «es quedarà en {futur}» — no compta res
 ]);
 {

@@ -9,7 +9,7 @@ const ROLS = ['entrenador', 'especialista'];
 const enter = (x) => (x == null || x === '' ? null : Math.round(Number(x)));
 
 import { plaPersonal } from '../../lib/pla_personal.js';
-import { setmanesRestants } from '../../lib/personal_v3.js';
+import { diesRestants } from '../../lib/personal_v3.js';
 
 export async function onRequestGet({ env, data }) {
   const pla = await env.DB.prepare('SELECT plantilla, fase_actual, parametres FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
@@ -29,9 +29,9 @@ export async function onRequestGet({ env, data }) {
   const { results: membres } = await env.DB.prepare(
     'SELECT id, rol, tipus, nivell, sou, data_fi_contracte FROM personal_membres WHERE usuari_id=? ORDER BY rol, tipus, id'
   ).bind(data.usuari.id).all();
-  // Les setmanes que queden es DERIVEN de la data (mai declarades: un compte es congela).
+  // Els dies que queden es DERIVEN de la data (mai declarats: un compte es congela).
   const avuiGet = new Date().toISOString().slice(0, 10);
-  for (const m of membres) m.setmanes_contracte = setmanesRestants(m.data_fi_contracte, avuiGet);
+  for (const m of membres) m.dies_contracte = diesRestants(m.data_fi_contracte, avuiGet);
   // FORA `fases_config`: era del model fàbrica (fases `fabrica`/`inflexio`/`competitiu`) i no
   // lligava ni amb la fase real. Els «desquadres» es calculaven contra el no-res i els
   // checklists encara servien el paquet d'inflexió. Qui diu ara què falta és el pla de flux.

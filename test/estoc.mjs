@@ -29,6 +29,12 @@ assert.equal(admissibleEstadi({ cost: 150000, caixa: 100000, flux: 10000,
 assert.equal(admissibleEstadi({ cost: 50000, caixa: 100000, flux: 10000,
   delta_manteniment: 3000, setmanes_periode: 2, reserva_flux: 5000 }), false,
   'ni una obra el manteniment de la qual es menge la reserva (3000 × 2 = 6000 > 10000 − 5000)');
+// UNA OBRA JA COMENÇADA NO ES TORNA A DECIDIR. Tonico la proposava cada setmana també quan
+// s'estava fent, perquè no tenia manera de saber-ho: una decisió presa i irreversible es
+// llegia com una decisió pendent.
+assert.equal(admissibleEstadi({ cost: 50000, caixa: 100000, flux: 10000,
+  delta_manteniment: 1000, setmanes_periode: 2, reserva_flux: 5000, obra_en_curs: true }), false,
+  'amb l\'obra en marxa no hi ha res a decidir, encara que la caixa i el flux la paguen');
 assert.equal(admissibleEstadi({ cost: 1, caixa: 100, flux: null, delta_manteniment: 0 }), false,
   'sense flux declarat no es decidix una obra');
 

@@ -23,9 +23,15 @@ export async function onRequestGet({ env, data }) {
           WHERE ij.instantania_id = ?`
       ).bind(inst.id).all()).results;
     }
+    // El cercador de HT demana un RANG d'edat, no un sostre: els dos extrems són poms.
+    const pomEnter = async (clau) => {
+      const r = await env.DB.prepare('SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau=?').bind(pla.plantilla, clau).first();
+      return r?.valor == null ? null : parseInt(r.valor, 10);
+    };
     const compra = {
-      edat_max: parseInt((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='compra_edat_max'").bind(pla.plantilla).first())?.valor || '18', 10),
-      creativitat_min: parseInt((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='compra_creativitat_min'").bind(pla.plantilla).first())?.valor || '6', 10),
+      edat_min: await pomEnter('compra_edat_min'),
+      edat_max: await pomEnter('compra_edat_max'),
+      creativitat_min: await pomEnter('compra_creativitat_min'),
       posicions: JSON.parse((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='compra_posicions'").bind(pla.plantilla).first())?.valor || '["MC"]'),
     };
     const { caixa } = await economia(env.DB, data.usuari.id);

@@ -385,7 +385,6 @@ main:has(.auth) { max-width: none; padding: 0; }
    L'opció i l'acció són text; el guany, el cost i el rendiment són xifres i van a la dreta. */
 .c-estoc { grid-template-columns: minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr); }
 .c-flux  { grid-template-columns: minmax(0,1.6fr) minmax(0,.7fr) minmax(0,1.2fr) minmax(0,1.4fr); }
-.c-staff { grid-template-columns: minmax(0,1.6fr) repeat(3, minmax(0,.9fr)) auto auto; align-items: end; }
 /* Camp xic dins d'una fila: etiqueta damunt, en xicotet, i el camp a tot l'ample de la
    columna. Així el número és sempre llegible i l'etiqueta no empeny la fila. */
 .camp-xic { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: .74rem; color: var(--tenue); }
@@ -433,8 +432,6 @@ main:has(.auth) { max-width: none; padding: 0; }
    L'opció i l'acció són text; el guany, el cost i el rendiment són xifres i van a la dreta. */
 .c-estoc { grid-template-columns: minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr); }
 .c-flux  { grid-template-columns: minmax(0,1.6fr) minmax(0,.7fr) minmax(0,1.2fr) minmax(0,1.4fr); }
-.c-staff { grid-template-columns: 1fr; }
-  .c-staff button { justify-self: start; }
   .graella-cap { display: none; }
 }
 /* Un formulari dins d'una targeta és un bloc: la graella de camps ha d'ocupar tot l'ample. */
@@ -519,3 +516,19 @@ form.card-cos { display: block; }
 .filtre-camps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 8px; }
 .filtre-camp { display: flex; flex-direction: column; gap: 2px; background: #fbf8ee; border-radius: 8px; padding: 6px 10px; }
 .filtre-et { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--gris); }
+
+/* ── El PLA DE PERSONAL: cada plaça és una píndola amb el seu llapis, no una fila de taula. */
+.placa-cap { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.placa-cap .placa-tipus { margin: 0; }
+.placa-contracte { font-size: 12px; color: var(--gris); margin-top: 4px; }
+.placa-contracte.venç { color: #b8860b; font-weight: 800; }
+.placa-accio { margin-top: 8px; }
+.placa-accio.cap { color: var(--gris); font-weight: 500; font-size: 12px; }
+.placa-editor { border-top: 2px solid var(--tinta); margin-top: 10px; padding-top: 10px; }
+.placa-editor.amagat { display: none; }
+.placa-camps { display: grid; gap: 8px; }
+.placa-botons { display: flex; gap: 6px; }
+/* L'obra ja començada: un fet, no una proposta. */
+.obra-curs { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+/* El que hi ha posat a HT quan no és el prescrit. */
+.desquadre { color: #b8860b; font-weight: 700; }

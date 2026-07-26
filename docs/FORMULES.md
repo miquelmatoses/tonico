@@ -231,8 +231,13 @@ PREGUNTA a l'inici de cada temporada, de `url_calculadora_estadi` (configuració
    `estadi_cost_obra`    = total costs de l'obra                    → ESTOC
 estadi_caduc   = (hui − `estadi_data`) > `setmanes_caducitat_estadi` × 7
 ACCIÓ("torna a la calculadora i reinserix els números")  SI estadi_caduc
+obra_en_curs   = `estadi_obra_inici` ≠ ∅            [declarada: l'obra ja s'està fent]
+   [una obra començada NO és una decisió pendent. Mentre dura, l'opció ESTADI no és
+    admissible i no es proposa res: ja s'ha decidit i no es pot decidir dues vegades.
+    S'acaba quan es declara el `manteniment_estadi` nou i es buida la data.]
 Δmanteniment   = `estadi_manteniment` − manteniment_actual
-admissible(estadi) = `estadi_cost_obra` ≤ caixa
+admissible(estadi) = ¬obra_en_curs
+                   I  `estadi_cost_obra` ≤ caixa
                    I  flux − per_periode(Δmanteniment) ≥ reserva_flux
 ACCIÓ("remodela l'estadi")  SI admissible(estadi) I ¬estadi_caduc
    [PRIORITAT ABSOLUTA: abans que qualsevol fitxatge, sempre. L'estadi és l'única
@@ -353,9 +358,12 @@ ACCIÓ("puja al venciment", tipus, nivell)  SI ocupada I nivell > declarat
     respecte d'un contracte més curt (guia «Staff»): al nivell 4, trencar a la
     setmana 10 de 16 val 57.600 €. Per això només es proposa al venciment]
 AVÍS: compromet el flux `setmanes_contracte` setmanes (no es pot desfer)
+[i mentre no arribe el venciment NO hi ha cap acció: dir «renova» amb 40 dies per davant
+ és soroll, perquè eixe dia no es pot fer res. Vore `dies_avis_contracte`.]
 
 RENOVAR (única decisió reversible; NO existix acomiadar):
-   PER membre amb 0 ≤ setmanes_restants ≤ `dies_avis_caducitat`:
+   dies_restants(membre) = ARROD.AMUNT(data_fi − hui)      [DIES; una data no es podrix]
+   PER membre amb 0 ≤ dies_restants ≤ `dies_avis_contracte`:
       SI(cost_flux(tipus, actual) ≤ flux_lliure;      ACCIÓ("renova")
       SI(existix n < actual amb cost_flux(tipus, n) ≤ flux_lliure;
                                                       ACCIÓ("renova al nivell n")
@@ -367,7 +375,8 @@ RENOVAR (única decisió reversible; NO existix acomiadar):
 
 ```
 CADUCITATS (contractes de personal i altres dates declarades):
-   ACCIÓ("renova/decidix", data)  SI 0 ≤ data − hui ≤ `dies_avis_caducitat`
+   ACCIÓ("renova/decidix", data)  SI 0 ≤ data − hui ≤ `dies_avis_contracte`
+   [DIES als dos costats. Abans el full comparava SETMANES amb un pom de DIES.]
 urgencia(acció) = BUSCA(`urgencia_tipus`; tipus(acció))      [pom; MAI a la vista]
 nivell(acció)   = SI(urgencia ≥ `llindar_urgent`; "urgent";
                   SI(urgencia ≥ `llindar_aviat`; "aviat"; "normal"))

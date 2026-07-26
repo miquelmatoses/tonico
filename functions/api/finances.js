@@ -23,7 +23,7 @@ async function ancora(db) {
 // La taquilla i el patrocini van a l'HISTÒRIC PER SETMANA; `finances` guarda l'ESTAT ACTUAL.
 // GET torna les dues coses i l'eixida de l'avaluador; POST fa merge (no trepitja el que no ve).
 const CAMPS = ['caixa', 'caixa_data', 'despesa_estadi',
-  'estadi_manteniment', 'estadi_cost_obra', 'estadi_data'];
+  'estadi_manteniment', 'estadi_cost_obra', 'estadi_data', 'estadi_obra_inici'];
 const COLS = CAMPS.join(', ');
 
 export async function onRequestGet({ env, data }) {
@@ -47,11 +47,12 @@ export async function onRequestPost({ request, env, data }) {
   if ('caixa' in c || Array.isArray(c.setmanes)) v.caixa_data = hui();
   const enter = (x) => (x == null || x === '' ? null : Math.round(Number(x)));
   await env.DB.prepare(
-    `INSERT INTO finances (usuari_id, ${COLS}) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO finances (usuari_id, ${COLS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(usuari_id) DO UPDATE SET
        ${CAMPS.map((c) => `${c}=excluded.${c}`).join(', ')}`
   ).bind(data.usuari.id, enter(v.caixa), v.caixa_data || null, enter(v.despesa_estadi),
-    enter(v.estadi_manteniment), enter(v.estadi_cost_obra), v.estadi_data || null).run();
+    enter(v.estadi_manteniment), enter(v.estadi_cost_obra), v.estadi_data || null,
+    v.estadi_obra_inici || null).run();
 
   // LES DOS SETMANES a l'històric. La identitat de cada una ix del CALENDARI (data → temporada
   // + setmana des de l'àncora): no es demana, es deriva. Redeclarar una setmana la sobreescriu,
