@@ -536,3 +536,6 @@ form.card-cos { display: block; }
 /* Una INSTRUCCIÓ («posa entrenament A: creativitat») no és una nota al peu: es llig com el
    recordatori de tàctica, perquè és el mateix tipus de cosa. */
 .instruccio { font-weight: 700; }
+
+/* Els dos estats de l'obra: es marquen on es proposa, no al final d'un formulari. */
+.obra-botons { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 4px; }

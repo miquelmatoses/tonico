@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict';
 import { nova } from './_d1shim.mjs';
 import * as mercat from '../functions/api/mercat.js';
+import * as finances from '../functions/api/finances.js';
 import * as personal from '../functions/api/personal.js';
 import * as vendes from '../functions/api/vendes.js';
 import { subhastaDeserta, despatxable } from '../lib/vendes.js';
@@ -56,6 +57,26 @@ assert.equal(enCurs.obra_en_curs, true, 'la pantalla sap que l\'obra està en ma
 assert.equal(enCurs.admissible, false, 'i per tant no és una opció admissible');
 assert.equal(enCurs.motiu, 'obra_en_curs', 'i el motiu ho diu, derivat');
 assert.notEqual(m3.estoc.recomanada?.tipus, 'estadi', 'no es recomana el que ja s\'està fent');
+
+// I ELS DOS BOTONS, que és el que Miquel prem de veres. Sense això l'obra es proposava per
+// sempre: té prioritat absoluta, o siga que mentre estiga damunt de la taula no es proposa res
+// més, i no hi havia manera de dir-li «ja l'estic fent» ni «ja està feta».
+const post = (body) => finances.onRequestPost({
+  request: new Request('http://t', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }),
+  env: { DB: db }, data: { usuari: { id: 1 } } });
+// «ja està feta» = eixa obra ja no existix: els números de la calculadora la descrivien i es
+// buiden. No és un tercer estat que calga arrossegar.
+await post({ estadi_obra_inici: null, estadi_cost_obra: null, estadi_manteniment: null, estadi_data: null });
+const m4 = await (await mercat.onRequestGet(ctx)).json();
+assert.equal(m4.estoc.estadi_declarat, false, 'feta l\'obra, ja no hi ha cap obra a proposar');
+assert.ok(!m4.estoc.opcions.some((o) => o.tipus === 'estadi'), 'ni com a opció de la llista');
+
+// «ja l'estic fent» sobre una obra declarada: es queda com a fet, no com a proposta.
+sqlite.prepare('UPDATE finances SET estadi_manteniment=?, estadi_cost_obra=? WHERE usuari_id=1').run(9000, 200000);
+await post({ estadi_obra_inici: '2026-07-20' });
+const m5 = await (await mercat.onRequestGet(ctx)).json();
+assert.equal(m5.estoc.opcions.find((o) => o.tipus === 'estadi').admissible, false,
+  'marcada en marxa, deixa de ser admissible i no bloqueja la resta');
 sqlite.prepare('UPDATE finances SET estadi_obra_inici=NULL WHERE usuari_id=1').run();
 
 // L'edat de compra és un RANG: el cercador de HT demana els dos extrems, no un sostre.

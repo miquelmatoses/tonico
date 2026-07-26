@@ -15,12 +15,11 @@ export async function onRequestGet({ env, data }) {
   const pres = pla ? await entrenamentPrescrit(env.DB, pla.plantilla) : null;
   // El pipeline juvenil llig la PRESCRIPCIÓ del contracte (PAS 1), no una fase.
   const pipeline = pres && { principal: pres.skill, secundari: pres.skill_b };
-  const entrenamentJuvenil = (pla?.parametres ? JSON.parse(pla.parametres).entrenament_juvenil : null) ?? null;
 
   const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id=? AND tipus='juvenil'").bind(data.usuari.id).first();
-  if (!equip) return json({ juvenils: [], llindars, pipeline, entrenament_juvenil: entrenamentJuvenil });
+  if (!equip) return json({ juvenils: [], llindars, pipeline });
   const inst = await env.DB.prepare('SELECT id, data FROM instantanies WHERE equip_id=? ORDER BY data DESC, id DESC LIMIT 1').bind(equip.id).first();
-  if (!inst) return json({ juvenils: [], llindars, pipeline, entrenament_juvenil: entrenamentJuvenil });
+  if (!inst) return json({ juvenils: [], llindars, pipeline });
 
   const ancora = await carregaAncora(env.DB);
   const { results } = await env.DB.prepare(
@@ -61,7 +60,7 @@ export async function onRequestGet({ env, data }) {
   const edatMin = parseInt((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='promocio_edat_min_anys'").first())?.valor || '17', 10);
   const diesMin = parseInt((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='promocio_dies_min_academia'").first())?.valor || '112', 10);
   const promocio = lecturaPromocio(rang, results, { edat_min: edatMin, dies_academia_min: diesMin });
-  return json({ juvenils, llindars, pipeline, entrenament_juvenil: entrenamentJuvenil, onze_juvenil, crida, promocio, ranquing: rang });
+  return json({ juvenils, llindars, pipeline, onze_juvenil, crida, promocio, ranquing: rang });
 }
 
 export async function onRequestPost({ request, env, data }) {

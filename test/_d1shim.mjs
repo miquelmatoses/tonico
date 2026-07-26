@@ -100,5 +100,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/077_personal_guia.sql'));
   sqlite.exec(src('../schema/078_alertes_estructura.sql'));
   sqlite.exec(src('../schema/079_obra_i_contracte_dies.sql'));
+  sqlite.exec(src('../schema/080_obra_estats.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

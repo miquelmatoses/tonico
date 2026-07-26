@@ -54,11 +54,10 @@ const je = [
 ];
 assert.deepEqual(REGLES.ALR_JOVE_ESPECIALITAT({ juvenils: je }, { urgencia: 48 }).map((x) => x.jugador_id), [1], '3d: només el candidat real a eixida');
 
-// Regla F.12: entrenament juvenil invàlid
-const p = { urgencia: 55 };
-assert.equal(REGLES.ALR_ENTRENAMENT_JUVENIL({ entrenament: pipe, entrenament_juvenil: { principal: 'passades', secundari: 'anotacio' } }, p).length, 0, 'passades servix el pipeline → ok');
-assert.equal(REGLES.ALR_ENTRENAMENT_JUVENIL({ entrenament: pipe, entrenament_juvenil: { principal: 'porteria', secundari: 'extrem' } }, p)[0].missatge_clau, 'alerta.entrenament_juvenil_fora', 'cap servix el pipeline');
-assert.equal(REGLES.ALR_ENTRENAMENT_JUVENIL({ entrenament: pipe, entrenament_juvenil: { principal: 'porteria', secundari: 'porteria' } }, p)[0].missatge_clau, 'alerta.entrenament_juvenil_igual', 'parell igual no permés');
-assert.equal(REGLES.ALR_ENTRENAMENT_JUVENIL({ entrenament: pipe, entrenament_juvenil: { principal: 'creativitat', secundari: 'creativitat' } }, p).length, 0, 'creativitat+creativitat és parell permés i servix');
+// FORA la regla F.12 (ALR_ENTRENAMENT_JUVENIL). Comparava l'entrenament juvenil DECLARAT amb
+// el pipeline sènior, però l'entrenament juvenil NO es declara: es prescriu, i és el pipeline
+// mateix. Comparar la prescripció amb ella mateixa no pot donar res.
+assert.equal(REGLES.ALR_ENTRENAMENT_JUVENIL, undefined,
+  'la regla se n\'ha anat del motor, no només de la pantalla');
 
-console.log('OK — juvenils: pipeline (fora/topat/vendible/destí), especialitat i validació d\'entrenament');
+console.log('OK — juvenils: pipeline (fora/topat/vendible/destí) i especialitat');

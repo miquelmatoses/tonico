@@ -303,8 +303,6 @@
   "alerta.jove_fora_agregat_1": "1 juvenil fora de la pipa espera la cua d'eixida; es resol amb la pròxima crida al cercapromeses. El detall, a l'Acadèmia.",
   "alerta.jove_fora_agregat_n": "{n} juvenils fora de la pipa esperen la cua d'eixida; es resol amb la pròxima crida al cercapromeses. El detall, a l'Acadèmia.",
   "alerta.jove_especialitat": "{nom} té especialitat ({especialitat}). És valor a protegir: tin-la en compte abans de deixar-lo anar.",
-  "alerta.entrenament_juvenil_igual": "L'entrenament juvenil té principal i secundari iguals ({habilitat}) i eixe parell no està permés. Repassa-ho.",
-  "alerta.entrenament_juvenil_fora": "L'entrenament juvenil ({principal}/{secundari}) no alimenta el pipeline sènior ({pipeline}). Ajusta'l.",
   "juvenils.col_especialitat": "Especialitat",
   "juvenils.col_pipeline": "Pipeline",
   "juvenils.pipeline_ok": "en pipeline",
@@ -569,7 +567,7 @@
   "motiu.llistat": "està al mercat",
   "juvenils.entrenament_sense_pipeline": "encara no ho puc dir: falta l'entrenament sènior.",
   "estoc.obra_en_curs": "En construcció",
-  "estoc.obra_des_de": "L'obra va començar el {data}: mentre dura no hi ha res a decidir. Quan acabe, torna a la calculadora i posa el manteniment nou.",
+  "estoc.obra_des_de": "L'obra va començar el {data}: mentre dura no hi ha res a decidir i no et propose res més d'estadi.",
   "mercat.camp_edat": "Edat",
   "mercat.rang": "{min} – {max}",
   "plantilla.despatxable": "despatxable",
@@ -584,7 +582,6 @@
   "flux.accio_renova_al_nivell_n": "Renova-lo, però al nivell {n} ({paraula})",
   "flux.accio_res_1": "Res a fer: només es pot moure el nivell quan li queda 1 dia o menys de contracte.",
   "flux.accio_res_n": "Res a fer: només es pot moure el nivell quan li queden {dies} dies o menys de contracte.",
-  "economia.estadi_obra_inici": "Data d'inici de l'obra (si ja s'està fent)",
   "hab.porteria": "porteria",
   "hab.defensa": "defensa",
   "hab.creativitat": "creativitat",
@@ -592,5 +589,7 @@
   "hab.passades": "passades",
   "hab.anotacio": "anotació",
   "hab.pilota_aturada": "pilota aturada",
-  "juvenils.entrenament_posa": "Posa entrenament A: {principal}. Entrenament B: {secundari}."
+  "juvenils.entrenament_posa": "Posa entrenament A: {principal}. Entrenament B: {secundari}.",
+  "estoc.obra_fent": "Ja l'estic fent",
+  "estoc.obra_feta": "Ja està feta"
 }

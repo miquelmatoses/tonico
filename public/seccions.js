@@ -538,10 +538,23 @@ function bucleEstoc(main, e) {
   // lloc, nivell ni mancança: a la taula era una fila de quatre guions amb una capçalera que
   // s'esclafava en tres línies. I una obra ja COMENÇADA no és cap decisió pendent.
   const obra = e.opcions.find((o) => o.tipus === 'estadi');
+  // ELS DOS ESTATS DE L'OBRA, on es pren la decisió. Sense això l'obra es proposava per sempre:
+  // té prioritat absoluta, o siga que mentre estiga damunt de la taula NO ES PROPOSA RES MÉS, i
+  // no hi havia manera de dir-li «ja l'estic fent» ni «ja està feta».
+  //
+  // «ja està feta» no és un tercer estat: és que eixa obra ja no existix. Els números de la
+  // calculadora la descrivien i es buiden, i Tonico torna a demanar-los per a la següent.
+  const marca = (camps) => api('/api/finances', { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(camps) }).then(() => location.reload());
+  const bFeta = () => { const b = el('button', { type: 'button', class: 'b-prim', text: t('estoc.obra_feta') });
+    b.addEventListener('click', () => marca({ estadi_obra_inici: null, estadi_cost_obra: null,
+      estadi_manteniment: null, estadi_data: null }));
+    return b; };
   if (obra?.obra_en_curs) {
     cos.append(el('p', { class: 'obra-curs' },
       el('span', { class: 'pill ok', text: t('estoc.obra_en_curs') }), ' ',
       el('span', { text: t('estoc.obra_des_de', { data: obra.obra_inici }) })));
+    cos.append(el('div', { class: 'obra-botons' }, bFeta()));
   } else if (e.recomanada) {
     cos.append(el('p', {}, el('b', { text: t('estoc.recomanada') }), ' ',
       el('span', { text: e.recomanada.tipus === 'estadi'
@@ -554,6 +567,12 @@ function bucleEstoc(main, e) {
               // Tonico: fer «n + 4» ací seria aritmètica de domini a la vista (invariant 12).
               nivell: t('nivell_ht.' + e.recomanada.nivell_objectiu),
               mancanca: e.recomanada.mancanca, cost: e.recomanada.cost }, ['cost'])) })));
+    if (e.recomanada.tipus === 'estadi') {
+      const bFent = el('button', { type: 'button', class: 'b-prim', text: t('estoc.obra_fent') });
+      // La data d'inici és el dia que ho marca: només s'ensenya, no entra a cap fórmula.
+      bFent.addEventListener('click', () => marca({ estadi_obra_inici: new Date().toISOString().slice(0, 10) }));
+      cos.append(el('div', { class: 'obra-botons' }, bFent, bFeta()));
+    }
   } else {
     cos.append(el('p', { class: 'nota-peu', text: t('estoc.cap_opcio') }));
   }
@@ -795,20 +814,18 @@ function formEstadi(main, e) {
   const obra = camp('estadi_cost_obra', e.estadi_cost_obra);
   const mant = camp('estadi_manteniment', e.estadi_manteniment);
   const data = camp('estadi_data', e.estadi_data, 'date');
-  // L'OBRA EN CURS: mentre esta data hi siga, l'estadi no es proposa (ja s'ha decidit). Es
-  // buida quan l'obra acaba i es torna a la calculadora amb el manteniment nou.
-  const inici = camp('estadi_obra_inici', e.estadi_obra_inici, 'date');
+  // L'ESTAT DE L'OBRA no viu ací: no és un número de la calculadora, i ací no el trobava ningú.
+  // Els dos botons («ja l'estic fent» / «ja està feta») van on es proposa l'obra, al Mercat.
   f.append(el('div', { class: 'decl-setmanes' },
     el('div', { class: 'decl-bloc ample' },
       el('h4', { class: 'decl-titol', text: t('economia.estadi_calculadora') }),
-      el('div', { class: 'decl-camps' }, obra, mant, data, inici))));
+      el('div', { class: 'decl-camps' }, obra, mant, data))));
   f.append(el('button', { type: 'submit', class: 'b-prim', text: t('economia.estadi_desa') }));
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const v = (l) => { const x = l.querySelector('input').value; return x === '' ? null : x; };
     await api('/api/finances', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      estadi_cost_obra: v(obra), estadi_manteniment: v(mant), estadi_data: v(data),
-      estadi_obra_inici: v(inici) }) });
+      estadi_cost_obra: v(obra), estadi_manteniment: v(mant), estadi_data: v(data) }) });
     location.reload();
   });
   main.append(f);

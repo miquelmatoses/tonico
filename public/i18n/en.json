@@ -304,8 +304,6 @@
   "alerta.jove_fora_agregat_1": "1 youth outside the pipe is waiting for the exit queue; it resolves with the next call-up. Details in the Academy.",
   "alerta.jove_fora_agregat_n": "{n} youths outside the pipe are waiting for the exit queue; it resolves with the next call-up. Details in the Academy.",
   "alerta.jove_especialitat": "{nom} has a specialty ({especialitat}). Value to protect: keep it in mind before letting him go.",
-  "alerta.entrenament_juvenil_igual": "The youth training has the same primary and secondary ({habilitat}) and that pair isn't allowed. Review it.",
-  "alerta.entrenament_juvenil_fora": "The youth training ({principal}/{secundari}) doesn't feed the senior pipeline ({pipeline}). Adjust it.",
   "juvenils.col_especialitat": "Specialty",
   "juvenils.col_pipeline": "Pipeline",
   "juvenils.pipeline_ok": "in pipeline",
@@ -569,7 +567,7 @@
   "motiu.llistat": "is on the market",
   "juvenils.entrenament_sense_pipeline": "can't say yet: senior training is missing.",
   "estoc.obra_en_curs": "Under construction",
-  "estoc.obra_des_de": "Work started on {data}: nothing to decide while it lasts. When it finishes, go back to the calculator and enter the new upkeep.",
+  "estoc.obra_des_de": "Work started on {data}: nothing to decide while it lasts, and no further stadium proposals.",
   "mercat.camp_edat": "Age",
   "mercat.rang": "{min} – {max}",
   "plantilla.despatxable": "sackable",
@@ -584,7 +582,6 @@
   "flux.accio_renova_al_nivell_n": "Renew, but at level {n} ({paraula})",
   "flux.accio_res_1": "Nothing to do: the level can only move with 1 day or less left on the contract.",
   "flux.accio_res_n": "Nothing to do: the level can only move with {dies} days or fewer left on the contract.",
-  "economia.estadi_obra_inici": "Construction start date (if under way)",
   "hab.porteria": "goalkeeping",
   "hab.defensa": "defending",
   "hab.creativitat": "playmaking",
@@ -592,5 +589,7 @@
   "hab.passades": "passing",
   "hab.anotacio": "scoring",
   "hab.pilota_aturada": "set pieces",
-  "juvenils.entrenament_posa": "Set training A: {principal}. Training B: {secundari}."
+  "juvenils.entrenament_posa": "Set training A: {principal}. Training B: {secundari}.",
+  "estoc.obra_fent": "Already building it",
+  "estoc.obra_feta": "It's finished"
 }
