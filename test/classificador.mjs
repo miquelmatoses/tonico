@@ -32,7 +32,7 @@ const config = await carregaConfigPla(db, 'competitiva');
 const res = classifica(jugadors, config);
 
 const per = (cat) => res.filter((r) => r.categoria === cat);
-const entren = per('entrenable');
+const entren = per('core');
 const noms = entren.map((r) => r.nom);
 
 assert.equal(res.every((r) => !!r.categoria), true, 'tot jugador té veredicte');
@@ -51,18 +51,18 @@ assert.equal(fe.experiencia, maxExp, 'futur_entrenador = màxima experiència');
 const cycle = {
   params: { buckets_posicio: { mc: ['MC'] }, categoria_terminal: 'venda' },
   categories: [
-    { categoria: 'entrenable', ordre: 1, aforament: null, es_funcio: true,
+    { categoria: 'core', ordre: 1, aforament: null, es_funcio: true,
       parametres: { places: { mc: 4 }, requisits: [{ camp: 'edat_anys', op: '<=', valor: 25 }],
         puntuacio: { termes: [{ camp: 'tsi', pes: 1 }] } } },
     { categoria: 'venda', ordre: 2, aforament: null, es_funcio: false, parametres: {} },
   ],
 };
 const resC = classifica(jugadors, cycle);
-assert.equal(resC.filter((r) => r.categoria === 'entrenable').length, 4, 'cycle: 4 entrenables MC');
+assert.equal(resC.filter((r) => r.categoria === 'core').length, 4, 'cycle: 4 entrenables MC');
 assert.equal(resC.every((r) => !!r.categoria), true);
 // I trien-se pels de més TSI (política distinta), no pels més creatius:
 const topTsiMc = [...jugadors].filter((j) => j.posicio === 'MC').sort((a, b) => b.tsi - a.tsi).slice(0, 4).map((j) => j.id_hattrick);
-assert.deepEqual(resC.filter((r) => r.categoria === 'entrenable').map((r) => r.id_hattrick).sort(), topTsiMc.sort());
+assert.deepEqual(resC.filter((r) => r.categoria === 'core').map((r) => r.id_hattrick).sort(), topTsiMc.sort());
 
 // ── Cobertura mínima dura: mai liquidar l'últim ocupant d'una quota ──
 // Un únic porter amb porteria per davall de l'adequació: es reté igual (farciment),
@@ -74,7 +74,7 @@ const squad = [
 const cfgCob = {
   params: {},
   categories: [
-    { categoria: 'farciment', ordre: 1, aforament: null, es_funcio: true, parametres: {
+    { categoria: 'cos', ordre: 1, aforament: null, es_funcio: true, parametres: {
       buckets: { porter: ['PO'], DC: ['DC'] },
       places: { porter: { n: 1, requisit: { camp: 'porteria', op: '>=', valor: 6 } }, DC: { n: 2 } },
       cobertura_minima: true,
@@ -83,6 +83,6 @@ const cfgCob = {
   ],
 };
 const resCob = classifica(squad, cfgCob);
-assert.equal(resCob.find((r) => r.id_hattrick === 1).categoria, 'farciment', 'l\'únic porter es reté per cobertura mínima');
+assert.equal(resCob.find((r) => r.id_hattrick === 1).categoria, 'cos', 'l\'únic porter es reté per cobertura mínima');
 
 console.log('OK — classificador: embut fàbrica + estratègia nova + cobertura mínima');

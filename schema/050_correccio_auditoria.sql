@@ -18,8 +18,8 @@ DELETE FROM regles_parametres WHERE clau='porteria_deprecia'
 
 -- ── Punt 3 · NETEJA DE LLEGAT (poms) ──
 -- ALR_ANIVERSARI: el codi exclou 'venda' (la governa ALR_LLISTAR_VENDA). El pom
--- 'categories' es cabla al seu ús real: només ENTRENABLE.
-UPDATE regles_parametres SET valor='entrenable'
+-- 'categories' es cabla al seu ús real: qui ENTRENA (core i rotatius, vocabulari v3).
+UPDATE regles_parametres SET valor='core,rotatiu'
   WHERE clau='categories' AND regla_id=(SELECT id FROM regles WHERE codi='ALR_ANIVERSARI');
 
 -- juvenil_bo_min: constant MORTA (cap referència a codi; grep buit). El rànquing és

@@ -4,5 +4,5 @@
 -- El nom visible de cada rol és una clau i18n (parametritzable per plantilla).
 UPDATE plantilles_parametres
    SET clau = 'rols',
-       valor = '[{"id":"A","competitiu":true,"nom_clau":"rol.fabrica_a"},{"id":"B","competitiu":false,"nom_clau":"rol.fabrica_b"}]'
+       valor = '[{"id":"A","competitiu":true,"nom_clau":"rol.onze_a"},{"id":"B","competitiu":false,"nom_clau":"rol.onze_b"}]'
  WHERE plantilla = 'competitiva' AND clau = 'partits';

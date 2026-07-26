@@ -42,7 +42,7 @@ assert.equal(cobDef.entrenables_objectiu, 6, 'defensa: 3×100 × 2 = 6');
 assert.notEqual(cobCrea.entrenables_objectiu, cobDef.entrenables_objectiu, 'canviar l\'entrenament mou l\'objectiu d\'entrenables');
 
 // ── 4. L'ALINEACIÓ es deriva: amb defensa, entrenen els DEFENSES, no els MC ──
-const squad = Array.from({ length: 8 }, (_, i) => ({ jugador_id: i + 1, nom: 'E' + i, posicio: 'DC', categoria: 'entrenable' }));
+const squad = Array.from({ length: 8 }, (_, i) => ({ jugador_id: i + 1, nom: 'E' + i, posicio: 'DC', categoria: 'core' }));
 const rCrea = alinea(squad, { slots: slotsCrea, buckets: { porter: ['PO'], defensa: ['DC'], mc: ['MC'], extrem: ['ED'], davanter: ['DV'] }, rols });
 const entrenaEn = (r, bucket) => ['A', 'B'].reduce((n, k) => n + r.onze[k].filter((s) => s.bucket === bucket && s.jugador && s.entrena).length, 0);
 assert.ok(entrenaEn(rCrea, 'mc') > 0, 'creativitat: hi ha entrenables entrenant d\'MC');

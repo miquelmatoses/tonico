@@ -5,13 +5,13 @@ import { REGLES, executaRegles } from '../lib/regles.js';
 const ctxBase = { dataInstantania: '2026-07-25', any_dies: 112, porter_notable_min: 7, jugadors: [], juvenils: [] };
 const codis = (a) => a.map((x) => x.regla_codi);
 
-// ALR_ANIVERSARI: NOMÉS entrenable (fet). La venda no espera aniversari → ALR_LLISTAR_VENDA.
+// ALR_ANIVERSARI: NOMÉS qui entrena (core i rotatius). La venda no espera aniversari → ALR_LLISTAR_VENDA.
 {
   const jugadors = [
     { jugador_id: 1, nom: 'Prop', categoria: 'venda', edat_dies: 100, edat_anys: 23 },        // venda → NO (liquidació)
-    { jugador_id: 3, nom: 'Entren', categoria: 'entrenable', edat_dies: 105, edat_anys: 17 },  // 7 dies → FET
+    { jugador_id: 3, nom: 'Entren', categoria: 'core', edat_dies: 105, edat_anys: 17 },  // 7 dies → FET
   ];
-  const p = { dies_avis: 14, categories: 'venda,entrenable', urgencia: 70 };
+  const p = { dies_avis: 14, categories: 'venda,core,rotatiu', urgencia: 70 };
   const a = REGLES.ALR_ANIVERSARI({ ...ctxBase, jugadors }, p);
   assert.deepEqual(a.map((x) => x.jugador_id), [3], 'la venda ja no la governa l\'aniversari');
   assert.equal(a[0].missatge_clau, 'alerta.aniversari_fet');
@@ -87,19 +87,19 @@ const codis = (a) => a.map((x) => x.regla_codi);
 
 // ALR_NUCLI_INCOMPLET: menys d'objectiu
 {
-  const set = (n) => ({ ...ctxBase, jugadors: Array.from({ length: n }, (_, i) => ({ jugador_id: i, categoria: 'entrenable' })) });
+  const set = (n) => ({ ...ctxBase, jugadors: Array.from({ length: n }, (_, i) => ({ jugador_id: i, categoria: 'core' })) });
   assert.equal(REGLES.ALR_NUCLI_INCOMPLET(set(7), { objectiu: 8, urgencia: 60 }).length, 1);
   assert.equal(REGLES.ALR_NUCLI_INCOMPLET(set(8), { objectiu: 8, urgencia: 60 }).length, 0);
 }
 
-// ALR_ENTRENABLE_SENSE_MINUTS: no dispara per a nouvinguts (setmanes_club < 1)
+// ALR_NUCLI_SENSE_MINUTS: no dispara per a nouvinguts (setmanes_club < 1)
 {
   const ctx = { ...ctxBase, jugadors: [
-    { jugador_id: 1, nom: 'A', categoria: 'entrenable', data_ultim_partit: '2026-07-10', setmanes_club: 30 }, // vell → sí
-    { jugador_id: 2, nom: 'B', categoria: 'entrenable', data_ultim_partit: '2026-07-23', setmanes_club: 30 }, // recent → no
-    { jugador_id: 3, nom: 'C', categoria: 'entrenable', data_ultim_partit: null, setmanes_club: 0 },          // nouvingut → no (no podia jugar)
+    { jugador_id: 1, nom: 'A', categoria: 'core', data_ultim_partit: '2026-07-10', setmanes_club: 30 }, // vell → sí
+    { jugador_id: 2, nom: 'B', categoria: 'core', data_ultim_partit: '2026-07-23', setmanes_club: 30 }, // recent → no
+    { jugador_id: 3, nom: 'C', categoria: 'core', data_ultim_partit: null, setmanes_club: 0 },          // nouvingut → no (no podia jugar)
   ] };
-  assert.deepEqual(REGLES.ALR_ENTRENABLE_SENSE_MINUTS(ctx, { dies_sense_partit: 7, urgencia: 80 }).map((x) => x.jugador_id), [1]);
+  assert.deepEqual(REGLES.ALR_NUCLI_SENSE_MINUTS(ctx, { dies_sense_partit: 7, urgencia: 80 }).map((x) => x.jugador_id), [1]);
 }
 
 // ALR_PROMOCIO_JUVENIL i ALR_PLANTILLA_JUVENIL_MINIMA
@@ -114,13 +114,13 @@ const codis = (a) => a.map((x) => x.regla_codi);
 
 // ALR_COMPRA_ENTRENABLE: filtre concret + pressupost màxim derivat
 {
-  const filtres = [{ rol: 'entrenable', posicions: ['MC'], edat_max: 18, creativitat_min: 6, falten: 1 }];
+  const filtres = [{ rol: 'core', posicions: ['MC'], edat_max: 18, creativitat_min: 6, falten: 1 }];
   const amb = REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres, caixa: 200000, reserva: 50000 } }, { urgencia: 72 });
-  assert.equal(amb[0].missatge_clau, 'alerta.compra_entrenable');
+  assert.equal(amb[0].missatge_clau, 'alerta.compra_core');
   assert.equal(amb[0].parametres.pressupost, 150000);           // (200000 − 50000) / 1
   const sense = REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres, caixa: 0, reserva: 50000 } }, { urgencia: 72 });
-  assert.equal(sense[0].missatge_clau, 'alerta.compra_entrenable_sense_caixa');
-  assert.equal(REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres: [{ rol: 'entrenable', falten: 0 }], caixa: 1 } }, { urgencia: 72 }).length, 0);
+  assert.equal(sense[0].missatge_clau, 'alerta.compra_core_sense_caixa');
+  assert.equal(REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres: [{ rol: 'core', falten: 0 }], caixa: 1 } }, { urgencia: 72 }).length, 0);
 }
 
 // ALR_SENSE_CATEGORIA
@@ -134,7 +134,7 @@ const codis = (a) => a.map((x) => x.regla_codi);
 {
   const ctx = { ...ctxBase, jugadors: [
     { jugador_id: 1, nom: 'P', categoria: 'venda', posicio: 'PO', porteria: 7, transferible: 1, data_ultim_partit: '2026-07-10', edat_dies: 100, edat_anys: 23 },
-    ...Array.from({ length: 8 }, (_, i) => ({ jugador_id: 10 + i, categoria: 'entrenable', data_ultim_partit: '2026-07-23' })),
+    ...Array.from({ length: 8 }, (_, i) => ({ jugador_id: 10 + i, categoria: 'core', data_ultim_partit: '2026-07-23' })),
   ] };
   const actives = [
     { codi: 'ALR_ANIVERSARI', params: { dies_avis: 14, categories: 'venda', urgencia: 70 } },
@@ -143,7 +143,7 @@ const codis = (a) => a.map((x) => x.regla_codi);
   const a = executaRegles(ctx, actives);
   assert.deepEqual(codis(a), []);   // venda ja no dispara aniversari; 8 entrenables sense data → res
   // Setmana tranquil·la
-  const tranquil = executaRegles({ ...ctxBase, jugadors: Array.from({ length: 8 }, (_, i) => ({ jugador_id: i, categoria: 'entrenable', data_ultim_partit: '2026-07-23' })) }, actives);
+  const tranquil = executaRegles({ ...ctxBase, jugadors: Array.from({ length: 8 }, (_, i) => ({ jugador_id: i, categoria: 'core', data_ultim_partit: '2026-07-23' })) }, actives);
   assert.equal(tranquil.length, 0, 'Paco sap callar');
 }
 

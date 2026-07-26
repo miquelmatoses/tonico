@@ -15,8 +15,8 @@ sqlite.exec(`
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (1,1,'2027-01-01',90,1);
   INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (1,1,100,'Ent'),(2,1,101,'Recent'),(3,1,102,'Vell');
   INSERT INTO intercanvis (usuari_id, categoria, entrant_id, eixent_id, puntuacio_eixent, diferencia, desti_eixent, estat, data) VALUES
-    (1,'entrenable',1,2,5,1,'venda','executat','2027-01-01'),
-    (1,'entrenable',1,3,5,1,'venda','executat','2026-01-01');
+    (1,'core',1,2,5,1,'venda','executat','2027-01-01'),
+    (1,'core',1,3,5,1,'venda','executat','2026-01-01');
 `);
 
 const d = await (await intercanvis.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();

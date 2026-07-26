@@ -108,7 +108,7 @@ export async function onRequestGet({ env, data }) {
                        JOIN (SELECT jugador_id, MAX(id) mid FROM categories_jugador GROUP BY jugador_id) m ON cj.id=m.mid) c
                   ON c.jugador_id = ij.jugador_id
            LEFT JOIN vendes v ON v.jugador_id = ij.jugador_id
-          WHERE ij.instantania_id=? AND COALESCE(c.categoria,'') <> 'entrenable'
+          WHERE ij.instantania_id=? AND COALESCE(c.categoria,'') NOT IN ('core','rotatiu')
             AND ij.posicio_ultim_partit ${esPorter ? '=' : '<>'} ? AND ij.transferible IS NOT 1
             AND COALESCE(v.estat,'') <> 'llistat'`
       ).bind(inst.id, porterPos).first())?.n ?? 0;

@@ -41,3 +41,17 @@ CREATE INDEX IF NOT EXISTS ix_categories_jugador ON categories_jugador(jugador_i
 -- de tall), no mecànica de joc: defecte 0 = no filtra.
 INSERT OR REPLACE INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
   ('competitiva', 'core_a_min', '0', 'int');
+
+-- La config de categories (que encara alimenta la cerca de mercat, PAS 8) passa al
+-- vocabulari nou. Les categories que el v3 no reconeix desapareixen.
+UPDATE plantilles_categories SET categoria='core'    WHERE categoria='entrenable';
+UPDATE plantilles_categories SET categoria='cos'     WHERE categoria='farciment';
+UPDATE plantilles_categories SET categoria='titular' WHERE categoria='nucli_competitiu';
+DELETE FROM plantilles_categories WHERE categoria IN ('experiencia','alliberament');
+
+-- Els noms dels dos onzes no són «de la fàbrica»: són l'onze A (competitiu) i el B
+-- (d'entrenament). Vocabulari v3.
+UPDATE plantilles_parametres
+   SET valor = replace(valor, 'rol.fabrica_', 'rol.onze_')
+ WHERE clau = 'rols' AND valor LIKE '%rol.fabrica_%';
+UPDATE regles SET codi='ALR_NUCLI_SENSE_MINUTS' WHERE codi='ALR_ENTRENABLE_SENSE_MINUTS';

@@ -6,9 +6,10 @@ import { entrenamentFase } from '../lib/entrenament.js';
 import { REGLES } from '../lib/regles.js';
 
 const { sqlite, db } = nova(import.meta.url);
-sqlite.exec("INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');");
+sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
+  INSERT INTO config_usuari (usuari_id, estrategia, pais, divisio, sistema_juvenil, partits_setmana) VALUES (1,'competitiva','ES','VII','academia',2);`);
 
-// La fase fàbrica prescriu creativitat/100%/10% i el pipeline creativitat→passades.
+// La fase prescriu creativitat/100%/10% i el pipeline creativitat→passades.
 const ent = await entrenamentFase(db, 'competitiva', 'competitiva');
 assert.equal(ent.tipus, 'creativitat');
 assert.equal(ent.intensitat, 100);

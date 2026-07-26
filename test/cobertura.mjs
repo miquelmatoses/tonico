@@ -137,14 +137,8 @@ assert.equal(cobertura(cfgCreativitat, { futur_entrenador: 1, porters_minims: 3 
   assert.ok(r2.has(2), 'a igualtat de valor, el sou desempata (es queda el més barat)');
 
   // COIXÍ PREFERENT: un cos d'alliberament/despatx es reté abans que cap actiu amb valor.
-  const ambCoixi = [
-    { jugador_id: 1, posicio: 'DC', sou: 1000, valor: 300, categoria: 'venda' },
-    { jugador_id: 2, posicio: 'DC', sou: 1000, valor: 50000, categoria: 'venda' },
-    { jugador_id: 9, posicio: 'DC', sou: 1000, valor: 40000, categoria: 'alliberament' },
-  ];
-  const r3 = retingutsPerCobertura(ambCoixi, { camp_minim: 1, cos_camp: 1, posicio_porter: 'PO' });
-  assert.ok(r3.has(9), 'el cos d\'alliberament és coixí preferent, encara que puntue alt');
-  assert.ok(!r3.has(2), 'cap actiu de valor queda retingut havent-hi coixí');
+  // v3: el «coixí preferent» (una categoria de baixa separada) ja no existix — la venda és
+  // una categoria sencera. La retenció, si en queda, es tria pel valor de venda més baix.
 }
 
 // ── 3 · UNA SOLA FONT DE «LLISTABLE ARA»: el recompte i el sou de l'alerta agregada
@@ -196,7 +190,7 @@ assert.equal(cobertura(cfgCreativitat, { futur_entrenador: 1, porters_minims: 3 
 
 // I l'objectiu del nucli es deriva de la cobertura, no del pom.
 {
-  const ctx = { jugadors: Array.from({ length: 6 }, (_, i) => ({ jugador_id: i, categoria: 'entrenable' })), cobertura: { entrenables_objectiu: 10 } };
+  const ctx = { jugadors: Array.from({ length: 6 }, (_, i) => ({ jugador_id: i, categoria: 'core' })), cobertura: { entrenables_objectiu: 10 } };
   const a = REGLES.ALR_NUCLI_INCOMPLET(ctx, { objectiu: 8, urgencia: 60 });
   assert.equal(a.length, 1, '6 < 10 derivat → alerta');
   assert.equal(a[0].parametres.objectiu, 10, 'l\'objectiu ve de la cobertura derivada, no del pom 8');

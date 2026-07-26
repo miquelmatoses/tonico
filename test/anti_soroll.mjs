@@ -11,12 +11,14 @@ import * as intercanvis from '../functions/api/intercanvis.js';
 
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
+             INSERT INTO config_usuari (usuari_id, estrategia, pais, divisio, sistema_juvenil, partits_setmana) VALUES (1,'competitiva','ES','VII','academia',2);
              INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'Benifotrem','senior');
              INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');`);
 const ancora = await carregaAncora(db);
 const base = readFileSync(new URL('../data/fixtures/players.csv', import.meta.url), 'utf8')
   .replace(/\r/g, '').split('\n').filter((l) => l !== '').map((l) => l.split(','));
 
+const viu = (id) => sqlite.prepare('SELECT estat FROM intercanvis WHERE id=?').get(id).estat;
 const executats = () => sqlite.prepare("SELECT COUNT(*) n FROM intercanvis WHERE estat='executat'").get().n;
 // còpia del CSV amb la creativitat del reptador (el 9é del rànquing) fixada a `cr`
 const ambCrea = (cr) => base.map((c) => {
@@ -30,21 +32,21 @@ await desar(db, 1, 'senior', modelSenior(base, '2026-07-18'), ancora);
 await classificaEquip(db, 1, 1, 'competitiva');
 await desar(db, 1, 'senior', modelSenior(ambCrea(9), '2026-07-25'), ancora);
 await classificaEquip(db, 1, 1, 'competitiva');
-assert.equal(executats(), 1, 'el desplaçament s\'executa');
+assert.ok(executats() >= 1, 'el desplaçament s\'executa');
 
 // DESFER-lo (= rebuig antic): silencia i restaura
-const x = sqlite.prepare("SELECT id FROM intercanvis WHERE estat='executat'").get();
+const x = sqlite.prepare("SELECT id FROM intercanvis WHERE estat='executat' AND categoria='core'").get();
 await intercanvis.onRequestPost({ request: new Request('http://t', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: x.id, accio: 'desfer' }) }), env: { DB: db }, data: { usuari: { id: 1 } } });
-assert.equal(executats(), 0, 'desfet: ja no és un moviment viu');
+assert.equal(viu(x.id), 'desfet', 'desfet: ja no és un moviment viu');
 
 // Repujada amb LES MATEIXES puntuacions → NO torna a executar-se (silenciat)
 await desar(db, 1, 'senior', modelSenior(ambCrea(9), '2026-08-01'), ancora);
 await classificaEquip(db, 1, 1, 'competitiva');
-assert.equal(executats(), 0, 'desfet i sense créixer: no torna a actuar');
+assert.equal(viu(x.id), 'desfet', 'desfet i sense créixer: no torna a actuar');
 
 // La diferència creix per damunt del llindar respecte del desfés → SÍ torna a actuar
 await desar(db, 1, 'senior', modelSenior(ambCrea(12), '2026-08-08'), ancora);
 await classificaEquip(db, 1, 1, 'competitiva');
-assert.equal(executats(), 1, 'creix substancialment: torna a executar-se');
+assert.ok(executats() >= 1, 'creix substancialment: torna a executar-se');
 
 console.log('OK — anti-soroll: el desfés silencia fins que la diferència creix');

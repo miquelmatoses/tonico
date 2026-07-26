@@ -1,7 +1,7 @@
 // Tonico — override manual de categoria. POST {jugador_id, categoria, nota}.
 // Queda fixada (origen 'manual'): el classificador no la tocarà, però sí podrà
 // plantejar intercanvis que l'afecten.
-const CATEGORIES = ['entrenable', 'venda', 'alliberament', 'farciment', 'experiencia', 'futur_entrenador', 'nucli_competitiu'];
+const CATEGORIES = ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'];
 
 export async function onRequestPost({ request, env, data }) {
   const { jugador_id, categoria, nota } = await request.json().catch(() => ({}));

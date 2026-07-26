@@ -238,7 +238,7 @@ export async function decisions(main) {
   const cosM = el('div', { class: 'card-cos' });
   if (!pendents.length) cosM.append(el('p', { class: 'nota-peu', text: t('decisions.sense_motius') }));
   for (const j of pendents) {
-    const sel = el('select', {}, ...['venda', 'alliberament', 'promocio', 'altres'].map((m) => el('option', { value: m, text: t('motiu_baixa.' + m) })));
+    const sel = el('select', {}, ...['venda', 'despatx', 'promocio', 'altres'].map((m) => el('option', { value: m, text: t('motiu_baixa.' + m) })));
     const imp = el('input', { type: 'number', size: '8', 'aria-label': t('decisions.import') });
     const origenSel = el('select', {}, el('option', { value: '', text: '—' }), ...(j.candidats_juvenils || []).map((c) => el('option', { value: c.id, text: c.nom })));
     const b = el('button', { type: 'button', class: 'b-xic', text: t('decisions.desa') });
@@ -269,9 +269,9 @@ export async function alineacio(main) {
     const c = s.jugador.categoria;
     if (c === 'venda') return t('alineacio.motiu_venda');            // cos en venda (sense llistar: el llistat no juga)
     if (s.bucket === 'porter') return t('alineacio.motiu_porteria');
-    if (c === 'entrenable' && s.entrena) return t('alineacio.motiu_entrena', { pos: s.codi, pct: s.pct });
+    if ((c === 'core' || c === 'rotatiu') && s.entrena) return t('alineacio.motiu_entrena', { pos: s.codi, pct: s.pct });
     if (c === 'futur_entrenador') return t('alineacio.motiu_experiencia');
-    if (c === 'farciment') return t('alineacio.motiu_farciment');
+    if (c === 'titular') return t('alineacio.motiu_titular');
     return t('alineacio.motiu_cos');
   };
   const camp = (slots) => campDeJoc(slots, {
@@ -316,8 +316,9 @@ export async function alineacio(main) {
 // ── 4. Plantilla sènior (amb override de categoria) ──
 export async function plantilla(main) {
   capcalera(main, 4, 'plantilla');
-  const ORDRE = ['entrenable', 'futur_entrenador', 'experiencia', 'nucli_competitiu', 'farciment', 'venda', 'alliberament'];
-  const CATS = ['entrenable', 'venda', 'alliberament', 'farciment', 'experiencia', 'futur_entrenador', 'nucli_competitiu'];
+  // Vocabulari del contracte v3 (invariant 14). No hi ha «entrenable» ni «farciment».
+  const ORDRE = ['core', 'rotatiu', 'titular', 'porter', 'futur_entrenador', 'cos', 'venda'];
+  const CATS = ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'];
   const { instantania, jugadors, valor_especialitats: valorEsp = [] } = await api('/api/plantilla');
   if (!instantania) { main.append(el('p', { text: t('plantilla.buit') })); return; }
   main.append(el('p', { text: t('plantilla.instantania', { temporada: instantania.temporada, setmana: instantania.setmana_temporada, data: instantania.data }) }));
@@ -329,7 +330,7 @@ export async function plantilla(main) {
   for (const c of ORDRE) {
     const grup = jugadors.filter((j) => j.categoria === c);
     if (!grup.length) continue;
-    const tarja = card(t('categoria.' + c), grup.length, c === 'entrenable' ? 'llima' : c === 'alliberament' ? 'roig' : null);
+    const tarja = card(t('categoria.' + c), grup.length, c === 'core' ? 'llima' : c === 'venda' ? 'roig' : null);
     for (const j of grup) tarja.append(filaSegura(() => {
       // Override de categoria (punt 4a)
       const selCat = el('select', { 'aria-label': t('plantilla.col_categoria') }, ...CATS.map((x) => { const o = el('option', { value: x, text: t('categoria.' + x) }); if (x === j.categoria) o.setAttribute('selected', ''); return o; }));
@@ -513,9 +514,9 @@ export async function mercat(main) {
   capcalera(main, 6, 'mercat');
   const { filtres, preus } = await api('/api/mercat');
   const pres = (v) => (v > 0 ? diners(v) : t('mercat.sense_pressupost'));
-  const textFiltre = (f) => f.rol === 'entrenable'
-    ? t('mercat.filtre_entrenable', { posicions: (f.posicions || []).join('/'), edat_max: f.edat_max, creativitat_min: f.creativitat_min, pressupost: pres(f.pressupost), falten: f.falten })
-    : t('mercat.filtre_farciment', { bucket: f.bucket, posicions: (f.posicions || []).join('/'), habilitat: f.habilitat ? `${f.habilitat.camp} ${f.habilitat.op} ${f.habilitat.valor}` : '', pressupost: pres(f.pressupost), falten: f.falten })
+  const textFiltre = (f) => f.rol === 'core'
+    ? t('mercat.filtre_core', { posicions: (f.posicions || []).join('/'), edat_max: f.edat_max, creativitat_min: f.creativitat_min, pressupost: pres(f.pressupost), falten: f.falten })
+    : t('mercat.filtre_cos', { bucket: f.bucket, posicions: (f.posicions || []).join('/'), habilitat: f.habilitat ? `${f.habilitat.camp} ${f.habilitat.op} ${f.habilitat.valor}` : '', pressupost: pres(f.pressupost), falten: f.falten })
       + (f.previsio_venda ? t('mercat.filtre_previsio', { noms: f.previsio_venda.join(', ') }) : '');
   const utils = filtres.filter((f) => f.falten > 0);
   const cf = card(t('mercat.filtres_titol'), utils.length, 'llima');

@@ -11,6 +11,7 @@ import { estatRevisio } from '../lib/orquestra_alertes.js';
 
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`INSERT INTO usuaris (id,correu,contrasenya) VALUES (1,'z','x');
+  INSERT INTO config_usuari (usuari_id, estrategia, pais, divisio, sistema_juvenil, partits_setmana) VALUES (1,'competitiva','ES','VII','academia',2);
              INSERT INTO equips (id,usuari_id,nom,tipus) VALUES (1,1,'B','senior');
              INSERT INTO plans (usuari_id,plantilla,fase_actual) VALUES (1,'competitiva','competitiva');`);
 const anc = await carregaAncora(db);
@@ -20,7 +21,9 @@ await desar(db, 1, 'senior', modelSenior(base, '2026-07-18'), anc);
 // Regenerar → derivats al dia
 await regeneraPipeline(db, 1);
 assert.equal((await estatRevisio(db, 1)).revisat, true, 'després de regenerar: al dia');
-assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM categories_jugador WHERE categoria='entrenable'").get().n, 8);
+// v3: 5 core (els llocs que entrenen) + 3 rotatius (els que doblen els del 100%).
+assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM categories_jugador WHERE categoria='core'").get().n, 5);
+assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM categories_jugador WHERE categoria='rotatiu'").get().n, 3);
 
 // Canvi de config (un pom) → els derivats queden VELLS
 sqlite.exec("UPDATE plantilles_parametres SET valor='7' WHERE plantilla='competitiva' AND clau='edat_pic_venda'");

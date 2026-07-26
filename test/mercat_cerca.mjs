@@ -10,9 +10,9 @@ const { db } = nova(import.meta.url);
 const config = await carregaConfigPla(db, 'competitiva');
 
 // Entrenable amb aforament pla: 7 dels 8 → filtre amb «falten: 1»
-const squad = Array.from({ length: 7 }, (_, i) => ({ posicio: i < 5 ? 'MC' : 'ED', categoria: 'entrenable' }));
+const squad = Array.from({ length: 7 }, (_, i) => ({ posicio: i < 5 ? 'MC' : 'ED', categoria: 'core' }));
 const filtres = filtresCompra(config, squad, 100000, { edat_max: 18, creativitat_min: 6, posicions: ['MC', 'ED', 'EE'] });
-const ent = filtres.find((f) => f.rol === 'entrenable');
+const ent = filtres.find((f) => f.rol === 'core');
 assert.equal(ent.falten, 1, 'falta 1 entrenable (dels 8)');
 assert.equal(ent.creativitat_min, 6);
 assert.deepEqual(ent.posicions, ['MC', 'ED', 'EE']);
@@ -23,13 +23,13 @@ assert.deepEqual(ent.posicions, ['MC', 'ED', 'EE']);
 {
   const ambSalva = [...squad, { posicio: 'DV', categoria: 'futur_entrenador' }];
   const f = filtresCompra(config, ambSalva, 100000, { edat_max: 18, creativitat_min: 6, posicions: ['MC'] });
-  assert.equal(f.some((x) => x.rol === 'farciment' && x.bucket === 'davanter'), false, 'DV cobert per una altra categoria → cap filtre de davanter');
+  assert.equal(f.some((x) => x.rol === 'cos' && x.bucket === 'davanter'), false, 'DV cobert per una altra categoria → cap filtre de davanter');
   // Sense eixe davanter, el filtre SÍ apareix (la quota queda descoberta).
   const sense = filtresCompra(config, squad, 100000, { edat_max: 18, creativitat_min: 6, posicions: ['MC'] });
-  assert.equal(sense.some((x) => x.rol === 'farciment' && x.bucket === 'davanter'), true, 'sense cobertura → falta el davanter');
+  assert.equal(sense.some((x) => x.rol === 'cos' && x.bucket === 'davanter'), true, 'sense cobertura → falta el davanter');
   // Si el davanter només el «tapa» un jugador EN VENDA, el filtre ho diu (previsió).
   const ambVenda = [...squad, { nom: 'Davanter', posicio: 'DV', categoria: 'venda' }];
-  const dv = filtresCompra(config, ambVenda, 100000, { edat_max: 18, creativitat_min: 6, posicions: ['MC'] }).find((x) => x.rol === 'farciment' && x.bucket === 'davanter');
+  const dv = filtresCompra(config, ambVenda, 100000, { edat_max: 18, creativitat_min: 6, posicions: ['MC'] }).find((x) => x.rol === 'cos' && x.bucket === 'davanter');
   assert.ok(dv && dv.falten === 1 && dv.previsio_venda.includes('Davanter'), 'cobert només per venda → filtre amb previsió nominal');
 }
 

@@ -23,11 +23,11 @@ assert.deepEqual(farcimentDerivat(slotsDef, fb, ba, { porters_minims: 2, posicio
 // ── 2. El classificador amb farciment derivat: cos barat → farciment, sobrant → venda ──
 const config = {
   categories: [
-    { categoria: 'entrenable', ordre: 1, aforament: 2, parametres: { puntuacio: { termes: [{ camp: 'creativitat', pes: 1 }] } } },
-    { categoria: 'farciment', ordre: 2, parametres: {
+    { categoria: 'core', ordre: 1, aforament: 2, parametres: { puntuacio: { termes: [{ camp: 'creativitat', pes: 1 }] } } },
+    { categoria: 'cos', ordre: 2, parametres: {
       buckets: fb,
       places: farcimentDerivat(slots, fb, ba, { porters_minims: 2, posicio_porter: 'PO' }),
-      resta_ocupacio: true, resta_ocupacio_exclou: ['entrenable'], cobertura_minima: true,
+      resta_ocupacio: true, resta_ocupacio_exclou: ['core'], cobertura_minima: true,
       puntuacio: { termes: [{ camp: 'sou', pes: -1 }] } } },   // el més BARAT fa de cos
   ],
   params: { categoria_terminal: 'venda', buckets_posicio: fb },
@@ -42,13 +42,13 @@ const squad = [
 const res = classifica(squad, config, {});
 const cat = (id) => res.find((r) => r.id_hattrick === id).categoria;
 // Porters: els 2 MÉS BARATS a farciment, el car a venda.
-assert.equal(cat(10), 'farciment'); assert.equal(cat(11), 'farciment');
+assert.equal(cat(10), 'cos'); assert.equal(cat(11), 'cos');
 assert.equal(cat(12), 'venda', 'el porter MÉS CAR (sobrant) → venda, no un cos');
 // El porter car mai es queda com a cos: la protecció són 2, i són els barats.
-const portersFarc = [10, 11, 12].filter((id) => cat(id) === 'farciment');
+const portersFarc = [10, 11, 12].filter((id) => cat(id) === 'cos');
 assert.equal(portersFarc.length, 2, 'exactament 2 porters de cos (porters_minims), cap reserva');
 // Camp: els cars (valuosos) cauen a venda; els barats fan de cos.
 assert.equal(cat(23), 'venda', 'el DC valuós (car) → venda'); assert.equal(cat(32), 'venda', 'el DV valuós → venda');
-assert.equal(cat(20), 'farciment'); assert.equal(cat(30), 'farciment');   // els barats, cos
+assert.equal(cat(20), 'cos'); assert.equal(cat(30), 'cos');   // els barats, cos
 
 console.log('OK — farciment = cobertura mínima: cos barat retingut, porters protegits, sobrant a venda');

@@ -1,5 +1,33 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · RECONSTRUCCIÓ v3 · L6 CABLAT (fet i verificat a prod)
+- **El PAS 6 mana ara a l'app** (migració 060, desplegada en el mateix lot).
+  `classificaEquip` deixa de cridar el classificador de categories i construïx la plantilla
+  del v3. Les categories passen a `core·rotatiu·titular·porter·cos·venda·futur_entrenador`,
+  amb conversió de les ja assignades (`entrenable→core`, `farciment→cos`,
+  `nucli_competitiu→titular`, `experiencia|alliberament→venda`).
+  **Decisions no trivials:**
+  1. **El mecanisme necessitava una magnitud.** `reconcilia` distingix un guany lliure d'un
+     DESPLAÇAMENT per l'aforament i mesura si val la pena per la puntuació. Passant-li rols
+     sense capacitat ni punts, tot es tornava un «auto» silenciós i el desfés desapareixia.
+     Ara `construeixPlantilla` torna `punts` (el mèrit que ha posat cada u al seu rol) i els
+     rols porten la capacitat del PAS 6.
+  2. **Una millora encadena desplaçaments.** Amb rols amb capacitat, un jugador que creix
+     entra al core i empeny cap avall (core→rotatiu→cos). El test ja no fixa el NOMBRE de
+     desplaçaments (era artefacte del model vell): fixa que cadascun s'informa i es pot
+     desfer, que és el que el contracte garantix.
+  3. **El futur entrenador NO el tria el sistema.** El PAS 6 no el selecciona: és un override
+     de l'usuari (invariant 5). El test el fixa a mà, com ho farà l'usuari.
+  4. **Sense `partits_setmana` no hi ha nucli.** Els tests han hagut de declarar la config,
+     com un usuari real: la fórmula no suposa res.
+  5. **3 tests esborrats per defensar doctrina morta** (`plantilla_categories`,
+     `plantilla_punts`, `regla_or_bucket`: puntuacions i buckets del model fàbrica). La
+     xarxa ara és el G1. La resta s'han reescrit contra el v3.
+  6. **Vocabulari: 0 ocurrències** de `entrenable/farciment/alliberament/fàbrica/fornada/
+     supporter` a l'i18n i a les pantalles. `rol.fabrica_*` → `rol.onze_*`;
+     `ALR_ENTRENABLE_SENSE_MINUTS` → `ALR_NUCLI_SENSE_MINUTS`.
+
+
 ## 2026-07-26 · RECONSTRUCCIÓ v3 · L4 (fet i verificat a prod)
 - **L4 — pesos i nivell objectiu** (migració 059, desplegada en el mateix lot). `lib/pesos.js`
   amb `pes(lloc)`, `pressupost_sou(lloc)` i `nivell_objectiu(lloc)`.

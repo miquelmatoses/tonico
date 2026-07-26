@@ -4,7 +4,7 @@
 // l'alerta ALR_TRANSACCIO_PENDENT.
 import { signa } from '../../lib/economia.js';
 
-const MOTIUS = ['venda', 'alliberament', 'promocio', 'altres'];
+const MOTIUS = ['venda', 'despatx', 'promocio', 'altres'];
 
 export async function onRequestGet({ env, data }) {
   const { results: pendents } = await env.DB.prepare(

@@ -12,6 +12,7 @@ import { estatPla } from '../lib/pla.js';
 
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
+             INSERT INTO config_usuari (usuari_id, estrategia, pais, divisio, sistema_juvenil, partits_setmana) VALUES (1,'competitiva','ES','VII','academia',2);
              INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'Benifotrem','senior');
              INSERT INTO plans (id, usuari_id, plantilla, fase_actual, parametres) VALUES (1,1,'competitiva','competitiva','{"temporada_inflexio":88}');`);
 const ancora = await carregaAncora(db);

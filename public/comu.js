@@ -56,7 +56,7 @@ export function t(clau, params = {}) {
 }
 
 // Text amb PLURAL (punt 4): tria la clau `base_1` (n===1) o `base_n` segons el comptador.
-// Evita «1 places»/«1 entrenables». El guardià exigix les dues formes per a cada base.
+// Evita «1 places»/«1 rotatius». El guardià exigix les dues formes per a cada base.
 export function tp(base, n, params = {}) {
   return t(`${base}_${n === 1 ? '1' : 'n'}`, { ...params, n });
 }

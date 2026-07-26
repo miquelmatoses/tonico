@@ -41,9 +41,9 @@ for (const k of estatics) if (!k.endsWith('_')) assert.ok(te(k), `falta la clau 
 
 // ── 3. Famílies DINÀMIQUES t('prefix.' + variable): cada valor possible ──
 const families = {
-  'categoria': ['entrenable', 'futur_entrenador', 'experiencia', 'nucli_competitiu', 'farciment', 'venda', 'alliberament'],
+  'categoria': ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'],
   'motiu': ['mai', 'potencial', 'compost', 'per_davall', 'fluix', 'sense_dades', 'lesionat', 'sancionat', 'vetat', 'banqueta'],
-  'motiu_baixa': ['venda', 'alliberament', 'promocio', 'altres'],
+  'motiu_baixa': ['venda', 'despatx', 'promocio', 'altres'],
   'tipus': ['compra', 'venda', 'sou_setmanal', 'ingres_patrocini', 'taquilla', 'personal', 'estadi', 'taxa_llistat', 'altres'],
   'font': ['comparables', 'pom'],
   'fotrem.estat_': ['seguiment', 'elegit', 'cua_eixida'],
@@ -81,7 +81,7 @@ for (const cat of [ca, en]) for (const base of basesPlural) {
 }
 
 // Rols de partit: el nom visible és una clau i18n (config per plantilla).
-for (const k of ['rol.fabrica_a', 'rol.fabrica_b', 'rol.fabrica_a_curt', 'rol.fabrica_b_curt']) assert.ok(te(k), `falta el nom de rol: ${k}`);
+for (const k of ['rol.onze_a', 'rol.onze_b', 'rol.onze_a_curt', 'rol.onze_b_curt']) assert.ok(te(k), `falta el nom de rol: ${k}`);
 
 // ── 4. Cap valor del catàleg conté una clau sense resoldre (patró namespace.clau nu) ──
 for (const cat of [ca, en]) for (const [k, v] of Object.entries(cat)) {
