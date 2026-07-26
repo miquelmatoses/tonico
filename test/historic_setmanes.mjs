@@ -10,6 +10,8 @@ import { nova } from './_d1shim.mjs';
 import * as fin from '../functions/api/finances.js';
 import { economia, mitjanaSetmanal, calibrat } from '../lib/economia.js';
 import { motiuVenda } from '../lib/vendes.js';
+import { fCalendari } from '../lib/calendari.js';
+import { readFileSync } from 'node:fs';
 
 // ── Les fórmules pures ──
 const setm = (n) => Array.from({ length: n }, () => ({ taquilla: 10000, patrocini: 40000 }));
@@ -76,5 +78,29 @@ assert.equal(e.setmanes_declarades, 8);
 assert.equal(e.calibrat, true, 'amb 8 setmanes ja es fia');
 assert.equal(motiuVenda({}, { sobrecost: 99999, calibrat: e.calibrat }), 'sou_desproporcionat',
   'i llavors sí que pot proposar traure el sobrepagat');
+
+// ── 6. EL BACKFILL de la migració ha de coincidir amb `fCalendari`, no aproximar-s'hi ──
+// La declaració vigent (`taquilla_s1/s2`) es sembra a l'històric des de SQL. `CAST` trunca cap
+// a zero i `calcularSetmana` fa FLOOR: amb una data anterior a l'àncora —una pretemporada, que
+// és exactament el cas de Miquel— les dues discrepaven en una temporada sencera.
+{
+  const { sqlite: s2, db: db2 } = nova(import.meta.url);
+  s2.exec(`
+    INSERT INTO usuaris (id, correu, contrasenya) VALUES (9,'q','w');
+    INSERT INTO finances (usuari_id, caixa, caixa_data, taquilla_s1, patrocini_s1, taquilla_s2, patrocini_s2)
+      VALUES (9,1,'2026-07-26',21127,40500,0,40500);`);
+  s2.exec(readFileSync(new URL('../schema/075_historic_setmanes.sql', import.meta.url), 'utf8')
+    .split('CREATE TABLE')[0].split('ALTER TABLE')[0] +
+    readFileSync(new URL('../schema/075_historic_setmanes.sql', import.meta.url), 'utf8')
+      .slice(readFileSync(new URL('../schema/075_historic_setmanes.sql', import.meta.url), 'utf8').indexOf('INSERT OR REPLACE INTO setmanes_economiques')));
+  const anc = { data: '2026-07-25', temporada: 83, anyDies: 112 };
+  for (const [data, taq] of [['2026-07-19', 21127], ['2026-07-26', 0]]) {
+    const esperat = fCalendari(data, anc, 16);
+    const vist = s2.prepare('SELECT temporada, setmana, taquilla FROM setmanes_economiques WHERE usuari_id=9 AND data=?').get(data);
+    assert.equal(vist.temporada, esperat.temporada, `${data}: la temporada del backfill = la de fCalendari`);
+    assert.equal(vist.setmana, esperat.setmana, `${data}: i la setmana`);
+    assert.equal(vist.taquilla, taq, `${data}: amb el seu valor`);
+  }
+}
 
 console.log('OK — històric per setmana: el solapament actualitza, i el stopper s\'aixeca als 8');

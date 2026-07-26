@@ -37,6 +37,41 @@ ALTER TABLE finances DROP COLUMN premis;
 ALTER TABLE finances DROP COLUMN despesa_planter;
 ALTER TABLE finances DROP COLUMN periode_data;
 
--- `taquilla_s1/s2` i `patrocini_s1/s2` es queden de moment: són l'ÚLTIMA declaració i la
--- migració de dades les llig per a sembrar l'històric. Es lleven quan l'històric estiga viu
--- a prod i verificat — una migració no destruïx la seua pròpia font.
+-- ─── BACKFILL: l'última declaració passa a l'històric ─────────────────────────────────
+-- `taquilla_s1/s2` són la declaració vigent i NO es poden perdre. Es sembren com les dues
+-- setmanes que són, amb la identitat derivada del calendari com fa l'API:
+--   `caixa_data` és el dia de la declaració → eixa és «esta setmana» (s2)
+--   i «la passada» (s1) és set dies abans.
+-- L'aritmètica és la de `calcularSetmana` + `temporadaOperativa`, en SQL: dies des de
+-- l'àncora → temporada i setmana, i l'última setmana d'una temporada és la 0 de la següent.
+INSERT OR REPLACE INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada)
+WITH anc(adata, atemp, anydies, tempset) AS (
+  SELECT (SELECT valor FROM constants_joc WHERE clau='calendari_ancora_data'),
+         CAST((SELECT valor FROM constants_joc WHERE clau='calendari_ancora_temporada') AS INTEGER),
+         CAST((SELECT valor FROM constants_joc WHERE clau='any_dies') AS INTEGER),
+         CAST((SELECT valor FROM constants_joc WHERE clau='temporada_setmanes') AS INTEGER)
+),
+decl(usuari_id, data, taquilla, patrocini, declarada) AS (
+  SELECT usuari_id, date(caixa_data, '-7 day'), taquilla_s1, patrocini_s1, caixa_data
+    FROM finances WHERE caixa_data IS NOT NULL AND (taquilla_s1 IS NOT NULL OR patrocini_s1 IS NOT NULL)
+  UNION ALL
+  SELECT usuari_id, caixa_data, taquilla_s2, patrocini_s2, caixa_data
+    FROM finances WHERE caixa_data IS NOT NULL AND (taquilla_s2 IS NOT NULL OR patrocini_s2 IS NOT NULL)
+),
+cru AS (
+  -- CAST trunca cap a ZERO i `calcularSetmana` fa FLOOR: amb una data anterior a l'àncora
+  -- (una pretemporada) les dues coses discrepen en una temporada sencera. Es calcula
+  -- l'offset positiu primer i la divisió és llavors exacta, sense arrodoniments.
+  SELECT c.*,
+         (c.dia - (((c.dia % c.anydies) + c.anydies) % c.anydies)) / c.anydies AS temporades,
+         (((c.dia % c.anydies) + c.anydies) % c.anydies) / 7 + 1                AS setm
+    FROM (SELECT d.usuari_id, d.data, d.taquilla, d.patrocini, d.declarada,
+                 a.atemp, a.anydies, a.tempset,
+                 CAST(ROUND(julianday(d.data) - julianday(a.adata)) AS INTEGER) AS dia
+            FROM decl d, anc a) c
+)
+SELECT usuari_id,
+       CASE WHEN setm >= tempset THEN atemp + temporades + 1 ELSE atemp + temporades END,
+       CASE WHEN setm >= tempset THEN 0 ELSE setm END,
+       taquilla, patrocini, data, declarada
+  FROM cru;
