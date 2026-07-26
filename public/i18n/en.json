@@ -372,7 +372,7 @@
   "fotrem.pipeline_ok": "in pipeline",
   "fotrem.pipeline_cua": "out → on the way out",
   "fotrem.pipeline_vendre": "out → promote and sell",
-  "fotrem.desti_fabrica": "on promotion → academy",
+  "fotrem.desti_promociona": "on promotion → rotation",
   "fotrem.desti_venda": "on promotion → sale",
   "fotrem.entrenament_titol": "Youth training",
   "fotrem.entrenament_actual": "Current: {principal} / {secundari}. Senior pipeline: {pipeline}.",

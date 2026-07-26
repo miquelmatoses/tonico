@@ -371,7 +371,7 @@
   "fotrem.pipeline_ok": "en pipeline",
   "fotrem.pipeline_cua": "fora → cua d'eixida",
   "fotrem.pipeline_vendre": "fora → promocionar i vendre",
-  "fotrem.desti_fabrica": "en promocionar → fàbrica",
+  "fotrem.desti_promociona": "en promocionar → rotatiu",
   "fotrem.desti_venda": "en promocionar → venda",
   "fotrem.entrenament_titol": "Entrenament juvenil",
   "fotrem.entrenament_actual": "Actual: {principal} / {secundari}. Pipeline sènior: {pipeline}.",

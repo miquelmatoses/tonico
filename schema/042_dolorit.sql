@@ -13,4 +13,4 @@ INSERT INTO constants_joc (clau, valor, tipus, nota) VALUES
   ('dolorit_caducitat_dies', '14', 'int', 'Dies fins que la marca manual de dolorit caduca sola');
 -- Pom de fase: en fàbrica (no competitiu) els dolorits en venda descansen de l'aparador.
 INSERT INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
-  ('fabrica', 'dolorit_descansa_aparador', 'true', 'bool');
+  ('competitiva', 'dolorit_descansa_aparador', 'true', 'bool');

@@ -14,7 +14,7 @@ import * as intercanvis from '../functions/api/intercanvis.js';
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
              INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'Benifotrem','senior');
-             INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'fabrica','fabrica');`);
+             INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');`);
 const ancora = await carregaAncora(db);
 const files = readFileSync(new URL('../data/fixtures/players.csv', import.meta.url), 'utf8')
   .replace(/\r/g, '').split('\n').filter((l) => l !== '').map((l) => l.split(','));
@@ -24,7 +24,7 @@ const idDe = (htnom) => sqlite.prepare('SELECT id FROM jugadors WHERE nom=?').ge
 
 // ── Pujada 1: classificació inicial ──
 await desar(db, 1, 'senior', modelSenior(files, '2026-07-18'), ancora);
-const r1 = await classificaEquip(db, 1, 1, 'fabrica');
+const r1 = await classificaEquip(db, 1, 1, 'competitiva');
 assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM categories_jugador WHERE categoria='entrenable'").get().n, 8);
 // CONTRACTE CENTRAL: equip verge → tot és assignació inicial (auto), mai desplaçament.
 assert.equal(r1.autos, 25, 'primera pujada: els 25 jugadors reben categoria auto');
@@ -39,7 +39,7 @@ reptador[22] = '8';                                                     // creat
 const nomReptador = reptador[2];
 const catAbans = cat(idDe(nomReptador));
 await desar(db, 1, 'senior', modelSenior(files2, '2026-07-25'), ancora);
-const r2 = await classificaEquip(db, 1, 1, 'fabrica');
+const r2 = await classificaEquip(db, 1, 1, 'competitiva');
 // ACTUA: supera el llindar → el moviment s'EXECUTA i s'informa (no pregunta)
 assert.equal(r2.moviments, 1, 'un moviment executat');
 assert.equal(r2.preguntes, 0, 'cap pregunta: s\'ha actuat');

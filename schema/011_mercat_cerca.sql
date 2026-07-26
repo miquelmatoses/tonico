@@ -14,8 +14,8 @@ CREATE INDEX ix_preus_usuari ON preus_observats(usuari_id);
 
 -- Poms de compra per a la plantilla fàbrica
 INSERT INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
-  ('fabrica', 'compra_edat_max', '18', 'int'),
-  ('fabrica', 'compra_creativitat_min', '6', 'int');
+  ('competitiva', 'compra_edat_max', '18', 'int'),
+  ('competitiva', 'compra_creativitat_min', '6', 'int');
 
 -- Regla de finestra de mercat (compra en depressió)
 INSERT INTO regles (codi, modul, activa, ambit) VALUES ('ALR_FINESTRA_MERCAT', 'mercat', 1, 'global');

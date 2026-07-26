@@ -387,7 +387,7 @@ export async function fotrem(main) {
         : t('fotrem.pipe_sostre', { potencial: p.principal_potencial });
       return `${base} → ${t(p.proposta === 'promocionar_vendre' ? 'fotrem.prop_vendre' : 'fotrem.prop_cua')}`;
     }
-    return `${t('fotrem.pipe_creix', { habilitat: p.principal, actual: p.principal_actual, potencial: p.principal_potencial })} · ${t(p.desti_promocio === 'fabrica' ? 'fotrem.desti_fabrica' : 'fotrem.desti_venda')}`;
+    return `${t('fotrem.pipe_creix', { habilitat: p.principal, actual: p.principal_actual, potencial: p.principal_potencial })} · ${t(p.desti_promocio === 'promociona' ? 'fotrem.desti_promociona' : 'fotrem.desti_venda')}`;
   };
   // Taules netes: NIVELL numèric (una dada per columna); el PERQUÈ (raonament) viu al
   // títol de la cel·la (detall per fila), no a la graella. Aterratge = només la data (5b).

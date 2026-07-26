@@ -4,4 +4,4 @@
 -- decisió pendent en compte de quedar silenciat. El fre anti-soroll de rebuig
 -- segueix vigent (memòria de la diferència al rebutjar).
 UPDATE plantilles_parametres SET valor='0.25'
- WHERE plantilla='fabrica' AND clau='llindar_intercanvi';
+ WHERE plantilla='competitiva' AND clau='llindar_intercanvi';

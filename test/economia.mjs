@@ -19,13 +19,13 @@ assert.equal(signa('altres', -50), -50);
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
              INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'Benifotrem','senior');
-             INSERT INTO plans (usuari_id, plantilla, fase_actual, parametres) VALUES (1,'fabrica','fabrica','{"capital_objectiu":430000}');`);
+             INSERT INTO plans (usuari_id, plantilla, fase_actual, parametres) VALUES (1,'competitiva','competitiva','{"capital_objectiu":430000}');`);
 const ancora = await carregaAncora(db);
 const senior = readFileSync(new URL('../data/fixtures/players.csv', import.meta.url), 'utf8').replace(/\r/g, '').split('\n').filter((l) => l !== '').map((l) => l.split(','));
 const ctx = (body, method = 'POST') => ({ request: new Request('http://t', { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }), env: { DB: db }, data: { usuari: { id: 1 } } });
 
 await desar(db, 1, 'senior', modelSenior(senior, '2026-07-18'), ancora);
-await classificaEquip(db, 1, 1, 'fabrica');
+await classificaEquip(db, 1, 1, 'competitiva');
 
 // Caixa i nòmina: una venda i una compra apuntades
 await tx.onRequestPost(ctx({ tipus: 'venda', import: 200000, data: '2026-07-19' }));

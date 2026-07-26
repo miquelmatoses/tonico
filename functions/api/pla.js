@@ -12,17 +12,9 @@ export async function onRequestPost({ request, env, data }) {
   const pla = await env.DB.prepare('SELECT id FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
   if (!pla) return json({ error: 'sense_pla' }, 404);
 
-  if (cos.temporada != null) {                       // upsert d'una temporada
-    await env.DB.prepare(
-      `INSERT INTO plans_temporades (pla_id, temporada, divisio_prevista, mode)
-       VALUES (?, ?, ?, ?)
-       ON CONFLICT(pla_id, temporada) DO UPDATE SET divisio_prevista=excluded.divisio_prevista, mode=excluded.mode`
-    ).bind(pla.id, cos.temporada, cos.divisio_prevista ?? null, cos.mode ?? null).run();
-    return json({ ok: true });
-  }
-  // Merge de paràmetres del pla (JSON) sense trepitjar la resta: capital, divisió
-  // actual, tipus de setmana de partits (ab/un/copa), caducitat del Supporter, etc.
-  const MERGE = ['capital_objectiu', 'divisio_actual', 'tipus_setmana', 'temporada_inflexio', 'entrenament_confirmat', 'entrenament_senior'];
+  // Merge de paràmetres del pla (JSON) sense trepitjar la resta. La divisió, el país i
+  // els partits per setmana ja NO viuen ací: són config (PAS 0), a /api/config.
+  const MERGE = ['capital_objectiu', 'tipus_setmana', 'entrenament_confirmat'];
   const aplicar = MERGE.filter((k) => cos[k] !== undefined);
   if (aplicar.length) {
     const row = await env.DB.prepare('SELECT parametres FROM plans WHERE id=?').bind(pla.id).first();

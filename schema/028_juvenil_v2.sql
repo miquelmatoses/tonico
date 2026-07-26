@@ -10,14 +10,14 @@ INSERT INTO constants_joc (clau, valor, tipus, nota) VALUES
 
 -- Poms de plantilla (fabrica).
 INSERT INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
-  ('fabrica', 'juvenil_objectiu',      '10',     'int'),   -- plantilla exacta (coixí de lesions)
-  ('fabrica', 'preu_esperat_min',      '100000', 'int'),   -- barra de valor per promocionar-i-vendre vs despatx
-  ('fabrica', 'venda_termini_setmanes','2',      'int');   -- vendre els promocionats dins d''este termini
+  ('competitiva', 'juvenil_objectiu',      '10',     'int'),   -- plantilla exacta (coixí de lesions)
+  ('competitiva', 'preu_esperat_min',      '100000', 'int'),   -- barra de valor per promocionar-i-vendre vs despatx
+  ('competitiva', 'venda_termini_setmanes','2',      'int');   -- vendre els promocionats dins d''este termini
 
 -- Punt 1: noms CURTS de rol (parametritzats per plantilla, com els llargs).
 UPDATE plantilles_parametres
    SET valor='[{"id":"A","competitiu":true,"nom_clau":"rol.fabrica_a","nom_clau_curt":"rol.fabrica_a_curt"},{"id":"B","competitiu":false,"nom_clau":"rol.fabrica_b","nom_clau_curt":"rol.fabrica_b_curt"}]'
- WHERE plantilla='fabrica' AND clau='rols';
+ WHERE plantilla='competitiva' AND clau='rols';
 
 -- Regles noves: crida setmanal recurrent, sobrants a despatxar, i revelació dirigida.
 INSERT INTO regles (codi, modul, activa, ambit) VALUES

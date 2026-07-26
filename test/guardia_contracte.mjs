@@ -13,6 +13,7 @@ import { dirname, join } from 'node:path';
 import { valorPlaces } from '../lib/valor_placa.js';
 import { valorHabilitat, lecturaPromocio } from '../lib/ranquing_juvenil.js';
 import { fCalendari, temporadaOperativa } from '../lib/calendari.js';
+import { ESTRATEGIES, falten as confFalten, llocsPartit } from '../lib/config.js';
 
 const arrel = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { formules } = JSON.parse(readFileSync(join(arrel, 'formules.json'), 'utf8'));
@@ -72,6 +73,24 @@ const VERIFICADES = {
     // La regla operativa és la MATEIXA que consumixen pla/alertes/economia.
     assert.deepEqual(temporadaOperativa(83, 16, 16), { temporada: 84, setmana: 0 });
     assert.deepEqual(temporadaOperativa(83, 15, 16), { temporada: 83, setmana: 15 });
+  },
+
+  // V.config / V.estrategia / P0.* — la config és l'única entrada d'usuari inicial i no
+  // porta cap valor suposat: el que no es declara, es demana.
+  'V.config': () => {
+    const camps = ['estrategia', 'pais', 'divisio', 'sistema_juvenil', 'partits_setmana'];
+    const buida = confFalten(null);
+    assert.deepEqual(buida, ['estrategia', 'pais', 'divisio', 'partits_setmana']);
+    const plena = { estrategia: 'competitiva', pais: 'ES', divisio: 'VII', sistema_juvenil: 'academia', partits_setmana: 2 };
+    assert.deepEqual(Object.keys(plena).sort(), camps.slice().sort(), 'els 5 camps del full');
+    assert.deepEqual(confFalten(plena), [], 'config completa → res a demanar');
+  },
+  'V.estrategia': () => assert.deepEqual(ESTRATEGIES, ['competitiva', 'cycle']),
+  'V.llocs_partit': () => {
+    // llocs_partit = 11 × partits_setmana (11 = els llocs de la formació, no un literal)
+    assert.equal(llocsPartit({ partits_setmana: 2 }, 11), 22);
+    assert.equal(llocsPartit({ partits_setmana: 1 }, 11), 11);
+    assert.equal(llocsPartit({ partits_setmana: null }, 11), null, 'sense declarar → no se suposa');
   },
 
   // P10.valor casos (a)(b)(c): coincidixen amb valorHabilitat. El cas (d) NO — vore DIVERGENTS.

@@ -15,4 +15,4 @@ INSERT INTO regles_parametres (regla_id, clau, valor, tipus) VALUES
 -- Punt 2b: formació de l'onze juvenil (contingut de plantilla, defecte 2-5-2 + porter).
 -- El bucket entrenable (mc, per al pipeline de creativitat) són les places de descobriment.
 INSERT INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
-  ('fabrica', 'formacio_juvenil', '{"porter":1,"defensa":2,"mc":5,"davanter":2}', 'json');
+  ('competitiva', 'formacio_juvenil', '{"porter":1,"defensa":2,"mc":5,"davanter":2}', 'json');

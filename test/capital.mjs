@@ -8,7 +8,7 @@ import { economia } from '../lib/economia.js';
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
              INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'B','senior');
-             INSERT INTO plans (usuari_id, plantilla, fase_actual, parametres) VALUES (1,'fabrica','fabrica','{"temporada_inflexio":88}');`);
+             INSERT INTO plans (usuari_id, plantilla, fase_actual, parametres) VALUES (1,'competitiva','competitiva','{"temporada_inflexio":88}');`);
 
 // Poms de la 019: reconversió 430000, 2 fitxatges, sostre 200000 (sense comparables), 8 setmanes.
 // Sense comparables ni nòmina: reconversió + 2×200000 + 0 = 830000.

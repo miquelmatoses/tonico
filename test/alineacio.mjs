@@ -13,12 +13,12 @@ import { alinea } from '../lib/alineacio.js';
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
              INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'Benifotrem','senior'),(2,1,'Fotrem','juvenil');
-             INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'fabrica','fabrica');`);
+             INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');`);
 const ancora = await carregaAncora(db);
 const senior = readFileSync(new URL('../data/fixtures/players.csv', import.meta.url), 'utf8').replace(/\r/g, '').split('\n').filter((l) => l !== '').map((l) => l.split(','));
 
 await desar(db, 1, 'senior', modelSenior(senior, '2026-07-18'), ancora);
-await classificaEquip(db, 1, 1, 'fabrica');
+await classificaEquip(db, 1, 1, 'competitiva');
 await generaAlertes(db, 1);   // per a l'obligació de minuts de la Junta
 
 const a = await proposaAlineacio(db, 1);

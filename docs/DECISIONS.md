@@ -1,5 +1,38 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · RECONSTRUCCIÓ v3 · L0–L2 (fet i verificat a prod)
+**Autoritzat per Miquel** (orde de reconstrucció completa L0–L12). Branca `v3-reconstruccio`.
+
+- **L0 — retirada de fàbrica** (migració 056). Cauen les FORNADES senceres (2 mòduls, 2
+  taules, 1 regla, 2 poms, 13 claus i18n, 9 fitxers netejats), el SUPPORTER i
+  ALR_JUNTA_PORTER. **Decisió no trivial:** el desempat per fornada de l'alineació es
+  substituïx per `horitzo_eixida(j)` (fórmula del v3), derivat d'`edat_pic_venda`, que ES
+  QUEDA. La projecció econòmica deixa de comptar «fornades previstes»: el negoci que hi
+  entra són les vendes actives.
+- **L1 — calendari únic** (sense migració). `f_calendari(data, ancora, tempSetmanes)` a
+  `lib/calendari.js` és ara l'única font de (temporada, setmana). `pla.js` i
+  `orquestra_alertes.js` perden la seua còpia inline; abans eren tres implementacions que
+  podien discrepar.
+- **L2 — config i user-agnostic** (migració 057). Taula `config_usuari` amb els 5 camps del
+  PAS 0. **Decisions no trivials:**
+  1. La clau de configuració deixa de ser `'fabrica'` i passa a ser l'**estratègia**
+     (`'competitiva'`). Afecta 30 fitxers de schema i els tests.
+  2. **`plans_temporades` es retira sencera.** Portava el pla mestre d'UN equip (T83→T91,
+     amb un nom propi dins) — exactament el que la regla d'or prohibix — i el v3 no té pla
+     per temporada. La `divisio`, l'única cosa viva d'eixes files, passa a `config_usuari` i
+     és el que consumix l'estimació de preu.
+  3. `009_pla_mestre.sql` es buida de dades d'equip i es queda només amb ALR_CANVI_FASE.
+  4. El destí d'un juvenil útil passa de `'fabrica'` a `'promociona'` (vocabulari v3,
+     invariant 14); el pom `fabrica_min` passa a `util_min`.
+  5. **Migració del compte existent, verificada per propietat:** estrategia=competitiva,
+     divisió conservada, sistema juvenil derivat de tindre equip juvenil, **país i
+     partits_setmana deixats a NULL a posta** — Paco els demana a l'informe, no se suposen.
+     Instantànies (14) i vendes (4) intactes.
+  6. **Pendent detectat per a L7:** la divisió declarada és `"7"` i `estimacio_per_divisio`
+     usa numerals romans (`VII`). Cal normalitzar-ho quan es unifique `preu_esperat`, o
+     l'estimació caurà silenciosament al valor per defecte.
+
+
 ## 2026-07-26 · CONTRACTE v3: TRES CORRECCIONS DEL FULL ABANS DE RECONSTRUIR
 **Autoritzat per Miquel** (respostes a la parada per ambigüitat). El full es corregix, no
 s'interpreta: `docs/FORMULES.md` actualitzat i `formules.json` regenerat abans de tocar codi.

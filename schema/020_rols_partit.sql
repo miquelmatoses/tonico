@@ -5,4 +5,4 @@
 UPDATE plantilles_parametres
    SET clau = 'rols',
        valor = '[{"id":"A","competitiu":true,"nom_clau":"rol.fabrica_a"},{"id":"B","competitiu":false,"nom_clau":"rol.fabrica_b"}]'
- WHERE plantilla = 'fabrica' AND clau = 'partits';
+ WHERE plantilla = 'competitiva' AND clau = 'partits';

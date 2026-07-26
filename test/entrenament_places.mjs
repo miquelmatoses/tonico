@@ -62,7 +62,7 @@ console.log('OK — motor d\'entrenament sènior general: places, %, cobertura i
   const { entrenamentEfectiu } = await import('../lib/entrenament_places.js');
   const { sqlite, db } = nova(import.meta.url);
   sqlite.exec(`INSERT INTO usuaris (id,correu,contrasenya) VALUES (1,'z','x');
-               INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'fabrica','fabrica');`);
+               INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');`);
   // Per defecte: el que prescriu la fase (creativitat) → MC 100 / extrem 50.
   const def = await entrenamentEfectiu(db, 1);
   assert.equal(def.skill, 'creativitat', 'per defecte, l\'entrenament de la fase');

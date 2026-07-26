@@ -8,4 +8,4 @@
 -- buits pot exigir-ho per a TOTES les categories, no només per a les del nucli.
 UPDATE plantilles_categories
    SET parametres = '{"puntuacio":{"termes":[{"camp":"habilitat_max","pes":2},{"camp":"especialitat_valuosa","pes":3},{"camp":"edat_anys","pes":1,"desde":25},{"camp":"lleialtat","pes":0.05},{"camp":"qualificacio_ultim_partit","pes":0.2}]}}'
- WHERE plantilla='fabrica' AND categoria='alliberament';
+ WHERE plantilla='competitiva' AND categoria='alliberament';

@@ -9,7 +9,7 @@ CREATE TABLE juvenils_estat (
 
 -- Llindars d'acceptació de crides (doctrina existent), com a pom de plantilla.
 INSERT INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
-  ('fabrica', 'crida_llindars',
+  ('competitiva', 'crida_llindars',
    '{"15":{"compost_min":3},"16":{"potencial_min":7,"compost_min":6},"17":{"mai":true}}', 'json');
 
 -- Alerta predictiva: la plantilla juvenil baixarà del mínim per promocions previstes.

@@ -29,7 +29,7 @@ ALTER TABLE fornades_jugadors ADD COLUMN origen TEXT NOT NULL DEFAULT 'auto';
 --    "llindar_minim":6,
 --    "places":{"mc":6,"extrem":2}}
 CREATE TABLE plantilles_categories (
-  plantilla   TEXT NOT NULL,               -- 'fabrica','cicle','hibrid_esglaonat','manteniment'
+  plantilla   TEXT NOT NULL,               -- 'competitiva','cicle','hibrid_esglaonat','manteniment'
   categoria   TEXT NOT NULL,               -- entrenable, futur_entrenador, experiencia, farciment, venda, alliberament...
   es_funcio   INTEGER NOT NULL DEFAULT 0,  -- 1 = compta com a «funció» (etapa 1 de l'embut)
   aforament   INTEGER,                     -- places totals; NULL = sense límit (o usa parametres.places)

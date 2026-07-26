@@ -27,8 +27,8 @@ CREATE TABLE revisions_alertes (
 
 -- Poms de mercat per a la plantilla fàbrica
 INSERT INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
-  ('fabrica', 'mercat_espera_max', '4', 'int'),        -- setmanes màx que val la pena esperar el mercat
-  ('fabrica', 'aniversari_perdua_pct', '8', 'int');    -- pèrdua estimada de valor per aniversari (%)
+  ('competitiva', 'mercat_espera_max', '4', 'int'),        -- setmanes màx que val la pena esperar el mercat
+  ('competitiva', 'aniversari_perdua_pct', '8', 'int');    -- pèrdua estimada de valor per aniversari (%)
 
 -- Ajust de la regla d'aniversari: també per a entrenables (FET), no sols venda.
 UPDATE regles_parametres SET valor = 'venda,entrenable'

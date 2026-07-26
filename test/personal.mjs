@@ -22,11 +22,11 @@ assert.equal(REGLES.ALR_PERSONAL_FASE({ personal: { desquadres: [] } }, { urgenc
 // Integració via API
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
-             INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'fabrica','fabrica');`);
+             INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');`);
 const ctx = (body) => ({ request: new Request('http://t', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }), env: { DB: db }, data: { usuari: { id: 1 } } });
 
 let d = await (await personal.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
-assert.equal(d.fase_actual, 'fabrica');
+assert.equal(d.fase_actual, 'competitiva');
 assert.equal(d.desquadres.length, 2, 'sense declarar: falten assistents i metge');
 assert.ok(d.checklists.find((c) => c.fase === 'inflexio').cost_total === 430000, 'checklist d\'inflexió amb el cost de FuturCoach');
 

@@ -9,7 +9,7 @@ import { carregaConfigPla } from '../lib/config_pla.js';
 import { avaluaPuntuacio } from '../lib/classificador.js';
 
 const { sqlite, db } = nova(import.meta.url);
-const config = await carregaConfigPla(db, 'fabrica');
+const config = await carregaConfigPla(db, 'competitiva');
 
 // 1) INVARIANT DE CONFIG: cap categoria sense vara de mesurar. Este és l'arrel del bug:
 //    sense spec, el derivador torna null i la fila cau al valor desat (null) → cel·la buida.

@@ -11,16 +11,16 @@ UPDATE regles_parametres SET valor='10'
 
 -- Punt 5: reserva operativa (coixí que no s'invertix en fitxatges), pom de plantilla.
 INSERT INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
-  ('fabrica', 'reserva_operativa', '50000', 'int');
+  ('competitiva', 'reserva_operativa', '50000', 'int');
 
 -- Punt 7: el capital objectiu de la inflexió és un pom que posa Miquel; els 430k
 -- eren el cost de Salvatella (una partida), no el capital. Es lleva de defecte.
-UPDATE plans SET parametres='{"temporada_inflexio":88}' WHERE plantilla='fabrica';
+UPDATE plans SET parametres='{"temporada_inflexio":88}' WHERE plantilla='competitiva';
 
 -- Punt 6: 15 anys «acceptar llevat que siga clarament fluix» (desconegut ≠ fluix).
 UPDATE plantilles_parametres
    SET valor='{"15":{"compost_min":3,"per_defecte":"accepta"},"16":{"potencial_min":7,"compost_min":6},"17":{"mai":true}}'
- WHERE plantilla='fabrica' AND clau='crida_llindars';
+ WHERE plantilla='competitiva' AND clau='crida_llindars';
 
 -- Punt 5: alerta de compra accionable (filtre concret + pressupost màxim).
 INSERT INTO regles (codi, modul, activa, ambit) VALUES ('ALR_COMPRA_ENTRENABLE', 'mercat', 1, 'global');

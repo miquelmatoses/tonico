@@ -38,7 +38,7 @@ export async function onRequestGet({ env, data }) {
   // 5a: base d'estimació PER DIVISIÓ. Pren la divisió declarada al pla; si no, el
   // defecte (VII, molt per davall dels valors inflats). El recalibratge amb vendes
   // reals (comparables) mana quan hi haja dades (5c).
-  const divRow = await env.DB.prepare("SELECT pt.divisio_prevista AS div FROM plans_temporades pt JOIN plans p ON p.id=pt.pla_id WHERE p.usuari_id=? AND pt.divisio_prevista IS NOT NULL ORDER BY pt.temporada DESC LIMIT 1").bind(data.usuari.id).first();
+  const divRow = await env.DB.prepare('SELECT divisio AS div FROM config_usuari WHERE usuari_id=?').bind(data.usuari.id).first();
   const divisio = divRow?.div || (await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='divisio_defecte'").first())?.valor || 'VII';
   const mapaDiv = JSON.parse((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='estimacio_per_divisio'").first())?.valor || '{}');
   const valorDefecte = mapaDiv[divisio] ?? (parseInt(String(config.params?.valor_estimat_defecte ?? ''), 10) || null);

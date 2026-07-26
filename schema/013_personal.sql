@@ -7,11 +7,11 @@ CREATE TABLE fases_config (
   PRIMARY KEY (plantilla, fase)
 );
 INSERT INTO fases_config (plantilla, fase, config) VALUES
-  ('fabrica','fabrica',
+  ('competitiva','competitiva',
    '{"personal":{"assistents":2,"metge":1,"psicoleg":0},"nota":"Fàbrica: 2 assistents alts + metge, sense psicòleg"}'),
-  ('fabrica','inflexio',
+  ('competitiva','inflexio',
    '{"personal":{"assistents":2,"metge":1,"psicoleg":1},"canvis":[{"nom":"Salvatella → entrenador (notable)","cost":430000},{"nom":"General → Tribuna","cost":0},{"nom":"Pujada de resistència","cost":0}],"nota":"Inflexió: paquet complet"}'),
-  ('fabrica','competitiu',
+  ('competitiva','competitiu',
    '{"personal":{"assistents":2,"metge":1,"psicoleg":1},"nota":"Competitiu"}');
 
 -- Estat declarat per l'usuari (què té ara mateix)

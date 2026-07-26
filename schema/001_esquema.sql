@@ -190,20 +190,12 @@ CREATE TABLE plans (
   id          INTEGER PRIMARY KEY,
   usuari_id   INTEGER NOT NULL REFERENCES usuaris(id),
   plantilla   TEXT NOT NULL CHECK (plantilla IN
-                ('fabrica','cicle','hibrid_esglaonat','manteniment')),
+                ('competitiva','cycle')),      -- estratègies del contracte v3
   fase_actual TEXT,
   parametres  TEXT                                -- JSON
 );
 CREATE INDEX ix_plans_usuari ON plans(usuari_id);
 
-CREATE TABLE plans_temporades (
-  pla_id            INTEGER NOT NULL REFERENCES plans(id),
-  temporada         INTEGER NOT NULL,
-  divisio_prevista  TEXT,
-  mode              TEXT,
-  accions_previstes TEXT,                          -- JSON
-  PRIMARY KEY (pla_id, temporada)
-);
 
 -- ───────────────────────── MOTOR DE REGLES ─────────────────────────
 

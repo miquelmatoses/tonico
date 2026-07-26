@@ -11,7 +11,7 @@ const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`
   INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
   INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'B','senior');
-  INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'fabrica','fabrica');
+  INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (1,1,'2027-01-01',90,1);
   INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (1,1,100,'Ent'),(2,1,101,'Recent'),(3,1,102,'Vell');
   INSERT INTO intercanvis (usuari_id, categoria, entrant_id, eixent_id, puntuacio_eixent, diferencia, desti_eixent, estat, data) VALUES

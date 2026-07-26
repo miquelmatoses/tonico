@@ -5,8 +5,8 @@
 UPDATE plantilles_categories
    SET aforament = 8,
        parametres = '{"requisits":[{"camp":"creativitat","op":">=","valor":2},{"camp":"edat_anys","op":"<=","valor":23}],"puntuacio":{"termes":[{"camp":"creativitat","pes":1},{"camp":"edat_anys","pes":0.5,"desde":20}]}}'
- WHERE plantilla = 'fabrica' AND categoria = 'entrenable';
+ WHERE plantilla = 'competitiva' AND categoria = 'entrenable';
 
 -- Posicions objectiu per al filtre de compra d'entrenables (ja no hi ha buckets).
 INSERT INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
-  ('fabrica', 'compra_posicions', '["MC","ED","EE"]', 'json');
+  ('competitiva', 'compra_posicions', '["MC","ED","EE"]', 'json');

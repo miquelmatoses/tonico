@@ -32,7 +32,7 @@ assert.equal(REGLES.ALR_CRIDA_JUVENIL({ juvenils: jv(10, 200) }, { dies_avis: 30
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
              INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (2,1,'Fotrem','juvenil');
-             INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'fabrica','fabrica');`);
+             INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');`);
 const anc = await carregaAncora(db);
 const youth = readFileSync(new URL('../data/fixtures/youthplayers.csv', import.meta.url), 'utf8').replace(/\r/g, '').split('\n').filter((l) => l !== '').map((l) => l.split(','));
 await desar(db, 1, 'juvenil', modelJuvenil(youth, '2026-07-18'), anc);

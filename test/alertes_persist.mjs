@@ -12,7 +12,7 @@ import { generaAlertes, estatRevisio } from '../lib/orquestra_alertes.js';
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
              INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'Benifotrem','senior'),(2,1,'Fotrem','juvenil');
-             INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'fabrica','fabrica');`);
+             INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');`);
 const ancora = await carregaAncora(db);
 const files = (p) => readFileSync(new URL(p, import.meta.url), 'utf8').replace(/\r/g, '').split('\n').filter((l) => l !== '').map((l) => l.split(','));
 const senior = files('../data/fixtures/players.csv');
@@ -21,7 +21,7 @@ const actives = () => sqlite.prepare("SELECT COUNT(*) n FROM alertes WHERE estat
 const teMinima = () => sqlite.prepare("SELECT COUNT(*) n FROM alertes a JOIN regles r ON r.id=a.regla_id WHERE r.codi='ALR_PLANTILLA_JUVENIL_MINIMA' AND a.estat IN ('nova','vista')").get().n;
 
 await desar(db, 1, 'senior', modelSenior(senior, '2026-07-18'), ancora);
-await classificaEquip(db, 1, 1, 'fabrica');
+await classificaEquip(db, 1, 1, 'competitiva');
 const youth9 = [youth[0], ...youth.slice(1, 10)];   // capçalera + 9 juvenils (mínim = 10)
 await desar(db, 1, 'juvenil', modelJuvenil(youth9, '2026-07-18'), ancora);
 

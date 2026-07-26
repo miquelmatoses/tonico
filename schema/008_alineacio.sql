@@ -1,10 +1,10 @@
 -- Tonico — migració 008: configuració d'alineació (Fase 3), contingut de fàbrica.
 -- Formació 3-5-2 amb marca d'entrenament per posició; el motor és universal.
 INSERT INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
-  ('fabrica', 'partits', '["lliga","amistos"]', 'json'),
-  ('fabrica', 'buckets_alineacio',
+  ('competitiva', 'partits', '["lliga","amistos"]', 'json'),
+  ('competitiva', 'buckets_alineacio',
    '{"porter":["PO"],"defensa":["DC"],"mc":["MC"],"extrem":["ED","EE"],"davanter":["DV"]}', 'json'),
-  ('fabrica', 'formacio',
+  ('competitiva', 'formacio',
    '[{"codi":"POR","bucket":"porter","entrena":false},
       {"codi":"DC1","bucket":"defensa","entrena":false},
       {"codi":"DC2","bucket":"defensa","entrena":false},
@@ -16,4 +16,4 @@ INSERT INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
       {"codi":"EXT2","bucket":"extrem","entrena":true,"pct":50},
       {"codi":"DAV1","bucket":"davanter","entrena":false},
       {"codi":"DAV2","bucket":"davanter","entrena":false}]', 'json'),
-  ('fabrica', 'suspensio_amonestacions', '3', 'int');   -- amonestacions que suposen sanció
+  ('competitiva', 'suspensio_amonestacions', '3', 'int');   -- amonestacions que suposen sanció

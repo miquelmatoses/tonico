@@ -12,7 +12,7 @@ import { classificaEquip } from '../lib/orquestra_classificacio.js';
 const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`INSERT INTO usuaris (id,correu,contrasenya) VALUES (1,'z','x');
              INSERT INTO equips (id,usuari_id,nom,tipus) VALUES (1,1,'B','senior');
-             INSERT INTO plans (usuari_id,plantilla,fase_actual) VALUES (1,'fabrica','fabrica');`);
+             INSERT INTO plans (usuari_id,plantilla,fase_actual) VALUES (1,'competitiva','competitiva');`);
 const anc = await carregaAncora(db);
 const base = readFileSync(new URL('../data/fixtures/players.csv', import.meta.url), 'utf8').replace(/\r/g, '').split('\n').filter((l) => l !== '').map((l) => l.split(','));
 const catDe = (nom) => sqlite.prepare(`SELECT c.categoria FROM categories_jugador c JOIN jugadors j ON j.id=c.jugador_id
@@ -22,7 +22,7 @@ const nEntrenables = () => sqlite.prepare(`SELECT COUNT(*) n FROM categories_jug
 
 // Pujada 1: Entrenable1 (Marc Montaner) d'MC, CasBucket (Vicent Camarasa) d'EE → tots dos entrenables
 await desar(db, 1, 'senior', modelSenior(base, '2026-07-18'), anc);
-await classificaEquip(db, 1, 1, 'fabrica');
+await classificaEquip(db, 1, 1, 'competitiva');
 assert.equal(catDe('Marc Montaner'), 'entrenable');
 assert.equal(catDe('Vicent Camarasa'), 'entrenable');
 assert.equal(nEntrenables(), 8);
@@ -31,7 +31,7 @@ assert.equal(nEntrenables(), 8);
 const s19 = base.map((c) => c.slice());
 s19.find((c) => c[2] === 'Marc Montaner')[29] = 'ED';
 await desar(db, 1, 'senior', modelSenior(s19, '2026-07-19'), anc);
-const r = await classificaEquip(db, 1, 1, 'fabrica');
+const r = await classificaEquip(db, 1, 1, 'competitiva');
 
 // La posició jugada és efecte, no causa: cap canvi, cap moviment, CasBucket dins.
 assert.equal(r.autos, 0, 'cap reassignació automàtica');

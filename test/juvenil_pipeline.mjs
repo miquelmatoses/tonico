@@ -10,7 +10,7 @@ const fila = (o) => ({ creativitat_actual: null, creativitat_potencial: null, an
 
 // En pipeline i amb sostre alt → candidat a fàbrica.
 let r = avaluaPipeline(fila({ creativitat_actual: '3', creativitat_potencial: '6' }), pipe);
-assert.equal(r.fora, false); assert.equal(r.desti_promocio, 'fabrica');
+assert.equal(r.fora, false); assert.equal(r.desti_promocio, 'promociona');
 
 // ForaPipe (actual = potencial) → fora; sense valor vendible → cua d'eixida.
 r = avaluaPipeline(fila({ creativitat_actual: '5', creativitat_potencial: '5' }), pipe);

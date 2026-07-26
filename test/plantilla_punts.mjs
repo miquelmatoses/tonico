@@ -9,7 +9,7 @@ const { sqlite, db } = nova(import.meta.url);
 sqlite.exec(`
   INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
   INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'B','senior');
-  INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'fabrica','fabrica');
+  INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (1,1,'2026-07-25',83,1);
   INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (1,1,100,'Desplaçat'),(2,1,101,'Titular');
   -- Dades reals de Desplaçat a prod: habilitat_max=6, edat 21, lleialtat 20, qual 3.5, sense especialitat.

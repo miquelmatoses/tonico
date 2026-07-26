@@ -1,6 +1,6 @@
 -- Polit #11.5 — Estimacions amb peu a terra. Base d'estimació PER DIVISIÓ (VII molt
 -- per davall dels valors actuals inflats). Es pren la divisió del pla (Miquel la
--- declara a plans_temporades.divisio_prevista); si no n'hi ha, el defecte (VII). El
+-- declara a config_usuari.divisio); si no n'hi ha, el defecte (VII). El
 -- recalibratge amb vendes reals (comparables) substituïx el pom en quant hi haja dades.
 INSERT INTO constants_joc (clau, valor, tipus, nota) VALUES
   ('estimacio_per_divisio',

@@ -9,7 +9,7 @@ const { sqlite, db } = nova(import.meta.url);
 sqlite.exec("INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');");
 
 // La fase fàbrica prescriu creativitat/100%/10% i el pipeline creativitat→passades.
-const ent = await entrenamentFase(db, 'fabrica', 'fabrica');
+const ent = await entrenamentFase(db, 'competitiva', 'competitiva');
 assert.equal(ent.tipus, 'creativitat');
 assert.equal(ent.intensitat, 100);
 assert.equal(ent.resistencia, 10);

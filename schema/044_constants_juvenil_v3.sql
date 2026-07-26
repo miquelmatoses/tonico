@@ -25,8 +25,8 @@ INSERT INTO constants_joc (clau, valor, tipus, nota) VALUES
    'text', 'Taula entrenament→buckets entrenables (guia HT). El motor de valor de plaça la creua.');
 -- Els dos entrenaments de la plantilla (A i B) per a classificar les places.
 INSERT INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
-  ('fabrica', 'entrenament_a', 'creativitat', 'text'),
-  ('fabrica', 'entrenament_b', 'passades', 'text');
+  ('competitiva', 'entrenament_a', 'creativitat', 'text'),
+  ('competitiva', 'entrenament_b', 'passades', 'text');
 
 -- Doctrina juvenil v3 · punt 3 — llindar «bo» de l'habilitat actual per al rànquing.
 INSERT INTO constants_joc (clau, valor, tipus, nota) VALUES

@@ -76,5 +76,7 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/053_entrenament_baix.sql'));
   sqlite.exec(src('../schema/054_fora_subhasta_tanca.sql'));
   sqlite.exec(src('../schema/055_cobertura_lean.sql'));
+  sqlite.exec(src('../schema/056_retirada_fabrica.sql'));
+  sqlite.exec(src('../schema/057_config_v3.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

@@ -7,7 +7,7 @@ import { filtresCompra } from '../lib/mercat_cerca.js';
 import { REGLES } from '../lib/regles.js';
 
 const { db } = nova(import.meta.url);
-const config = await carregaConfigPla(db, 'fabrica');
+const config = await carregaConfigPla(db, 'competitiva');
 
 // Entrenable amb aforament pla: 7 dels 8 → filtre amb «falten: 1»
 const squad = Array.from({ length: 7 }, (_, i) => ({ posicio: i < 5 ? 'MC' : 'ED', categoria: 'entrenable' }));

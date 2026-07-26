@@ -28,7 +28,7 @@ assert.equal(compleixRequisits([{ camp: 'edat_anys', op: '<=', valor: 16 }], jx,
 
 // ── L'embut sobre dades reals, amb la config de `fabrica` llegida de BD ──
 const { db } = nova(import.meta.url);
-const config = await carregaConfigPla(db, 'fabrica');
+const config = await carregaConfigPla(db, 'competitiva');
 const res = classifica(jugadors, config);
 
 const per = (cat) => res.filter((r) => r.categoria === cat);
