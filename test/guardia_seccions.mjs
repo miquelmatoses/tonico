@@ -38,8 +38,9 @@ sqlite.exec(`
   INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'E','senior');
   INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (1,1,'2026-07-25',83,2);
-  INSERT INTO finances (usuari_id, caixa, caixa_data, taquilla, patrocini, premis)
-    VALUES (1, 900000, '2026-07-25', 90000, 40000, 8000);
+  INSERT INTO finances (usuari_id, caixa, caixa_data) VALUES (1, 900000, '2026-07-25');
+  INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada) VALUES
+    (1,83,1,90000,40000,'2026-07-19','2026-07-25'),(1,83,2,0,40000,'2026-07-25','2026-07-25');
 `);
 const N = 26;
 for (let i = 1; i <= N; i++) {

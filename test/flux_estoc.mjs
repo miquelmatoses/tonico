@@ -77,13 +77,14 @@ assert.equal(e.caixa, null, 'amb moviments però sense declaració: seguix null'
 
 // Les DOS setmanes, literals, com a l'informe: setmana passada (taquilla 21.127 + patrocini
 // 40.500) i esta setmana (taquilla 0 perquè el partit era fora + patrocini 40.500).
-sqlite.exec(`INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi,
-               taquilla_s1, patrocini_s1, taquilla_s2, patrocini_s2)
-             VALUES (1,173004,'2026-07-26',7100,21127,40500,0,40500);`);
+sqlite.exec(`INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi)
+             VALUES (1,173004,'2026-07-26',7100);
+  INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada) VALUES
+    (1,83,1,21127,40500,'2026-07-19','2026-07-26'),(1,83,2,0,40500,'2026-07-26','2026-07-26');`);
 e = await economia(db, 1, '2026-07-26');
 assert.equal(e.caixa, 173004, 'la caixa són els «Diners disponibles»');
-assert.equal(e.ingressos_recurrents, 21127 + 40500 + 0 + 40500,
-  'la suma de les DOS setmanes: cap multiplicació al camí dels ingressos');
+assert.equal(e.ingressos_recurrents, Math.round((21127 + 40500 + 0 + 40500) / 2 * 2),
+  'mitjana de les setmanes declarades × període');
 assert.equal(e.despeses.nomina, 5000 * 2, 'la nòmina és setmanal → × 2');
 assert.equal(e.despeses.manteniment_estadi, 7100 * 2, 'el manteniment és constant setmanal → × 2');
 assert.equal(e.despeses.planter, 5000 * 2);
@@ -103,10 +104,10 @@ assert.equal(e.sou_sostenible,
 
 // ── 4. Res que no siga taquilla o patrocini pot moure el sostre de sou ──
 const abans = e.ingressos_recurrents;
-sqlite.exec("UPDATE finances SET premis=50000, taquilla=99999, patrocini=99999 WHERE usuari_id=1;");
+sqlite.exec("INSERT INTO transaccions (usuari_id, tipus, import, data) VALUES (1,'venda',99999,'2026-07-20');");
 e = await economia(db, 1, '2026-07-26');
 assert.equal(e.ingressos_recurrents, abans,
-  'ni els premis ni les columnes velles: només les dos setmanes declarades manen');
+  'res de fora de l\'històric mou el sostre de sou');
 
 // ── 5. El personal consumix flux (PAS 11 el llig d'ací), també normalitzat ──
 sqlite.exec("INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou) VALUES (1,'especialista','metge',2,2040);");

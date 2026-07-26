@@ -32,9 +32,10 @@ sqlite.exec(`
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, sou, creativitat, defensa, porteria, anotacio, extrem, passades)
     VALUES (1,1,'MC',22,3000,5,1,1,1,1,1),(1,2,'DC',24,2000,1,6,1,1,1,1);
   INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (1,'core','auto'),(2,'titular','auto');
-  INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi,
-      taquilla_s1, patrocini_s1, taquilla_s2, patrocini_s2, estadi_manteniment, estadi_cost_obra, estadi_data)
-    VALUES (1, 500000, '2026-07-25', 7100, 21127, 40500, 0, 40500, 9000, 200000, '2026-07-25');
+  INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi, estadi_manteniment, estadi_cost_obra, estadi_data)
+    VALUES (1, 500000, '2026-07-25', 7100, 9000, 200000, '2026-07-25');
+  INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada) VALUES
+    (1,83,1,21127,40500,'2026-07-19','2026-07-26'),(1,83,2,0,40500,'2026-07-26','2026-07-26');
   INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou, setmanes_contracte) VALUES (1,'especialista','metge',2,2040,4);
 `);
 const ctx = { env: { DB: db }, data: { usuari: { id: 1 } } };
@@ -52,7 +53,8 @@ const igual = (vist, esperat, què) => { assert.deepEqual(vist, esperat, `golden
   // I la pantalla consumix l'avaluador de la MATEIXA resposta: cap aritmètica a la vista.
   igual(vista.economia.ingressos_recurrents, eco.ingressos_recurrents, 'ingressos servits per l\'avaluador');
   // PERÍODE BI-SETMANAL: es declaren les DOS setmanes i els ingressos són la seua suma.
-  igual(eco.ingressos_recurrents, 21127 + 40500 + 0 + 40500, 'ingressos = suma de les dos setmanes');
+  igual(eco.ingressos_recurrents, Math.round((21127 + 40500 + 0 + 40500) / 2 * 2),
+    'ingressos = mitjana de l\'històric × període');
   igual(eco.planter_derivat, despesaPlanter('academia', 3, { cost_instalacions: 5000, cost_cercapromeses: 5000 }),
     'el planter es DERIVA, no es declara');
   igual(eco.despeses_fixes, (5000 + 20000 + 7100 + 2040) * 2,

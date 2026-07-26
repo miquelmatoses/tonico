@@ -1,5 +1,48 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · QUATRE CORRECCIONS: repartiment per lloc, històric per setmana, i dues més
+
+**1. El pressupost es repartia entre 5 TIPUS de lloc, no entre els 11 LLOCS.** El full sempre
+ha dit «SUMA(pesos de tots els llocs)»; el codi sumava els buckets deduplicats i després donava
+el pressupost sencer de cada tipus a **cadascun** dels seus llocs. Els tres MC rebien 3.197 €
+cadascun. **L'11 ideal eixia a 19.430 €/setmana amb un sostre de 10.290 — 1,9×.**
+Direcció de l'error, que no era neutra: mancances inflades (→ comprar) i sobrecost menor
+(→ ningú sembla sobrepagat), just quan Miquel ja va un 3% per damunt del sostre de despeses.
+*Per què cap guardià el va vore:* el G1 verificava `pressupostSou` amb `{a:3, b:1}` —un lloc per
+tipus— i amb un lloc per tipus les dues fórmules donen el mateix. **El guardià nou no és
+aritmètic, és una PROPIETAT:** la nòmina de l'11 ideal ha de cabre sota el sostre. Això el bug
+no ho pot complir per casualitat.
+
+**2. HISTÒRIC ECONÒMIC PER SETMANA** (`setmanes_economiques`) + mitjana de 8 setmanes + stopper.
+Decisió de Miquel: *«la mitjana de flux que usarem per als càlculs, les últimes 8 setmanes»*.
+- **Per setmana i NO per període**, i la raó importa: cada declaració dona «la passada» i
+  «esta», i la setmana següent la que era «esta» es torna a declarar. **Les declaracions se
+  solapen.** Guardant períodes, cada setmana comptaria dues vegades. Guardant setmanes, el
+  solapament és una actualització.
+- **La identitat no es demana, es deriva**: `fCalendari(data)` → temporada + setmana. Això
+  també repara el defecte que jo havia introduït en llevar `periode_data` (una declaració no
+  sabia a quines setmanes pertanyia).
+- `calibrat = COMPTA(setmanes) ≥ 8`. **STOPPER:** `motiu_venda` no emet «sou desproporcionat»
+  sense calibrar — és l'ÚNIC dels tres motius que penja del flux; l'edat i l'estructura de
+  plantilla seguixen vives. I `puntsVenda` torna 0 sense calibrar, que si no ordenaria la
+  llista per una xifra provisional.
+- Neteja inclosa: `finances` arrossegava 17 columnes i en llegia 10. Fora sis mortes.
+
+**3. El missatge d'obra d'estadi estava trencat** des del lot de la prioritat, i era meu:
+interpolava `delta_flux` (renombrat a `delta_manteniment` → `undefined`) i `guany` (ara sempre
+`null`, perquè l'estadi ja no es puntua). A més el text deia «t'allibera X cada setmana» quan
+`delta_manteniment` és el que l'obra **AFIG**. Signe canviat i dos buits.
+
+**4. Els nivells es pintaven com a números pelats.** L'escala de Tonico no és la de Hattrick:
+compta des d'on el sou deixa de ser el mínim, o siga **nivell Tonico 1 = «Insuficient» (HT 5)**.
+Un «nivell 5» sonava mediocre i era **Formidable**. Ara es diuen pel nom.
+*Compte de disseny:* les claus van indexades pel nivell **de Tonico**. Fer `t('nivell_ht.' +
+(n + 4))` a la vista seria aritmètica de domini a la presentació, que l'invariant 12 prohibix.
+
+**I una de camí:** `taula_salaris` tenia el 129.150 € de Playmaking-Diví col·locat com a
+`defensa` 16 (la cel·la buida de Defending va desplaçar la columna en llegir la guia). El test
+`pesos.mjs` **afirmava el valor equivocat**, i per això no va saltar mai.
+
 ## 2026-07-26 · LA UNITAT D'UNA XIFRA ES DECLARA, no s'escriu a l'etiqueta
 **Símptoma de Miquel:** *«però com dius que entren més de 100.000 € cada setmana, això com
 és?»* No entraven: eren DUES setmanes (102.127 € = 51.064 €/setmana, i el gruix és el

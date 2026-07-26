@@ -457,10 +457,16 @@ const VERIFICADES = {
     assert.equal(pesLloc('cap', ap, ps), null, 'posició desconeguda → no se suposa');
   },
   'P4.pressupost_sou': () => {
-    // pressupost_sou(lloc) = sou_sostenible × pes(lloc) / SUMA(pesos)
+    // pressupost_sou(lloc) = sou_sostenible × pes(lloc) / SUMA(pesos de TOTS ELS LLOCS)
     const pesos = { a: 3, b: 1 };
-    assert.deepEqual(pressupostSou(pesos, 8000), { a: 6000, b: 2000 });
+    assert.deepEqual(pressupostSou(pesos, 8000), { a: 6000, b: 2000 }, 'un lloc per tipus');
     assert.equal(pressupostSou(pesos, null), null, 'sense sou sostenible, res');
+    // AMB UN TIPUS DE MÉS D'UN LLOC — el cas que el fixture anterior no tenia, i per això el
+    // bug va viure: es dividia entre 2 tipus en compte d'entre 4 llocs.
+    //   suma correcta = 3×3 + 1×1 = 10  →  a = 8000×3/10 = 2400 (i n'hi ha 3: 7200)
+    assert.deepEqual(pressupostSou(pesos, 8000, { a: 3, b: 1 }), { a: 2400, b: 800 });
+    const total = 2400 * 3 + 800 * 1;
+    assert.equal(total, 8000, 'repartint per lloc, la suma torna a ser el sostre sencer');
   },
   'P4.nivell_objectiu': () => {
     // MAX(n : taula_salaris(hab, n) ≤ pressupost). Guia §8: creativitat 1→250, 2→270, 3→330.
@@ -548,9 +554,15 @@ const VERIFICADES = {
   },
   'P7.motiu_venda': () => {
     assert.equal(motiuVenda({}, { esRotatiu: true, temporada: 86, horitzo_eixida: 85 }), 'pic_de_valor');
-    assert.equal(motiuVenda({}, { sobrecost: 500 }), 'sou_desproporcionat');
+    assert.equal(motiuVenda({}, { sobrecost: 500, calibrat: true }), 'sou_desproporcionat');
     assert.equal(motiuVenda({}, { enVenda: true }), 'sobrant');
     assert.equal(motiuVenda({}, {}), null);
+    // EL STOPPER: sense calibrar, cap venda per sou. `sobrecost` penja del flux, i el flux amb
+    // poques setmanes és soroll. Els altres dos motius no en depenen i seguixen vius.
+    assert.equal(motiuVenda({}, { sobrecost: 99999, calibrat: false }), null,
+      'sense calibrar, el sou no desfà de ningú');
+    assert.equal(motiuVenda({}, { enVenda: true, calibrat: false }), 'sobrant',
+      'el sobrant va per estructura: no depén del flux');
   },
   // v3.1: NOMÉS sobrecost. El segon criteri era `preu_esperat DESC`, una xifra inventada.
   'P7.ordre_venda': () => assert.deepEqual(ordreVenda([

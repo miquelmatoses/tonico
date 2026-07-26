@@ -34,13 +34,16 @@ assert.equal(e.flux, null, 'sense ingressos declarats no hi ha flux (i no es fab
 assert.equal(e.planter_derivat, 20000, 'acadèmia + 3 cercapromeses, derivat del PAS 0');
 
 // ── 2. Les QUATRE coses que Miquel declara, i cap més ──
-sqlite.exec(`INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi,
-               taquilla_s1, patrocini_s1, taquilla_s2, patrocini_s2)
-             VALUES (1, 173004, '2026-07-26', 7100, 21127, 40500, 0, 40500);`);
+sqlite.exec(`INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi)
+             VALUES (1, 173004, '2026-07-26', 7100);
+  INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada) VALUES
+    (1,83,1,21127,40500,'2026-07-19','2026-07-26'),(1,83,2,0,40500,'2026-07-26','2026-07-26');`);
 e = await economia(db, 1, '2026-07-26');
 assert.equal(e.caixa, 173004, 'mana el saldo real declarat');
-assert.equal(e.ingressos_recurrents, 21127 + 40500 + 0 + 40500,
-  'els ingressos són la suma de les DOS setmanes declarades');
+assert.equal(e.setmanes_declarades, 2, 'l\'històric guarda una fila per SETMANA');
+assert.equal(e.calibrat, false, 'amb 2 de 8 setmanes, encara no es fia');
+assert.equal(e.ingressos_recurrents, Math.round((21127 + 40500 + 0 + 40500) / 2 * 2),
+  'ingressos = mitjana setmanal × setmanes_periode');
 assert.equal(e.despeses_fixes, (e.nomina + 20000 + 7100 + 0) * e.setmanes_periode,
   'despeses = per_periode(nòmina + planter derivat + manteniment + personal)');
 assert.equal(e.flux, e.ingressos_recurrents - e.despeses_fixes);

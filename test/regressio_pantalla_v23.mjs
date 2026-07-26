@@ -22,8 +22,9 @@ sqlite.exec(`
   -- que este test vol provar.
   INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'E','senior');
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (1,1,'2026-07-25',83,2);
-  INSERT INTO finances (usuari_id, caixa, caixa_data, taquilla_s1, patrocini_s1, taquilla_s2, patrocini_s2)
-    VALUES (1, 900000, '2026-07-25', 150000, 80000, 0, 80000);
+  INSERT INTO finances (usuari_id, caixa, caixa_data) VALUES (1, 900000, '2026-07-25');
+  INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada) VALUES
+    (1,83,1,150000,80000,'2026-07-19','2026-07-25'),(1,83,2,0,80000,'2026-07-25','2026-07-25');
 `);
 // La trampa: el millor defensa (9) és el que més cobra; el pitjor (1) el més barat.
 const N = 24;

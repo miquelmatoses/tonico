@@ -324,13 +324,57 @@
       "taules": []
     },
     {
+      "id": "P3.setmanes_declarades",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "setmanes_declarades",
+      "linia": "setmanes_declarades = ORDENA(setmanes amb declaració; (temporada, setmana) DESC)",
+      "entrades": [
+        "temporada"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P3.mitjana_setmanal",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "mitjana_setmanal",
+      "linia": "mitjana_setmanal = MITJANA(PRIMERS(`setmanes_mitjana`; setmanes_declarades):",
+      "entrades": [
+        "setmanes_declarades"
+      ],
+      "poms": [
+        "setmanes_mitjana"
+      ],
+      "taules": []
+    },
+    {
       "id": "P3.ingressos_recurrents",
       "pas": "P3",
       "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
       "clau": "ingressos_recurrents",
-      "linia": "ingressos_recurrents = SUMA(setmanes del període: taquilla + patrocini)",
-      "entrades": [],
-      "poms": [],
+      "linia": "ingressos_recurrents = mitjana_setmanal × `setmanes_periode`",
+      "entrades": [
+        "mitjana_setmanal"
+      ],
+      "poms": [
+        "setmanes_periode"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P3.calibrat",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "calibrat",
+      "linia": "calibrat         = COMPTA(setmanes_declarades) ≥ `setmanes_mitjana`",
+      "entrades": [
+        "setmanes_declarades"
+      ],
+      "poms": [
+        "setmanes_mitjana"
+      ],
       "taules": []
     },
     {

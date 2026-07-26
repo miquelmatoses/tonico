@@ -81,6 +81,9 @@ const families = {
   'flux': ['col_tipus','col_nivell','col_cost','col_accio'],
   'estoc': ['col_opcio','col_guany','col_cost','col_eficiencia'],
   'categoria': ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'],
+  // Els 16 nivells d'habilitat, pel NOM de Hattrick. L'escala de Tonico compta des d'on el sou
+  // deixa de ser el mínim: nivell 1 = «Insuficient» (HT 5), o siga Tonico n = HT n+4.
+  'nivell_ht': Array.from({ length: 16 }, (_, i) => String(i + 1)),
   'motiu': motiusDelCodi(),        // derivat del codi: un motiu nou el caça sol
   'motiu_baixa': ['venda', 'despatx', 'promocio', 'altres'],
   // `tipus.*` (moviments) i `font.*` (d'on eixia el preu estimat) han caigut: ni hi ha

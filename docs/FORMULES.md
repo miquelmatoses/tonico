@@ -105,11 +105,22 @@ periode_setmanes = `setmanes_periode`                       [2: un partit a casa
     quina toque, i eixa oscil·lació és més gran que el flux net.]
 per_periode(x)   = x × `setmanes_periode`                   ← NORMALITZACIÓ
    [per a les DESPESES, que són constants setmanals]
-ingressos_recurrents = SUMA(setmanes del període: taquilla + patrocini)
-   [es declaren les DOS setmanes, LITERALS (la passada i esta): així el període és la
-    seua suma i cap factor 2 toca els ingressos. NOMÉS taquilla i patrocinadors: club
-    d'aficionats, comissions i vendes són PUNTUALS, no s'extrapolen i marejarien el
-    sostre de sou]
+setmanes_declarades = ORDENA(setmanes amb declaració; (temporada, setmana) DESC)
+   [l'històric va per SETMANA, no per període: cada declaració dona «la passada» i
+    «esta», i la setmana següent la que era «esta» es torna a declarar com a
+    «passada». Guardant setmanes, el solapament és una actualització; guardant
+    períodes, seria comptar dues vegades. La identitat de cada setmana ix de
+    f_calendari, que ja és font única]
+mitjana_setmanal = MITJANA(PRIMERS(`setmanes_mitjana`; setmanes_declarades):
+                           taquilla + patrocini)
+   [NOMÉS taquilla i patrocinadors: club d'aficionats, comissions i vendes són
+    PUNTUALS, no s'extrapolen i marejarien el sostre de sou]
+ingressos_recurrents = mitjana_setmanal × `setmanes_periode`
+calibrat         = COMPTA(setmanes_declarades) ≥ `setmanes_mitjana`
+   [la taquilla oscil·la desenes de milers entre setmanes mentre el flux net va en
+    milers: amb poques setmanes el número és soroll, i el sistema HO DIU en compte de
+    presentar-lo com una certesa. Fer la mitjana d'observacions és ESTIMAR (val);
+    extrapolar-ne un creixement seria PROJECTAR (invariant 3)]
 despesa_planter  = SI(sistema_juvenil = 'academia'; `cost_instalacions_juvenils`; 0)
                  + `cost_cercapromeses` × n_cercapromeses
 despeses_fixes   = per_periode(nòmina + manteniment_estadi + personal + despesa_planter)
@@ -179,8 +190,12 @@ venda     = plantilla − retinguts        [categoria sencera; cap marca dins]
 
 ```
 motiu_venda(j) = SI(j ∈ rotatius I temporada ≥ horitzo_eixida(j); "pic de valor";
-                 SI(sobrecost(j) > 0;                              "sou desproporcionat";
+                 SI(calibrat I sobrecost(j) > 0;                   "sou desproporcionat";
                  SI(j ∈ venda;                                     "sobrant"; ∅)))
+   [SENSE CALIBRAR NO ES DESFÀ DE NINGÚ PEL SOU. `sobrecost` penja de
+    nivell_objectiu, que penja del flux: mentre el flux siga soroll, este motiu ho
+    seria també. Els altres dos no en depenen —l'edat i l'estructura de plantilla— i
+    seguixen funcionant]
 ordre_venda    = ORDENA(FILTRA(plantilla; motiu_venda ≠ ∅); sobrecost DESC)
 urgent(j)       = dies_aniversari(j) ≤ `dies_urgencia`
 destí(j) = SI(lesionat(j);                              AGENDA("llista'l en recuperar-se");

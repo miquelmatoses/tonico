@@ -17,7 +17,16 @@ assert.equal(urgent(null, 14), false, 'sense dada no s\'inventa urgència');
 
 // ── motiu_venda ──
 assert.equal(motiuVenda(j, { esRotatiu: true, temporada: 86, horitzo_eixida: 85 }), 'pic_de_valor');
-assert.equal(motiuVenda(j, { sobrecost: 500 }), 'sou_desproporcionat');
+assert.equal(motiuVenda(j, { sobrecost: 500, calibrat: true }), 'sou_desproporcionat');
+
+// EL STOPPER: sense calibrar, el sou no desfà de ningú. `sobrecost` penja del flux, i el flux
+// amb poques setmanes és soroll. Els altres dos motius SÍ que seguixen vius, que no en depenen.
+assert.equal(motiuVenda(j, { sobrecost: 99999, calibrat: false }), null,
+  'sense calibrar, cap venda per sou — ni amb un sobrecost enorme');
+assert.equal(motiuVenda(j, { esRotatiu: true, temporada: 86, horitzo_eixida: 85, calibrat: false }),
+  'pic_de_valor', 'el pic de valor va per EDAT: no depén del flux');
+assert.equal(motiuVenda(j, { enVenda: true, calibrat: false }), 'sobrant',
+  'i el sobrant va per estructura de plantilla: tampoc');
 assert.equal(motiuVenda(j, { enVenda: true }), 'sobrant');
 assert.equal(motiuVenda(j, {}), null, 'un retingut sense sobrecost no té motiu de venda');
 

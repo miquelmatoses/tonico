@@ -543,11 +543,16 @@ function bucleEstoc(main, e) {
   if (e.recomanada) {
     cos.append(el('p', {}, el('b', { text: t('estoc.recomanada') }), ' ',
       el('span', { text: e.recomanada.tipus === 'estadi'
-        ? t('estoc.opcio_estadi', ambXifres({ cost: e.recomanada.cost, guany: e.recomanada.guany,
-            delta: e.recomanada.delta_flux }, ['cost', 'delta']))
+        // L'obra no es puntua (té prioritat absoluta), així que el missatge no parla de guany.
+        // I `delta_manteniment` és el que l'obra AFIG cada setmana, no el que allibera.
+        ? t('estoc.opcio_estadi', ambXifres({ cost: e.recomanada.cost,
+            manteniment: e.recomanada.delta_manteniment }, ['cost', 'manteniment']))
         : tp('estoc.opcio_jugador', e.recomanada.mancanca,
             ambXifres({ lloc: e.recomanada.lloc, habilitat: t('habilitat.' + e.recomanada.habilitat),
-              nivell: e.recomanada.nivell_objectiu, mancanca: e.recomanada.mancanca, cost: e.recomanada.cost }, ['cost'])) })));
+              // El nivell es diu pel seu NOM de Hattrick. Les claus van indexades pel nivell de
+              // Tonico: fer «n + 4» ací seria aritmètica de domini a la vista (invariant 12).
+              nivell: t('nivell_ht.' + e.recomanada.nivell_objectiu),
+              mancanca: e.recomanada.mancanca, cost: e.recomanada.cost }, ['cost'])) })));
   } else {
     cos.append(el('p', { class: 'nota-peu', text: t('estoc.cap_opcio') }));
   }
@@ -738,7 +743,8 @@ function formFinances(main, e) {
     if (val != null) i.value = val;
     return el('label', { class: 'decl-camp' }, el('span', { class: 'decl-et', text: t('economia.' + clau) }), i);
   };
-  const s1 = e.setmanes?.[0] || {}, s2 = e.setmanes?.[1] || {};
+  // L'històric ve del més recent al més antic: [0] és esta setmana i [1] la passada.
+  const s2 = e.setmanes?.[0] || {}, s1 = e.setmanes?.[1] || {};
   const tq1 = camp('taquilla', s1.taquilla);
   const pt1 = camp('patrocini', s1.patrocini);
   const tq2 = camp('taquilla', s2.taquilla);
@@ -751,8 +757,8 @@ function formFinances(main, e) {
   const bloc = (clau, ...camps) => el('div', { class: 'decl-bloc' },
     el('h4', { class: 'decl-titol', text: t('economia.' + clau) }), ...camps);
   f.append(el('div', { class: 'decl-setmanes' },
-    bloc('setmana_passada', tq1, pt1),
-    bloc('setmana_esta', tq2, pt2)));
+    bloc('setmana_passada', d1, tq1, pt1),
+    bloc('setmana_esta', d2, tq2, pt2)));
   // El club: estes dues no van per setmana. La caixa és d'ara i el manteniment és constant.
   f.append(el('div', { class: 'decl-setmanes' },
     el('div', { class: 'decl-bloc ample' },
@@ -762,9 +768,12 @@ function formFinances(main, e) {
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const v = (l) => { const x = l.querySelector('input').value; return x === '' ? null : x; };
+    // Cada setmana va amb la SEUA data: d'ahí el servidor deriva temporada i setmana pel
+    // calendari, i redeclarar-ne una la sobreescriu en compte de duplicar-la.
     await api('/api/finances', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      taquilla_s1: v(tq1), patrocini_s1: v(pt1), taquilla_s2: v(tq2), patrocini_s2: v(pt2),
-      caixa: v(caixa), despesa_estadi: v(estadi) }) });
+      caixa: v(caixa), despesa_estadi: v(estadi),
+      setmanes: [{ data: v(d1), taquilla: v(tq1), patrocini: v(pt1) },
+                 { data: v(d2), taquilla: v(tq2), patrocini: v(pt2) }].filter((x) => x.data) }) });
     location.reload();
   });
   main.append(f);

@@ -19,8 +19,9 @@ sqlite.exec(`
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (1,1,'2026-07-18',83,1);
   INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (1,1,100,'A');
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, sou) VALUES (1,1,5000);
-  INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi, taquilla_s1, patrocini_s1, taquilla_s2, patrocini_s2)
-    VALUES (1,173004,'2026-07-18',7100,21127,40500,0,40500);
+  INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi) VALUES (1,173004,'2026-07-18',7100);
+  INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada) VALUES
+    (1,83,1,21127,40500,'2026-07-19','2026-07-18'),(1,83,2,0,40500,'2026-07-26','2026-07-18');
 `);
 const velles = () => sqlite.prepare(
   "SELECT COUNT(*) n FROM alertes a JOIN regles r ON r.id=a.regla_id WHERE r.codi='ALR_DADES_VELLES' AND a.estat IN ('nova','vista')").get().n;
@@ -57,7 +58,7 @@ console.log('OK — dades velles: reclama al huité dia i es mesura contra HUI, 
     headers: { 'content-type': 'application/json' }, body: JSON.stringify(cos) }),
     env: { DB: db }, data: { usuari: { id: 1 } } });
   sqlite.exec("UPDATE finances SET caixa_data='2020-01-01' WHERE usuari_id=1;");
-  await finances.onRequestPost(ctx({ taquilla_s1: 1000, patrocini_s1: 2000 }));
+  await finances.onRequestPost(ctx({ setmanes: [{ data: '2026-07-26', taquilla: 1000, patrocini: 2000 }] }));
   const nova = sqlite.prepare('SELECT caixa_data FROM finances WHERE usuari_id=1').get().caixa_data;
   assert.notEqual(nova, '2020-01-01', 'declarar reposa la data, encara que ja n\'hi haguera una');
   assert.equal(nova, new Date().toISOString().slice(0, 10), 'i la posa a hui');

@@ -69,3 +69,27 @@ const pobre = nivellsObjectiu(LLOCS, cfg, 20000);
 for (const l of LLOCS) assert.ok(niv[l].nivell_objectiu >= pobre[l].nivell_objectiu, `monotonia a ${l}`);
 
 console.log('OK — pesos i nivell objectiu: seeds de la guia, pes per sector i sostre per lloc');
+
+// ── LA PROPIETAT QUE HAURIA CAÇAT EL BUG ──────────────────────────────────────────────
+// L'11 ideal ha de CABRE sota el sostre. És l'única cosa que el pressupost per lloc ha de
+// garantir, i el bug la violava per 1,9×: es dividia entre els 5 TIPUS de lloc i després cada
+// tipus donava el seu pressupost sencer a cadascun dels seus llocs (els 3 MC, 3.197 € cadascun).
+// Comprovar l'aritmètica no ho hauria vist —la funció era correcta—; comprovar la PROPIETAT sí.
+{
+  const FORMACIO = ['porter', 'defensa', 'defensa', 'defensa', 'mc', 'mc', 'mc',
+    'extrem', 'extrem', 'davanter', 'davanter'];
+  for (const sostre of [3000, 10290, 25000, 90000]) {
+    const n = nivellsObjectiu(FORMACIO, cfg, sostre);
+    const nomina = Object.entries(n).reduce((a, [b, v]) =>
+      a + (cfg.taula_salaris[v.habilitat]?.[v.nivell_objectiu] ?? 0) * v.llocs, 0);
+    assert.ok(nomina <= sostre,
+      `l'11 ideal ha de cabre: amb ${sostre} € de sostre costa ${nomina} €`);
+  }
+  // I el repartiment ha de comptar CADA lloc, no cada tipus.
+  const n = nivellsObjectiu(FORMACIO, cfg, 10290);
+  assert.equal(n.mc.llocs, 3, 'el bucket mc porta els seus 3 llocs');
+  const suma = Object.values(n).reduce((a, v) => a + v.pressupost_sou * v.llocs, 0);
+  assert.ok(Math.abs(suma - 10290) <= Object.keys(n).length,
+    `la suma dels pressupostos PER LLOC ha de donar el sostre (dona ${suma})`);
+}
+console.log('OK — PAS 4: l\'11 ideal cap sota el sostre (propietat, no aritmètica)');
