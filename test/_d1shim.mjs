@@ -94,5 +94,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/071_v31_economia_personal.sql'));
   sqlite.exec(src('../schema/072_economia_quatre_camps.sql'));
   sqlite.exec(src('../schema/073_caixa_i_dies.sql'));
+  sqlite.exec(src('../schema/074_taula_salaris_divi.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

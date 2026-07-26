@@ -13,9 +13,19 @@ assert.equal(cfg.pes_sector.central, 0.36, 'guia §5: 36,0% de les ocasions pel 
 assert.equal(cfg.pes_sector.banda, 0.255, 'guia §5: 25,5% per cada costat');
 assert.equal(cfg.taula_aportacio.Mig['Mig#Cre'], 1, 'guia §4: el Mig aporta el 100% de Cre al mig camp');
 assert.equal(cfg.taula_aportacio.Por['DC#Por'], 0.87, 'guia §4: el porter, 87% de Porteria a la defensa central');
-assert.equal(cfg.taula_salaris.creativitat['3'], 330, 'guia §8: Creativitat Notable = 330 €');
+// L'ESCALA de Tonico compta des d'on el sou deixa de ser el mínim de 250 €:
+//   nivell Tonico 1 = «Insuficient» de Hattrick (HT 5)  →  nivell Tonico n = HT n+4
 assert.equal(cfg.taula_salaris.porteria['1'], 610, 'guia §8: Porteria Insuficient = 610 €');
-assert.equal(cfg.taula_salaris.defensa['16'], 129150, 'guia §8: Defensa Diví = 129.150 €');
+assert.equal(cfg.taula_salaris.creativitat['3'], 330, 'guia §8: Creativitat Sòlid = 330 €');
+assert.equal(cfg.taula_salaris.creativitat['5'], 850, 'guia §8: Creativitat Formidable = 850 €');
+
+// LA COLUMNA DESPLAÇADA. A la guia la fila «Diví» té Defending i Scoring BUITS, i el 129.150 €
+// que hi ha enmig és el de PLAYMAKING. En muntar la taula, la cel·la buida va desplaçar la
+// columna i eixe valor va acabar com a `defensa` 16. Este test fixa les tres coses alhora.
+assert.equal(cfg.taula_salaris.creativitat['16'], 129150, 'guia §8: Creativitat Diví = 129.150 €');
+assert.equal(cfg.taula_salaris.defensa['16'], undefined, 'la guia NO publica Defensa Diví');
+assert.equal(cfg.taula_salaris.anotacio['16'], undefined, 'ni Anotació Diví');
+assert.equal(cfg.taula_salaris.defensa['15'], 75730, 'i Defensa s\'atura a Utòpic = 75.730 €');
 
 // ── pes(lloc) = SUMA(aportacio × pes_sector) ──
 // El Mig, a mà: 1,00·pes_mig + 0,40·0,36 + 0,19·0,255 + 0,22·0,36 + 0,33·0,36 + 0,26·0,255
@@ -39,9 +49,10 @@ assert.ok(Math.abs(sumaPr - 100000) <= Object.keys(pr).length, 'es repartix tot 
 assert.ok(pr.mc > pr.defensa, 'el lloc que més pesa s\'emporta més pressupost');
 
 // ── nivell_objectiu: el nivell més alt que el pressupost paga (taula §8) ──
-assert.equal(nivellObjectiu('creativitat', 330, cfg.taula_salaris), 3, 'just per a Notable (330 €)');
-assert.equal(nivellObjectiu('creativitat', 329, cfg.taula_salaris), 2, 'un euro menys → Acceptable');
-assert.equal(nivellObjectiu('creativitat', 1000000, cfg.taula_salaris), 15, 'Creativitat no publica el 16');
+assert.equal(nivellObjectiu('creativitat', 330, cfg.taula_salaris), 3, 'just per a Sòlid (330 €)');
+assert.equal(nivellObjectiu('creativitat', 329, cfg.taula_salaris), 2, 'un euro menys → Passable');
+assert.equal(nivellObjectiu('creativitat', 1000000, cfg.taula_salaris), 16, 'Creativitat SÍ que publica el Diví');
+assert.equal(nivellObjectiu('defensa', 1000000, cfg.taula_salaris), 15, 'Defensa s\'atura a Utòpic');
 assert.equal(nivellObjectiu('porteria', 100, cfg.taula_salaris), 0, 'no arriba ni al primer nivell');
 assert.equal(nivellObjectiu('creativitat', null, cfg.taula_salaris), null, 'sense pressupost, res');
 
