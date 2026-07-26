@@ -5,6 +5,7 @@
 import { temporadaOperativa } from '../../lib/calendari.js';
 import { avaluaPuntuacio } from '../../lib/classificador.js';
 import { carregaConfigPla } from '../../lib/config_pla.js';
+import { sqlCategoriaVigent } from '../../lib/categoria_vigent.js';
 
 export async function onRequestGet({ env, data }) {
   const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id = ? AND tipus = 'senior'")
@@ -29,10 +30,7 @@ export async function onRequestGet({ env, data }) {
             c.categoria, c.puntuacio, c.justificacio, c.origen
        FROM instantanies_jugadors ij
        JOIN jugadors j ON j.id = ij.jugador_id
-       LEFT JOIN (SELECT cj.jugador_id, cj.categoria, cj.puntuacio, cj.justificacio, cj.origen
-                    FROM categories_jugador cj
-                    JOIN (SELECT jugador_id, MAX(id) mid FROM categories_jugador GROUP BY jugador_id) m
-                      ON cj.id = m.mid) c ON c.jugador_id = j.id
+       LEFT JOIN ${sqlCategoriaVigent(['categoria', 'puntuacio', 'justificacio', 'origen'])} c ON c.jugador_id = j.id
       WHERE ij.instantania_id = ?
       ORDER BY c.puntuacio DESC`
   ).bind(inst.id).all();

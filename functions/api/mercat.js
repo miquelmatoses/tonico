@@ -4,6 +4,7 @@ import { carregaConfigPla } from '../../lib/config_pla.js';
 import { filtresCompra } from '../../lib/mercat_cerca.js';
 import { economia } from '../../lib/economia.js';
 import { estatEstoc } from '../../lib/orquestra_estoc.js';
+import { sqlCategoriaVigent } from '../../lib/categoria_vigent.js';
 
 export async function onRequestGet({ env, data }) {
   const pla = await env.DB.prepare('SELECT plantilla FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
@@ -17,8 +18,7 @@ export async function onRequestGet({ env, data }) {
       squad = (await env.DB.prepare(
         `SELECT j.nom, ij.posicio_ultim_partit AS posicio, c.categoria FROM instantanies_jugadors ij
            JOIN jugadors j ON j.id = ij.jugador_id
-           LEFT JOIN (SELECT cj.jugador_id, cj.categoria FROM categories_jugador cj
-                       JOIN (SELECT jugador_id, MAX(id) mid FROM categories_jugador GROUP BY jugador_id) m ON cj.id=m.mid) c
+           LEFT JOIN ${sqlCategoriaVigent(['categoria'])} c
                   ON c.jugador_id = ij.jugador_id
           WHERE ij.instantania_id = ?`
       ).bind(inst.id).all()).results;

@@ -2,6 +2,8 @@
 // l'anterior del MATEIX equip; admet selecció manual (a, b). Torna pops
 // d'habilitat, deltes de TSI/sou, nous/desapareguts, dies reals entre les dos
 // (la velocitat mai assumix «una setmana») i marca la frontera de temporada.
+import { categoriesVigents } from '../../lib/categoria_vigent.js';
+
 const HABILITATS = ['porteria', 'defensa', 'creativitat', 'extrem', 'passades', 'anotacio', 'pilota_aturada'];
 
 export async function onRequestGet({ request, env, data }) {
@@ -31,11 +33,7 @@ export async function onRequestGet({ request, env, data }) {
   };
   const [fa, fb] = [await files(aId), await files(bId)];
   // Categoria vigent per jugador (per a declarar les altes: «Alta: X (17a, venda)»).
-  const { results: cats } = await env.DB.prepare(
-    `SELECT cj.jugador_id, cj.categoria FROM categories_jugador cj
-       JOIN (SELECT jugador_id, MAX(id) mid FROM categories_jugador GROUP BY jugador_id) m ON cj.id = m.mid`
-  ).all();
-  const catDe = new Map(cats.map((c) => [c.jugador_id, c.categoria]));
+  const catDe = await categoriesVigents(env.DB);
 
   const dies = Math.round((Date.parse(B.data) - Date.parse(A.data)) / 86400000);
   const setmanes = dies / 7;
