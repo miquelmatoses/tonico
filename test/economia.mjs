@@ -44,11 +44,36 @@ assert.equal(e.setmanes_declarades, 2, 'l\'històric guarda una fila per SETMANA
 assert.equal(e.calibrat, false, 'amb 2 de 8 setmanes, encara no es fia');
 assert.equal(e.ingressos_recurrents, Math.round((21127 + 40500 + 0 + 40500) / 2 * 2),
   'ingressos = mitjana setmanal × setmanes_periode');
-assert.equal(e.despeses_fixes, (e.nomina + 20000 + 7100 + 0) * e.setmanes_periode,
-  'despeses = per_periode(nòmina + planter derivat + manteniment + personal)');
+assert.equal(e.despeses_fixes, (e.nomina + 20000 + 7100 + 0 + 0) * e.setmanes_periode,
+  'despeses = per_periode(nòmina + planter + manteniment + personal + entrenador)');
 assert.equal(e.flux, e.ingressos_recurrents - e.despeses_fixes);
 assert.ok(e.sou_sostenible != null && e.sou_sostenible_setmanal === e.sou_sostenible / 2,
   'i d\'ací ix el sostre de sou, amb l\'ÚNIC canvi d\'unitat del sistema');
+
+// ── 2b. EL SOU DE L'ENTRENADOR ÉS UN SOU. Faltava a `despeses_fixes` i, com que
+// `sou_sostenible` es calcula restant `despeses_fixes − nòmina`, el sostre de sou eixia inflat
+// per tot el seu import: amb 5.000 €/setmana deia 15.291 quan eren 10.291. I d'eixe sostre
+// pengen els `nivell_objectiu` de TOTS els llocs — l'onze ideal es dissenyava amb un 49% de
+// sou que no existia. `flux_repartible` sí que el restava: dues xifres del mateix pas amb
+// criteris distints, i eixe desacord és el que el feia invisible.
+{
+  const abans = await economia(db, 1, '2026-07-26');
+  sqlite.exec("INSERT INTO personal_membres (usuari_id, rol, tipus, sou) VALUES (1,'entrenador','entrenador',5000);");
+  const ara = await economia(db, 1, '2026-07-26');
+  const perPeriode = 5000 * ara.setmanes_periode;
+  assert.equal(ara.despeses_fixes, abans.despeses_fixes + perPeriode, 'entra als fixos');
+  assert.equal(ara.flux, abans.flux - perPeriode, 'i per tant baixa el flux');
+  assert.equal(ara.sou_sostenible, abans.sou_sostenible - perPeriode,
+    'i el sostre de sou: cada euro de l\'entrenador és un euro que no pots pagar en jugadors');
+  assert.equal(ara.sou_sostenible_setmanal, abans.sou_sostenible_setmanal - 5000,
+    'també en setmanal, que és el que consumix el PAS 4');
+  // I NO es descompta dues vegades: `flux_repartible` ja el restava pel seu compte.
+  assert.equal(ara.flux_repartible_setmanal, abans.flux_repartible_setmanal - 5000,
+    'el repartible baixa el mateix, una sola vegada');
+  assert.equal(ara.despeses_setmanals.personal, abans.despeses_setmanals.personal,
+    'i no es cola dins del personal: l\'entrenador no és especialista');
+  sqlite.exec("DELETE FROM personal_membres WHERE rol='entrenador';");
+}
 
 // ── 3. La caixa NO pot vindre dels moviments, encara que la taula en tinga ──
 // La taula `transaccions` es queda (té apunts vells de Miquel) però ja no la llig ningú.

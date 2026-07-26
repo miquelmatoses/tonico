@@ -129,6 +129,12 @@ despesa_planter  = SI(sistema_juvenil = 'academia'; `cost_instalacions_juvenils`
                  + `cost_cercapromeses` × n_cercapromeses
 despeses_fixes   = per_periode(nòmina + manteniment_estadi + personal + despesa_planter
                                + sou_entrenador)
+   [CINC conceptes. `sou_entrenador` hi va perquè és un sou que es paga cada setmana
+    com qualsevol altre, i d'ací baixa `sou_sostenible`. L'avaluador en sumava
+    QUATRE: el sostre de sou eixia inflat per tot l'import de l'entrenador (amb
+    5.000 €/setmana deia 15.291 quan eren 10.291), i d'eixe sostre pengen els
+    `nivell_objectiu` de TOTS els llocs. `flux_repartible` sí que el restava, i eixe
+    desacord entre dues xifres del mateix pas és el que ho feia invisible]
 flux_repartible  = ingressos_recurrents − reserva_flux
                    − per_periode(manteniment_estadi + despesa_planter + sou_entrenador)
    [EL CALAIX ÚNIC del qual ixen els sous del personal I els dels jugadors. Es lleven

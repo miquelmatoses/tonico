@@ -441,11 +441,30 @@ const VERIFICADES = {
     assert.equal(despesaPlanter('cap', 1, C), 5000, '«cap» NO és cost zero: el cercapromeses es paga igual');
   },
   'P3.despeses_fixes': () => {
-    const set = { nomina: 5000, manteniment_estadi: 7100, personal: 2040, planter: 20000 };
-    const per = Object.values(set).reduce((a, v) => a + perPeriode(v, 2), 0);
-    assert.equal(per, 68280, 'totes les despeses són setmanals → × setmanes_periode');
+    // ELS CINC CONCEPTES DE LA LÍNIA DEL FULL, comptats des del full i no des de l'avaluador.
+    // Ací estava el forat: esta comprovació llistava els mateixos QUATRE que el codi —sense
+    // `sou_entrenador`— o siga que confirmava el bug en compte de caçar-lo. L'oracle no pot
+    // eixir de la font que es prova. Es llig la línia del full i se'n compten els sumands.
+    // Del FULL CRU: la línia es partix en dos i el mirall només en guarda la primera, així que
+    // es llig fins a tancar el parèntesi. Si es llegira el mirall, es perdria el darrer sumand
+    // i tornaríem a tindre un oracle escapçat — que és una altra manera del mateix error.
+    const full = readFileSync(join(arrel, 'docs/FORMULES.md'), 'utf8');
+    const des = full.slice(full.indexOf('despeses_fixes'));
+    let obert = 0, fi = 0;
+    for (const [i, c] of [...des.slice(0, 500)].entries()) {
+      if (c === '(') obert++;
+      else if (c === ')' && --obert === 0) { fi = i; break; }
+    }
+    const sumands = des.slice(des.indexOf('(') + 1, fi).split('+').map((x) => x.trim().replace(/`/g, ''));
+    assert.deepEqual(sumands.sort(),
+      ['despesa_planter', 'manteniment_estadi', 'nòmina', 'personal', 'sou_entrenador'].sort(),
+      'el full en llista cinc: si el codi en suma quatre, el flux i el sostre de sou ixen inflats');
+    const set = { nomina: 5000, manteniment_estadi: 7100, personal: 2040, planter: 20000, entrenador: 5000 };
+    assert.equal(Object.keys(set).length, sumands.length, 'i el fixture els cobrix tots');
+    assert.equal(Object.values(set).reduce((a, v) => a + perPeriode(v, 2), 0), 78280,
+      'totes les despeses són setmanals → × setmanes_periode');
   },
-  'P3.flux': () => assert.equal(102127 - 68280, 33847),
+  'P3.flux': () => assert.equal(102127 - 78280, 23847),
   'P3.reserva_flux': () => {
     // v3.1: FRACCIÓ dels ingressos, no un import absolut.
     assert.equal(reservaFlux(102127, 0.05), 5106);

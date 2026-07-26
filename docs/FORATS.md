@@ -42,6 +42,28 @@ ara es declaren quatre coses i no hi ha comptabilitat de moviments. Cal repassar
 
 ---
 
+## C-02 · UN ORACLE DE G1 ESCRIT MIRANT EL CODI
+
+**Vigent. Avís de mètode, no de codi.**
+
+El sou de l'entrenador faltava a `despeses_fixes` de l'avaluador i el sostre de sou eixia inflat
+un 49%. G1 tenia comprovació d'eixa línia (`P3.despeses_fixes`) i **no el va caçar**, perquè
+l'oracle llistava els mateixos quatre conceptes que el codi en compte dels cinc del full:
+
+```js
+const set = { nomina: 5000, manteniment_estadi: 7100, personal: 2040, planter: 20000 };
+```
+
+Un guardià que copia el codi confirma el codi. Ara eixa comprovació **llig la línia del full** i
+en compta els sumands, o siga que l'oracle ja no pot heretar l'omissió.
+
+**I una segona lliçó, de la mateixa tanda:** en arreglar-ho, cap test va petar — no hi havia cap
+fixture amb entrenador declarat que mirara el sostre de sou. El guardià nou només comprovava la
+FORMA de la línia, no que l'avaluador la respectara. Fins que no s'ha vist petar amb l'entrenador
+posat (`test/economia.mjs` §2b), no valia res. Vore [[verificacio-per-mutacio]].
+
+---
+
 # CORRECCIONS DEL MEU PROPI DIAGNÒSTIC (es queden com a avís)
 
 ## C-01 · CAP NÚMERO DE FLUX ÉS CREÏBLE ENCARA
