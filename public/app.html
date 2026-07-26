@@ -71,14 +71,23 @@
     // Capçalera viva: caixa i fase del pla (dades reals, no decoració)
     (async () => {
       const [eco, pla] = await Promise.all([
-        api('/api/economia').catch(() => null), api('/api/pla').catch(() => null),
+        // `/api/economia` no existix (mai ha existit): la caixa la serveix `/api/finances`
+        // junt amb l'avaluador. El `.catch` s'ho menjava i la caixa de la capçalera no
+        // s'ha vist mai.
+        api('/api/finances').catch(() => null), api('/api/pla').catch(() => null),
       ]);
       // La caixa a la capçalera és NOMÉS informativa: si no està declarada, s'amaga el
       // bloc (no un blanc mut). Qui demana emplenar-la és Paco a l'informe (falten), no ací.
-      if (eco && eco.caixa != null) document.getElementById('hdr-caixa').textContent = diners(eco.caixa);
+      const caixa = eco?.economia?.caixa ?? null;
+      if (caixa != null) document.getElementById('hdr-caixa').textContent = diners(caixa);
       else document.querySelector('.hdr-caixa')?.remove();
       if (pla && !pla.error && pla.temporadaActual != null) {
-        document.getElementById('hdr-fase').textContent = `T${pla.temporadaActual} · ${t('fase.' + pla.fase_actual)}`;
+        // La FASE es va retirar amb el model «fàbrica» (L3) i amb ella les claus `fase.*`:
+        // açò pintava «[text no disponible]» des de llavors. El que sí que situa Miquel és la
+        // setmana de la temporada, que és el rellotge de tot el sistema.
+        document.getElementById('hdr-fase').textContent = pla.setmanaActual != null
+          ? t('comu.temporada_setmana', { t: pla.temporadaActual, s: pla.setmanaActual })
+          : t('comu.temporada', { t: pla.temporadaActual });
       }
     })();
 

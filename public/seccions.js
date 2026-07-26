@@ -254,15 +254,16 @@ export async function decisions(main) {
   if (!pendents.length) cosM.append(el('p', { class: 'nota-peu', text: t('decisions.sense_motius') }));
   for (const j of pendents) {
     const sel = el('select', {}, ...['venda', 'despatx', 'promocio', 'altres'].map((m) => el('option', { value: m, text: t('motiu_baixa.' + m) })));
-    const imp = el('input', { type: 'number', size: '8', 'aria-label': t('decisions.import') });   // crea
     const origenSel = el('select', {}, el('option', { value: '', text: '—' }), ...(j.candidats_juvenils || []).map((c) => el('option', { value: c.id, text: c.nom })));
     const b = el('button', { type: 'button', class: 'b-xic', text: t('decisions.desa') });
     b.addEventListener('click', async () => {
-      await api('/api/motius', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.id, motiu: sel.value, import: imp.value ? Number(imp.value) : null, origen_juvenil_id: origenSel.value ? Number(origenSel.value) : null }) });
+      await api('/api/motius', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.id, motiu: sel.value, origen_juvenil_id: origenSel.value ? Number(origenSel.value) : null }) });
       location.reload();
     });
     cosM.append(el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
-      el('span', { class: 'mov-text', text: t('decisions.motiu_jugador', { nom: j.nom }) }), sel, imp, origenSel, b));
+      // Sense casella d'IMPORT: la venda ja no s'apunta enlloc (no entra a cap fórmula) i
+      // demanar-la era una porta oberta a un número que no anava a cap lloc.
+      el('span', { class: 'mov-text', text: t('decisions.motiu_jugador', { nom: j.nom }) }), sel, origenSel, b));
   }
   subM.append(cosM);
   duo.append(subM);

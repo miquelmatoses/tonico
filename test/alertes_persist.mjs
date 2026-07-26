@@ -105,3 +105,26 @@ await generaAlertes(db, 1);
 assert.equal(teMinima(), 0, 'amb 10 juvenils, l\'alerta del mínim es resol sola');
 
 console.log('OK — alertes: creació, idempotència, ignora preservada i resolució automàtica');
+
+// ── El REFRESC ha de portar TOT el contingut derivat, `diners` i `compte` inclosos ──
+// REGRESSIÓ REAL (vista a prod): l'UPDATE de refresc only refrescava missatge_clau,
+// parametres, urgencia i data. `diners` i `compte` van arribar després (migracions 068 i 070)
+// i ningú va tocar l'UPDATE, així que una alerta que JA EXISTIA es quedava amb els dos a NULL
+// per sempre. Conseqüències que Miquel va vore a la pantalla:
+//   · sense `compte`, la vista no pot triar la forma de plural → «[text no disponible]»
+//   · sense `diners`, l'import es pinta en cru (invariant 12)
+{
+  const fila = () => sqlite.prepare(
+    "SELECT missatge_clau, diners, compte FROM alertes WHERE missatge_clau LIKE 'alerta.compra%' AND estat!='resolta'").get();
+  // Es força una alerta amb els dos declarats i es buiden a mà, com estaven a prod.
+  const abans = fila();
+  assert.ok(abans, "el fixture ha de tindre l'alerta amb compte declarat: si no, este test no prova res");
+  {
+    sqlite.exec("UPDATE alertes SET diners=NULL, compte=NULL WHERE missatge_clau LIKE 'alerta.compra%';");
+    await generaAlertes(db, 1);
+    const despres = fila();
+    assert.ok(despres.compte, 'el refresc ha de tornar a posar `compte` (si no: «[text no disponible]»)');
+    assert.ok(despres.diners, 'i `diners`, o l\'import es pinta en cru (invariant 12)');
+  }
+}
+console.log('OK — el refresc d\'alertes no perd `diners` ni `compte`');
