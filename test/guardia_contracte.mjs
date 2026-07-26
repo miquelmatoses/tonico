@@ -18,6 +18,7 @@ import { souSostenible, caixaDisponible } from '../lib/economia.js';
 import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
 import { pesLloc, pressupostSou, nivellObjectiu } from '../lib/pesos.js';
 import { nivellActual, mancanca, exces, sobrecost, prioritat } from '../lib/mancanca.js';
+import { comptesNucli, maxPartits, construeixPlantilla } from '../lib/plantilla.js';
 
 const arrel = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { formules } = JSON.parse(readFileSync(join(arrel, 'formules.json'), 'utf8'));
@@ -180,6 +181,38 @@ const VERIFICADES = {
   'P5.prioritat': () => {
     assert.equal(prioritat(3, 1.5), 4.5, 'mancança × pes');
     assert.equal(prioritat(0, 1.5), 0);
+  },
+
+  // PAS 2/6 — qui es queda, derivat. Vocabulari del full: core/rotatiu/titular/cos.
+  'P2.n_core': () => assert.equal(comptesNucli([{ entrena: true, pct: 100 }, { entrena: true, pct: 100 },
+    { entrena: true, pct: 100 }, { entrena: true, pct: 50 }, { entrena: true, pct: 50 }], 2).n_core, 5),
+  'P2.n_rotatius': () => {
+    // SUMA(pos_A amb pct=100: partits_setmana − 1)
+    const slots = [{ entrena: true, pct: 100 }, { entrena: true, pct: 100 }, { entrena: true, pct: 100 },
+      { entrena: true, pct: 50 }, { entrena: true, pct: 50 }];
+    assert.equal(comptesNucli(slots, 2).n_rotatius, 3);
+    assert.equal(comptesNucli(slots, 1).n_rotatius, 0, 'amb un partit no calen rotatius');
+  },
+  'P2.max_partits': () => {
+    assert.equal(maxPartits('core', 50), 2, 'un lloc que no entrena al 100% es dobla');
+    assert.equal(maxPartits('core', 100), 1);
+    assert.equal(maxPartits('cos', 100), 2);
+    assert.equal(maxPartits('futur_entrenador', 100), 2);
+  },
+  'P6.venda': () => {
+    // venda = plantilla − retinguts, categoria SENCERA i sense marques dins.
+    const llocs = [{ lloc: 'mc', entrena: true, pct: 100, habilitat: 'creativitat' },
+      { lloc: 'por', entrena: false, habilitat: 'porteria' }];
+    const squad = [
+      { jugador_id: 1, creativitat: 9, porteria: 1, sou: 900, edat_anys: 20, edat_dies: 0 },
+      { jugador_id: 2, creativitat: 1, porteria: 9, sou: 800, edat_anys: 20, edat_dies: 0 },
+      { jugador_id: 3, creativitat: 1, porteria: 1, sou: 100, edat_anys: 20, edat_dies: 0 },
+    ];
+    const r = construeixPlantilla(squad, llocs, { A: 'creativitat', core_a_min: 0, edat_pic_venda: 25,
+      any_dies: 112, partits_setmana: 1, llocs_partit: 2 });
+    const tots = [...r.retinguts, ...r.venda].map((j) => j.jugador_id).sort();
+    assert.deepEqual(tots, [1, 2, 3], 'retinguts ∪ venda = plantilla');
+    assert.ok(r.venda.every((j) => !r.rol[j.jugador_id]), 'cap marca de retenció dins de venda');
   },
 
   // P10.valor casos (a)(b)(c): coincidixen amb valorHabilitat. El cas (d) NO — vore DIVERGENTS.
