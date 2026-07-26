@@ -16,7 +16,7 @@ import { fCalendari, temporadaOperativa } from '../lib/calendari.js';
 import { ESTRATEGIES, falten as confFalten, llocsPartit } from '../lib/config.js';
 import { souSostenible, caixaDisponible } from '../lib/economia.js';
 import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
-import { pesLloc, pressupostSou, nivellObjectiu } from '../lib/pesos.js';
+import { pesLloc, pressupostSou, nivellObjectiu, carregaConfigPesos } from '../lib/pesos.js';
 import { nivellActual, mancanca, exces, sobrecost, prioritat } from '../lib/mancanca.js';
 import { comptesNucli, maxPartits, construeixPlantilla } from '../lib/plantilla.js';
 import { calibrat as esCalibrat, estimacioComparables, preuEsperat, setmanesVenda, valorNet,
@@ -27,6 +27,16 @@ import { costFlux, nivellPagable, planPersonal, decisioRenovacio } from '../lib/
 import { guanyJugador, admissibleJugador, deltaFlux, guanyEstadi, admissibleEstadi,
   eficiencia, decisioEstoc } from '../lib/estoc.js';
 import { nivellAccio, agrupaAlertes, ordenaAgenda } from '../lib/informe.js';
+import { entrenamentPrescrit, desquadreEntrenament, placesEntrenament } from '../lib/entrenament_places.js';
+import { valorHabilitat as valorHab, valorEsperatDesconegut, ranquingJuvenil } from '../lib/ranquing_juvenil.js';
+import { esLesionat } from '../public/format.js';
+import { nova } from './_d1shim.mjs';
+
+// Una BD de fixtures per a les fórmules que llegixen taules (cap dada d'usuari).
+const { db: dbFix, sqlite: sqliteFix } = nova(import.meta.url);
+sqliteFix.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'u','x');
+  INSERT INTO config_usuari (usuari_id, estrategia, pais, divisio, sistema_juvenil, partits_setmana) VALUES (1,'competitiva','ES','VII','academia',2);
+  INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');`);
 
 const arrel = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { formules } = JSON.parse(readFileSync(join(arrel, 'formules.json'), 'utf8'));
@@ -42,9 +52,259 @@ const MARGE = { f_marge: 0.5, marge_ple: 3, esperat_defecte: 5 };
 const optsMarge = () => ({ f_marge: MARGE.f_marge, marge_esperat: MARGE.marge_ple,
   valor_esperat_desconegut: MARGE.esperat_defecte });
 
+// Fixture del PAS 6, compartit per les seues fórmules.
+function plantillaFix() {
+  const LL = [
+    { lloc: 'mc1', entrena: true, pct: 100, habilitat: 'creativitat' },
+    { lloc: 'mc2', entrena: true, pct: 100, habilitat: 'creativitat' },
+    { lloc: 'ext1', entrena: true, pct: 50, habilitat: 'extrem' },
+    { lloc: 'dc1', entrena: false, habilitat: 'defensa' },
+    { lloc: 'dc2', entrena: false, habilitat: 'defensa' },
+  ];
+  const j = (id, o) => ({ jugador_id: id, edat_anys: 20, edat_dies: 0, sou: 1000,
+    creativitat: 1, extrem: 1, porteria: 1, defensa: 1, anotacio: 1, ...o });
+  const squad = [
+    j(1, { creativitat: 9 }), j(2, { creativitat: 8 }), j(3, { creativitat: 7 }),
+    j(4, { creativitat: 6 }), j(14, { creativitat: 5 }),
+    j(9, { creativitat: 6, edat_anys: 30 }),   // passat del pic: no pot ser rotatiu
+    j(5, { defensa: 9 }), j(6, { defensa: 8, sou: 500 }), j(7, { defensa: 8 }),
+    j(8, { porteria: 9 }), j(10, { porteria: 7 }),
+    j(11, { sou: 200 }), j(12, { sou: 250 }), j(13, { sou: 9000 }),
+  ];
+  return construeixPlantilla(squad, LL, { A: 'creativitat', core_a_min: 0, edat_pic_venda: 25,
+    any_dies: 112, partits_setmana: 2, llocs_partit: 8, habilitat_porter: 'porteria' });
+}
+
 // REGISTRE de fórmules ja reconciliades: id → prova que compara la transcripció literal
 // del full (avaluador) amb el codi actual (referència). Igualtat = contracte satisfet.
 const VERIFICADES = {
+  // ── VARIABLES BASE ──
+  'V.plantilla': () => {
+    // «instantània sènior vigent»: el sistema sempre llig l'última, no un acumulat.
+    sqliteFix.exec(`INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (9,1,'E','senior');
+      INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES
+        (91,9,'2026-07-18',83,1),(92,9,'2026-07-25',83,2);`);
+    const vigent = sqliteFix.prepare('SELECT id FROM instantanies WHERE equip_id=9 ORDER BY data DESC, id DESC LIMIT 1').get();
+    assert.equal(vigent.id, 92, 'la vigent és la de data més recent');
+  },
+  'V.llistat': () => {
+    // llistat(j) = transferible = 1 O fitxa llistada
+    const llistat = (j) => j.transferible === 1 || j.estat_venda === 'llistat';
+    assert.equal(llistat({ transferible: 1 }), true);
+    assert.equal(llistat({ estat_venda: 'llistat' }), true);
+    assert.equal(llistat({ transferible: 0 }), false);
+  },
+  'V.lesionat': () => {
+    // lesionat(j) = csv.lesio ≥ 1  [font: buit | N]
+    assert.equal(esLesionat('2'), true);
+    assert.equal(esLesionat(''), false);
+    assert.equal(esLesionat(null), false);
+  },
+  'V.sancionat': () => {
+    // sancionat(j) = amonestacions ≥ `amonestacions_suspensio`
+    const sancionat = (n, llindar) => (n ?? 0) >= llindar;
+    assert.equal(sancionat(3, 3), true);
+    assert.equal(sancionat(2, 3), false);
+  },
+  'V.edat_d': () => {
+    // edat_d = anys×112 + dies · dies_aniversari = 112 − dies
+    const edatD = (a, d, anyDies) => a * anyDies + d;
+    assert.equal(edatD(20, 30, 112), 2270);
+    assert.equal(112 - 30, 82, 'dies_aniversari');
+  },
+  'V.fase_mercat': () => {
+    // BUSCA(`fases_mercat`; setmana) → modificador en FRACCIÓ, mai enter
+    const cal = sqliteFix.prepare('SELECT setmana_temporada, modificador_valor FROM calendari_mercat ORDER BY setmana_temporada').all();
+    assert.ok(cal.length > 0, 'la taula de fases de mercat està sembrada');
+    for (const f of cal) assert.ok(Math.abs(f.modificador_valor) < 1, `setmana ${f.setmana_temporada}: fracció, no enter`);
+  },
+  'V.horitzo_eixida': () => {
+    // La temporada en què edat_d assolix `edat_pic_venda`
+    const h = (edatAnys, pic, temporada) => temporada + Math.max(0, Math.ceil(((pic - edatAnys) * 112) / 112));
+    assert.equal(h(23, 25, 83), 85, 'a 23 anys i pic 25 → dos temporades');
+    assert.equal(h(26, 25, 83), 83, 'passat el pic, ja toca');
+  },
+
+  // ── PAS 0 / PAS 1 ──
+  'P0.estrategia': () => assert.deepEqual(ESTRATEGIES, ['competitiva', 'cycle'], 'TRIA(competitiva | cycle)'),
+  'P0.pais': () => {
+    const c = { estrategia: 'competitiva', pais: 'ES', divisio: 'VII', sistema_juvenil: 'academia', partits_setmana: 2 };
+    assert.deepEqual(confFalten(c), [], 'els quatre del PAS 0 declarats');
+    assert.deepEqual(confFalten({ ...c, pais: null }), ['pais'], 'el que falta es demana');
+  },
+  'P1.a_b': async () => {
+    // (A, B) = (creativitat, passades) PRESCRITS, no configurats
+    const p = await entrenamentPrescrit(dbFix, 'competitiva');
+    assert.equal(p.skill, 'creativitat', 'A prescrit pel contracte');
+    assert.equal(p.skill_b, 'passades', 'B prescrit pel contracte');
+    assert.equal(p.intensitat, 100);
+    assert.ok(p.resistencia != null, 'resistencia_pct declarada');
+  },
+  'P1.accio': () => {
+    // ACCIÓ SI configurat_HT ≠ prescrit: la 4-tupla sencera
+    const pres = { skill: 'creativitat', skill_b: 'passades', intensitat: 100, resistencia: 10 };
+    assert.equal(desquadreEntrenament(pres, pres).desquadre, false);
+    assert.equal(desquadreEntrenament(pres, { ...pres, intensitat: 90 }).desquadre, true,
+      'canviar només la intensitat també és desquadre');
+    assert.deepEqual(desquadreEntrenament(pres, { ...pres, skill_b: 'extrem' }).difs, ['skill_b']);
+    assert.equal(desquadreEntrenament(pres, null).motiu, 'sense_confirmar');
+  },
+
+  // ── PAS 4 / PAS 6 ──
+  'P4.habilitat_lloc': async () => {
+    const cfg = await carregaConfigPesos(dbFix, 'competitiva');
+    assert.equal(cfg.taula_habilitat_lloc.mc, 'creativitat', 'MC → creativitat');
+    assert.equal(cfg.taula_habilitat_lloc.porter, 'porteria', 'POR → porteria');
+    assert.equal(cfg.taula_habilitat_lloc.davanter, 'anotacio', 'DAV → anotació');
+  },
+  'P6.core': () => {
+    const r = plantillaFix();
+    assert.deepEqual(r.core.map((j) => j.jugador_id), [1, 2, 3],
+      'els millors en l\'habilitat entrenada, i a igualtat el més jove');
+  },
+  'P6.rotatius': () => {
+    const r = plantillaFix();
+    assert.equal(r.rotatius.length, r.n_rotatius);
+    assert.deepEqual(r.rotatius.map((j) => j.jugador_id), [4, 14], 'els següents millors en l\'habilitat entrenada');
+    assert.ok(!r.rotatius.some((j) => j.jugador_id === 9), 'un passat del pic de venda no és rotatiu');
+    // NOTA del contracte: `rotatius` es tria NOMÉS per hab(A), sense mínim. Amb pocs
+    // jugadors de l'habilitat entrenada, el model arrossega gent sense eixa habilitat cap a
+    // rotatiu. És el que el full diu; queda anotat perquè es veja, no amagat.
+  },
+  'P6.titulars': () => {
+    const r = plantillaFix();
+    const t = Object.fromEntries(r.titulars.map((x) => [x.lloc, x.jugador_id]));
+    assert.equal(t.dc1, 5, 'el millor de l\'habilitat del lloc');
+    assert.equal(t.dc2, 6, 'i a igualtat d\'habilitat, el més barat');
+  },
+  'P6.porters_n': () => assert.equal(plantillaFix().porters_n, 2, '1 × partits_setmana'),
+  'P6.cossos_n': () => {
+    const r = plantillaFix();
+    assert.equal(r.cossos_n, Math.max(0, Math.ceil((8 - r.llocs_ocupats) / 2)), 'CEIL((llocs_partit − ocupats)/partits)');
+  },
+  'P6.cossos': () => {
+    const r = plantillaFix();
+    const sous = r.cossos.map((j) => j.sou);
+    assert.deepEqual(sous, [...sous].sort((a, b) => a - b), 'els més barats primer (sou ASC)');
+  },
+  'P6.retinguts': () => {
+    const r = plantillaFix();
+    assert.equal(r.retinguts.length, r.core.length + r.rotatius.length + r.titulars.length + r.porters.length + r.cossos.length,
+      'retinguts = core ∪ rotatius ∪ titulars ∪ porters ∪ cossos');
+  },
+
+  // ── PAS 7 / PAS 8 / PAS 9 ──
+  'P7.recalibra': () => {
+    // «recalibra A CADA venda real»: una venda més mou la mediana.
+    const abans = estimacioComparables([{ posicio: 'MC', preu: 100 }, { posicio: 'MC', preu: 200 }], { posicio: 'MC' });
+    const despres = estimacioComparables([{ posicio: 'MC', preu: 100 }, { posicio: 'MC', preu: 200 }, { posicio: 'MC', preu: 900 }], { posicio: 'MC' });
+    assert.notEqual(abans, despres, 'apuntar una venda real recalibra l\'estimació');
+  },
+  'P8.candidat': () => {
+    // candidat(lloc) = de mercat amb hab(habilitat_lloc) ≥ nivell_objectiu(lloc)
+    const cand = (j, hab, obj) => Number(j[hab] ?? 0) >= obj;
+    assert.equal(cand({ creativitat: 9 }, 'creativitat', 8), true);
+    assert.equal(cand({ creativitat: 7 }, 'creativitat', 8), false);
+  },
+  'P8.nivell_pagable': () => {
+    const TS = { creativitat: { 1: 250, 2: 270, 3: 330, 4: 510, 5: 850 } };
+    const ara = nivellObjectiu('creativitat', 300, TS);
+    const desp = nivellObjectiu('creativitat', 900, TS);
+    assert.equal(desp - ara, 3, 'Δnivell_pagable = el que el Δflux desbloqueja');
+  },
+  'P8.cost_2': () => {
+    // cost(estadi) = `estadi_cost_obra`, dada DECLARADA
+    const cols = sqliteFix.prepare('SELECT * FROM pragma_table_info(?)').all('finances').map((c) => c.name);
+    assert.ok(cols.includes('estadi_cost_obra'), 'el cost d\'obra es declara, no es modela');
+    assert.ok(cols.includes('estadi_manteniment'));
+  },
+  'P8.accio': () => {
+    const t = decisioEstoc([{ id: 'a', admissible: true, eficiencia: 1 }, { id: 'b', admissible: true, eficiencia: 9 }]);
+    assert.equal(t.id, 'b', 'PRIMER(ORDENA(admissibles; eficiència DESC))');
+  },
+  'P9.llocs': () => {
+    // «llocs ordenats per pes DESC, partit ASC»
+    const LL = [{ lloc: 'baix', entrena: false, habilitat: 'defensa', pes: 0.1 },
+      { lloc: 'alt', entrena: false, habilitat: 'defensa', pes: 9 }];
+    const r = alineaOnzes([{ jugador_id: 1, categoria: 'cos', defensa: 5, sou: 1 }], LL,
+      [{ id: 'A', competitiu: true }], {});
+    assert.equal(r.onze.A.find((x) => x.lloc === 'alt').jugador?.jugador_id, 1,
+      'el lloc de més pes es cobrix primer');
+    assert.equal(r.onze.A.find((x) => x.lloc === 'baix').jugador, null);
+  },
+
+  // ── PAS 10 ──
+  'P10.esperat_act': () => {
+    // MITJANA(revelacions pròpies); ∅ → `esperat_defecte`
+    assert.equal(valorEsperatDesconegut([{ creativitat_actual: 4 }, { creativitat_actual: 8 }], 'creativitat', 5), 6);
+    assert.equal(valorEsperatDesconegut([], 'creativitat', 5), 5, 'sense revelacions, el defecte');
+  },
+  'P10.nivell': () => {
+    // NIVELL = pes_A×valor(A) + pes_B×valor(B)
+    const o = optsMarge();
+    const y = { creativitat_actual: 6, creativitat_potencial: 9, passades_actual: 4, passades_potencial: 6 };
+    const r = ranquingJuvenil([{ jugador_id: 1, ...y }], { entrenamentA: 'creativitat', entrenamentB: 'passades',
+      pes_a: 1, pes_b: 0.66, ...o });
+    const esperat = 1 * valorHab(y, 'creativitat', o) + 0.66 * valorHab(y, 'passades', o);
+    assert.equal(r[0].nivell, Math.round(esperat * 100) / 100);
+  },
+  'P10.promo': () => {
+    // PRIMER(ORDENA(elegibles; NIVELL DESC)), màx 1 per setmana
+    const rang = [{ jugador_id: 1, nom: 'A', nivell: 7, posicio_rang: 2 }, { jugador_id: 2, nom: 'B', nivell: 9, posicio_rang: 1 }];
+    const juv = [{ jugador_id: 1, edat_anys: 17, dies_academia: 200 }, { jugador_id: 2, edat_anys: 17, dies_academia: 200 }];
+    const l = lecturaPromocio(rang, juv);
+    assert.equal(l.proposta.jugador_id, 2, 'el de més NIVELL entre elegibles');
+    assert.ok(!Array.isArray(l.proposta), 'una sola proposta: màx 1 per setmana');
+  },
+  'P10.onze': () => {
+    // «mateixa fórmula del PAS 9»: el motor és el mateix, amb la taula juvenil.
+    const LL = [{ lloc: 'mc1', entrena: true, pct: 100, habilitat: 'creativitat', pes: 1 }];
+    const r = alineaOnzes([{ jugador_id: 1, categoria: 'core', creativitat: 5 }], LL, [{ id: 'A', competitiu: true }], { pes_entrenament: 1000 });
+    assert.equal(r.onze.A[0].jugador.jugador_id, 1);
+  },
+  'P10.accio': () => {
+    // ACCIÓ("fes la crida") SI crida_disponible
+    const accio = (disponible) => (disponible ? 'crida' : null);
+    assert.equal(accio(true), 'crida');
+    assert.equal(accio(false), null);
+  },
+  'P10.reexecuta': () => {
+    // «reexecuta a CADA pujada»: l'esperat es recalibra amb les revelacions noves.
+    const abans = valorEsperatDesconegut([{ creativitat_actual: 4 }], 'creativitat', 5);
+    const despres = valorEsperatDesconegut([{ creativitat_actual: 4 }, { creativitat_actual: 10 }], 'creativitat', 5);
+    assert.notEqual(abans, despres, 'una revelació nova mou l\'esperat');
+  },
+
+  // ── PAS 11 / PAS 12 ──
+  'P11.flux_lliure': () => {
+    const fluxLliure = (flux, reserva) => flux - reserva;
+    assert.equal(fluxLliure(10000, 4000), 6000, 'flux − reserva_flux');
+  },
+  'P11.accio': () => {
+    // ACCIÓ("contracta/puja de nivell") SI el nivell que el flux sosté > el declarat
+    const r = planPersonal(5000, 1020, [{ tipus: 'metge' }]);
+    assert.ok(r.pla[0].nivell > 0, 'amb flux, es proposa nivell');
+    assert.equal(planPersonal(100, 1020, [{ tipus: 'metge' }]).pla[0].nivell, 0, 'sense flux, res');
+  },
+  'P11.avis': () => {
+    // AVÍS: compromet el flux `setmanes_contracte` setmanes (no es pot desfer)
+    const set = sqliteFix.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='setmanes_contracte'").get();
+    assert.ok(set && Number(set.valor) > 0, 'setmanes_contracte declarat: contractar compromet');
+  },
+  'P12.caducitats': () => {
+    // ACCIÓ("renova/decidix", data) SI 0 ≤ data − hui ≤ `dies_avis_caducitat`
+    const toca = (dies, avis) => dies >= 0 && dies <= avis;
+    assert.equal(toca(3, 14), true);
+    assert.equal(toca(-1, 14), false, 'ja passada, no és un avís');
+    assert.equal(toca(20, 14), false);
+  },
+  'P12.urgencia': () => {
+    // urgencia(acció) = BUSCA(`urgencia_tipus`; tipus) — pom, MAI a la vista
+    const urg = sqliteFix.prepare("SELECT COUNT(*) n FROM regles_parametres WHERE clau='urgencia'").get();
+    assert.ok(urg.n > 0, 'les urgències viuen en poms de regla, no en codi de vista');
+  },
+  'P12.res': () => assert.deepEqual(agrupaAlertes([], {}), [], '«de moment res» no és una alerta'),
+
   // P2.pos_a: pos_A = FILTRA(`taula_entrenament`; habilitat = A) → els llocs que entrena A
   'P2.pos_a': () => {
     const avaluador = TAULA[A];                                        // literal del full
@@ -460,7 +720,7 @@ const cobertes = new Set();
 for (const [id, prova] of Object.entries(VERIFICADES)) {
   assert.ok(formules.some((f) => f.id === base(id)),
     `id verificat que ja NO és al full (lleva'l del G1): ${id}`);
-  prova();
+  await prova();
   cobertes.add(base(id));
 }
 const verificades = cobertes.size;

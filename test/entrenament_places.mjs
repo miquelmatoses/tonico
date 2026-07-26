@@ -68,12 +68,17 @@ console.log('OK — motor d\'entrenament sènior general: places, %, cobertura i
                INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');`);
   // Per defecte: el que prescriu la fase (creativitat) → MC 100 / extrem 50.
   const def = await entrenamentEfectiu(db, 1);
-  assert.equal(def.skill, 'creativitat', 'per defecte, l\'entrenament de la fase');
+  // v3 (PAS 1): l'entrenament és PRESCRIPCIÓ, no configuració. Ix dels poms del contracte
+  // (creativitat + passades), no d'una fase ni d'un override del pla.
+  assert.equal(def.skill, 'creativitat', 'A prescrit');
+  assert.equal(def.skill_b, 'passades', 'B prescrit');
+  assert.equal(def.intensitat, 100);
   assert.deepEqual(def.places, { mc: 100, extrem: 50 });
-  // L'usuari canvia a defensa → la derivació canvia sola.
-  sqlite.prepare("UPDATE plans SET parametres=? WHERE usuari_id=1").run(JSON.stringify({ entrenament_senior: 'defensa' }));
+  // Canviar la prescripció (el contracte) sí que canvia la derivació; un «override del
+  // pla» ja no existix.
+  sqlite.prepare("UPDATE plantilles_parametres SET valor='defensa' WHERE plantilla='competitiva' AND clau='entrenament_a'").run();
   const ov = await entrenamentEfectiu(db, 1);
-  assert.equal(ov.skill, 'defensa', 'l\'override del pla mana');
+  assert.equal(ov.skill, 'defensa', 'canviar la prescripció canvia les places');
   assert.deepEqual(ov.places, { defensa: 100 }, 'defensa → només defensa 100 (cap 50)');
 }
 console.log('OK — l\'override entrenament_senior canvia la derivació per BD');

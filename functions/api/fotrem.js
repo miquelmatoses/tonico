@@ -2,7 +2,7 @@
 // projecció d'aterratge, avaluació de crida) + decisions; POST fixa una decisió.
 import { carregaAncora } from './pujar.js';
 import { vistaJuvenil } from '../../lib/fotrem.js';
-import { entrenamentFase } from '../../lib/entrenament.js';
+import { entrenamentPrescrit } from '../../lib/entrenament_places.js';
 import { recomanaJoc } from '../../lib/juvenil.js';
 import { alineaJuvenil } from '../../lib/alineacio_juvenil.js';
 import { ranquingJuvenil, lecturaPromocio } from '../../lib/ranquing_juvenil.js';
@@ -12,7 +12,9 @@ export async function onRequestGet({ env, data }) {
   const pla = await env.DB.prepare('SELECT plantilla, fase_actual, parametres FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
   const llindars = pla ? JSON.parse((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='crida_llindars'").bind(pla.plantilla).first())?.valor || 'null') : null;
   // Pipeline de la fase (habilitat principal/secundària que entrena la fàbrica).
-  const pipeline = pla ? await entrenamentFase(env.DB, pla.plantilla, pla.fase_actual) : null;
+  const pres = pla ? await entrenamentPrescrit(env.DB, pla.plantilla) : null;
+  // El pipeline juvenil llig la PRESCRIPCIÓ del contracte (PAS 1), no una fase.
+  const pipeline = pres && { principal: pres.skill, secundari: pres.skill_b };
   const entrenamentJuvenil = (pla?.parametres ? JSON.parse(pla.parametres).entrenament_juvenil : null) ?? null;
 
   const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id=? AND tipus='juvenil'").bind(data.usuari.id).first();

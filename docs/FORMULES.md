@@ -244,10 +244,10 @@ reexecuta el PAS a CADA pujada (revelacions recalibren esperat_act)
 ## PAS 11 — PERSONAL (bucle de FLUX; el paral·lel del PAS 8)
 
 ```
-El personal consumix FLUX (sou setmanal), no estoc. Tot el personal cobra igual siga
-quin siga el tipus: només compta el NIVELL. Per tant no es compara eficiència entre
-tipus — es seguix una PRIORITAT fixa i cada tipus s'emporta el nivell més alt que el
-flux encara sostinga.
+   [El personal consumix FLUX (sou setmanal), no estoc. Tot el personal cobra igual
+    siga quin siga el tipus: només compta el NIVELL. Per tant no es compara eficiència
+    entre tipus — es seguix una PRIORITAT fixa i cada tipus s'emporta el nivell més alt
+    que el flux encara sostinga.]
 
 cost_flux(nivell) = `staff_cost_base` × 2^(nivell−1)
                     [1.020 · 2.040 · 4.080 · 8.160 · 16.320]

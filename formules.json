@@ -1158,54 +1158,6 @@
       "taules": []
     },
     {
-      "id": "P11.el",
-      "pas": "P11",
-      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
-      "clau": "El",
-      "linia": "El personal consumix FLUX (sou setmanal), no estoc. Tot el personal cobra igual siga",
-      "entrades": [
-        "sou"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P11.quin",
-      "pas": "P11",
-      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
-      "clau": "quin",
-      "linia": "quin siga el tipus: només compta el NIVELL. Per tant no es compara eficiència entre",
-      "entrades": [
-        "NIVELL",
-        "eficiència",
-        "tipus"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P11.tipus",
-      "pas": "P11",
-      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
-      "clau": "tipus",
-      "linia": "tipus — es seguix una PRIORITAT fixa i cada tipus s'emporta el nivell més alt que el",
-      "entrades": [
-        "nivell"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P11.flux",
-      "pas": "P11",
-      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
-      "clau": "flux",
-      "linia": "flux encara sostinga.",
-      "entrades": [],
-      "poms": [],
-      "taules": []
-    },
-    {
       "id": "P11.cost_flux",
       "pas": "P11",
       "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
@@ -1252,8 +1204,7 @@
       "clau": "nivell",
       "linia": "nivell(tipus) = MAX(n : cost_flux_acumulat(fins a tipus, n) ≤ flux_lliure)",
       "entrades": [
-        "flux_lliure",
-        "tipus"
+        "flux_lliure"
       ],
       "poms": [],
       "taules": []
@@ -1266,8 +1217,7 @@
       "linia": "ACCIÓ(\"contracta/puja de nivell\", tipus, nivell, cost_flux)  SI nivell(tipus) > declarat",
       "entrades": [
         "cost_flux",
-        "nivell",
-        "tipus"
+        "nivell"
       ],
       "poms": [],
       "taules": []
@@ -1313,9 +1263,7 @@
       "pasTitol": "INFORME I AGENDA",
       "clau": "urgencia",
       "linia": "urgencia(acció) = BUSCA(`urgencia_tipus`; tipus(acció))      [pom; MAI a la vista]",
-      "entrades": [
-        "tipus"
-      ],
+      "entrades": [],
       "poms": [],
       "taules": [
         "urgencia_tipus"
@@ -1343,7 +1291,6 @@
       "clau": "alertes",
       "linia": "alertes = AGRUPA(ACCIONS amb data = HUI; tipus) ORDENA per urgencia DESC",
       "entrades": [
-        "tipus",
         "urgencia"
       ],
       "poms": [],
