@@ -88,5 +88,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/065_estoc_v3.sql'));
   sqlite.exec(src('../schema/066_informe_v3.sql'));
   sqlite.exec(src('../schema/067_prescripcio_v3.sql'));
+  sqlite.exec(src('../schema/068_alerta_diners.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

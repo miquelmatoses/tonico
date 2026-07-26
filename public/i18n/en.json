@@ -73,7 +73,6 @@
   "esta_setmana.base": "Report on the snapshot from {data}.",
   "esta_setmana.no_revisat": "Look boss, this may be worked out with old data or settings. Do a review and I'll bring it up to date.",
   "esta_setmana.regenera": "Do a review",
-  "esta_setmana.estat_pla": "Season T{temporada} · phase {fase}.",
   "esta_setmana.alineacio_resum": "This week's lineup: {entrenen}/{total} trainees at 100%.",
   "esta_setmana.veure_alineacio": "See the lineup",
   "esta_setmana.sense_dades": "I've no data for this week yet, boss. Upload the CSV and I'll get you the report.",
@@ -564,5 +563,7 @@
   "vendes.eixida_despatxar": "Release them",
   "vendes.eixida_un_euro": "Put them at €1",
   "pujada.fitxer_buit": "«{nom}» is empty. Export it again from Hattrick and try once more.",
-  "pujada.no_es_csv": "That file doesn't look like the Hattrick export: I can't find the columns. Check it's the squad CSV and not another one."
+  "pujada.no_es_csv": "That file doesn't look like the Hattrick export: I can't find the columns. Check it's the squad CSV and not another one.",
+  "esta_setmana.sub": "What to do today, and nothing else.",
+  "esta_setmana.estat": "Season {temporada} · {estrategia} strategy"
 }

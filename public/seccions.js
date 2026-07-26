@@ -107,9 +107,15 @@ export async function esta_setmana(main) {
       el('p', {}, el('a', { href: '#pujada', text: t('esta_setmana.a_pujar') }))));
     return;
   }
+  // El v3 no té «fase» del pla (va caure amb el pla per temporades): la capçalera diu la
+  // temporada i l'estratègia activa, que és el que el contracte reconeix.
+  const conf = await opc(api('/api/config'));
   const pla = await opc(api('/api/pla'));
   const trossos = [`${t('esta_setmana.base', { data: instantania.data })}`];
-  if (pla && !pla.error && pla.temporadaActual != null) trossos.push(t('esta_setmana.estat_pla', { temporada: pla.temporadaActual, fase: t('fase.' + pla.fase_actual) }));
+  if (pla && !pla.error && pla.temporadaActual != null) {
+    trossos.push(t('esta_setmana.estat', { temporada: pla.temporadaActual,
+      estrategia: conf?.config ? t('estrategia.' + conf.config.estrategia) : '—' }));
+  }
   const capçalera = hero(trossos.join(' · '));
 
   // KPIs derivats (res decoratiu): accions de hui i línies d'agenda.
@@ -145,8 +151,13 @@ export async function esta_setmana(main) {
 
   // Els paràmetres monetaris de les alertes (números crus des de les regles) es
   // formaten ací, al render — les regles no barregen presentació amb lògica.
-  const DINERS_ALERTA = new Set(['pressupost', 'objectiu', 'projectada', 'falta', 'ingres', 'sou', 'sou_total']);
-  const ambDiners = (par) => { const o = { ...par }; for (const k of DINERS_ALERTA) if (typeof o[k] === 'number') o[k] = diners(o[k]); return o; };
+  // Les unitats les DECLARA l'avaluador (`diners` a l'alerta), no les endevina la vista pel
+  // nom del paràmetre. Endevinar-les formatava «objectiu: 8 jugadors» com si fóra un import.
+  const ambDiners = (par, claus) => {
+    const o = { ...par };
+    for (const k of (claus || [])) if (typeof o[k] === 'number') o[k] = diners(o[k]);
+    return o;
+  };
   if (alertes.length) {
     const graella = el('ul', { class: 'targetes' });
     for (const a of alertes) {
@@ -156,7 +167,7 @@ export async function esta_setmana(main) {
         el('div', { class: 'targeta-cap' },
           el('span', { class: 'tag', text: t('urgencia.' + niv) }),
           el('span', { class: 'targeta-nom', text: par.nom || t('esta_setmana.accio') })),
-        el('p', { text: t(a.missatge_clau, ambDiners(par)) }));
+        el('p', { text: t(a.missatge_clau, ambDiners(par, a.diners)) }));
       const accions = el('div', { class: 'targeta-accions' });
       for (const [estatNou, clau, cls] of [['vista', 'esta_setmana.vista', 'b-prim'], ['ignorada', 'esta_setmana.ignora', 'b-sec']]) {
         const b = el('button', { type: 'button', class: cls, text: t(clau) });

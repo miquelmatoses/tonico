@@ -24,8 +24,10 @@ assert.equal(c.n_core, 5, 'N_core = els llocs que entrenen (3 MC + 2 extrems)');
 assert.equal(c.n_rotatius, 3, 'N_rotatius = els llocs al 100% × (partits − 1) = 3×1');
 assert.deepEqual(comptesNucli([{ entrena: true, pct: 100 }], 1), { n_core: 1, n_rotatius: 0 },
   'amb un sol partit no calen rotatius');
-assert.deepEqual(comptesNucli([], null), { n_core: null, n_rotatius: null },
-  'sense partits_setmana no se suposa res');
+// N_core = COMPTA(pos_A): NO depén de partits_setmana. Només N_rotatius en depén, i sense
+// declarar-lo torna null (no 0: «no ho sé» no és «cap»).
+assert.deepEqual(comptesNucli([{ entrena: true, pct: 100 }, { entrena: true, pct: 50 }], null),
+  { n_core: 2, n_rotatius: null }, 'sense partits_setmana, N_core sí i N_rotatius no');
 
 // max_partits: un lloc al 50% es dobla; un cos també; un titular del 100%, no.
 assert.equal(maxPartits('core', 50), 2);

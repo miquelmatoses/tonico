@@ -476,8 +476,15 @@ const VERIFICADES = {
   },
 
   // PAS 2/6 — qui es queda, derivat. Vocabulari del full: core/rotatiu/titular/cos.
-  'P2.n_core': () => assert.equal(comptesNucli([{ entrena: true, pct: 100 }, { entrena: true, pct: 100 },
-    { entrena: true, pct: 100 }, { entrena: true, pct: 50 }, { entrena: true, pct: 50 }], 2).n_core, 5),
+  'P2.n_core': () => {
+    const slots = [{ entrena: true, pct: 100 }, { entrena: true, pct: 100 },
+      { entrena: true, pct: 100 }, { entrena: true, pct: 50 }, { entrena: true, pct: 50 }];
+    assert.equal(comptesNucli(slots, 2).n_core, 5, 'N_core = COMPTA(pos_A)');
+    // N_core NO depén de partits_setmana: el full no l'hi lliga. Fer-ho buidava el core
+    // sencer quan el PAS 0 estava incomplet.
+    assert.equal(comptesNucli(slots, null).n_core, 5, 'N_core no depén del PAS 0');
+    assert.equal(comptesNucli(slots, null).n_rotatius, null, 'N_rotatius sí que en depén');
+  },
   'P2.n_rotatius': () => {
     // SUMA(pos_A amb pct=100: partits_setmana − 1)
     const slots = [{ entrena: true, pct: 100 }, { entrena: true, pct: 100 }, { entrena: true, pct: 100 },
@@ -571,6 +578,12 @@ const VERIFICADES = {
     assert.equal(sanc.onze.A[0].jugador, null, 'sancionat: fora de la lliga');
     assert.equal(sanc.onze.B[0].jugador.jugador_id, 1, 'però juga l\'altre partit');
     assert.equal(compatible({ categoria: 'porter' }, { habilitat: 'defensa' }), false);
+    // «j ∈ retinguts»: el sobrant NO s'alinea. Sense este filtre, un porter en venda
+    // acabava ocupant un lloc de camp.
+    const sobrant = alineaOnzes([{ ...base, categoria: 'venda' }], LL, P, {});
+    assert.equal(sobrant.onze.A[0].jugador, null, 'un jugador en venda no entra a l\'onze');
+    const retingut = alineaOnzes([{ ...base, categoria: 'cos' }], LL, P, {});
+    assert.equal(retingut.onze.A[0].jugador?.jugador_id, 1, 'un retingut sí');
   },
   'P9.jugador': () => {
     // ORDENA(valor DESC, partits_assignats ASC, sou ASC)

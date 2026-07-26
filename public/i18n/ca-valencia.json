@@ -73,7 +73,6 @@
   "esta_setmana.base": "Informe sobre la instantània del {data}.",
   "esta_setmana.no_revisat": "Ei cap, açò pot estar calculat amb dades o configuració d'abans. Passa revista i t'ho deixe al dia.",
   "esta_setmana.regenera": "Passa revista",
-  "esta_setmana.estat_pla": "Temporada T{temporada} · fase {fase}.",
   "esta_setmana.alineacio_resum": "Alineació d'esta setmana: {entrenen}/{total} del nucli al 100%.",
   "esta_setmana.veure_alineacio": "Vore l'alineació",
   "esta_setmana.sense_dades": "Encara no tinc dades d'esta setmana, cap. Puja el CSV i te'n passe l'informe.",
@@ -564,5 +563,7 @@
   "vendes.eixida_despatxar": "Despatxa'l",
   "vendes.eixida_un_euro": "Posa'l a 1 €",
   "pujada.fitxer_buit": "«{nom}» està buit. Torna a exportar-lo de Hattrick i prova de nou.",
-  "pujada.no_es_csv": "Eixe fitxer no sembla l'export de Hattrick: no hi trobe les columnes. Comprova que és el CSV de la plantilla i no un altre."
+  "pujada.no_es_csv": "Eixe fitxer no sembla l'export de Hattrick: no hi trobe les columnes. Comprova que és el CSV de la plantilla i no un altre.",
+  "esta_setmana.sub": "El que toca fer hui, i res més.",
+  "esta_setmana.estat": "Temporada {temporada} · estratègia {estrategia}"
 }
