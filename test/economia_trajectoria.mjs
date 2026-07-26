@@ -34,22 +34,18 @@ assert.equal(REGLES.ALR_TRAJECTORIA_INFLEXIO({ economia: eco }, { urgencia: 70 }
 // Si arriba, no dispara.
 assert.equal(REGLES.ALR_TRAJECTORIA_INFLEXIO({ economia: { projeccio: { ...eco.projeccio, arriba: true } } }, { urgencia: 70 }).length, 0);
 
-// Punt 1a/1b: el NEGOCI (vendes actives + cadència de fornades) entra a la projecció.
-sqlite.exec(`
-  INSERT INTO vendes (jugador_id, usuari_id, preu_eixida, estat) VALUES (1,1,200000,'llistat');
-  INSERT INTO plans_temporades (pla_id, temporada, accions_previstes) VALUES ((SELECT id FROM plans WHERE usuari_id=1), 85, '{"eixides_fornada":["A1"]}');
-`);
+// v3: el negoci que entra a la projecció són les VENDES actives (les fornades han caigut).
+sqlite.exec("INSERT INTO vendes (jugador_id, usuari_id, preu_eixida, estat) VALUES (1,1,200000,'llistat');");
 const eco3 = await economia(db, 1);
 assert.equal(eco3.projeccio.vendes_previstes, 200000, 'venda activa amb preu d\'eixida');
-assert.equal(eco3.projeccio.fornades_previstes, 300000, 'una fornada del pla que ix abans de la inflexió × pom');
-assert.equal(eco3.projeccio.ingres_estimat, 500000);
-assert.equal(eco3.projeccio.caixa_projectada, 100000 + (-1000) * 80 + 500000, 'el negoci entra a la caixa projectada');
-assert.equal(eco3.projeccio.arriba, true, 'amb vendes, SÍ arriba a l\'objectiu');
+assert.equal(eco3.projeccio.ingres_estimat, 200000);
+assert.equal(eco3.projeccio.caixa_projectada, 100000 + (-1000) * 80 + 200000, 'el negoci entra a la caixa projectada');
+
 assert.equal(eco3.projeccio.sense_dades_venda, false, 'hi ha fitxa de venda → no informatiu');
 // L'alerta alarmista declara la seua base (ingressos estimats).
 const a3 = REGLES.ALR_TRAJECTORIA_INFLEXIO({ economia: { projeccio: { ...eco3.projeccio, arriba: false } } }, { urgencia: 70 });
 assert.equal(a3[0].missatge_clau, 'alerta.trajectoria_inflexio');
-assert.equal(a3[0].parametres.ingres, 500000, 'la base declarada = ingressos estimats');
+assert.equal(a3[0].parametres.ingres, 200000, 'la base declarada = ingressos estimats');
 
 // Caixa derivada quan no hi ha declaració real (fallback a SUM de moviments).
 sqlite.exec("DELETE FROM finances; INSERT INTO transaccions (usuari_id, tipus, import, data) VALUES (1,'venda',7000,'2026-07-25');");

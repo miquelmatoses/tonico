@@ -23,7 +23,7 @@
     const HAB = ['porteria', 'defensa', 'creativitat', 'extrem', 'passades', 'anotacio', 'pilota_aturada'];
     const SIGLA = { porteria: 'PO', defensa: 'DF', creativitat: 'CR', extrem: 'EX', passades: 'PA', anotacio: 'AN', pilota_aturada: 'PP' };
 
-    const { jugador, instantanies, categories, fornada } = await api('/api/jugador?id=' + encodeURIComponent(id));
+    const { jugador, instantanies, categories } = await api('/api/jugador?id=' + encodeURIComponent(id));
     estat.remove();
 
     main.append(el('h1', { text: jugador.nom }));
@@ -34,7 +34,6 @@
       el('dt', { text: t('jugador.estat') }), el('dd', { text: jugador.estat }),
       el('dt', { text: t('jugador.data_alta') }), el('dd', { text: jugador.data_alta_club || '—' }),
       el('dt', { text: t('jugador.categoria_actual') }), el('dd', { text: actual ? t('categoria.' + actual.categoria) : '—' }),
-      el('dt', { text: t('jugador.fornada') }), el('dd', { text: fornada ? fornada.lletra : '—' }),
     );
     main.append(dl);
 

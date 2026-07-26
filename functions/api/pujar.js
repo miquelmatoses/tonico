@@ -45,7 +45,7 @@ export async function onRequestPost(context) {
   }
   if (resultats.length === 0) return json({ error: 'cap_fitxer' }, 400);
 
-  // Pipeline derivat sencer (classificació → fornades → alertes), regla d'or inclosa.
+  // Pipeline derivat sencer (classificació → alertes), regla d'or inclosa.
   const { classificacio, alertes } = await regeneraPipeline(env.DB, usuari.id);
   return json({ ok: true, resultats, classificacio, alertes });
 }

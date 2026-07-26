@@ -22,7 +22,7 @@ export async function onRequestPost({ request, env, data }) {
   }
   // Merge de paràmetres del pla (JSON) sense trepitjar la resta: capital, divisió
   // actual, tipus de setmana de partits (ab/un/copa), caducitat del Supporter, etc.
-  const MERGE = ['capital_objectiu', 'divisio_actual', 'tipus_setmana', 'supporter_caducitat', 'temporada_inflexio', 'entrenament_confirmat', 'entrenament_senior'];
+  const MERGE = ['capital_objectiu', 'divisio_actual', 'tipus_setmana', 'temporada_inflexio', 'entrenament_confirmat', 'entrenament_senior'];
   const aplicar = MERGE.filter((k) => cos[k] !== undefined);
   if (aplicar.length) {
     const row = await env.DB.prepare('SELECT parametres FROM plans WHERE id=?').bind(pla.id).first();

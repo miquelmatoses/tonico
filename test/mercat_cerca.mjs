@@ -39,20 +39,12 @@ assert.equal(REGLES.ALR_FINESTRA_MERCAT({ mercat: { depressio: true, finsDepress
 assert.equal(REGLES.ALR_FINESTRA_MERCAT({ mercat: { depressio: false, finsDepressio: 2 } }, p).length, 0, '3e: depressió a la vora és informatiu → fora de l\'informe (viu a Mercat)');
 assert.equal(REGLES.ALR_FINESTRA_MERCAT({ mercat: { depressio: false, finsDepressio: 5 } }, p).length, 0, 'depressió lluny → cap avís');
 
-// Punt 7.2: creuar amb el context de pla (nucli ple + cadència de fornades).
+// v3: amb el nucli PLE no hi ha res a comprar; amb buit i depressió, senyal de mercat barat.
 {
-  // A1 ix la T84 → la finestra de compra és la depressió de final de la T83.
-  const ple = { compra: { nucli_ple: true }, pla: { temporada_raw: 83, proxima_eixida: { temporada: 84, fornades: ['A1'] } } };
-  // Nucli ple + DEPRESSIÓ a la T83 → ALERTA FORTA (ara toca comprar la reposició).
-  assert.equal(REGLES.ALR_FINESTRA_MERCAT({ ...ple, mercat: { depressio: true } }, p)[0].missatge_clau, 'alerta.finestra_mercat_fornada');
-  // 3e: nucli ple + SENSE depressió (finestra futura) → informativa → FORA de l'informe (viu a Mercat).
-  assert.equal(REGLES.ALR_FINESTRA_MERCAT({ ...ple, mercat: { depressio: false, finsDepressio: 3 } }, p).length, 0, 'finestra prevista → fora de l\'informe');
-  // Un any abans (raw T82): la compra encara no és de hui → tampoc alerta.
-  assert.equal(REGLES.ALR_FINESTRA_MERCAT({ compra: { nucli_ple: true }, pla: { temporada_raw: 82, proxima_eixida: { temporada: 84, fornades: ['A1'] } }, mercat: { depressio: true } }, p).length, 0, 'finestra a més d\'una temporada → fora de l\'informe');
-  // Nucli ple + eixida LLUNY (T86, compra a final T85, encara a més d'un any) → res.
-  assert.equal(REGLES.ALR_FINESTRA_MERCAT({ compra: { nucli_ple: true }, pla: { temporada_raw: 83, proxima_eixida: { temporada: 86, fornades: ['A2'] } }, mercat: { depressio: true } }, p).length, 0);
-  // Nucli amb BUIT (no ple) + depressió → immediatesa (comprar ja), ignora el pla.
-  assert.equal(REGLES.ALR_FINESTRA_MERCAT({ ...ple, compra: { nucli_ple: false }, mercat: { depressio: true } }, p)[0].missatge_clau, 'alerta.finestra_mercat_ara');
+  const p = { urgencia: 58 };
+  assert.equal(REGLES.ALR_FINESTRA_MERCAT({ compra: { nucli_ple: true }, mercat: { depressio: true } }, p).length, 0, 'nucli ple → res');
+  assert.equal(REGLES.ALR_FINESTRA_MERCAT({ compra: { nucli_ple: false }, mercat: { depressio: true } }, p)[0].missatge_clau, 'alerta.finestra_mercat_ara');
+  assert.equal(REGLES.ALR_FINESTRA_MERCAT({ compra: { nucli_ple: false }, mercat: { depressio: false } }, p).length, 0, 'sense depressió → res');
 }
 
 console.log('OK — mercat: filtres de cerca segons buits i finestra de compra');

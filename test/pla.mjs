@@ -19,7 +19,7 @@ const ancora = await carregaAncora(db);
 const senior = readFileSync(new URL('../data/fixtures/players.csv', import.meta.url), 'utf8').replace(/\r/g, '').split('\n').filter((l) => l !== '').map((l) => l.split(','));
 
 await desar(db, 1, 'senior', modelSenior(senior, '2026-07-18'), ancora);
-await classificaEquip(db, 1, 1, 'fabrica');   // crea fornades A1 (ix T84), A2 (ix T86)
+await classificaEquip(db, 1, 1, 'fabrica');
 
 // Estat del pla
 const e = await estatPla(db, 1);
@@ -27,10 +27,9 @@ assert.equal(e.temporadaActual, 83, 'temporada competitiva actual = T83 (pretemp
 assert.equal(e.parametres.temporada_inflexio, 88);
 assert.equal(e.temporades.find((t) => t.temporada === 84).estat, 'futura');
 
-// Regles de fase: finestra de venda d'A1 (ix T84, a 1 temporada) sí; canvi de fase (T88) encara no
+// Regles de fase: canvi de fase (T88) encara no
 await generaAlertes(db, 1);
 const clau = (k) => sqlite.prepare('SELECT COUNT(*) n FROM alertes WHERE missatge_clau=?').get(k).n;
-assert.equal(clau('alerta.finestra_venda_fornada'), 1, 'finestra de venda d\'A1 (ix T84)');
 assert.equal(clau('alerta.canvi_fase'), 0, 'inflexió T88 encara lluny');
 
-console.log('OK — pla mestre: estat, temporada actual i regles de fase (finestra de venda, canvi de fase)');
+console.log('OK — pla mestre: estat, temporada actual i regla de canvi de fase');

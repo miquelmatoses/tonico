@@ -1,4 +1,4 @@
-// Tonico — economia (Fase 5): signe, caixa, marges per fornada, projecció i
+// Tonico — economia (Fase 5): signe, caixa, projecció i
 // alerta de transacció pendent. node test/economia.mjs
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -27,17 +27,13 @@ const ctx = (body, method = 'POST') => ({ request: new Request('http://t', { met
 await desar(db, 1, 'senior', modelSenior(senior, '2026-07-18'), ancora);
 await classificaEquip(db, 1, 1, 'fabrica');
 
-// Una venda d'un entrenable d'A1 → marge de la fornada A1
-const a1jugador = sqlite.prepare(`SELECT fj.jugador_id FROM fornades_jugadors fj JOIN fornades f ON f.id=fj.fornada_id WHERE f.lletra='A1' LIMIT 1`).get().jugador_id;
-await tx.onRequestPost(ctx({ tipus: 'venda', import: 200000, jugador_id: a1jugador, data: '2026-07-19' }));
+// Caixa i nòmina: una venda i una compra apuntades
+await tx.onRequestPost(ctx({ tipus: 'venda', import: 200000, data: '2026-07-19' }));
 await tx.onRequestPost(ctx({ tipus: 'compra', import: 50000, data: '2026-07-19' }));
 
 const e = await economia(db, 1);
 assert.equal(e.caixa, 150000, 'caixa = 200000 venda − 50000 compra');
-assert.ok(e.nomina > 0, 'nòmina setmanal automàtica des dels sous');   // 7a
-const a1 = e.margesFornada.find((m) => m.fornada === 'A1');
-assert.equal(a1.vendes, 200000);
-assert.equal(a1.marge, 200000);
+assert.ok(e.nomina > 0, 'nòmina setmanal automàtica des dels sous');
 assert.equal(e.projeccio.objectiu, 430000);
 assert.equal(e.projeccio.falta, 280000);
 
@@ -54,4 +50,4 @@ await tx.onRequestPost(ctx({ tipus: 'venda', import: 90000, jugador_id: foraId, 
 await generaAlertes(db, 1);
 assert.equal(pendent(), 0, 'apuntada la venda → alerta resolta');
 
-console.log('OK — economia: signe, caixa, marges per fornada, projecció i transacció pendent');
+console.log('OK — economia: signe, caixa, projecció i transacció pendent');

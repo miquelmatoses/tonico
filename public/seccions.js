@@ -313,7 +313,7 @@ export async function alineacio(main) {
   }
 }
 
-// ── 4. Plantilla sènior (amb override de categoria i fornada) ──
+// ── 4. Plantilla sènior (amb override de categoria) ──
 export async function plantilla(main) {
   capcalera(main, 4, 'plantilla');
   const ORDRE = ['entrenable', 'futur_entrenador', 'experiencia', 'nucli_competitiu', 'farciment', 'venda', 'alliberament'];
@@ -325,7 +325,7 @@ export async function plantilla(main) {
   // Especialitat + prima de mercat (G.14): a Venda, si l'especialitat és valuosa.
   const cellaEsp = (j, c) => el('td', { text: (j.especialitat || '—') + (j.especialitat && c === 'venda' && valorEsp.includes(j.especialitat) ? ' ' + t('plantilla.prima') : '') });
   // Una targeta per categoria, amb files denses (el disseny: xip de posició, nom,
-  // meta amb píndoles, punts, TSI, habilitats en monoespai i fornada).
+  // meta amb píndoles, punts, TSI i habilitats en monoespai).
   for (const c of ORDRE) {
     const grup = jugadors.filter((j) => j.categoria === c);
     if (!grup.length) continue;
@@ -339,9 +339,6 @@ export async function plantilla(main) {
       if (j.especialitat && c === 'venda' && valorEsp.includes(j.especialitat)) meta.append(el('span', { class: 'pill ok', text: t('plantilla.prima') }));
       if (esLesionat(j.lesio)) meta.append(el('span', { class: 'pill perill', text: t('comu.lesionat_durada', { n: duradaLesio(j.lesio) ?? '?' }) }));
       if (j.origen === 'manual') meta.append(el('span', { class: 'pill info', text: t('plantilla.manual') }));
-      const fornada = c === 'entrenable'
-        ? (() => { const inp = el('input', { type: 'text', size: '2', value: j.fornada || '', 'aria-label': t('plantilla.col_fornada') }); inp.addEventListener('change', () => api('/api/fornada', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.id, lletra: inp.value.trim() }) }).catch(() => {})); return inp; })()
-        : el('span', { text: j.fornada || '' });
       return el('div', { class: 'fila' },
         el('div', { class: 'fila-qui' },
           el('div', { class: posCls(j.posicio), text: j.posicio || '—' }),
@@ -349,7 +346,7 @@ export async function plantilla(main) {
         el('div', { class: 'punts', text: decimal(j.puntuacio) }),
         el('div', { class: 'tsi', text: 'TSI ' + (j.tsi ?? '—') }),
         el('div', { class: 'skills', text: hab(j) }),
-        el('div', { class: 'fornada' }, selCat, ' ', fornada));
+        el('div', { class: 'cel-cat' }, selCat));
     }, 1));
     main.append(tarja);
   }
@@ -652,17 +649,6 @@ export async function economia(main) {
   duo.append(cMov);
   main.append(duo);
 
-  if (e.margesFornada.length) {
-    const cM = card(t('economia.marges_titol'), e.margesFornada.length);
-    const g = el('div', { class: 'graella' });
-    for (const m of e.margesFornada) {
-      g.append(el('div', { class: 'graella-fila' }, el('b', { text: m.fornada }),
-        el('span', { text: `${diners(m.compres)} / ${diners(m.vendes)}` }),
-        el('span', { class: 'graella-val', text: diners(m.marge) })));
-    }
-    cM.append(cos(g));
-    main.append(cM);
-  }
 }
 
 function formFinances(main, e) {
@@ -778,16 +764,13 @@ function formEstructura(main, params) {
   if (params.divisio_actual) divisio.value = params.divisio_actual;
   const setmana = el('select', { 'aria-label': t('pla.tipus_setmana') }, ...['ab', 'un', 'copa'].map((x) => {
     const o = el('option', { value: x, text: t('pla.setmana_' + x) }); if ((params.tipus_setmana || 'ab') === x) o.setAttribute('selected', ''); return o; }));
-  const supporter = el('input', { type: 'date', 'aria-label': t('pla.supporter_caducitat') });
-  if (params.supporter_caducitat) supporter.value = params.supporter_caducitat;
   const b = el('button', { type: 'submit', class: 'b-prim', text: t('pla.desa') });
-  graella.append(el('label', {}, t('pla.divisio_actual'), divisio), el('label', {}, t('pla.tipus_setmana'), setmana),
-    el('label', {}, t('pla.supporter_caducitat'), supporter));
+  graella.append(el('label', {}, t('pla.divisio_actual'), divisio), el('label', {}, t('pla.tipus_setmana'), setmana));
   f.append(graella, b);
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     await api('/api/pla', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      divisio_actual: divisio.value || '', tipus_setmana: setmana.value, supporter_caducitat: supporter.value || '' }) });
+      divisio_actual: divisio.value || '', tipus_setmana: setmana.value }) });
     location.reload();
   });
   c.append(f); main.append(c);

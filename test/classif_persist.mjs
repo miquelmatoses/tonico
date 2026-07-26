@@ -30,12 +30,7 @@ assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM categories_jugador WHERE cat
 assert.equal(r1.autos, 25, 'primera pujada: els 25 jugadors reben categoria auto');
 assert.equal(r1.moviments, 0, 'primera pujada: ZERO moviments');
 assert.equal(r1.preguntes, 0, 'primera pujada: ZERO preguntes');
-assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM intercanvis").get().n, 0);
-// Fornades auto per horitzó d'eixida: A1 (19-21 → T84) = 2, A2 (17 → T86) = 6
-assert.equal(r1.fornades, 8, 'els 8 entrenables reben fornada auto');
-assert.deepEqual(
-  sqlite.prepare('SELECT f.lletra, COUNT(*) n FROM fornades_jugadors fj JOIN fornades f ON f.id=fj.fornada_id GROUP BY f.lletra ORDER BY f.lletra').all().map((x) => [x.lletra, x.n]),
-  [['A1', 2], ['A2', 6]]);
+
 
 // ── Pujada 2: un candidat fora dels 8 creix i supera el pitjor entrenable ──
 const files2 = files.map((c) => c.slice());
@@ -54,9 +49,6 @@ assert.equal(cat(idDe(nomReptador)), 'entrenable', 'el rival ENTRA sol (actua)')
 const x = sqlite.prepare("SELECT id, eixent_id, categoria_previa_entrant FROM intercanvis WHERE estat='executat'").get();
 assert.equal(x.categoria_previa_entrant, catAbans, 'guarda la categoria prèvia per desfer');
 assert.notEqual(cat(x.eixent_id), 'entrenable', 'el desplaçat ha eixit de la plaça');
-// Doctrina #4.1c: la fornada és unitat de VENDA → el desplaçat a venda CONSERVA la lletra.
-const fornDe = (jid) => sqlite.prepare('SELECT f.lletra FROM fornades_jugadors fj JOIN fornades f ON f.id=fj.fornada_id WHERE fj.jugador_id=?').get(jid)?.lletra;
-assert.ok(fornDe(x.eixent_id), 'el desplaçat a venda manté la seua lletra de fornada');
 
 // ── DESFÉS: restaura l'estat previ complet ──
 const ctx = { request: new Request('http://t/api/intercanvis', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: x.id, accio: 'desfer' }) }), env: { DB: db }, data: { usuari: { id: 1 } } };

@@ -62,9 +62,9 @@ const families = {
   // Columnes construïdes des d'arrays (t('prefix.' + k)):
   'personal': ['rol', 'tipus', 'nivell', 'sou', 'setmanes_contracte'],
   'fotrem': ['col_jugador', 'col_nivell', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_potencial', 'col_promocio', 'col_aterratge', 'col_estat'],
-  'plantilla': ['col_jugador', 'col_posicio', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_tsi', 'col_puntuacio', 'col_categoria', 'col_fornada'],
+  'plantilla': ['col_jugador', 'col_posicio', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_tsi', 'col_puntuacio', 'col_categoria'],
   'pla': ['col_temporada', 'col_divisio', 'col_mode', 'col_accions', 'col_estat'],
-  'economia': ['col_fornada', 'col_compres', 'col_vendes', 'col_marge', 'col_data', 'col_tipus', 'col_import', 'col_jugador', 'col_nota'],
+  'economia': ['col_compres', 'col_vendes', 'col_marge', 'col_data', 'col_tipus', 'col_import', 'col_jugador', 'col_nota'],
   'jugador': ['col_data', 'col_temporada', 'col_edat', 'col_tsi', 'col_sou', 'col_habilitats', 'col_pops', 'col_categoria', 'col_origen', 'col_puntuacio'],
 };
 for (const [prefix, vals] of Object.entries(families)) for (const v of vals) {

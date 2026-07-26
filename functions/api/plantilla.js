@@ -1,5 +1,5 @@
 // Tonico — vista de plantilla sènior: jugadors de l'última instantània amb la
-// seua categoria vigent (puntuació + justificació + origen) i la fornada.
+// seua categoria vigent (puntuació + justificació + origen).
 // La PUNTUACIÓ es DERIVA de la instantània actual i la config (no del valor desat
 // a categories_jugador, que pot ser ranci/null en desplaçats estables).
 import { temporadaOperativa } from '../../lib/calendari.js';
@@ -26,16 +26,13 @@ export async function onRequestGet({ env, data }) {
             ij.edat_anys, ij.edat_dies, ij.tsi, ij.sou, ij.experiencia, ij.lideratge,
             ij.lleialtat, ij.qualificacio_ultim_partit, ij.lesio,
             ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada,
-            c.categoria, c.puntuacio, c.justificacio, c.origen,
-            f.lletra AS fornada
+            c.categoria, c.puntuacio, c.justificacio, c.origen
        FROM instantanies_jugadors ij
        JOIN jugadors j ON j.id = ij.jugador_id
        LEFT JOIN (SELECT cj.jugador_id, cj.categoria, cj.puntuacio, cj.justificacio, cj.origen
                     FROM categories_jugador cj
                     JOIN (SELECT jugador_id, MAX(id) mid FROM categories_jugador GROUP BY jugador_id) m
                       ON cj.id = m.mid) c ON c.jugador_id = j.id
-       LEFT JOIN fornades_jugadors fj ON fj.jugador_id = j.id
-       LEFT JOIN fornades f ON f.id = fj.fornada_id
       WHERE ij.instantania_id = ?
       ORDER BY c.puntuacio DESC`
   ).bind(inst.id).all();

@@ -1,5 +1,5 @@
 // Tonico — fitxa de jugador (F1-C): identitat + historial d'instantànies amb
-// pops d'habilitat detectats, corba de TSI/sou, historial de categoria i fornada.
+// pops d'habilitat detectats, corba de TSI/sou i historial de categoria.
 const HABILITATS = ['porteria', 'defensa', 'creativitat', 'extrem', 'passades', 'anotacio', 'pilota_aturada'];
 
 export async function onRequestGet({ request, env, data }) {
@@ -33,11 +33,7 @@ export async function onRequestGet({ request, env, data }) {
     'SELECT categoria, origen, puntuacio, justificacio, data_assignacio FROM categories_jugador WHERE jugador_id = ? ORDER BY id'
   ).bind(id).all();
 
-  const fornada = await env.DB.prepare(
-    `SELECT f.lletra, fj.origen FROM fornades_jugadors fj JOIN fornades f ON f.id = fj.fornada_id WHERE fj.jugador_id = ?`
-  ).bind(id).first();
-
-  return json({ jugador, instantanies, categories, fornada });
+  return json({ jugador, instantanies, categories });
 }
 
 const json = (obj, status = 200) =>

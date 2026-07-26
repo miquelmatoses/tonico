@@ -178,7 +178,7 @@ button { font-family: var(--font); cursor: pointer; }
 .tsi { font-size: 11px; color: var(--gris); white-space: nowrap; }
 .skills { font-family: var(--mono); font-size: 11px; color: var(--gris); letter-spacing: -.3px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fornada { font-size: 11px; }
+.cel-cat { font-size: 11px; }
 
 /* ══ PÍNDOLES D'ESTAT ══ */
 .pill { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px;

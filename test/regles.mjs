@@ -73,47 +73,15 @@ const codis = (a) => a.map((x) => x.regla_codi);
   assert.equal(a.filter((x) => x.missatge_clau === 'alerta.llistar_lesionat').length, 1, 'el lesionat, avís propi d\'ajornament');
 }
 
-// ALR_JUNTA_PORTER: venda-pla vs llistat-fet (columna Transferible). Llindar «notable»
-// = ctx.porter_notable_min (font única), no un pom propi de la regla.
+// UN CONCEPTE, UN LLINDAR: ctx.porter_notable_min governa el rellotge de depreciació.
+// (La Junta va caure amb el model fàbrica; el v3 no la contempla.)
 {
-  const p = { posicio_porter: 'PO', minuts_min: 60, dies_sense_partit: 7, urgencia: 90, urgencia_suau: 45 };
-  // No llistat (venda-pla) → recordatori suau
-  const suau = REGLES.ALR_JUNTA_PORTER({ ...ctxBase, jugadors: [{ jugador_id: 1, categoria: 'venda', posicio: 'PO', porteria: 7, data_ultim_partit: '2026-07-22' }] }, p);
-  assert.equal(suau[0].missatge_clau, 'alerta.junta_porter_suau');
-  // Llistat i sense jugar → urgent
-  const urgent = REGLES.ALR_JUNTA_PORTER({ ...ctxBase, jugadors: [{ jugador_id: 1, categoria: 'venda', posicio: 'PO', porteria: 7, transferible: 1, data_ultim_partit: '2026-07-05' }] }, p);
-  assert.equal(urgent[0].missatge_clau, 'alerta.junta_porter_urgent');
-  // Llistat i jugant recentment → cap alerta
-  assert.equal(REGLES.ALR_JUNTA_PORTER({ ...ctxBase, jugadors: [{ jugador_id: 1, categoria: 'venda', posicio: 'PO', porteria: 7, transferible: 1, data_ultim_partit: '2026-07-23' }] }, p).length, 0);
-  // PorterA (PO6) i PorterB (PO5) < 7 → la Junta NO els reté → cap alerta (falses abans)
-  assert.equal(REGLES.ALR_JUNTA_PORTER({ ...ctxBase, jugadors: [
-    { jugador_id: 2, nom: 'PorterA', categoria: 'venda', posicio: 'PO', porteria: 6, transferible: 1, data_ultim_partit: '2026-07-05' },
-    { jugador_id: 3, nom: 'PorterB', categoria: 'venda', posicio: 'PO', porteria: 5, transferible: 1, data_ultim_partit: '2026-07-05' },
-  ] }, p).length, 0);
-
-  // EXEMPCIONS de retenció (guia §17), una per cas. Base: PO7 llistat i sense jugar
-  // (dispararia urgent si no fóra per l'exempció).
-  const base = { jugador_id: 9, categoria: 'venda', posicio: 'PO', porteria: 7, transferible: 1, data_ultim_partit: '2026-07-05' };
-  assert.equal(REGLES.ALR_JUNTA_PORTER({ ...ctxBase, jugadors: [{ ...base, setmanes_club: 1 }] }, p).length, 0, 'nouvingut (<2 setmanes) exempt');
-  assert.equal(REGLES.ALR_JUNTA_PORTER({ ...ctxBase, jugadors: [{ ...base, bonificacio_origen: 1 }] }, p).length, 0, 'ex-juvenil de la casa exempt');
-  assert.equal(REGLES.ALR_JUNTA_PORTER({ ...ctxBase, jugadors: [{ ...base, lesio: '2' }] }, p).length, 0, 'lesionat exempt (les lesions no compten)');
-  // Sense cap exempció (setmanes_club alt, no de la casa, sa) → sí dispara.
-  assert.equal(REGLES.ALR_JUNTA_PORTER({ ...ctxBase, jugadors: [{ ...base, setmanes_club: 20, bonificacio_origen: 0, lesio: '' }] }, p).length, 1, 'sense exempció → reté');
-}
-
-// UN CONCEPTE, UN LLINDAR (correcció post-auditoria #1, punt 1): el mateix ctx.porter_notable_min
-// governa la Junta I el rellotge de depreciació. Cap regla el redefinix pel seu compte.
-{
-  const jJunta = [{ jugador_id: 1, categoria: 'venda', posicio: 'PO', porteria: 6, transferible: 1, data_ultim_partit: '2026-07-05' }];
   const jDep = [{ jugador_id: 1, nom: 'PO6', categoria: 'venda', posicio: 'PO', porteria: 6, edat_dies: 40, edat_anys: 24 }];
-  const pJ = { posicio_porter: 'PO', minuts_min: 60, dies_sense_partit: 7, urgencia: 90, urgencia_suau: 45 };
   const pD = { urgencia: 72, urgencia_normal: 55, posicio_porter: 'PO', dies_aniversari: 14, depressio_profunda: -20 };
   const mNoDep = { depressio: false, modificador: 0 };
-  // Amb el llindar a 6, PO6 és notable per a LES DUES regles.
-  assert.equal(REGLES.ALR_JUNTA_PORTER({ ...ctxBase, porter_notable_min: 6, jugadors: jJunta }, pJ).length, 1, 'llindar 6 → Junta reté PO6');
+  // Amb el llindar a 6, PO6 és notable.
   assert.equal(REGLES.ALR_LLISTAR_VENDA({ ...ctxBase, porter_notable_min: 6, dataInstantania: '2026-07-21', jugadors: jDep, mercat: mNoDep }, pD)[0].urgencia, 72, 'llindar 6 → depreciació urgent PO6');
-  // Amb el llindar a 7, PO6 deixa de ser notable per a LES DUES.
-  assert.equal(REGLES.ALR_JUNTA_PORTER({ ...ctxBase, porter_notable_min: 7, jugadors: jJunta }, pJ).length, 0, 'llindar 7 → Junta no reté PO6');
+  // Amb el llindar a 7, PO6 deixa de ser notable.
   assert.equal(REGLES.ALR_LLISTAR_VENDA({ ...ctxBase, porter_notable_min: 7, dataInstantania: '2026-07-21', jugadors: jDep, mercat: mNoDep }, pD)[0].urgencia, 55, 'llindar 7 → depreciació normal PO6');
 }
 
@@ -161,14 +129,6 @@ const codis = (a) => a.map((x) => x.regla_codi);
   assert.deepEqual(REGLES.ALR_SENSE_CATEGORIA(ctx, { urgencia: 40 }).map((x) => x.jugador_id), [1]);
 }
 
-// ALR_SUPPORTER: caducitat dins de la finestra respecte de la instantània
-{
-  const p = { dies_avis: 7, urgencia: 62 };
-  assert.equal(REGLES.ALR_SUPPORTER({ ...ctxBase, pla: { supporterCaducitat: '2026-07-30' } }, p).length, 1, '5 dies → sí');
-  assert.equal(REGLES.ALR_SUPPORTER({ ...ctxBase, pla: { supporterCaducitat: '2026-08-20' } }, p).length, 0, 'lluny → no');
-  assert.equal(REGLES.ALR_SUPPORTER({ ...ctxBase, pla: { supporterCaducitat: '2026-07-20' } }, p).length, 0, 'ja caducat → no');
-  assert.equal(REGLES.ALR_SUPPORTER({ ...ctxBase, pla: {} }, p).length, 0, 'sense data → no');
-}
 
 // executaRegles: ordenat per urgència; setmana tranquil·la → cap alerta
 {
@@ -177,12 +137,11 @@ const codis = (a) => a.map((x) => x.regla_codi);
     ...Array.from({ length: 8 }, (_, i) => ({ jugador_id: 10 + i, categoria: 'entrenable', data_ultim_partit: '2026-07-23' })),
   ] };
   const actives = [
-    { codi: 'ALR_JUNTA_PORTER', params: { posicio_porter: 'PO', minuts_min: 60, dies_sense_partit: 7, urgencia: 90 } },
     { codi: 'ALR_ANIVERSARI', params: { dies_avis: 14, categories: 'venda', urgencia: 70 } },
     { codi: 'ALR_NUCLI_INCOMPLET', params: { objectiu: 8, urgencia: 60 } },
   ];
   const a = executaRegles(ctx, actives);
-  assert.deepEqual(codis(a), ['ALR_JUNTA_PORTER']);   // venda ja no dispara aniversari; 8 entrenables sense data → res
+  assert.deepEqual(codis(a), []);   // venda ja no dispara aniversari; 8 entrenables sense data → res
   // Setmana tranquil·la
   const tranquil = executaRegles({ ...ctxBase, jugadors: Array.from({ length: 8 }, (_, i) => ({ jugador_id: i, categoria: 'entrenable', data_ultim_partit: '2026-07-23' })) }, actives);
   assert.equal(tranquil.length, 0, 'Paco sap callar');
