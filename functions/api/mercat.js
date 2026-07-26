@@ -3,6 +3,7 @@
 import { carregaConfigPla } from '../../lib/config_pla.js';
 import { filtresCompra } from '../../lib/mercat_cerca.js';
 import { economia } from '../../lib/economia.js';
+import { estatEstoc } from '../../lib/orquestra_estoc.js';
 
 export async function onRequestGet({ env, data }) {
   const pla = await env.DB.prepare('SELECT plantilla FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
@@ -31,7 +32,8 @@ export async function onRequestGet({ env, data }) {
     filtres = filtresCompra(config, squad, caixa, compra);
   }
   const { results: preus } = await env.DB.prepare('SELECT id, posicio, edat, habilitat, preu, data, nota FROM preus_observats WHERE usuari_id=? ORDER BY data DESC, id DESC').bind(data.usuari.id).all();
-  return json({ filtres, preus });
+  const estoc = await estatEstoc(env.DB, data.usuari.id);
+  return json({ filtres, preus , estoc });
 }
 
 export async function onRequestPost({ request, env, data }) {

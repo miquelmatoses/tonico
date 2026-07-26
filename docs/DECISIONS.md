@@ -1,5 +1,33 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · TANCAMENT DEL v3 (fet i verificat a prod)
+- **Fusionat a `main`** i desplegat des de main. Abans el codi viu no estava a cap branca
+  desplegable: qualsevol desplegament de main hauria tornat al model vell.
+- **P1 — l'entrenament és PRESCRIPCIÓ**: (A,B) = (creativitat, passades) són poms del
+  contracte, no `fases_config` ni un override del pla. `desquadreEntrenament` compara la
+  4-tupla sencera (canviar només la intensitat també és desquadre).
+- **G1: de 59 a 99 de 100.** Tota fórmula amb codi té entrada al guardià. Una fórmula amb
+  test propi però sense vigilància podia divergir del full sense avís, que és el contrari
+  del que el G1 existix per fer. **Cap «implementada però no vigilada».**
+  L'única pendent és `V.hores`: `hores_pais` està buida perquè la guia no publica el
+  dia/hora d'economia per país, i es declara per usuari.
+- **El mirall baixa de 104 a 100**: quatre línies de P11 eren PROSA que el generador
+  capturava com a fórmula. Corregit al FULL, no al generador.
+- **Les tres pantalles, cablades.** Mercat serveix el bucle d'estoc (opcions ordenades per
+  eficiència, amb l'obra d'estadi quan els números estan declarats i el motiu derivat de
+  cada opció); Personal serveix el pla de flux amb el que toca fer per tipus; Vendes fa la
+  PREGUNTA amb les quatre eixides i les desa. `test/pantalles_v3.mjs` ho fixa.
+- **G3 actiu** (deixa de ser bastida): 27 valors de pantalla comprovats contra l'avaluador
+  —caixa, flux, sou sostenible, divisió normalitzada, eficiència de cada opció, cost de
+  cada nivell de personal, el preu i el valor net de cada fitxa, i el nivell de cada
+  alerta. **Decisió de disseny:** el golden comprova la FONT de cada valor (que la vista no
+  se'l fabrique pel camí) en compte de renderitzar DOM, que és el que l'invariant 13 vol
+  protegir i el que es pot verificar sense navegador.
+- **Efecte del contracte que queda anotat, no amagat:** `rotatius` es tria només per hab(A)
+  sense mínim, així que amb pocs jugadors de l'habilitat entrenada el model arrossega gent
+  sense eixa habilitat cap a rotatiu.
+
+
 ## 2026-07-26 · RECONSTRUCCIÓ v3 · L10, L11 i L12 (fet i verificat a prod)
 - **L10 — bucle d'estoc** (migració 065). Jugadors i estadi competixen pel mateix diner amb
   la mateixa unitat: guany d'un fitxatge = mancança×pes; guany d'una obra = el que el seu

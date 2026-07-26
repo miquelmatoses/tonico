@@ -16,6 +16,48 @@ function compteEspecialistes(membres) {
   return c;
 }
 
+import { planPersonal, decisioRenovacio } from '../../lib/personal_v3.js';
+import { economia } from '../../lib/economia.js';
+import { llegixConfig } from '../../lib/config.js';
+import { normalitzaDivisio, divisioArab } from '../../lib/divisio.js';
+
+// PAS 11: el pla de personal que el FLUX sosté, per prioritat. Ací no hi ha política: els
+// números són poms i l'orde és el del contracte.
+async function plaFlux(db, usuariId) {
+  const conf = await llegixConfig(db, usuariId);
+  const estrategia = conf?.estrategia ?? 'competitiva';
+  const eco = await economia(db, usuariId);
+  const pom = async (clau) => (await db.prepare('SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau=?').bind(estrategia, clau).first())?.valor ?? null;
+  const base = Number(await pom('staff_cost_base')) || null;
+  const prioritat = JSON.parse((await pom('prioritat_personal')) || '[]');
+  const divisioPsic = normalitzaDivisio(await pom('divisio_psicoleg'));
+  const fluxLliure = eco.flux == null ? null : eco.flux - (eco.reserva_flux ?? 0);
+  if (fluxLliure == null || !base || !prioritat.length) {
+    return { flux_lliure: fluxLliure, pla: [], falten: eco.flux == null ? ['flux'] : [] };
+  }
+  // El psicòleg només de `divisio_psicoleg` cap amunt (número de divisió més baix = més alta).
+  const admet = (tipus) => {
+    if (tipus !== 'psicoleg') return true;
+    const meua = divisioArab(conf?.divisio); const llindar = divisioArab(divisioPsic);
+    return meua != null && llindar != null && meua <= llindar;
+  };
+  const { pla, flux_restant } = planPersonal(fluxLliure, base, prioritat, { admet });
+  // Els membres declarats, per a dir si toca pujar de nivell o renovar.
+  const { results: membres } = await db.prepare('SELECT tipus, nivell, setmanes_contracte FROM personal_membres WHERE usuari_id=?').bind(usuariId).all();
+  const declarat = new Map();
+  for (const m of membres) declarat.set(m.tipus, m);
+  const amb = pla.map((x) => {
+    const d = declarat.get(x.tipus);
+    const renovacio = d ? decisioRenovacio(d.nivell, fluxLliure, base) : null;
+    return { ...x, nivell_declarat: d?.nivell ?? null,
+      accio: x.exclos ? 'exclos' : d == null ? (x.nivell > 0 ? 'contracta' : 'res')
+        : x.nivell > d.nivell ? 'puja' : renovacio?.accio ?? 'res',
+      renovacio: renovacio?.accio ?? null, renovacio_nivell: renovacio?.nivell ?? null,
+      setmanes_contracte: d?.setmanes_contracte ?? null };
+  });
+  return { flux_lliure: fluxLliure, flux_restant, staff_cost_base: base, pla: amb, falten: [] };
+}
+
 export async function onRequestGet({ env, data }) {
   const pla = await env.DB.prepare('SELECT plantilla, fase_actual, parametres FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
   if (!pla) return json({ error: 'sense_pla' }, 404);
@@ -43,7 +85,8 @@ export async function onRequestGet({ env, data }) {
   const checklists = fases.filter((f) => f.fase !== pla.fase_actual)
     .map((f) => ({ fase: f.fase, ...checklistCanviFase(JSON.parse(f.config), compte) }));
 
-  return json({ fase_actual: pla.fase_actual, esperat, membres, desquadres, checklists, entrenament });
+  const pla_flux = await plaFlux(env.DB, data.usuari.id);
+  return json({ fase_actual: pla.fase_actual, esperat, membres, desquadres, checklists, entrenament , pla_flux });
 }
 
 export async function onRequestPost({ request, env, data }) {

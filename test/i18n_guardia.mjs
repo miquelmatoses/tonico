@@ -41,6 +41,11 @@ for (const k of estatics) if (!k.endsWith('_')) assert.ok(te(k), `falta la clau 
 
 // ── 3. Famílies DINÀMIQUES t('prefix.' + variable): cada valor possible ──
 const families = {
+  'habilitat': ['porteria','defensa','creativitat','passades','extrem','anotacio','pilota_aturada'],
+  'vendes.eixida_': ['rebaixar','rellistar','despatxar','un_euro'],
+  'flux.accio_': ['contracta','puja','renova','renova_al_nivell','no_renoves','res','exclos'],
+  'flux': ['col_tipus','col_nivell','col_cost','col_accio'],
+  'estoc': ['col_opcio','col_guany','col_cost','col_eficiencia'],
   'categoria': ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'],
   'motiu': ['mai', 'potencial', 'compost', 'per_davall', 'fluix', 'sense_dades', 'lesionat', 'sancionat', 'vetat', 'banqueta'],
   'motiu_baixa': ['venda', 'despatx', 'promocio', 'altres'],

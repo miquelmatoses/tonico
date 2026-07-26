@@ -1,6 +1,6 @@
 // Tonico — fitxes de venda (Àrea E). GET els jugadors en categoria 'venda' amb la
 // seua fitxa (preu d'eixida proposat/editat, data de llistada, estat); POST upsert.
-import { preuEsperat, valorNet as calcValorNet, habilitatMax } from '../../lib/preu.js';
+import { preuEsperat, valorNet as calcValorNet, habilitatMax, preguntaVenda, EIXIDES_DESERTA } from '../../lib/preu.js';
 import { normalitzaDivisio } from '../../lib/divisio.js';
 import { avaluaPuntuacio } from '../../lib/classificador.js';
 import { carregaConfigPla } from '../../lib/config_pla.js';
@@ -84,6 +84,8 @@ export async function onRequestGet({ env, data }) {
     const valor = punts[i] ?? preu_proposat ?? 0;
     return { ...j, estat: j.estat || 'pendent', preu_proposat, valor, puntuacio: punts[i] ?? null, preu_estimacio_grossa: pe.base === 'divisio',
       tancament_previst: tancament(j.data_llistada), lesionat: esLesionat(j.lesio), calibrat,
+      pregunta: preguntaVenda({ ...j, transferible_anterior: j.transferible_anterior ?? (j.data_llistada ? 1 : null),
+        venda_apuntada: j.estat === 'venut' || j.estat === 'despatxat' }),
       valor_net, despatxar: calibrat && valor_net != null && valor_net < despatxarLlindar && !forc };
   });
   // (4) FORA les marques de BUFFER («cobrix X — ven-lo l'últim»): doctrina morta amb la
@@ -125,6 +127,19 @@ export async function onRequestGet({ env, data }) {
 }
 
 export async function onRequestPost({ request, env, data }) {
+  const cosPrev = await request.clone().json().catch(() => ({}));
+  // PAS 7: l'usuari tria una de les quatre eixides d'una subhasta deserta. Cada eixida es
+  // tradueix a un estat de fitxa; el «1 €» és un override explícit del preu.
+  if (cosPrev.eixida_deserta) {
+    const EIXIDES = { rebaixar: 'pendent', rellistar: 'llistat', despatxar: 'despatxat', un_euro: 'llistat' };
+    const nouEstat = EIXIDES[cosPrev.eixida_deserta];
+    if (!nouEstat || !cosPrev.jugador_id) return json({ error: 'dades_invalides' }, 400);
+    await env.DB.prepare(
+      `UPDATE vendes SET estat=?, preu_eixida=CASE WHEN ?='un_euro' THEN 1 ELSE preu_eixida END
+        WHERE usuari_id=? AND jugador_id=?`
+    ).bind(nouEstat, cosPrev.eixida_deserta, data.usuari.id, cosPrev.jugador_id).run();
+    return json({ ok: true, estat: nouEstat });
+  }
   const c = await request.json().catch(() => ({}));
   if (!c.jugador_id) return json({ error: 'falta_jugador' }, 400);
   const own = await env.DB.prepare('SELECT j.id FROM jugadors j JOIN equips e ON e.id=j.equip_id WHERE j.id=? AND e.usuari_id=?').bind(c.jugador_id, data.usuari.id).first();

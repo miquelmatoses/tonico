@@ -513,9 +513,45 @@ function formEntrenamentJuvenil(main, d) {
 }
 
 // ── 6. Mercat ──
+// BUCLE D'ESTOC (PAS 8): què comprar i si l'obra d'estadi guanya, amb la seua eficiència.
+// La vista no calcula res: interpola el que l'avaluador ja ha decidit.
+function bucleEstoc(main, e) {
+  const c = card(t('estoc.titol'), e.opcions.length);
+  const cos = el('div', { class: 'card-cos' });
+  if (e.caixa_disponible == null) {
+    cos.append(el('p', { class: 'nota-peu', text: t('estoc.sense_caixa') }));
+  } else {
+    cos.append(el('p', { class: 'nota-peu', text: t('estoc.capçal', {
+      disponible: diners(e.caixa_disponible), sostenible: e.sou_sostenible == null ? '—' : diners(e.sou_sostenible) }) }));
+  }
+  if (e.recomanada) {
+    cos.append(el('p', {}, el('b', { text: t('estoc.recomanada') }), ' ',
+      el('span', { text: e.recomanada.tipus === 'estadi'
+        ? t('estoc.opcio_estadi', { cost: diners(e.recomanada.cost), guany: e.recomanada.guany, delta: diners(e.recomanada.delta_flux) })
+        : t('estoc.opcio_jugador', { lloc: e.recomanada.lloc, habilitat: t('habilitat.' + e.recomanada.habilitat),
+            nivell: e.recomanada.nivell_objectiu, mancanca: e.recomanada.mancanca, cost: diners(e.recomanada.cost) }) })));
+  } else {
+    cos.append(el('p', { class: 'nota-peu', text: t('estoc.cap_opcio') }));
+  }
+  const g = el('div', { class: 'graella' });
+  g.append(el('div', { class: 'graella-cap c-estoc' },
+    ...['col_opcio', 'col_guany', 'col_cost', 'col_eficiencia'].map((k) => el('span', { text: t('estoc.' + k) }))));
+  for (const o of e.opcions) {
+    g.append(el('div', { class: 'graella-fila-d c-estoc' + (o.admissible ? '' : ' inadmissible') },
+      el('span', { text: o.tipus === 'estadi' ? t('estoc.estadi') : t('estoc.lloc', { lloc: o.lloc }) }),
+      el('span', { text: String(o.guany ?? '—') }),
+      el('span', { text: o.cost == null ? '—' : diners(o.cost) }),
+      el('span', { class: 'graella-val', text: o.eficiencia == null ? '—' : String(o.eficiencia) })));
+  }
+  cos.append(g);
+  if (!e.estadi_declarat) cos.append(el('p', { class: 'nota-peu', text: t('estoc.estadi_falta') }));
+  c.append(cos); main.append(c);
+}
+
 export async function mercat(main) {
   capcalera(main, 6, 'mercat');
-  const { filtres, preus } = await api('/api/mercat');
+  const { filtres, preus, estoc } = await api('/api/mercat');
+  if (estoc) bucleEstoc(main, estoc);
   const pres = (v) => (v > 0 ? diners(v) : t('mercat.sense_pressupost'));
   const textFiltre = (f) => f.rol === 'core'
     ? t('mercat.filtre_core', { posicions: (f.posicions || []).join('/'), edat_max: f.edat_max, creativitat_min: f.creativitat_min, pressupost: pres(f.pressupost), falten: f.falten })
@@ -543,6 +579,21 @@ export async function mercat(main) {
 
 // ── Fitxes de venda (Àrea E) ──
 const ESTATS_VENDA = ['pendent', 'llistat', 'venut', 'desert', 'despatxat'];
+// Les quatre eixides d'una subhasta deserta (PAS 7). El motiu el dona l'avaluador.
+const EIXIDES_DESERTA = ['rebaixar', 'rellistar', 'despatxar', 'un_euro'];
+function preguntaDeserta(jugador) {
+  const p = el('div', { class: 'tip' });
+  p.append(el('b', { text: t('vendes.pregunta_deserta', { nom: jugador.nom }) }));
+  const opcions = el('div', { class: 'accions' });
+  for (const eixida of EIXIDES_DESERTA) {
+    const b = el('button', { type: 'button', class: 'b-xic', text: t('vendes.eixida_' + eixida) });
+    b.addEventListener('click', () => api('/api/vendes', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jugador_id: jugador.jugador_id, eixida_deserta: eixida }) }).then(() => location.reload()).catch(() => {}));
+    opcions.append(b);
+  }
+  p.append(opcions);
+  return p;
+}
 async function fitxesVenda(main) {
   const { jugadors, cobertura: cobMin } = await api('/api/vendes');
   const sec = card(t('vendes.titol'), jugadors.length);
@@ -580,6 +631,9 @@ async function fitxesVenda(main) {
     propCell.append(el('div', { class: 'cobertura', text: j.estat_liquidacio === 'retingut'
       ? t('vendes.retingut_cobertura', { n: cobMin?.camp_minim ?? '?' })
       : t('vendes.estat_liq_' + (j.estat_liquidacio || 'llistable')) }));
+    // PAS 7: si la fitxa ha eixit del mercat i no sabem com, es PREGUNTA amb les quatre
+    // eixides del full. La pregunta la deriva l'avaluador, no la vista.
+    if (j.pregunta) propCell.append(preguntaDeserta(j));
     return el('div', { class: 'graella-fila-d c-venda' },
       el('div', { class: 'fila-qui' },
         el('div', { class: posCls(j.posicio), text: j.posicio || '—' }),
@@ -782,10 +836,35 @@ function formActivaAcademia(main) {
 // ── 9. Personal ──
 const ESPECIALISTES = ['assistents', 'metge', 'psicoleg'];
 const lblElement = (k) => { const v = t('element.' + k); return v === t('comu.text_indisponible') ? k : v; };
+// PAS 11: el pla que el FLUX sosté, per prioritat. La vista només interpola.
+function plaFlux(main, p) {
+  const c = card(t('flux.titol'), p.pla.length);
+  const cos = el('div', { class: 'card-cos' });
+  if (p.falten && p.falten.length) {
+    cos.append(el('p', { class: 'nota-peu', text: t('flux.sense_flux') }));
+  } else {
+    cos.append(el('p', { class: 'nota-peu', text: t('flux.capçal', { lliure: diners(p.flux_lliure), restant: diners(p.flux_restant) }) }));
+    const g = el('div', { class: 'graella' });
+    g.append(el('div', { class: 'graella-cap c-flux' },
+      ...['col_tipus', 'col_nivell', 'col_cost', 'col_accio'].map((k) => el('span', { text: t('flux.' + k) }))));
+    for (const x of p.pla) {
+      g.append(el('div', { class: 'graella-fila-d c-flux' },
+        el('span', { text: t('element.' + x.tipus) === t('comu.text_indisponible') ? x.tipus : t('element.' + x.tipus) }),
+        el('span', { text: x.exclos ? '—' : String(x.nivell) }),
+        el('span', { text: x.cost ? diners(x.cost) : '—' }),
+        el('span', { class: 'graella-val', text: t('flux.accio_' + x.accio) })));
+    }
+    cos.append(g);
+    cos.append(el('p', { class: 'nota-peu', text: t('flux.avis_compromis') }));
+  }
+  c.append(cos); main.append(c);
+}
+
 export async function personal(main) {
   capcalera(main, 9, 'personal');
   const d = await api('/api/personal');
   if (d.error) { main.append(el('p', { text: t('personal.sense_config') })); return; }
+  if (d.pla_flux) plaFlux(main, d.pla_flux);
 
   const duo = el('div', { class: 'duo' });
   // Entrenament sènior: prescrit per la fase + confirmació del que hi ha a HT

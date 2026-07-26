@@ -27,6 +27,7 @@ import { costFlux, nivellPagable, planPersonal, decisioRenovacio } from '../lib/
 import { guanyJugador, admissibleJugador, deltaFlux, guanyEstadi, admissibleEstadi,
   eficiencia, decisioEstoc } from '../lib/estoc.js';
 import { nivellAccio, agrupaAlertes, ordenaAgenda } from '../lib/informe.js';
+import { preguntaVenda, EIXIDES_DESERTA } from '../lib/preu.js';
 import { entrenamentPrescrit, desquadreEntrenament, placesEntrenament } from '../lib/entrenament_places.js';
 import { valorHabilitat as valorHab, valorEsperatDesconegut, ranquingJuvenil } from '../lib/ranquing_juvenil.js';
 import { esLesionat } from '../public/format.js';
@@ -194,6 +195,29 @@ const VERIFICADES = {
   },
 
   // ── PAS 7 / PAS 8 / PAS 9 ──
+  'P7.pregunta': () => {
+    // PREGUNTA quan transferible passa 1→buit sense venda apuntada, amb les 4 eixides.
+    assert.equal(preguntaVenda({ transferible_anterior: 1, transferible: 0 })?.pregunta, 'venut_o_deserta');
+    assert.deepEqual(preguntaVenda({ transferible_anterior: 1, transferible: 0 }).eixides, EIXIDES_DESERTA);
+    assert.deepEqual(EIXIDES_DESERTA, ['rebaixar', 'rellistar', 'despatxar', 'un_euro']);
+    assert.equal(preguntaVenda({ transferible_anterior: 1, transferible: 0, venda_apuntada: true }), null,
+      'si ja sabem què va passar, no es pregunta');
+    assert.equal(preguntaVenda({ transferible: 1 }), null, 'mentres està llistat, tampoc');
+  },
+  'P8.pregunta': () => {
+    // Es DEMANA a l'inici de cada temporada, de la calculadora: els camps existixen i
+    // l'adreça és una constant, no un text a la vista.
+    const cols = sqliteFix.prepare('SELECT * FROM pragma_table_info(?)').all('finances').map((c) => c.name);
+    assert.ok(cols.includes('estadi_manteniment') && cols.includes('estadi_cost_obra') && cols.includes('estadi_data'),
+      'els números de la calculadora es declaren i es daten');
+    const url = sqliteFix.prepare("SELECT valor FROM constants_joc WHERE clau='url_calculadora_estadi'").get();
+    assert.ok(url?.valor?.startsWith('http'), 'l\'adreça de la calculadora és una constant');
+  },
+  'P8.capacitat_objectiu': () => {
+    // «configuració NRG de la calculadora»: Tonico NO la calcula, la rep declarada.
+    const url = sqliteFix.prepare("SELECT valor, nota FROM constants_joc WHERE clau='url_calculadora_estadi'").get();
+    assert.ok(/delega|declara/i.test(url.nota), 'queda escrit que es delega i es declara');
+  },
   'P7.recalibra': () => {
     // «recalibra A CADA venda real»: una venda més mou la mediana.
     const abans = estimacioComparables([{ posicio: 'MC', preu: 100 }, { posicio: 'MC', preu: 200 }], { posicio: 'MC' });
