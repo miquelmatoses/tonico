@@ -531,11 +531,11 @@ function formEntrenamentJuvenil(main, d) {
 function bucleEstoc(main, e) {
   const c = card(t('estoc.titol'), e.opcions.length);
   const cos = el('div', { class: 'card-cos' });
-  if (e.caixa_disponible == null) {
+  if (e.caixa == null) {
     cos.append(el('p', { class: 'nota-peu', text: t('estoc.sense_caixa') }));
   } else {
     cos.append(el('p', { class: 'nota-peu', text: t('estoc.capçal', {
-      disponible: diners(e.caixa_disponible), sostenible: e.sou_sostenible == null ? '—' : diners(e.sou_sostenible) }) }));
+      disponible: diners(e.caixa), sostenible: e.sou_sostenible == null ? '—' : diners(e.sou_sostenible) }) }));
   }
   if (e.recomanada) {
     cos.append(el('p', {}, el('b', { text: t('estoc.recomanada') }), ' ',
@@ -672,19 +672,14 @@ const eur = (obj, ...keys) => ambXifres(obj, keys);   // àlies curt: els noms d
 export async function economia(main) {
   capcalera(main, 7, 'economia');
   const { economia: e } = await api('/api/finances');
-  // Les xifres del PAS 3: ESTOC (caixa disponible) i FLUX (i el sou que sosté).
+  // Les xifres del PAS 3: ESTOC (la caixa) i FLUX (i el sou que sosté). Ja no hi ha targeta
+  // de «disponible per a comprar»: sense reserva d'estoc era la caixa dita dues vegades.
   // Cap aritmètica ací: tot ve calculat de l'avaluador (invariant 12, render pur).
   const kpis = el('div', { class: 'eco-kpis' });
   kpis.append(el('div', { class: 'eco-card fosc' },
     el('div', { class: 'eco-et', text: t('economia.caixa_et') }),
     el('div', { class: 'eco-xifra', text: e.caixa == null ? '—' : diners(e.caixa) }),
     el('div', { class: 'eco-nota', text: e.caixa == null ? t('economia.caixa_falta') : (e.caixa_data || '') })));
-  if (e.caixa_disponible != null) {
-    kpis.append(el('div', { class: 'eco-card' },
-      el('div', { class: 'eco-et', text: t('economia.disponible_et') }),
-      el('div', { class: 'eco-xifra', text: diners(e.caixa_disponible) }),
-      el('div', { class: 'eco-nota', text: t('economia.disponible_nota', eur(e, 'reserva_caixa')) })));
-  }
   if (e.flux != null) {
     kpis.append(el('div', { class: 'eco-card' },
       el('div', { class: 'eco-et', text: t('economia.flux_et') }),
@@ -722,17 +717,32 @@ export async function economia(main) {
 // i el planter es deriva: res d'això es pregunta.
 function formFinances(main, e) {
   const f = el('form', { class: 'card-cos' });
-  const graella = el('div', { class: 'form-graella' });
-  const camp = (clau, val, type = 'number') => { const i = el('input', { type, 'aria-label': t('economia.' + clau) }); if (val != null) i.value = val; return el('label', {}, t('economia.' + clau), i); };
+  const camp = (clau, val, type = 'number') => {
+    const i = el('input', { type, 'aria-label': t('economia.' + clau) });
+    if (val != null) i.value = val;
+    return el('label', { class: 'decl-camp' }, el('span', { class: 'decl-et', text: t('economia.' + clau) }), i);
+  };
   const s1 = e.setmanes?.[0] || {}, s2 = e.setmanes?.[1] || {};
-  const tq1 = camp('taquilla_s1', s1.taquilla);
-  const pt1 = camp('patrocini_s1', s1.patrocini);
-  const tq2 = camp('taquilla_s2', s2.taquilla);
-  const pt2 = camp('patrocini_s2', s2.patrocini);
+  const tq1 = camp('taquilla', s1.taquilla);
+  const pt1 = camp('patrocini', s1.patrocini);
+  const tq2 = camp('taquilla', s2.taquilla);
+  const pt2 = camp('patrocini', s2.patrocini);
   const caixa = camp('caixa_real', e.caixa);
   const estadi = camp('despesa_estadi', e.manteniment_estadi || null);
-  graella.append(tq1, pt1, tq2, pt2, caixa, estadi);
-  f.append(graella, el('button', { type: 'submit', class: 'b-prim', text: t('economia.finances_desa') }));
+  // Una columna per SETMANA, amb la seua capçalera: la de la passada i la d'esta. Les dues
+  // porten els mateixos dos camps en el mateix orde, així la lectura és horitzontal i es veu
+  // d'un colp d'ull què falta. El període és la suma de les dues.
+  const bloc = (clau, ...camps) => el('div', { class: 'decl-bloc' },
+    el('h4', { class: 'decl-titol', text: t('economia.' + clau) }), ...camps);
+  f.append(el('div', { class: 'decl-setmanes' },
+    bloc('setmana_passada', tq1, pt1),
+    bloc('setmana_esta', tq2, pt2)));
+  // El club: estes dues no van per setmana. La caixa és d'ara i el manteniment és constant.
+  f.append(el('div', { class: 'decl-setmanes' },
+    el('div', { class: 'decl-bloc ample' },
+      el('h4', { class: 'decl-titol', text: t('economia.del_club') }),
+      el('div', { class: 'decl-camps' }, caixa, estadi))));
+  f.append(el('button', { type: 'submit', class: 'b-prim', text: t('economia.finances_desa') }));
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const v = (l) => { const x = l.querySelector('input').value; return x === '' ? null : x; };
@@ -748,13 +758,19 @@ function formFinances(main, e) {
 // Cadència distinta de la declaració del període, i caduquen (PAS 8) — per això va a banda.
 function formEstadi(main, e) {
   const f = el('form', { class: 'card-cos' });
-  const graella = el('div', { class: 'form-graella' });
-  const camp = (clau, val, type = 'number') => { const i = el('input', { type, 'aria-label': t('economia.' + clau) }); if (val != null) i.value = val; return el('label', {}, t('economia.' + clau), i); };
+  const camp = (clau, val, type = 'number') => {
+    const i = el('input', { type, 'aria-label': t('economia.' + clau) });
+    if (val != null) i.value = val;
+    return el('label', { class: 'decl-camp' }, el('span', { class: 'decl-et', text: t('economia.' + clau) }), i);
+  };
   const obra = camp('estadi_cost_obra', e.estadi_cost_obra);
   const mant = camp('estadi_manteniment', e.estadi_manteniment);
   const data = camp('estadi_data', e.estadi_data, 'date');
-  graella.append(obra, mant, data);
-  f.append(graella, el('button', { type: 'submit', class: 'b-prim', text: t('economia.estadi_desa') }));
+  f.append(el('div', { class: 'decl-setmanes' },
+    el('div', { class: 'decl-bloc ample' },
+      el('h4', { class: 'decl-titol', text: t('economia.estadi_calculadora') }),
+      el('div', { class: 'decl-camps' }, obra, mant, data))));
+  f.append(el('button', { type: 'submit', class: 'b-prim', text: t('economia.estadi_desa') }));
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const v = (l) => { const x = l.querySelector('input').value; return x === '' ? null : x; };

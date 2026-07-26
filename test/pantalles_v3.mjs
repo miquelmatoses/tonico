@@ -28,7 +28,7 @@ const ctx = { env: { DB: db }, data: { usuari: { id: 1 } } };
 // ── MERCAT: el bucle d'estoc arriba a la pantalla ──
 const m = await (await mercat.onRequestGet(ctx)).json();
 assert.ok(m.estoc, 'el mercat serveix el bucle d\'estoc');
-assert.ok(m.estoc.caixa_disponible > 0, 'i la caixa disponible amb què compara');
+assert.ok(m.estoc.caixa > 0, 'i la caixa amb què compara');
 assert.ok(m.estoc.sou_sostenible > 0, 'i el sou que el flux sosté');
 assert.ok(Array.isArray(m.estoc.opcions), 'amb les opcions ordenades');
 assert.ok(Array.isArray(m.estoc.mancances), 'i les mancances que les justifiquen');

@@ -29,13 +29,15 @@ sqlite.exec(`
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (1,1,'2026-07-25',83,1);
   INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (1,1,100,'A');
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, sou) VALUES (1,1,5000);
-  INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_planter, despesa_estadi, ingres_setmanal) VALUES (1,100000,'2026-07-25',2000,3000,10000);
+  INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi, taquilla_s1, patrocini_s1, taquilla_s2, patrocini_s2)
+    VALUES (1,100000,'2026-07-25',3000,21127,40500,0,40500);
   INSERT INTO preus_observats (usuari_id, posicio, edat, habilitat, preu, data) VALUES (1,'MC',20,7,120000,'2026-07-18');
 `);
 const e = await economia(db, 1);
 // La secció passa objectes de l'avaluador a estes claus: no ha de quedar cap {…}.
 assert.equal(fuga(interpola(ca['economia.despeses_detall'], e.despeses)), false, 'despeses_detall amb les despeses reals');
-assert.equal(fuga(interpola(ca['economia.disponible_nota'], e)), false, 'disponible_nota amb l\'economia real');
-assert.ok('manteniment_estadi' in e.despeses && 'reserva_caixa' in e, 'els camps que les claus referencien existixen');
+assert.equal(fuga(interpola(ca['economia.dades_velles'], { data: e.caixa_data })), false,
+  'dades_velles amb la data real');
+assert.ok('manteniment_estadi' in e.despeses, 'els camps que les claus referencien existixen');
 
 console.log('OK — guardià d\'interpolació: paritat de paràmetres i economia real sense {…} sense resoldre');

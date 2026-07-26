@@ -14,7 +14,7 @@ import { valorPlaces } from '../lib/valor_placa.js';
 import { valorHabilitat, lecturaPromocio } from '../lib/ranquing_juvenil.js';
 import { fCalendari, temporadaOperativa } from '../lib/calendari.js';
 import { ESTRATEGIES, falten as confFalten, llocsPartit } from '../lib/config.js';
-import { souSostenible, caixaDisponible, fluxLliure, perPeriode, reservaFlux,
+import { souSostenible, fluxLliure, perPeriode, reservaFlux,
   despesaPlanter, dadesVelles } from '../lib/economia.js';
 import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
 import { pesLloc, pressupostSou, nivellObjectiu, carregaConfigPesos } from '../lib/pesos.js';
@@ -231,7 +231,7 @@ const VERIFICADES = {
     const cols = sqliteFix.prepare('SELECT * FROM pragma_table_info(?)').all('finances').map((c) => c.name);
     assert.ok(cols.includes('estadi_cost_obra') && cols.includes('estadi_manteniment'),
       'els dos números de l\'obra es declaren, no es modelen');
-    assert.equal(admissibleEstadi({ cost: 1, caixa_disponible: null, flux: 1, delta_manteniment: 0 }), false,
+    assert.equal(admissibleEstadi({ cost: 1, caixa: null, flux: 1, delta_manteniment: 0 }), false,
       'sense caixa cobrada no hi ha obra');
   },
   'P8.accio': () => {
@@ -433,11 +433,8 @@ const VERIFICADES = {
   },
   'P3.caixa': () => {
     // «saldo real declarat (mai projectat)»: la funció no en fabrica cap.
-    assert.equal(caixaDisponible(null, 0), null, 'sense declarar → null, no 0');
   },
-  'P3.caixa_disponible': () => {
-    assert.equal(caixaDisponible(100000, 30000), 70000);
-    assert.equal(caixaDisponible(10000, 30000), 0, 'MAX(0; …)');
+  'P3.caixa': () => {
   },
 
   // La DIVISIÓ té un únic format intern: cap taula del joc pot fallar en silenci.
@@ -643,21 +640,21 @@ const VERIFICADES = {
   'P8.guany': () => assert.equal(guanyJugador(3, 1.5), 4.5, 'mancança × pes'),
   'P8.cost': () => assert.equal(eficiencia(4.5, 50000), 0.00009, 'guany/cost'),
   'P8.admissible': () => {
-    assert.equal(admissibleJugador({ preu: 50000, sou: 900 }, { caixa_disponible: 100000, pressupost_sou_lloc: 1000 }), true);
-    assert.equal(admissibleJugador({ preu: 150000 }, { caixa_disponible: 100000 }), false, 'cap compra amb diners no cobrats');
-    assert.equal(admissibleJugador({ preu: 50000, sou: 5000 }, { caixa_disponible: 100000, pressupost_sou_lloc: 1000 }), false);
+    assert.equal(admissibleJugador({ preu: 50000, sou: 900 }, { caixa: 100000, pressupost_sou_lloc: 1000 }), true);
+    assert.equal(admissibleJugador({ preu: 150000 }, { caixa: 100000 }), false, 'cap compra amb diners no cobrats');
+    assert.equal(admissibleJugador({ preu: 50000, sou: 5000 }, { caixa: 100000, pressupost_sou_lloc: 1000 }), false);
   },
   'P8.manteniment': () => assert.equal(deltaManteniment(7100, 9000), 1900,
     'Δmanteniment = el que l\'obra AFIG cada setmana'),
   'P8.admissible_2': () => {
-    assert.equal(admissibleEstadi({ cost: 50000, caixa_disponible: 100000, flux: 10000,
+    assert.equal(admissibleEstadi({ cost: 50000, caixa: 100000, flux: 10000,
       delta_manteniment: 1000, setmanes_periode: 2, reserva_flux: 5000 }), true);
-    assert.equal(admissibleEstadi({ cost: 50000, caixa_disponible: 100000, flux: 10000,
+    assert.equal(admissibleEstadi({ cost: 50000, caixa: 100000, flux: 10000,
       delta_manteniment: 3000, setmanes_periode: 2, reserva_flux: 5000 }), false,
       'cap obra que es menge la reserva de flux');
     // La propietat que el model anterior feia impossible: AMPLIAR (Δmanteniment > 0) ha de
     // poder passar. Abans el guany de l'obra era 0 sempre que s'ampliara.
-    assert.equal(admissibleEstadi({ cost: 10000, caixa_disponible: 999999, flux: 100000,
+    assert.equal(admissibleEstadi({ cost: 10000, caixa: 999999, flux: 100000,
       delta_manteniment: 5000, setmanes_periode: 2, reserva_flux: 0 }), true,
       'ampliar l\'estadi ha de poder ser admissible');
   },

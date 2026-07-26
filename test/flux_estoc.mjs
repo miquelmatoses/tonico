@@ -6,7 +6,7 @@
 // suma, i les despeses (constants setmanals) es multipliquen per `setmanes_periode`.
 import assert from 'node:assert/strict';
 import { nova } from './_d1shim.mjs';
-import { economia, souSostenible, caixaDisponible, perPeriode, reservaFlux,
+import { economia, souSostenible, perPeriode, reservaFlux,
   despesaPlanter, dadesVelles } from '../lib/economia.js';
 
 const { sqlite, db } = nova(import.meta.url);
@@ -50,20 +50,17 @@ assert.equal(despesaPlanter('cercapromeses', 3, COSTOS), 15000, 'sense acadèmia
 assert.equal(despesaPlanter('cap', 1, COSTOS), 5000,
   '«cap» NO vol dir cost zero: el cercapromeses hi és i es paga igual');
 
-// caixa_disponible = MAX(0; caixa − reserva_caixa)
-assert.equal(caixaDisponible(100000, 20000), 80000);
-assert.equal(caixaDisponible(10000, 20000), 0, 'mai negativa');
-assert.equal(caixaDisponible(null, 20000), null, 'sense caixa declarada no hi ha estoc');
+// La caixa NO té derivada: el PAS 8 compara contra la declarada (fora `caixa_disponible`).
 
-// dades_velles: vella ≠ absent ≠ zero (invariant 18)
-assert.equal(dadesVelles('2026-07-01', '2026-07-26', 1), true);
-assert.equal(dadesVelles('2026-07-24', '2026-07-26', 1), false);
-assert.equal(dadesVelles(null, '2026-07-26', 1), false, 'sense període declarat no és «vell»: falta');
+// dades_velles: vella ≠ absent ≠ zero (invariant 18). El llindar va en DIES: 7.
+assert.equal(dadesVelles('2026-07-18', '2026-07-26', 7), true, '8 dies: vella');
+assert.equal(dadesVelles('2026-07-19', '2026-07-26', 7), false, '7 dies justos: encara no');
+assert.equal(dadesVelles(null, '2026-07-26', 7), false, 'sense declarar no és «vell»: falta');
 
 // ── 1. Sense res declarat: ni flux ni estoc, i es nota (no es fabrica un zero) ──
 let e = await economia(db, 1, '2026-07-26');
 assert.equal(e.caixa, null, 'caixa no declarada → null, MAI SUM(transaccions)');
-assert.equal(e.caixa_disponible, null);
+assert.equal(e.caixa, null);
 assert.equal(e.flux, null, 'sense ingressos declarats no hi ha flux');
 assert.equal(e.sou_sostenible, null);
 assert.equal(e.sou_sostenible_setmanal, null);
@@ -85,7 +82,6 @@ sqlite.exec(`INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi,
              VALUES (1,173004,'2026-07-26',7100,21127,40500,0,40500);`);
 e = await economia(db, 1, '2026-07-26');
 assert.equal(e.caixa, 173004, 'la caixa són els «Diners disponibles»');
-assert.equal(e.caixa_disponible, 173004, 'sense reserva declarada, tota disponible');
 assert.equal(e.ingressos_recurrents, 21127 + 40500 + 0 + 40500,
   'la suma de les DOS setmanes: cap multiplicació al camí dels ingressos');
 assert.equal(e.despeses.nomina, 5000 * 2, 'la nòmina és setmanal → × 2');
@@ -124,8 +120,9 @@ assert.equal(e.planter_derivat, 20000, 'acadèmia + 3 cercapromeses = el fixture
 assert.equal(e.despeses.planter, 40000, 'i entra al període doblat');
 
 // ── 7. Dades velles: es diu, no es calla (la frescor la data `caixa_data`) ──
-sqlite.exec("UPDATE finances SET caixa_data='2026-06-01' WHERE usuari_id=1;");
-assert.equal((await economia(db, 1, '2026-07-26')).dades_velles, true);
+sqlite.exec("UPDATE finances SET caixa_data='2026-07-18' WHERE usuari_id=1;");
+assert.equal((await economia(db, 1, '2026-07-26')).dades_velles, true, '8 dies sense declarar');
+assert.equal((await economia(db, 1, '2026-07-25')).dades_velles, false, 'a 7 dies encara calla');
 
 // ── 8. La divisió ix normalitzada (cap taula pot fallar en silenci) ──
 sqlite.exec("UPDATE config_usuari SET divisio='7' WHERE usuari_id=1;");

@@ -409,20 +409,6 @@
       "taules": []
     },
     {
-      "id": "P3.caixa_disponible",
-      "pas": "P3",
-      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
-      "clau": "caixa_disponible",
-      "linia": "caixa_disponible = MAX(0; caixa − `reserva_caixa`)",
-      "entrades": [
-        "caixa"
-      ],
-      "poms": [
-        "reserva_caixa"
-      ],
-      "taules": []
-    },
-    {
       "id": "P4.sou_sostenible_setmanal",
       "pas": "P4",
       "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
@@ -834,9 +820,9 @@
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "admissible",
-      "linia": "admissible(estadi) = `estadi_cost_obra` ≤ caixa_disponible",
+      "linia": "admissible(estadi) = `estadi_cost_obra` ≤ caixa",
       "entrades": [
-        "caixa_disponible"
+        "caixa"
       ],
       "poms": [
         "estadi_cost_obra"
@@ -905,9 +891,9 @@
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "admissible",
-      "linia": "admissible      = preu ≤ caixa_disponible  I  sou ≤ pressupost_sou(lloc)",
+      "linia": "admissible      = preu ≤ caixa  I  sou ≤ pressupost_sou(lloc)",
       "entrades": [
-        "caixa_disponible",
+        "caixa",
         "lloc",
         "pressupost_sou",
         "preu",

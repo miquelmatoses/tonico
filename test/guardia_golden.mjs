@@ -15,7 +15,7 @@ import * as apiMercat from '../functions/api/mercat.js';
 import * as apiPersonal from '../functions/api/personal.js';
 import * as apiVendes from '../functions/api/vendes.js';
 import * as apiAlertes from '../functions/api/alertes.js';
-import { economia, souSostenible, caixaDisponible, reservaFlux, despesaPlanter } from '../lib/economia.js';
+import { economia, souSostenible, reservaFlux, despesaPlanter } from '../lib/economia.js';
 import { nivellAccio } from '../lib/informe.js';
 import { costFlux, baseTipus } from '../lib/personal_v3.js';
 import { eficiencia } from '../lib/estoc.js';
@@ -63,7 +63,6 @@ const igual = (vist, esperat, què) => { assert.deepEqual(vist, esperat, `golden
   igual(eco.sou_sostenible, souSostenible(eco.ingressos_recurrents, eco.despeses_fixes, eco.despeses.nomina, eco.reserva_flux), 'sou sostenible');
   igual(eco.sou_sostenible_setmanal, eco.sou_sostenible / eco.setmanes_periode,
     'l\'ÚNIC canvi d\'unitat, i el fa l\'economia');
-  igual(eco.caixa_disponible, caixaDisponible(eco.caixa, eco.reserva_caixa), 'caixa disponible');
   // La divisió es va declarar en àrab: la pantalla NO pot mostrar el format cru.
   igual(eco.divisio, normalitzaDivisio('7'), 'divisió normalitzada, no el format declarat');
 }
@@ -72,7 +71,7 @@ const igual = (vist, esperat, què) => { assert.deepEqual(vist, esperat, `golden
 {
   const { estoc } = await json(apiMercat);
   const eco = await economia(db, 1, '2026-07-26');
-  igual(estoc.caixa_disponible, eco.caixa_disponible, 'la caixa amb què compara');
+  igual(estoc.caixa, eco.caixa, 'la caixa amb què compara');
   igual(estoc.sou_sostenible, eco.sou_sostenible, 'el sou que sosté');
   for (const o of estoc.opcions) assert.ok(o.motiu, `l'opció ${o.tipus} porta motiu derivat`);
   const est = estoc.opcions.find((o) => o.tipus === 'estadi');

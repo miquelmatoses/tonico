@@ -32,7 +32,12 @@ export async function onRequestPost({ request, env, data }) {
   const cur = await env.DB.prepare('SELECT * FROM finances WHERE usuari_id=?').bind(data.usuari.id).first() || {};
   const v = {};
   for (const k of CAMPS) v[k] = k in c ? c[k] : (cur[k] ?? null);
-  if (v.caixa != null && !v.caixa_data) v.caixa_data = new Date().toISOString().slice(0, 10);
+  // `caixa_data` és la data de la DECLARACIÓ, i és el rellotge d'on ix «fa més de 7 dies que
+  // no em dones dades» (invariant 18). Es reposa a CADA declaració del període: amb la
+  // condició d'abans (`&& !v.caixa_data`) només s'escrivia la primera vegada i la frescor es
+  // congelava per sempre, o siga que l'avís no hauria saltat mai.
+  const DECLARACIO = ['caixa', 'taquilla_s1', 'patrocini_s1', 'taquilla_s2', 'patrocini_s2'];
+  if (DECLARACIO.some((k) => k in c)) v.caixa_data = hui();
   const enter = (x) => (x == null || x === '' ? null : Math.round(Number(x)));
   await env.DB.prepare(
     `INSERT INTO finances (usuari_id, ${COLS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

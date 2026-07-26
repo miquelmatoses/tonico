@@ -440,3 +440,25 @@ main:has(.auth) { max-width: none; padding: 0; }
 /* Un formulari dins d'una targeta és un bloc: la graella de camps ha d'ocupar tot l'ample. */
 form.card-cos { display: block; }
 .form-graella { width: 100%; }
+
+/* ── DECLARACIÓ DEL PERÍODE (Economia) ─────────────────────────────────────────
+   Un bloc per SETMANA, amb capçalera pròpia, i els mateixos camps en el mateix orde
+   dins de cada bloc: així es llig horitzontalment i es veu d'un colp d'ull què falta.
+   Les etiquetes van sobre el camp i amb alçada fixa perquè els inputs queden alineats
+   entre columnes encara que un text ocupe dues línies. */
+.decl-setmanes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 14px; margin-bottom: 14px; }
+.decl-bloc { border: 2px solid var(--tinta); border-radius: 12px; padding: 12px 14px 14px;
+  background: #fbf9f0; display: flex; flex-direction: column; gap: 10px; }
+.decl-titol { margin: 0 0 2px; font-family: var(--font-titol); font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em; color: var(--verd-fosc);
+  border-bottom: 2px solid var(--verd-fosc); padding-bottom: 6px; }
+.decl-camp { display: flex; flex-direction: column; gap: 4px; }
+.decl-et { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--gris); min-height: 2.4em; display: flex; align-items: flex-end; }
+.decl-camp input { width: 100%; }
+/* Un bloc que no va per setmana (el del club) ocupa tot l'ample: els seus camps es reparteixen
+   en columnes per a que TOTS els inputs del formulari tinguen una amplada comparable. */
+.decl-bloc.ample { grid-column: 1 / -1; }
+.decl-bloc.ample .decl-camps { display: grid; gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); }

@@ -1,5 +1,42 @@
 # Tonico — registre de decisions (mode autònom)
 
+## 2026-07-26 · LA PANTALLA D'ECONOMIA: dos setmanes, i el rellotge de Paco arreglat
+Tres coses demanades per Miquel, i la tercera amagava dos bugs.
+
+**1. Visualització per setmanes.** Un bloc per setmana (la passada i esta) amb capçalera
+pròpia i els MATEIXOS dos camps en el mateix orde dins de cada u: la lectura és horitzontal i
+es veu d'un colp d'ull què falta. Les etiquetes van damunt amb alçada mínima fixa, així els
+inputs queden alineats entre columnes encara que un text ocupe dues línies. El bloc «del club»
+(caixa i manteniment) ocupa tot l'ample però reparteix els seus camps en columnes, perquè tots
+els inputs del formulari tinguen amplada comparable. Verificat al navegador a 360, 480 i 760 px:
+cau a una columna en mòbil. Nota: `.camp` ja era el camp de joc → classes `decl-*`.
+
+**2. Fora «Disponible per a comprar».** I no només la targeta: **`caixa_disponible` i
+`reserva_caixa` desapareixen del model**. La reserva d'ESTOC no s'ha usat mai (0 per defecte i
+ningú la posava), i una derivada que sempre val igual que la seua entrada és un concepte de
+més. El PAS 8 compara contra la `caixa` declarada. La reserva de FLUX (5%) es queda: eixa sí
+que fa feina.
+
+**3. «Que Paco em demane les dades si fa més de 7 dies».** Ja existia `ALR_DADES_VELLES`, però
+**no hauria saltat mai**, per dos motius independents:
+   - **El rellotge era la data de l'última INSTANTÀNIA**, no el dia de veres
+     (`economia(db, id, instSenior.data)`). Si Miquel deixa de pujar CSV, es compara dada vella
+     contra rellotge vell: la diferència es queda congelada i l'avís no salta —justament en
+     l'únic cas en què fa falta. Ara `generaAlertes(db, id, hui)` rep el dia com a paràmetre
+     (no un `new Date()` amagat: l'avaluador no pot tindre rellotges propis i els tests l'han
+     de poder fixar) i el passa avant des de `regeneraPipeline`.
+   - **`caixa_data` només s'escrivia la primera vegada** (`if (caixa != null && !caixa_data)`),
+     o siga que la data de frescor es congelava a la primera declaració. Ara es reposa a cada
+     desada.
+   El llindar passa de `setmanes_avis_dades` (1) a **`dies_avis_dades` (7)**: Miquel ho ha
+   demanat en dies i anomenar-ho en setmanes obligava a traduir cada vegada.
+   **Regressió coberta** (`test/dades_velles.mjs`): calla als 7 dies justos, reclama al huité,
+   i —el cas que importa— amb la instantània congelada al 18-07 i dos mesos passats **segueix
+   reclamant**. Si algú torna a lligar el rellotge a la instantània, este test peta.
+
+**Nota de procés:** la 072 ja estava aplicada a prod quan encara li afegia coses. Els canvis
+tardans s'han separat a la **073**: una migració que ja ha corregut no es toca.
+
 ## 2026-07-26 · L'ECONOMIA SÓN QUATRE COSES (correcció de Miquel, i era greu)
 **Símptoma de Miquel:** *«si t'he dit que Tonico només ha de tindre taquilla, patrocinadors,
 diners disponibles i manteniment de l'estadi, de la setmana passada i esta, per què has fet

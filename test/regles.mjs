@@ -104,15 +104,16 @@ const codis = (a) => a.map((x) => x.regla_codi);
   assert.equal(REGLES.ALR_PLANTILLA_JUVENIL_MINIMA(ctx, { minim: 11, urgencia: 50 }).length, 1);  // 2 < 11
 }
 
-// ALR_COMPRA_ENTRENABLE: filtre concret + caixa_disponible (la MATEIXA xifra que Mercat)
+// ALR_COMPRA_ENTRENABLE: filtre concret + la CAIXA declarada (la MATEIXA xifra que Mercat).
+// Ja no hi ha `caixa_disponible`: sense reserva d'estoc era la caixa dita dues vegades.
 {
   const filtres = [{ rol: 'core', posicions: ['MC'], edat_max: 18, creativitat_min: 6, falten: 1 }];
-  const amb = REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres, caixa: 200000, caixa_disponible: 150000 } }, { urgencia: 72 });
+  const amb = REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres, caixa: 150000 } }, { urgencia: 72 });
   assert.equal(amb[0].missatge_clau, 'alerta.compra_core');
-  assert.equal(amb[0].parametres.pressupost, 150000);   // caixa_disponible, sense repartir ni retallar
-  const sense = REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres, caixa: 0, caixa_disponible: 0 } }, { urgencia: 72 });
+  assert.equal(amb[0].parametres.pressupost, 150000);   // la caixa sencera, sense repartir ni retallar
+  const sense = REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres, caixa: 0 } }, { urgencia: 72 });
   assert.equal(sense[0].missatge_clau, 'alerta.compra_core_sense_caixa');
-  assert.equal(REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres: [{ rol: 'core', falten: 0 }], caixa_disponible: 1 } }, { urgencia: 72 }).length, 0);
+  assert.equal(REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres: [{ rol: 'core', falten: 0 }], caixa: 1 } }, { urgencia: 72 }).length, 0);
 }
 
 // ALR_SENSE_CATEGORIA
@@ -173,10 +174,10 @@ console.log('OK — ALR_LESIO_VENDA: llistat lesionat avisa');
     'sense economia no hi ha res a avisar');
   assert.equal(REGLES.ALR_DADES_VELLES({ economia: { dades_velles: false } }, p).length, 0,
     'amb dades fresques, Paco calla');
-  const velles = REGLES.ALR_DADES_VELLES({ economia: { dades_velles: true, periode_data: '2026-06-01' } }, p);
+  const velles = REGLES.ALR_DADES_VELLES({ economia: { dades_velles: true, caixa_data: '2026-07-18' } }, p);
   assert.equal(velles.length, 1, 'amb dades velles, avisa');
   assert.equal(velles[0].missatge_clau, 'alerta.dades_velles');
-  assert.equal(velles[0].parametres.data, '2026-06-01', 'i diu de quan són');
+  assert.equal(velles[0].parametres.data, '2026-07-18', 'i diu de quan són');
 
   assert.equal(REGLES.ALR_ESTADI_CADUC({ economia: { estadi_caduc: false } }, { urgencia: 55 }).length, 0);
   const caduc = REGLES.ALR_ESTADI_CADUC({ economia: { estadi_caduc: true, estadi_data: '2026-01-01' } }, { urgencia: 55 });

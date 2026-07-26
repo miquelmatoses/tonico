@@ -120,8 +120,9 @@ sou_sostenible   = MAX(0; ingressos_recurrents − reserva_flux
    [= les despeses recurrents no poden passar del (1 − `reserva_flux_pct`) dels
     ingressos recurrents. La reserva és POLÍTICA DE RISC declarada, no mecànica]
 caixa            = saldo real declarat (mai projectat)
-   [= «Diners disponibles» de l'informe, no «diners al final de setmana»]
-caixa_disponible = MAX(0; caixa − `reserva_caixa`)
+   [= «Diners disponibles» de l'informe, no «diners al final de setmana». NO hi ha
+    `caixa_disponible`: la reserva d'estoc no s'ha usat mai i una derivada que val
+    igual que la seua entrada és un concepte de més. El PAS 8 compara contra `caixa`]
 ```
 De l'informe setmanal de HT es declaren **QUATRE coses i cap més**: **taquilla** i
 **patrocinadors** (de la setmana passada i d'esta), **diners disponibles** i **manteniment
@@ -210,7 +211,7 @@ PREGUNTA a l'inici de cada temporada, de `url_calculadora_estadi` (configuració
 estadi_caduc   = (hui − `estadi_data`) > `setmanes_caducitat_estadi` × 7
 ACCIÓ("torna a la calculadora i reinserix els números")  SI estadi_caduc
 Δmanteniment   = `estadi_manteniment` − manteniment_actual
-admissible(estadi) = `estadi_cost_obra` ≤ caixa_disponible
+admissible(estadi) = `estadi_cost_obra` ≤ caixa
                    I  flux − per_periode(Δmanteniment) ≥ reserva_flux
 ACCIÓ("remodela l'estadi")  SI admissible(estadi) I ¬estadi_caduc
    [PRIORITAT ABSOLUTA: abans que qualsevol fitxatge, sempre. L'estadi és l'única
@@ -225,7 +226,7 @@ ACCIÓ("remodela l'estadi")  SI admissible(estadi) I ¬estadi_caduc
 candidat(lloc)  = jugador de mercat amb hab(habilitat_lloc) ≥ nivell_objectiu(lloc)
 guany(jugador)  = mancança(lloc) × pes(lloc)
 cost(jugador)   = preu de mercat del candidat        [preu real llistat, no estimat]
-admissible      = preu ≤ caixa_disponible  I  sou ≤ pressupost_sou(lloc)
+admissible      = preu ≤ caixa  I  sou ≤ pressupost_sou(lloc)
 eficiència(jugador) = guany / cost
 ACCIÓ = PRIMER(ORDENA(FILTRA(candidats; admissible); eficiència DESC))
    SI cap opció admissible: cap compra; el sistema optimitza NOMÉS venent (PAS 7)
@@ -355,8 +356,8 @@ Cap moviment derivat encadena efectes irreversibles.
 1. Una variable, una fórmula, una font (preu_esperat, calendari, llistat,
    nivell_objectiu).
 2. Derivar > preguntar: el que el CSV o una taula dona, mai es demana.
-3. Cap decisió de compra amb diners no cobrats; cap compra que deixe flux < 0 o
-   caixa < `reserva_caixa`.
+3. Cap decisió de compra amb diners no cobrats; cap compra que deixe el flux per
+   davall de `reserva_flux`.
 4. llistat no juga · lesionat no s'alinea · mai per davall dels mínims (porters,
    cossos, `minim_en_camp` juvenil).
 5. Overrides d'usuari sagrats: només es desplacen preguntant.
@@ -382,8 +383,10 @@ Cap moviment derivat encadena efectes irreversibles.
     abans de barrejar-se amb la taquilla; l'ÚNIC pas a unitats setmanals és el PAS 4.
 17. FINESTRA DE DECLARACIÓ: si Tonico consumix una dada que no pot derivar, eixa dada té
     finestra per a declarar-la. Cap dada demanada sense on posar-la, cap camp sense ús.
-18. DADES VELLES ≠ ABSENTS ≠ ZERO: passat `setmanes_avis_dades` sense declaració nova, el
-    sistema HO DIU i no seguix raonant en silenci sobre xifres velles.
+18. DADES VELLES ≠ ABSENTS ≠ ZERO: passats `dies_avis_dades` (7) sense declaració nova, el
+    sistema HO DIU i no seguix raonant en silenci sobre xifres velles. La comparació es fa
+    contra el dia DE VERES, no contra la data de l'última instantània: si no, quan es deixa
+    de pujar dades el rellotge es congela i l'avís no salta mai.
 
 ---
 

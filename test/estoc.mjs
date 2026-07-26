@@ -7,12 +7,12 @@ import { guanyJugador, admissibleJugador, deltaManteniment, admissibleEstadi, es
 // ── Opció JUGADOR ──
 assert.equal(guanyJugador(3, 1.5), 4.5, 'guany = mancança × pes (la mètrica única)');
 assert.equal(guanyJugador(null, 1.5), null);
-assert.equal(admissibleJugador({ preu: 50000, sou: 900 }, { caixa_disponible: 100000, pressupost_sou_lloc: 1000 }), true);
-assert.equal(admissibleJugador({ preu: 150000, sou: 900 }, { caixa_disponible: 100000, pressupost_sou_lloc: 1000 }), false,
+assert.equal(admissibleJugador({ preu: 50000, sou: 900 }, { caixa: 100000, pressupost_sou_lloc: 1000 }), true);
+assert.equal(admissibleJugador({ preu: 150000, sou: 900 }, { caixa: 100000, pressupost_sou_lloc: 1000 }), false,
   'no es compra amb diners que no tens');
-assert.equal(admissibleJugador({ preu: 50000, sou: 5000 }, { caixa_disponible: 100000, pressupost_sou_lloc: 1000 }), false,
+assert.equal(admissibleJugador({ preu: 50000, sou: 5000 }, { caixa: 100000, pressupost_sou_lloc: 1000 }), false,
   'ni un sou que el lloc no sosté');
-assert.equal(admissibleJugador({ preu: 1 }, { caixa_disponible: null }), false,
+assert.equal(admissibleJugador({ preu: 1 }, { caixa: null }), false,
   'sense caixa declarada no es compra res');
 
 // ── Opció ESTADI: només admissibilitat, no es puntua ──
@@ -21,20 +21,20 @@ assert.equal(deltaManteniment(null, 6000), null);
 
 // L'obra es paga amb caixa cobrada I el flux la sosté deixant la reserva intacta. El
 // Δmanteniment és SETMANAL i el flux va per període: es normalitza (invariant 16).
-assert.equal(admissibleEstadi({ cost: 50000, caixa_disponible: 100000, flux: 10000,
+assert.equal(admissibleEstadi({ cost: 50000, caixa: 100000, flux: 10000,
   delta_manteniment: 1000, setmanes_periode: 2, reserva_flux: 5000 }), true);
-assert.equal(admissibleEstadi({ cost: 150000, caixa_disponible: 100000, flux: 10000,
+assert.equal(admissibleEstadi({ cost: 150000, caixa: 100000, flux: 10000,
   delta_manteniment: 0, setmanes_periode: 2, reserva_flux: 0 }), false,
   'l\'obra tampoc es paga amb diners que no tens');
-assert.equal(admissibleEstadi({ cost: 50000, caixa_disponible: 100000, flux: 10000,
+assert.equal(admissibleEstadi({ cost: 50000, caixa: 100000, flux: 10000,
   delta_manteniment: 3000, setmanes_periode: 2, reserva_flux: 5000 }), false,
   'ni una obra el manteniment de la qual es menge la reserva (3000 × 2 = 6000 > 10000 − 5000)');
-assert.equal(admissibleEstadi({ cost: 1, caixa_disponible: 100, flux: null, delta_manteniment: 0 }), false,
+assert.equal(admissibleEstadi({ cost: 1, caixa: 100, flux: null, delta_manteniment: 0 }), false,
   'sense flux declarat no es decidix una obra');
 
 // PROPIETAT NOVA (v3.1): una AMPLIACIÓ (Δmanteniment > 0) pot ser admissible. Amb el model
 // anterior el guany de l'obra era 0 sempre que s'ampliara, i l'estadi no podia guanyar mai.
-assert.equal(admissibleEstadi({ cost: 10000, caixa_disponible: 999999, flux: 100000,
+assert.equal(admissibleEstadi({ cost: 10000, caixa: 999999, flux: 100000,
   delta_manteniment: 5000, setmanes_periode: 2, reserva_flux: 0 }), true,
   'ampliar l\'estadi ha de poder passar el filtre: abans era impossible');
 
