@@ -18,7 +18,7 @@ import { souSostenible, perPeriode, reservaFlux, despesaPlanter, dadesVelles,
   fluxRepartible, pressupostPersonal } from '../lib/economia.js';
 import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
 import { pesLloc, pressupostSou, nivellObjectiu, carregaConfigPesos } from '../lib/pesos.js';
-import { nivellActual, mancanca, exces, sobrecost, prioritat } from '../lib/mancanca.js';
+import { sobrecost } from '../lib/mancanca.js';
 import { urgent as esUrgent, motiuVenda, ordreVenda, desti, despatxable,
   subhastaDeserta } from '../lib/vendes.js';
 import { assignaEstructura } from '../lib/onze.js';
@@ -203,13 +203,13 @@ const VERIFICADES = {
     assert.ok(cediblesA.includes('dobla'), 'només els que dobles es poden cedir');
   },
   'P8.necessitats': () => {
-    // Les places BUIDES manen per damunt de qualsevol mancança, i un sol nivell de distància
-    // no és un forat: s'arregla entrenant o esperant.
+    // Les places BUIDES manen per damunt de qualsevol distància, i un sol nivell no és un
+    // forat: s'arregla entrenant o esperant.
     const est = { entrenables: [], entrenables_max: 2, porter_suplent: null,
       onze: [{ bucket: 'mc', nivell_objectiu: 9, diferencia: -1 },
              { bucket: 'davanter', nivell_objectiu: 9, diferencia: -3 }] };
-    const n = necessitats(est, { entrenable_min: 6, pesos: { mc: 1.46, davanter: 0.89 } });
-    assert.equal(n[0].prioritat, Infinity, 'una plaça buida va primer');
+    const n = necessitats(est, { entrenable_min: 6 });
+    assert.equal(n[0].distancia, Infinity, 'una plaça buida va primer');
     assert.ok(!n.some((x) => x.bucket === 'mc' && x.tipus === 'lloc'), 'un sol nivell no és forat');
     assert.ok(n.some((x) => x.clau === 'davanter:9'), 'i tres nivells sí');
   },
@@ -218,13 +218,15 @@ const VERIFICADES = {
     assert.equal(clauFitxatge('lloc', 'mc', 9), clauFitxatge('lloc', 'mc', 9));
     assert.notEqual(clauFitxatge('lloc', 'mc', 9), clauFitxatge('lloc', 'mc', 10));
   },
-  'P8.prioritat': () => {
+  'P8.comprable': () => {
+    // Un lloc SOBRAT ix a la llista —està fora de lloc— però no es compra: ni preu que
+    // declarar, ni pot arribar mai a recomanació.
     const est = { entrenables: [1], entrenables_max: 1, porter_suplent: {},
-      onze: [{ bucket: 'mc', nivell_objectiu: 9, diferencia: -3 },
-             { bucket: 'davanter', nivell_objectiu: 9, diferencia: -4 }] };
-    const n = necessitats(est, { pesos: { mc: 1.46, davanter: 0.89 } });
-    assert.deepEqual(n.map((x) => x.clau), ['mc:9', 'davanter:9'],
-      'mc 3×1,46 per damunt de davanter 4×0,89: mana mancança × pes');
+      onze: [{ bucket: 'porter', nivell_objectiu: 5, diferencia: 4 }] };
+    const [n] = ambPreus(necessitats(est, {}), new Map(), 999999);
+    assert.equal(n.motiu, 'excedeix');
+    assert.equal(n.falta, null, 'no espera cap preu');
+    assert.equal(n.admissible, false, 'i no pot arribar a recomanació de compra');
   },
   'P8.eficiencia': () => {
     // eficiència = prioritat / cost, i el cost és el preu DECLARAT.
@@ -529,11 +531,32 @@ const VERIFICADES = {
     assert.equal(nivellObjectiu('creativitat', null, ts), null);
   },
 
-  // PAS 5 — la mètrica única. Tot competix pel mateix diner amb la mateixa unitat.
-  'P5.ocupant': () => assert.equal(nivellActual(null, 'creativitat'), 0, 'lloc buit → ocupant ∅'),
-  'P5.nivell_actual': () => {
-    assert.equal(nivellActual({ creativitat: 7 }, 'creativitat'), 7);
-    assert.equal(nivellActual(null, 'creativitat'), 0);
+  // PAS 5 — LA DISTÀNCIA A L'OBJECTIU, en valor absolut.
+  'P5.distancia': () => {
+    // Per dalt o per baix: la distància és la mateixa, i el que canvia és qui va primer.
+    const n = necessitats({ entrenables: [], entrenables_max: 0, porter_suplent: {}, onze: [
+      { bucket: 'mc', nivell_objectiu: 9, diferencia: -3 },
+      { bucket: 'porter', nivell_objectiu: 5, diferencia: 4 }] }, {});
+    assert.equal(n.find((x) => x.bucket === 'mc').distancia, 3, 'tres per davall → distància 3');
+    assert.equal(n.find((x) => x.bucket === 'porter').distancia, 4, 'quatre per damunt → distància 4');
+    assert.equal(n.find((x) => x.bucket === 'porter').sota, false, 'i es diu de quin costat va');
+  },
+  'P5.compta': () => {
+    const n = necessitats({ entrenables: [], entrenables_max: 0, porter_suplent: {}, onze: [
+      { bucket: 'mc', nivell_objectiu: 9, diferencia: -1 },
+      { bucket: 'extrem', nivell_objectiu: 9, diferencia: 1 },
+      { bucket: 'davanter', nivell_objectiu: 9, diferencia: -2 }] }, {});
+    assert.deepEqual(n.map((x) => x.bucket), ['davanter'],
+      'un sol nivell no és un forat, ni per dalt ni per baix: s\'arregla entrenant');
+  },
+  'P5.ordre': () => {
+    const n = necessitats({ entrenables: [], entrenables_max: 2, porter_suplent: null, onze: [
+      { bucket: 'mc', nivell_objectiu: 9, diferencia: -2 },
+      { bucket: 'davanter', nivell_objectiu: 9, diferencia: 3 },
+      { bucket: 'extrem', nivell_objectiu: 9, diferencia: -3 }] }, { entrenable_min: 6 });
+    assert.deepEqual(n.map((x) => x.tipus === 'lloc' ? x.bucket : x.tipus),
+      ['entrenable', 'porter_suplent', 'extrem', 'davanter', 'mc'],
+      'places buides primer; després distància DESC; i a igualtat de 3, primer el que va curt');
   },
   'P4.nivell_objectiu_ht': () => {
     // DUES ESCALES. La taula de salaris comença en «Inadequate» (el 5é de HT) i les habilitats
@@ -545,23 +568,10 @@ const VERIFICADES = {
     assert.equal(taula.creativitat['5'], 850, 'el nostre 5 de creativitat és el Formidable de la guia');
     assert.equal(5 + off, 9, 'i Formidable és el nivell 9 de Hattrick');
   },
-  'P5.mancanca': () => {
-    assert.equal(mancanca(9, 6), 3);
-    assert.equal(mancanca(6, 9), 0, 'MAX(0; …)');
-    assert.equal(mancanca(null, 6), null);
-  },
-  'P5.exces': () => {
-    assert.equal(exces({ creativitat: 9 }, 'creativitat', 6), 3);
-    assert.equal(exces({ creativitat: 5 }, 'creativitat', 6), 0, 'MAX(0; …)');
-  },
   'P5.sobrecost': () => {
     const ts = { creativitat: { 3: 330 } };
     assert.equal(sobrecost({ sou: 900 }, 'creativitat', 3, ts), 570);
     assert.equal(sobrecost({ sou: 300 }, 'creativitat', 3, ts), 0, 'MAX(0; …)');
-  },
-  'P5.prioritat': () => {
-    assert.equal(prioritat(3, 1.5), 4.5, 'mancança × pes');
-    assert.equal(prioritat(0, 1.5), 0);
   },
 
   // PAS 6 — L'ASSIGNACIÓ. Es reparteixen TOTS els jugadors, lloc a lloc, i el que sobra és

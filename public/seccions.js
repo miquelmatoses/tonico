@@ -734,7 +734,8 @@ export async function mercat(main) {
       preu.addEventListener('change', desar);
       const etiqueta = n.tipus === 'porter_suplent' ? t('mercat.nec_porter_suplent')
         : n.tipus === 'entrenable' ? tp('mercat.nec_entrenable', n.quants, { n: n.quants, nivell: n.nivell })
-          : tp('mercat.nec_lloc', n.quants, { n: n.quants, lloc: t('hab.' + (BUCKET_HAB[n.bucket] || n.bucket)), nivell: n.nivell });
+          : tp(n.sota === false ? 'mercat.nec_lloc_sobrat' : 'mercat.nec_lloc', n.quants,
+          { n: n.quants, lloc: t('hab.' + (BUCKET_HAB[n.bucket] || n.bucket)), nivell: n.nivell });
       // ELS CRITERIS DE CERCA, al costat del preu: és el que Miquel ha de teclejar a Hattrick
       // per a mirar les últimes transferències i tornar el número.
       const camps = el('div', { class: 'filtre-camps' });
@@ -753,7 +754,9 @@ export async function mercat(main) {
       cnc.append(el('div', { class: 'filtre' },
         el('div', { class: 'filtre-cap' },
           el('b', { text: etiqueta }),
-          el('span', { class: 'filtre-falten', text: t('mercat.nec_' + n.motiu) })),
+          el('span', { class: 'filtre-falten', text: n.motiu === 'excedeix'
+            ? tp('mercat.nec_excedeix', n.distancia, { n: n.distancia })
+            : t('mercat.nec_' + n.motiu) })),
         camps,
         ...(n.preu_vell ? [el('p', { class: 'desquadre', text: t('mercat.preu_vell', { data: n.preu_data }) })] : [])));
     }

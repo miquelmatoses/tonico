@@ -475,65 +475,37 @@
       "taules": []
     },
     {
-      "id": "P5.ocupant",
+      "id": "P5.distancia",
       "pas": "P5",
-      "pasTitol": "MANCANÇA (la mètrica única)",
-      "clau": "ocupant",
-      "linia": "ocupant(lloc)   = el jugador assignat al lloc (PAS 8) o ∅",
+      "pasTitol": "LA DISTÀNCIA A L'OBJECTIU",
+      "clau": "distància",
+      "linia": "distància(lloc) = |diferència(lloc)|          [diferència: vore PAS 6]",
       "entrades": [
+        "diferència",
         "lloc"
       ],
       "poms": [],
       "taules": []
     },
     {
-      "id": "P5.nivell_actual",
+      "id": "P5.compta",
       "pas": "P5",
-      "pasTitol": "MANCANÇA (la mètrica única)",
-      "clau": "nivell_actual",
-      "linia": "nivell_actual(lloc) = SI(ocupant ≠ ∅; hab(ocupant, habilitat_lloc(lloc)); 0)",
+      "pasTitol": "LA DISTÀNCIA A L'OBJECTIU",
+      "clau": "compta",
+      "linia": "compta(lloc)    = distància(lloc) ≥ `distancia_min`",
       "entrades": [
-        "hab",
-        "habilitat_lloc",
-        "lloc",
-        "ocupant"
+        "distància",
+        "lloc"
       ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P5.mancanca",
-      "pas": "P5",
-      "pasTitol": "MANCANÇA (la mètrica única)",
-      "clau": "mancança",
-      "linia": "mancança(lloc)  = MAX(0; nivell_objectiu_ht(lloc) − nivell_actual(lloc))",
-      "entrades": [
-        "lloc",
-        "nivell_actual",
-        "nivell_objectiu_ht"
+      "poms": [
+        "distancia_min"
       ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P5.exces",
-      "pas": "P5",
-      "pasTitol": "MANCANÇA (la mètrica única)",
-      "clau": "excés",
-      "linia": "excés(j)        = MAX(0; hab(j, habilitat_lloc(lloc(j))) − nivell_objectiu_ht(lloc(j)))",
-      "entrades": [
-        "hab",
-        "habilitat_lloc",
-        "lloc",
-        "nivell_objectiu_ht"
-      ],
-      "poms": [],
       "taules": []
     },
     {
       "id": "P5.sobrecost",
       "pas": "P5",
-      "pasTitol": "MANCANÇA (la mètrica única)",
+      "pasTitol": "LA DISTÀNCIA A L'OBJECTIU",
       "clau": "sobrecost",
       "linia": "sobrecost(j)    = MAX(0; sou(j) − BUSCA(`taula_salaris`; habilitat_lloc(lloc(j));",
       "entrades": [
@@ -547,15 +519,13 @@
       ]
     },
     {
-      "id": "P5.prioritat",
+      "id": "P5.ordre",
       "pas": "P5",
-      "pasTitol": "MANCANÇA (la mètrica única)",
-      "clau": "prioritat",
-      "linia": "prioritat(lloc) = mancança(lloc) × pes(lloc)",
+      "pasTitol": "LA DISTÀNCIA A L'OBJECTIU",
+      "clau": "ORDRE",
+      "linia": "ORDRE DE LES NECESSITATS = places buides PRIMER;",
       "entrades": [
-        "lloc",
-        "mancança",
-        "pes"
+        "places"
       ],
       "poms": [],
       "taules": []
@@ -596,8 +566,7 @@
         "hab",
         "habilitat_lloc",
         "lloc",
-        "nivell_objectiu_ht",
-        "ocupant"
+        "nivell_objectiu_ht"
       ],
       "poms": [],
       "taules": []
@@ -921,10 +890,10 @@
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "necessitats",
-      "linia": "necessitats = places BUIDES d'entrenament i de porter suplent  → prioritat = ∞",
+      "linia": "necessitats = places BUIDES d'entrenament i de porter suplent  → distància = ∞",
       "entrades": [
-        "places",
-        "prioritat"
+        "distància",
+        "places"
       ],
       "poms": [],
       "taules": []
@@ -943,16 +912,12 @@
       "taules": []
     },
     {
-      "id": "P8.prioritat",
+      "id": "P8.comprable",
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
-      "clau": "prioritat",
-      "linia": "prioritat   = mancança × pes(lloc)                    [la mètrica única]",
-      "entrades": [
-        "lloc",
-        "mancança",
-        "pes"
-      ],
+      "clau": "comprable",
+      "linia": "comprable(n) = la necessitat va CURTA (o és una plaça buida)",
+      "entrades": [],
       "poms": [],
       "taules": []
     },
@@ -988,10 +953,10 @@
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "eficiència",
-      "linia": "eficiència  = prioritat / cost",
+      "linia": "eficiència  = distància / cost",
       "entrades": [
         "cost",
-        "prioritat"
+        "distància"
       ],
       "poms": [],
       "taules": []
@@ -1001,12 +966,11 @@
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "ACCIÓ",
-      "linia": "ACCIÓ = PRIMER(ORDENA(FILTRA(necessitats; admissible); prioritat DESC, eficiència DESC))",
+      "linia": "ACCIÓ = PRIMER(ORDENA(FILTRA(necessitats; admissible); ORDRE DEL PAS 5,",
       "entrades": [
+        "ORDRE",
         "admissible",
-        "eficiència",
-        "necessitats",
-        "prioritat"
+        "necessitats"
       ],
       "poms": [],
       "taules": []
