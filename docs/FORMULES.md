@@ -222,16 +222,24 @@ cap_a_temps(j) = edat_d(j) + setmanes_seguent(j) × 7 < `entrenable_edat_limit` 
     cobrarà mai. I com que pujar el fa més vell i la següent pujada és més lenta,
     el criteri el trau tot sol JUST DESPRÉS d'haver pujat, que és quan val més]
 
-futur_entrenador = PRIMER(ORDENA(FILTRA(sobrants − entrenables;
+porter_suplent   = PRIMER(ORDENA(FILTRA(sobrants − entrenables;
+                      porteria(j) ≥ `porter_suplent_porteria_min`); sou ASC))
+   [TRIA ABANS QUE EL FUTUR ENTRENADOR: la porteria és una OBLIGACIÓ —el titular
+    no dobla— i el futur entrenador una OPORTUNITAT. Amb l'orde al revés, un
+    porter amb experiència se n'anava d'entrenador i el sistema es quedava sense
+    porteria per a l'onze_B, dient «et falta un porter suplent» mentres
+    l'alineació el posava sota pals]
+   [UN LLINDAR, no una deducció. Abans era «la porteria per damunt de TOTES les
+    altres habilitats», i això deixava fora porters de veres: un que llança
+    faltes té la pilota aturada igual o més alta. Eixos se n'anaven a VENDA
+    mentres la mateixa pantalla demanava comprar-ne un]
+   [i entre els que arriben mana el SOU: eixe lloc no compra res]
+futur_entrenador = PRIMER(ORDENA(FILTRA(sobrants − entrenables − porter_suplent;
                       experiència(j) ≥ MÍNIM(`coach_preu_reconversio`));
                       experiència DESC, lideratge DESC))
    [només si es pot reconvertir: per davall del primer esglaó de la taula de la
     guia no hi ha cap nivell d'entrenador possible, i assenyalar «el de més
     experiència» d'una plantilla on tots en tenen 1 seria assenyalar per no res]
-porter_suplent   = PRIMER(ORDENA(FILTRA(resta; és_porter(j)); sou ASC))
-és_porter(j)     = porteria(j) > hab(j, h) per a TOTA h ≠ porteria
-   [ESTRICTAMENT per damunt: amb ≥, un descart amb totes les habilitats a 1
-    comptava com a porter i es quedava la plaça del suplent]
 
 despatxar = FILTRA(resta; desert(j))        [vore desert(j) al PAS 7]
 venda     = resta − despatxar
@@ -346,8 +354,11 @@ onze_B = es COMPON damunt de l'onze_A, en este orde:
        entrenarien mai. Sense entrenable per a la plaça, es queda BUIDA]
    llocs que entrenen al 50%   → els mateixos de l'onze_A
       [el seu lloc TAMBÉ és entrenament: no es cedix a ningú, doblen ells]
-   porteria                    → el PORTER SUPLENT
-      [el porter no dobla: és l'únic lloc que obliga a mantindre algú a posta]
+   porteria                    → el PORTER SUPLENT, i BUIDA si no n'hi ha
+      [el porter no dobla: és l'únic lloc que obliga a mantindre algú a posta.
+       Sense suplent la porteria es queda buida i es diu — abans s'hi quedava el
+       titular «doblant», que és justament el que no pot passar: es pintava una
+       alineació legal que no ho era]
    futur entrenador            → el millor lloc DELS QUE QUEDEN, si no juga ja
       [hi va per EXPERIÈNCIA, que és el que abarateix reconvertir-lo, no perquè
        siga millor que qui desplaça: per això no toca cap lloc que entrene]

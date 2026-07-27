@@ -107,4 +107,20 @@ assert.deepEqual(r.onze_a.map((l) => l.jugador?.id), r.estructura.onze.map((l) =
   assert.ok(buides.every((l) => l.jugador == null), 'i no s\'omplin amb un titular: seria entrenament perdut');
 }
 
+// ── 7. SENSE PORTER SUPLENT, la porteria de l'onze_B es queda BUIDA i es diu ──
+// Abans s'hi quedava el TITULAR amb el motiu «dobla» — justament l'única cosa que no pot
+// passar (el porter no dobla). Es pintava una alineació legal que no ho era, i alhora Mercat
+// demanava comprar un porter suplent: les dues pantalles dient coses distintes.
+{
+  const senseSuplent = equip.filter((j) => j.id !== 30);
+  const r3 = await dosOnzes(db, 1, senseSuplent, 10291);
+  const por = r3.onze_b.find((l) => l.bucket === 'porter');
+  assert.equal(por.jugador, null, 'la porteria de l\'onze_B es queda sense ningú');
+  assert.equal(por.motiu, 'porteria_buida', 'i es diu, no es dissimula amb un «dobla»');
+  const titular = r3.onze_a.find((l) => l.bucket === 'porter').jugador;
+  assert.ok(titular, 'el titular seguix a l\'onze_A');
+  assert.notEqual(r3.onze_b.find((l) => l.bucket === 'porter').jugador?.id, titular.id,
+    'i no apareix als dos onzes: el porter no dobla');
+}
+
 console.log('OK — els dos onzes: el competitiu és el del pla, i el d\'entrenament es compon');

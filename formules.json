@@ -646,11 +646,11 @@
       "taules": []
     },
     {
-      "id": "P6.futur_entrenador",
+      "id": "P6.porter_suplent",
       "pas": "P6",
       "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
-      "clau": "futur_entrenador",
-      "linia": "futur_entrenador = PRIMER(ORDENA(FILTRA(sobrants − entrenables;",
+      "clau": "porter_suplent",
+      "linia": "porter_suplent   = PRIMER(ORDENA(FILTRA(sobrants − entrenables;",
       "entrades": [
         "entrenables",
         "sobrants"
@@ -659,26 +659,15 @@
       "taules": []
     },
     {
-      "id": "P6.porter_suplent",
+      "id": "P6.futur_entrenador",
       "pas": "P6",
       "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
-      "clau": "porter_suplent",
-      "linia": "porter_suplent   = PRIMER(ORDENA(FILTRA(resta; és_porter(j)); sou ASC))",
+      "clau": "futur_entrenador",
+      "linia": "futur_entrenador = PRIMER(ORDENA(FILTRA(sobrants − entrenables − porter_suplent;",
       "entrades": [
-        "sou",
-        "és_porter"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P6.es_porter",
-      "pas": "P6",
-      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
-      "clau": "és_porter",
-      "linia": "és_porter(j)     = porteria(j) > hab(j, h) per a TOTA h ≠ porteria",
-      "entrades": [
-        "hab"
+        "entrenables",
+        "porter_suplent",
+        "sobrants"
       ],
       "poms": [],
       "taules": []

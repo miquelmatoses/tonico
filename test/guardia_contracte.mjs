@@ -607,6 +607,13 @@ const VERIFICADES = {
     assert.ok(!r.entrenables.some((x) => x.id === 200), 'la pujada li cau passat el límit');
   },
   'P6.futur_entrenador': async () => {
+    // EL PORTER SUPLENT TRIA ABANS. Un porter amb experiència se n'anava d'entrenador i el
+    // sistema es quedava sense porteria per a l'onze_B, dient «et falta un porter suplent»
+    // mentres l'alineació el posava sota pals.
+    const porterExpert = [...VELLS6, j6(306, { porteria: 6, experiencia: 8, sou: 300 })];
+    const rp = await onzeEstructura(dbFix, 1, porterExpert, 10291);
+    assert.equal(rp.porter_suplent?.id, 306, "la porteria és obligació; l'entrenador, oportunitat");
+    assert.notEqual(rp.futur_entrenador?.id, 306, 'i no pot ser les dues coses alhora');
     const r = await est6();
     assert.equal(r.futur_entrenador, null,
       'amb experiència per davall del primer esglaó de la taula, no s\'assenyala ningú');
@@ -617,17 +624,21 @@ const VERIFICADES = {
   },
   'P6.porter_suplent': async () => {
     const r = await est6();
-    // Cap dels sobrants té la porteria estrictament per damunt de la resta.
+    // Cap dels sobrants arriba al llindar de porteria.
     assert.equal(r.porter_suplent, null);
     const ambPorter = [...VELLS6, j6(301, { porteria: 6, sou: 700 }), j6(302, { porteria: 5, sou: 300 })];
     const r2 = await onzeEstructura(dbFix, 1, ambPorter, 10291);
-    assert.equal(r2.porter_suplent?.id, 302, 'entre porters, mana el SOU: eixe lloc no compra res');
-  },
-  'P6.es_porter': async () => {
-    // ESTRICTAMENT per damunt: un descart amb TOTES les habilitats iguals no és porter.
-    const pla = [...VELLS6, j6(303, { porteria: 1, sou: 100 })];
-    const r = await onzeEstructura(dbFix, 1, pla, 10291);
-    assert.notEqual(r.porter_suplent?.id, 303, 'tot a 1 no és un porter, és un descart');
+    assert.equal(r2.porter_suplent?.id, 302, 'entre els que arriben, mana el SOU: eixe lloc no compra res');
+    // UN LLINDAR, no una deducció: qui llança faltes seguix sent porter. Abans es demanava la
+    // porteria per damunt de TOTES les altres i este se n'anava a venda mentres la mateixa
+    // pantalla demanava comprar un porter suplent.
+    const faltes = [...VELLS6, j6(304, { porteria: 5, pilota_aturada: 7, sou: 300 })];
+    assert.equal((await onzeEstructura(dbFix, 1, faltes, 10291)).porter_suplent?.id, 304,
+      'la pilota aturada alta no el desqualifica: només mira la porteria');
+    // I per davall del llindar, no.
+    const fluix = [...VELLS6, j6(305, { porteria: 1, sou: 100 })];
+    assert.equal((await onzeEstructura(dbFix, 1, fluix, 10291)).porter_suplent, null,
+      'porteria 1 no és un porter, és un descart');
   },
   'P6.venda': async () => {
     const r = await est6();
