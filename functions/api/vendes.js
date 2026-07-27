@@ -1,6 +1,8 @@
 // Tonico — fitxes de venda (Àrea E). GET els jugadors en categoria 'venda' amb la
 // seua fitxa (preu d'eixida proposat/editat, data de llistada, estat); POST upsert.
 import { habilitatMax } from '../../lib/vendes.js';
+import { onzeEstructura } from '../../lib/onze_estructura.js';
+import { economia } from '../../lib/economia.js';
 import { normalitzaDivisio } from '../../lib/divisio.js';
 import { avaluaPuntuacio } from '../../lib/classificador.js';
 import { carregaConfigPla } from '../../lib/config_pla.js';
@@ -19,18 +21,26 @@ export async function onRequestGet({ env, data }) {
   const inst = await env.DB.prepare('SELECT id FROM instantanies WHERE equip_id=? ORDER BY data DESC, id DESC LIMIT 1').bind(equip.id).first();
   if (!inst) return json({ jugadors: [] });
 
-  const { results: jugadors } = await env.DB.prepare(
+  const { results: totsJugadors } = await env.DB.prepare(
     `SELECT j.id AS jugador_id, j.nom, j.especialitat, ij.posicio_ultim_partit AS posicio, ij.edat_anys,
             ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada,
             ij.lleialtat, ij.qualificacio_ultim_partit, ij.sou, ij.lesio, ij.transferible,
+            ij.edat_dies, ij.experiencia, ij.lideratge, ij.tsi,
+            ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada,
             v.data_llistada, v.estat, v.resultat_pendent, c.categoria
        FROM instantanies_jugadors ij JOIN jugadors j ON j.id = ij.jugador_id
-       JOIN ${sqlCategoriaVigent(['categoria'])} c
+       LEFT JOIN ${sqlCategoriaVigent(['categoria'])} c
          ON c.jugador_id = j.id
        LEFT JOIN vendes v ON v.jugador_id = j.id
-      WHERE ij.instantania_id = ? AND c.categoria = 'venda'
-        AND COALESCE(v.estat,'pendent') <> 'desert'`
+      WHERE ij.instantania_id = ?`
   ).bind(inst.id).all();
+
+  // QUI SURT ACÍ ÉS EXACTAMENT QUI SURT A PLANTILLA/VENDA. Abans es filtrava per la categoria
+  // vella (`categoria='venda'`, del PAS 6) i la pantalla de Plantilla ja no la gasta: les dues
+  // llistes podien no coincidir. Ara les dues llegixen el GRUP de l'assignació d'estructura.
+  const eco = await economia(env.DB, data.usuari.id);
+  const est = await onzeEstructura(env.DB, data.usuari.id, totsJugadors, eco.sou_sostenible_setmanal);
+  const jugadors = totsJugadors.filter((j) => est?.grups.get(j.jugador_id) === 'venda');
 
   // v3.1: FORA l'estimació de preu. No es llegixen `preus_observats`, ni `base_preu_divisio`,
   // ni `min_mostres`: Tonico no diu quant val un jugador, ho diu el mercat. Qui ordena la
@@ -62,10 +72,10 @@ export async function onRequestGet({ env, data }) {
     // puntuació de la categoria (derivada, no la desada). Sense preu estimat, la puntuació és
     // l'única vara — i és una dada pròpia, no una previsió.
     const valor = punts[i] ?? 0;
-    // Un SOBRANT que va desert es despatxa; un retingut, mai. Ací tots són sobrants per
-    // construcció (la consulta filtra categoria='venda'), però es deriva del camp i no del
-    // filtre: si la consulta canvia, açò no ha de mentir en silenci.
-    const esSobrant = j.categoria === 'venda' || j.categoria === 'sobrant';
+    // Tots els d'esta llista són sobrants PER CONSTRUCCIÓ: el filtre és el grup «venda», que
+    // vol dir justament «no ocupa cap lloc del pla, no entrena, i no és el futur entrenador ni
+    // el porter suplent». Ja no penja de la categoria vella.
+    const esSobrant = true;
     // El DESERT no arriba ni ací: la consulta ja l'ha deixat fora. Un jugador que ha eixit a
     // subhasta i ningú l'ha volgut NO torna a Vendes mai més —ni fitxa, ni píndola, ni
     // missatge—: no és transferible i l'única cosa que se'n pot fer és despatxar-lo, que és

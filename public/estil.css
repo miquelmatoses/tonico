@@ -261,6 +261,9 @@ td.num, th.num { text-align: right; }
 
 /* ══ GRAELLA DE COMPTABILITAT / DADES CURTES ══ */
 .graella { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 8px; }
+/* Una TAULA (capçalera + files) va en UNA columna: si hereta l'auto-fill de les targetes, les
+   files s'apilen de costat en pantalla ampla i la capçalera queda esclafada en tres línies. */
+.graella.taula { grid-template-columns: 1fr; gap: 0; }
 .graella-fila { display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 8px 12px; background: var(--paper); border-radius: 10px; font-size: 13px; }
 .graella-fila b { font-weight: 700; }

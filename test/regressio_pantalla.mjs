@@ -210,6 +210,18 @@ assert.ok(/if \(!files \|\| !files\.length\) return null;/.test(vista),
     }
   }
 
+  // UNA TAULA NO ÉS UNA GRAELLA DE TARGETES. `.graella` a seques reparteix en columnes
+  // (`auto-fill`), o siga que una capçalera + files hereten eixe repartiment i s'apilen de
+  // costat en pantalla ampla. L'ajudant únic ha d'emetre `taula`, i `taula` ha de ser d'UNA
+  // columna.
+  {
+    assert.ok(/graella taula/.test(vista),
+      'graellaAmbFiles ha d\'emetre la classe `taula`, no `graella` a seques');
+    const regla = css.match(/\.graella\.taula\s*\{([^}]*)\}/)?.[1] || '';
+    assert.ok(/grid-template-columns:\s*1fr/.test(regla),
+      '`.graella.taula` ha de ser d\'una sola columna');
+  }
+
   // I cap pista pot tindre un mínim FIX més ample que un telèfon estret (360 − 40 de marges):
   // la pista no encongix per davall del seu mínim i la pàgina es desplaça de costat. L'idioma
   // segur és `minmax(min(Npx, 100%), 1fr)`.

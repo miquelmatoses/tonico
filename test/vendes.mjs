@@ -12,9 +12,24 @@ sqlite.exec(`
   INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'B','senior');
   INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (1,1,'2026-07-25',83,1);
-  INSERT INTO jugadors (id, equip_id, id_hattrick, nom, especialitat) VALUES (1,1,100,'Venut','Ràpid');
-  INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, creativitat, defensa, passades, extrem, anotacio, pilota_aturada, porteria) VALUES (1,1,'MC',25,5,4,4,3,3,3,1);
-  INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (1,'venda','auto');
+  INSERT INTO config_usuari (usuari_id, estrategia, pais, divisio, sistema_juvenil, partits_setmana)
+    VALUES (1,'competitiva','ES','VII','cap',2);
+  -- DOTZE jugadors: qui va a Vendes és qui NO entra a l'onze, o siga que amb menys de dotze
+  -- tots serien titulars i la llista de vendes eixiria buida.
+  INSERT INTO jugadors (id, equip_id, id_hattrick, nom, especialitat) VALUES
+    (1,1,100,'Venut','Ràpid'),(2,1,101,'B',NULL),(3,1,102,'C',NULL),(4,1,103,'D',NULL),
+    (5,1,104,'E',NULL),(6,1,105,'F',NULL),(7,1,106,'G',NULL),(8,1,107,'H',NULL),
+    (9,1,108,'I',NULL),(10,1,109,'J',NULL),(11,1,110,'K',NULL),(12,1,111,'L',NULL);
+  INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, creativitat, defensa, passades, extrem, anotacio, pilota_aturada, porteria) VALUES
+    (1,1,'MC',25,1,1,1,1,1,1,1),
+    (1,2,'POR',25,1,1,1,1,1,1,9),(1,3,'DC',25,1,8,1,1,1,1,1),(1,4,'DC',25,1,7,1,1,1,1,1),
+    (1,5,'MC',25,9,1,1,1,1,1,1),(1,6,'MC',25,8,1,1,1,1,1,1),(1,7,'MC',25,7,1,1,1,1,1,1),
+    (1,8,'EX',25,1,1,1,7,1,1,1),(1,9,'EX',25,1,1,1,6,1,1,1),
+    (1,10,'DV',25,1,1,1,1,8,1,1),(1,11,'DV',25,1,1,1,1,7,1,1),(1,12,'DV',25,1,1,1,1,6,1,1);
+  INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES
+    (1,'venda','auto'),(2,'porter','auto'),(3,'titular','auto'),(4,'titular','auto'),
+    (5,'core','auto'),(6,'core','auto'),(7,'core','auto'),(8,'core','auto'),(9,'core','auto'),
+    (10,'titular','auto'),(11,'titular','auto'),(12,'titular','auto');
   INSERT INTO preus_observats (usuari_id, posicio, edat, habilitat, preu, data) VALUES (1,'MC',25,7,100000,'2026-07-18'),(1,'MC',25,7,200000,'2026-07-18'),(1,'MC',25,7,300000,'2026-07-18');
 `);
 const ctx = (body) => ({ request: new Request('http://t', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }), env: { DB: db }, data: { usuari: { id: 1 } } });
@@ -56,9 +71,10 @@ sqlite.exec("UPDATE vendes SET estat='pendent' WHERE jugador_id=1;");
 // Afegim un 2n venda amb més habilitat → més puntuació.
 sqlite.exec(`
   DELETE FROM preus_observats;
-  INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (2,1,101,'Crack');
-  INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, creativitat, defensa, passades, extrem, anotacio, pilota_aturada, porteria) VALUES (1,2,'MC',20,9,8,8,7,7,7,1);
-  INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (2,'venda','auto');
+  -- Millor que el «Venut» en tot, però per davall dels titulars a cada lloc: se'n va a venda.
+  INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (20,1,120,'Crack');
+  INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, creativitat, defensa, passades, extrem, anotacio, pilota_aturada, porteria) VALUES (1,20,'MC',25,6,6,5,5,5,5,1);
+  INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (20,'venda','auto');
 `);
 const d2 = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 const v = (nom) => d2.jugadors.find((j) => j.nom === nom).valor;

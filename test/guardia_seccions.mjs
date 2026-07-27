@@ -69,43 +69,41 @@ const ctx = { env: { DB: db }, data: { usuari: { id: 1 } } };
 const dona = async (ruta) => (await (await import(ruta)).onRequestGet(ctx)).json();
 const pl = await dona('../functions/api/plantilla.js');
 const ve = await dona('../functions/api/vendes.js');
-const al = await dona('../functions/api/alineacio.js');
 
-const on = new Map();
-const posa = (id, sec) => { (on.get(id) || on.set(id, new Set()).get(id)).add(sec); };
-for (const x of pl.jugadors || []) posa(x.id, 'plantilla:' + x.categoria);
-for (const x of ve.jugadors || []) posa(x.jugador_id, 'vendes');
-for (const p of Object.keys(al.onze || {})) {
-  for (const s of al.onze[p]) if (s.jugador) posa(s.jugador.jugador_id, 'onze');
-}
-assert.ok(on.size > 0, 'les seccions han de tornar jugadors: si no, esta comprovació no val res');
-assert.ok([...on.values()].some((s) => s.has('onze')), 'i l\'alineació ha d\'assignar algú');
-assert.equal(on.has(99), false, 'un jugador que ja no és a la instantània no ix a cap secció');
+// LES DUES LLISTES HAN DE SER LA MATEIXA GENT. Abans això es comprovava com a
+// «compatibilitat» —que ningú estiguera alhora retingut i a Vendes— perquè les seccions eixien
+// de la classificació del PAS 6 i la llista de vendes es filtrava per categoria: eren dues
+// derivacions distintes de la mateixa cosa i podien discrepar.
+//
+// Ara les dues llegixen el GRUP de l'assignació d'estructura, o siga que la comprovació ja no
+// és de compatibilitat sinó d'IDENTITAT: Mercat/fitxes de venda ha de tindre EXACTAMENT els
+// mateixos jugadors que Plantilla/Venda. Ni un més, ni un menys.
+const onze = new Set((pl.onze_titular || []).map((l) => l.jugador_id).filter(Boolean));
+const aVenda = new Set(pl.venda || []);
+const aFitxes = new Set((ve.jugadors || []).map((x) => x.jugador_id));
 
-const RETINGUTS = new Set(['core', 'rotatiu', 'titular', 'porter', 'cos', 'futur_entrenador']);
-const xocs = [];
-for (const [id, secs] of on) {
-  const cat = [...secs].find((x) => x.startsWith('plantilla:'))?.slice(10);
-  if (cat && RETINGUTS.has(cat) && secs.has('vendes')) xocs.push(`${id}: retingut (${cat}) i a Vendes`);
-  if (cat === 'venda' && secs.has('onze')) xocs.push(`${id}: a vendre i alineat`);
-  if (secs.has('onze') && !cat) xocs.push(`${id}: alineat i absent de Plantilla`);
+assert.ok(pl.onze_titular?.length, 'les seccions han de tornar jugadors: si no, açò no val res');
+assert.deepEqual([...aFitxes].sort(), [...aVenda].sort(),
+  'Mercat/fitxes de venda i Plantilla/Venda són la MATEIXA llista');
+assert.ok([...aFitxes].every((id) => !onze.has(id)),
+  'i ningú que juga a l\'onze titular pot estar a vendre');
+assert.equal(aVenda.has(99), false, 'un jugador que ja no és a la instantània no ix a cap secció');
+
+// UN JUGADOR, UN GRUP. Amb el model vell un jugador podia caure en dues seccions perquè cada
+// una el classificava pel seu compte; ara el grup és únic per construcció i això es comprova.
+const grups = { onze, entrenables: new Set((pl.entrenables?.jugadors || []).map((x) => x.id)),
+  venda: aVenda, despatxar: new Set(pl.despatxar || []) };
+if (pl.futur_entrenador) grups.futur = new Set([pl.futur_entrenador.jugador_id]);
+if (pl.porter_suplent) grups.porter = new Set([pl.porter_suplent.jugador_id]);
+const repetits = [];
+const vistos = new Map();
+for (const [nom, conjunt] of Object.entries(grups)) {
+  for (const id of conjunt) {
+    if (vistos.has(id)) repetits.push(`${id}: ${vistos.get(id)} i ${nom}`);
+    else vistos.set(id, nom);
+  }
 }
-assert.deepEqual(xocs, [], `seccions incompatibles per al mateix jugador:\n  ${xocs.join('\n  ')}`);
-// I que la comprovació DISCRIMINE: el llistat fort. El full només en garantix una cosa
-// (restricció 4: «llistat no juga»), i això sí que s'ha de complir sempre.
-const secs3 = [...(on.get(3) || [])];
-assert.ok(!secs3.includes('onze'),
-  `un llistat no s'alinea mai (restricció 4 del full); està a: ${secs3.join(', ')}`);
-// CONTRADICCIÓ OBERTA DEL FULL (pendent de correcció, no de pedaç): el PAS 6 reparteix rols
-// sobre `plantilla` sencera, que inclou els llistats, mentres el PAS 9 no els alinea. Un
-// llistat pot quedar-se el rol de core i deixar el lloc buit sense que ningú el reemplace.
-// Ací es MESURA el dany en lloc d'afirmar cap de les dos lectures.
-const rol3 = secs3.find((x) => x.startsWith('plantilla:'))?.slice(10);
-if (rol3 && RETINGUTS.has(rol3)) {
-  console.log(`   ⚠ contradicció PAS 6 / PAS 9: un llistat duu rol «${rol3}» i no pot jugar ` +
-    `→ el sistema ho avisa com a: ${JSON.stringify(al.avisos.filter((a) => a.jugador_id === 3))}. ` +
-    'Correcció del full pendent d\'aprovació.');
-}
+assert.deepEqual(repetits, [], `jugadors en dos grups alhora:\n  ${repetits.join('\n  ')}`);
 
 // ── V5: la puntuació no pot dependre que la categoria CANVIE ──
 // Només s'inserix fila de categoria quan hi ha canvi de rol. Si la puntuació només s'escriu
@@ -124,5 +122,5 @@ assert.deepEqual(sensePunt, [],
 const cats = new Set((pl2.jugadors || []).map((j) => j.categoria));
 assert.ok(cats.size >= 4, `la fixture ha de cobrir prou categories (${[...cats].join(', ')})`);
 
-console.log(`OK — V4: font única de la categoria vigent · ${on.size} jugadors, cap secció incompatible` +
-  ` · V5: ${cats.size} categories, cap fila sense puntuació`);
+console.log(`OK — V4: font única de la categoria vigent · ${vistos.size} jugadors amb un sol grup,` +
+  ` Vendes i Plantilla/Venda idèntiques · V5: ${cats.size} categories, cap fila sense puntuació`);

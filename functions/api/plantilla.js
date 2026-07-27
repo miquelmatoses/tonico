@@ -6,7 +6,7 @@ import { temporadaOperativa } from '../../lib/calendari.js';
 import { avaluaPuntuacio } from '../../lib/classificador.js';
 import { carregaConfigPla } from '../../lib/config_pla.js';
 import { sqlCategoriaVigent } from '../../lib/categoria_vigent.js';
-import { desertsDesats, despatxable } from '../../lib/vendes.js';
+import { desertsDesats } from '../../lib/vendes.js';
 import { onzeEstructura } from '../../lib/onze_estructura.js';
 import { economia } from '../../lib/economia.js';
 
@@ -42,11 +42,6 @@ export async function onRequestGet({ env, data }) {
   // plantilla. Ix del fet DESAT (va eixir a subhasta i ningú el va voler) i no d'una transició
   // entre instantànies, que es perd a la pujada següent. Només val per als sobrants: per a un
   // retingut, una subhasta deserta no és un veredicte sobre el jugador.
-  const deserts = await desertsDesats(env.DB, data.usuari.id);
-  for (const j of jugadors) {
-    j.desert = deserts.has(j.id);
-    j.despatxar = despatxable({ es_sobrant: j.categoria === 'venda', desert: j.desert });
-  }
 
   const { results: intercanvis } = await env.DB.prepare(
     `SELECT x.id, x.categoria, x.diferencia, x.desti_eixent, x.puntuacio_entrant, x.puntuacio_eixent,
@@ -74,6 +69,14 @@ export async function onRequestGet({ env, data }) {
   // una classificació. Ací només es mostra; qui el gastarà per a mesurar és el PAS 5.
   const eco = await economia(env.DB, data.usuari.id);
   const est = await onzeEstructura(env.DB, data.usuari.id, jugadors, eco.sou_sostenible_setmanal);
+  // DESPATXABLE ix del GRUP, no de la categoria vella: «va eixir a subhasta, ningú el va voler,
+  // i no ocupa cap lloc del pla». Amb `categoria === 'venda'` eren dues derivacions distintes
+  // de la mateixa cosa i podien discrepar amb el que pinta la secció de Despatxar.
+  const deserts = await desertsDesats(env.DB, data.usuari.id);
+  for (const j of jugadors) {
+    j.desert = deserts.has(j.id);
+    j.despatxar = est?.grups.get(j.id) === 'despatxar';
+  }
 
   return json({ instantania: inst, jugadors, intercanvis, valor_especialitats: valorEsp,
     onze_titular: est ? est.onze.map((l) => ({ bucket: l.bucket, habilitat: l.habilitat,

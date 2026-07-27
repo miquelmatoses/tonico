@@ -150,4 +150,31 @@ assert.deepEqual(trencades, [], 'pantalles que no es pinten netes:\n  ' + trenca
     `les setmanes fins al nivell següent (${xifra}) no arriben a la pantalla`);
 }
 
+// ── ELS ANELLS D'ENTRENAMENT ALS DOS ONZES ───────────────────────────────────────────────
+// L'anell diu quant d'entrenament hi ha en joc en eixe lloc, i això no depén de qui hi juga:
+// als mig centres s'entrena al 100% i als extrems al 50%, tant a l'onze competitiu com al
+// d'entrenament. L'11A els va perdre quan l'anell es va lligar al «motiu», que només té l'11B.
+{
+  const main = crea('main');
+  await seccions.alineacio(main);
+  const classes = [];
+  const arreplega = (n) => { const c = n.atributs?.class; if (c) classes.push(c);
+    (n.fills || []).forEach(arreplega); };
+  arreplega(main);
+  const xips = classes.filter((c) => c.includes('jug-chip'));
+  // L'esperat es DERIVA del que servix l'API, no d'un número escrit: un lloc que entrena i té
+  // ocupant porta anell (ple al 100%, mig al 50%), tinga qui tinga.
+  const { onRequestGet: onzes } = await import('../functions/api/onzes.js');
+  const d = await (await onzes({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
+  const tots = [...d.onze_a, ...d.onze_b];
+  const nPle = tots.filter((l) => l.jugador && l.entrena && l.pct === 100).length;
+  const nMig = tots.filter((l) => l.jugador && l.entrena && l.pct !== 100).length;
+  assert.ok(nPle >= 3 && nMig >= 2, 'el fixture ha de tindre llocs d\'entrenament ocupats als dos onzes');
+  assert.equal(xips.length, tots.length, 'es pinten tots els llocs dels dos onzes');
+  assert.equal(xips.filter((c) => /\bple\b/.test(c)).length, nPle,
+    'cada lloc que entrena al 100% amb ocupant porta anell ple, als DOS onzes');
+  assert.equal(xips.filter((c) => /\bmig\b/.test(c)).length, nMig,
+    'i cada lloc que entrena al 50%, anell mig');
+}
+
 console.log(`OK — les ${PANTALLES.length} pantalles es pinten de veres, sense variables soltes ni claus sense resoldre`);

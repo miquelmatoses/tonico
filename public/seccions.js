@@ -283,15 +283,17 @@ export async function alineacio(main) {
   // no dobla), el futur entrenador entra si no juga ja a l'11A, i la resta la cobrixen els
   // mateixos de l'11A, que no entrenen i poden doblar.
   const camp = (slots) => campDeJoc(slots, {
-    // L'anell diu QUANT D'ENTRENAMENT hi ha en joc en eixe lloc: ple al 100%, mig al 50%.
-    anell: (s) => (s.motiu === 'entrena' ? 'ple' : s.motiu === 'entrena_mig' ? 'mig' : s.jugador ? '' : 'buit'),
+    // L'anell diu QUANT D'ENTRENAMENT hi ha en joc EN EIXE LLOC: ple al 100%, mig al 50%. Ix
+    // del lloc i no del motiu, perquè els dos onzes entrenen igual — als mig centres i als
+    // extrems s'entrena tant si hi juga el titular com si hi juga l'entrenable.
+    anell: (s) => (!s.jugador ? 'buit' : !s.entrena ? '' : (s.pct ?? 100) === 100 ? 'ple' : 'mig'),
     nom: (s) => (s.jugador ? cognom(s.jugador.nom) : t('alineacio.buit')),
     titol: (s) => `${s.codi} · ${s.jugador ? s.jugador.nom : t('alineacio.buit')}`
       + (s.motiu ? ' · ' + t('alineacio.motiu_' + s.motiu) : ''),
   });
   const onzes = el('div', { class: 'onzes' });
   for (const [clau, slots, i] of [['onze_a', d.onze_a, 0], ['onze_b', d.onze_b, 1]]) {
-    const entrenen = slots.filter((s) => s.motiu === 'entrena' || s.motiu === 'entrena_mig').length;
+    const entrenen = slots.filter((s) => s.entrena && s.jugador).length;
     onzes.append(el('div', { class: 'onze' },
       el('div', { class: 'onze-cap' + (i ? ' b' : '') },
         el('div', { class: 'onze-titol', text: t('alineacio.' + clau) }),
@@ -840,9 +842,13 @@ async function fitxesVenda(main) {
 // intacta): així cap plantilla econòmica interpola un número cru.
 // PATRÓ: sense files, NO es pinta la taula (ni la capçalera). Qui vulga una graella passa
 // per ací i no pot oblidar-se'n.
+//
+// La classe `taula` és una sola columna: `.graella` a seques és una graella de TARGETES
+// (auto-fill), i amb ella les files d'una taula s'apilaven de costat en pantalla ampla i la
+// capçalera quedava esclafada en tres línies.
 const graellaAmbFiles = (classe, capçaleres, files) => {
   if (!files || !files.length) return null;
-  const g = el('div', { class: 'graella' });
+  const g = el('div', { class: 'graella taula' });
   g.append(el('div', { class: 'graella-cap ' + classe }, ...capçaleres.map((x) => el('span', { text: x }))));
   for (const f of files) g.append(f);
   return g;
