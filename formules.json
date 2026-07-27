@@ -514,6 +514,21 @@
       ]
     },
     {
+      "id": "P4.nivell_objectiu_ht",
+      "pas": "P4",
+      "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
+      "clau": "nivell_objectiu_ht",
+      "linia": "nivell_objectiu_ht(lloc) = nivell_objectiu(lloc) + `nivell_habilitat_offset`",
+      "entrades": [
+        "lloc",
+        "nivell_objectiu"
+      ],
+      "poms": [
+        "nivell_habilitat_offset"
+      ],
+      "taules": []
+    },
+    {
       "id": "P5.ocupant",
       "pas": "P5",
       "pasTitol": "MANCANÇA (la mètrica única)",
@@ -546,11 +561,11 @@
       "pas": "P5",
       "pasTitol": "MANCANÇA (la mètrica única)",
       "clau": "mancança",
-      "linia": "mancança(lloc)  = MAX(0; nivell_objectiu(lloc) − nivell_actual(lloc))",
+      "linia": "mancança(lloc)  = MAX(0; nivell_objectiu_ht(lloc) − nivell_actual(lloc))",
       "entrades": [
         "lloc",
         "nivell_actual",
-        "nivell_objectiu"
+        "nivell_objectiu_ht"
       ],
       "poms": [],
       "taules": []
@@ -560,12 +575,12 @@
       "pas": "P5",
       "pasTitol": "MANCANÇA (la mètrica única)",
       "clau": "excés",
-      "linia": "excés(j)        = MAX(0; hab(j, habilitat_lloc(lloc(j))) − nivell_objectiu(lloc(j)))",
+      "linia": "excés(j)        = MAX(0; hab(j, habilitat_lloc(lloc(j))) − nivell_objectiu_ht(lloc(j)))",
       "entrades": [
         "hab",
         "habilitat_lloc",
         "lloc",
-        "nivell_objectiu"
+        "nivell_objectiu_ht"
       ],
       "poms": [],
       "taules": []

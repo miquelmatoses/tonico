@@ -171,6 +171,13 @@ habilitat_lloc(lloc)  = BUSCA(`taula_habilitat_lloc`; lloc)   [POR→porteria,
                         DC/lateral→defensa, MC→creativitat, extrem→extrem, DAV→anotació]
 nivell_objectiu(lloc) = MAX(n : BUSCA(`taula_salaris`; habilitat_lloc(lloc), n)
                                 ≤ pressupost_sou(lloc))      ← taula de la guia
+nivell_objectiu_ht(lloc) = nivell_objectiu(lloc) + `nivell_habilitat_offset`
+   [DUES ESCALES, i esta és la que es compara. La taula de salaris de la guia §8
+    comença en «Inadequate», el 5é esglaó de Hattrick: els quatre primers
+    (disastrous · wretched · poor · weak) es van deixar fora perquè per a tot el
+    que no és porteria valen 250 € igual. Les habilitats dels jugadors, en canvi,
+    venen del CSV en l'escala SENCERA. El nostre nivell 5 val 2.250 de porteria i
+    850 de creativitat: eixa fila de la guia és «Formidable», el HT 9]
 ```
 
 ## PAS 5 — MANCANÇA (la mètrica única)
@@ -178,8 +185,11 @@ nivell_objectiu(lloc) = MAX(n : BUSCA(`taula_salaris`; habilitat_lloc(lloc), n)
 ```
 ocupant(lloc)   = el jugador assignat al lloc (PAS 8) o ∅
 nivell_actual(lloc) = SI(ocupant ≠ ∅; hab(ocupant, habilitat_lloc(lloc)); 0)
-mancança(lloc)  = MAX(0; nivell_objectiu(lloc) − nivell_actual(lloc))
-excés(j)        = MAX(0; hab(j, habilitat_lloc(lloc(j))) − nivell_objectiu(lloc(j)))
+mancança(lloc)  = MAX(0; nivell_objectiu_ht(lloc) − nivell_actual(lloc))
+excés(j)        = MAX(0; hab(j, habilitat_lloc(lloc(j))) − nivell_objectiu_ht(lloc(j)))
+   [EN L'ESCALA DE HATTRICK als dos costats. Restar l'índex de la taula de salaris
+    d'un `hab(jugador)` deixava TOTES les mancances quatre nivells curtes: un
+    objectiu de «Formidable» (HT 9) contra un jugador amb CR 8 donava 0]
 sobrecost(j)    = MAX(0; sou(j) − BUSCA(`taula_salaris`; habilitat_lloc(lloc(j));
                                         nivell_objectiu(lloc(j))))
 prioritat(lloc) = mancança(lloc) × pes(lloc)

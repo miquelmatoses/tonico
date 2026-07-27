@@ -534,6 +534,16 @@ const VERIFICADES = {
     assert.equal(nivellActual({ creativitat: 7 }, 'creativitat'), 7);
     assert.equal(nivellActual(null, 'creativitat'), 0);
   },
+  'P4.nivell_objectiu_ht': () => {
+    // DUES ESCALES. La taula de salaris comença en «Inadequate» (el 5é de HT) i les habilitats
+    // del CSV venen en l'escala sencera: la xifra comparable és l'índex més el desplaçament.
+    const off = Number(sqliteFix.prepare("SELECT valor FROM constants_joc WHERE clau='nivell_habilitat_offset'").get()?.valor);
+    assert.equal(off, 4, 'el pont entre les dues escales està declarat, amb la seua font');
+    // I es comprova contra la guia: el nostre 5 és el «Formidable» de la taula, que és el HT 9.
+    const taula = JSON.parse(sqliteFix.prepare("SELECT valor FROM constants_joc WHERE clau='taula_salaris'").get().valor);
+    assert.equal(taula.creativitat['5'], 850, 'el nostre 5 de creativitat és el Formidable de la guia');
+    assert.equal(5 + off, 9, 'i Formidable és el nivell 9 de Hattrick');
+  },
   'P5.mancanca': () => {
     assert.equal(mancanca(9, 6), 3);
     assert.equal(mancanca(6, 9), 0, 'MAX(0; …)');

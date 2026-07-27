@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { nova } from './_d1shim.mjs';
 import { pesLloc, pesosFormacio, pressupostSou, nivellObjectiu, nivellsObjectiu, carregaConfigPesos } from '../lib/pesos.js';
 
-const { db } = nova(import.meta.url);
+const { sqlite, db } = nova(import.meta.url);
 const cfg = await carregaConfigPesos(db, 'competitiva');
 
 // ── Els seeds són els de la guia ──
@@ -67,6 +67,30 @@ for (const l of LLOCS) {
 // Més flux → mai menys nivell (monotonia: la fórmula no pot castigar guanyar més).
 const pobre = nivellsObjectiu(LLOCS, cfg, 20000);
 for (const l of LLOCS) assert.ok(niv[l].nivell_objectiu >= pobre[l].nivell_objectiu, `monotonia a ${l}`);
+
+// ── EL PONT ENTRE LES DUES ESCALES, comprovat contra la taula de la guia ────────────────
+// El nostre nivell 5 val 2.250 (porteria) · 850 (creativitat) · 730 (defensa) · 590 (passades)
+// · 550 (extrem) · 790 (anotació). Eixa fila de la guia §8 és «Formidable», el nivell 9 de
+// Hattrick: d'ahí el desplaçament de 4, i que la taula comence en «Inadequate».
+{
+  const FORMIDABLE = { porteria: 2250, creativitat: 850, defensa: 730, passades: 590, extrem: 550, anotacio: 790 };
+  const taula = JSON.parse(sqlite.prepare("SELECT valor FROM constants_joc WHERE clau='taula_salaris'").get().valor);
+  for (const [hab, sou] of Object.entries(FORMIDABLE)) {
+    assert.equal(taula[hab]?.['5'], sou, `${hab}: el nostre nivell 5 és el «Formidable» de la guia`);
+  }
+  const off = Number(sqlite.prepare("SELECT valor FROM constants_joc WHERE clau='nivell_habilitat_offset'").get().valor);
+  assert.equal(off, 4, 'i «Formidable» és el 9 de Hattrick: 5 + 4');
+
+  // I EL PONT S'HA D'APLICAR DE VERES en carregar la config: no basta que la constant existisca.
+  assert.equal(cfg.nivell_offset, off, 'la config el porta');
+  const n = nivellsObjectiu(LLOCS, cfg, 100000);
+  for (const [lloc, v] of Object.entries(n)) {
+    assert.equal(v.nivell_objectiu_ht, v.nivell_objectiu + off,
+      `${lloc}: la xifra comparable és l'índex de la taula més el desplaçament`);
+    assert.notEqual(v.nivell_objectiu_ht, v.nivell_objectiu,
+      `${lloc}: i no pot ser la mateixa, que és el bug que teníem`);
+  }
+}
 
 console.log('OK — pesos i nivell objectiu: seeds de la guia, pes per sector i sostre per lloc');
 

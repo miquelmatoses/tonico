@@ -158,11 +158,13 @@ button { font-family: var(--font); cursor: pointer; }
 .card-cos { padding: 16px; }
 
 /* ══ FILA DE JUGADOR (plantilla, juvenils, vendes) ══ */
-/* Les columnes de NÚMERO porten mínim propi: si no, la cel·la s'esclafa per davall del text,
-   la xifra alineada a la dreta se n'ix per l'esquerra i la columna es llig dentada. Qui cedix
-   espai és `.skills`, que ja té ellipsi. */
+/* LES COLUMNES DE NÚMERO VAN A AMPLE FIX, i el motiu no és el que sembla: CADA FILA ÉS UNA
+   GRAELLA PRÒPIA. Les pistes `auto` es calculen dins de cada fila, no entre files, o siga que
+   una fila amb «6,0» i una amb «−23,3» es donaven amples distints i res quedava alineat per
+   molt que la xifra anara a la dreta. Amb ample fix, totes les files calculen igual i les
+   unitats cauen sota les unitats. Qui cedix espai és `.skills`, que ja té ellipsi. */
 .fila { display: grid;
-  grid-template-columns: minmax(0,2.4fr) minmax(58px,auto) minmax(76px,auto) minmax(0,1.6fr) auto;
+  grid-template-columns: minmax(0,2.4fr) 64px 78px minmax(0,1.6fr) 104px;
   align-items: center; gap: 12px; padding: 9px 16px; border-top: 1px solid var(--vora-suau); }
 .fila:first-child { border-top: 0; }
 .fila:nth-child(even) { background: #fbf9f0; }
@@ -551,7 +553,8 @@ form.card-cos { display: block; }
 .obra-botons { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 4px; }
 
 /* La VARA de cada lloc: contra quina habilitat es mesura i quin nivell paga el flux. */
-.vara { display: flex; flex-direction: column; gap: 1px; text-align: right; white-space: nowrap; }
+.vara { display: flex; flex-direction: column; gap: 1px; text-align: right; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; }
 .vara-hab { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--gris); }
 
 /* L'onze titular gasta la MATEIXA fila que la resta de targetes: només es matisa el lloc que

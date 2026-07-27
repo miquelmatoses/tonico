@@ -181,15 +181,19 @@ assert.ok(/if \(!files \|\| !files\.length\) return null;/.test(vista),
     assert.ok(/text-align:\s*right/.test(regla), `.${classe}: els números van alineats a la dreta`);
   }
 
-  // LES COLUMNES DE NÚMERO NO PODEN ESCLAFAR-SE. `.fila` porta dues cel·les de xifres (punts i
-  // TSI) entre columnes elàstiques: si van amb `auto` pelat i una cel·la nova s'emporta l'espai,
-  // la columna baixa per davall del text, la xifra alineada a la dreta se n'ix per l'esquerra i
-  // la TSI ix tallada («T: 2040»). Han de dur un mínim propi.
+  // LES COLUMNES DE NÚMERO HAN D'ANAR A AMPLE FIX, i el motiu és que CADA `.fila` ÉS UNA
+  // GRAELLA PRÒPIA: les pistes `auto` es calculen dins de cada fila, no entre files. Amb `auto`,
+  // una fila amb «6,0» i una altra amb «−23,3» es donen amples distints i la columna es llig
+  // dentada per molt que la xifra vaja alineada a la dreta. Amb `fr` passa igual, perquè el
+  // repartiment depén del que ocupen les altres cel·les d'eixa fila.
   {
     const plantilla = css.match(/\.fila\s*\{[^}]*grid-template-columns:\s*([^;]+);/)?.[1] || '';
-    const ambMinim = [...plantilla.matchAll(/minmax\(\s*(\d+)px/g)].length;
-    assert.ok(ambMinim >= 2,
-      `.fila: les columnes de número necessiten un mínim en px (n'hi ha ${ambMinim})\n  ${plantilla}`);
+    const pistes = plantilla.replace(/minmax\([^)]*\)/g, 'M').split(/\s+/).filter(Boolean);
+    // Les cel·les de número són la 2a (punts) i la 3a (TSI): ni `auto` ni `fr`.
+    for (const i of [1, 2]) {
+      assert.ok(/^\d+px$/.test(pistes[i] || ''),
+        `.fila: la pista ${i + 1} (número) ha d'anar a ample fix, no «${pistes[i]}»\n  ${plantilla}`);
+    }
   }
 
   // I cap pista pot tindre un mínim FIX més ample que un telèfon estret (360 − 40 de marges):

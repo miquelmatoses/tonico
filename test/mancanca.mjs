@@ -48,4 +48,24 @@ assert.deepEqual(orde.map((x) => x.lloc), ['mc', 'porter'],
   'mc 3×1,5=4,5 per damunt de porter 6×0,6=3,6: no mana la mancança sola, mana mancança×pes');
 assert.ok(orde.every((x) => x.prioritat > 0), 'els llocs sense mancança no ixen a la llista');
 
-console.log('OK — mancança: la mètrica única (mancança × pes) i el seu orde');
+// ── LES DUES ESCALES ─────────────────────────────────────────────────────────────────────
+// La taula de salaris de la guia (§8) comença en «Inadequate», el 5é esglaó de Hattrick: els
+// quatre primers es van deixar fora perquè per a tot el que no és porteria valen 250 € igual.
+// Les habilitats dels jugadors, en canvi, venen del CSV en l'escala SENCERA. El PAS 5 restava
+// les dues coses directament i TOTES les mancances eixien quatre nivells curtes: un objectiu de
+// «Formidable» (HT 9) contra un jugador amb CR 8 (Excellent) donava 0 en compte d'1.
+{
+  const nivells = { mc: { habilitat: 'creativitat', pes: 1.5, nivell_objectiu: 5, nivell_objectiu_ht: 9 } };
+  const ocupants = { mc: { jugador_id: 1, creativitat: 8 } };
+  assert.equal(mancances(nivells, ocupants).mc.mancanca, 1,
+    'objectiu Formidable (HT 9) contra CR 8: li falta 1, no 0');
+  // I qui arriba de veres, no reclama res.
+  assert.equal(mancances(nivells, { mc: { jugador_id: 1, creativitat: 9 } }).mc.mancanca, 0);
+  // Sense la xifra comparable es cau a l'índex de la taula, que és el comportament vell: es
+  // declara ací per a que es veja què es perd, no per a beneir-ho.
+  const senseHt = { mc: { habilitat: 'creativitat', pes: 1.5, nivell_objectiu: 5 } };
+  assert.equal(mancances(senseHt, ocupants).mc.mancanca, 0,
+    'sense `nivell_objectiu_ht` torna el 0 d\'abans: per això la xifra comparable no és opcional');
+}
+
+console.log('OK — mancança: la mètrica única (mancança × pes), el seu orde i les dues escales');
