@@ -2,7 +2,6 @@
 // les sis seccions que derivа l'assignació d'estructura. Ja no hi ha CATEGORIA: el PAS 6
 // decidia qui es quedava abans de saber qui ocupa cada lloc, i cap secció el gastava.
 import { temporadaOperativa } from '../../lib/calendari.js';
-import { carregaConfigPla } from '../../lib/config_pla.js';
 import { desertsDesats } from '../../lib/vendes.js';
 import { onzeEstructura } from '../../lib/onze_estructura.js';
 import { economia } from '../../lib/economia.js';
@@ -40,15 +39,11 @@ export async function onRequestGet({ env, data }) {
   // L'ORDE de cada secció el posa la mateixa secció (l'onze va per formació, els entrenables
   // per setmanes, la venda pel sobrecost). Ací ja no s'ordena res: ordenar per la puntuació
   // de la categoria era ordenar onze jugadors mesurats amb fórmules distintes.
-  const pla = await env.DB.prepare('SELECT plantilla FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
-  const config = pla ? await carregaConfigPla(env.DB, pla.plantilla) : { params: {} };
-  const valorEsp = config.params?.valor_especialitats || [];
-
   // L'ONZE TITULAR: tots els jugadors col·locats lloc a lloc, no una categoria decidida abans.
   // Els llocs es recorren per pes i cada jugador n'ocupa un: els que sobren són el residu, no
   // una classificació. Ací només es mostra; qui el gastarà per a mesurar és el PAS 5.
   const eco = await economia(env.DB, data.usuari.id);
-  const est = await onzeEstructura(env.DB, data.usuari.id, jugadors, eco.sou_sostenible_setmanal);
+  const est = await onzeEstructura(env.DB, data.usuari.id, jugadors, eco.sou_sostenible_setmanal, eco.calibrat);
   // DESPATXABLE ix del GRUP, no de la categoria vella: «va eixir a subhasta, ningú el va voler,
   // i no ocupa cap lloc del pla». Amb `categoria === 'venda'` eren dues derivacions distintes
   // de la mateixa cosa i podien discrepar amb el que pinta la secció de Despatxar.
@@ -58,7 +53,7 @@ export async function onRequestGet({ env, data }) {
     j.despatxar = est?.grups.get(j.id) === 'despatxar';
   }
 
-  return json({ instantania: inst, jugadors, valor_especialitats: valorEsp,
+  return json({ instantania: inst, jugadors,
     onze_titular: est ? est.onze.map((l) => ({ bucket: l.bucket, habilitat: l.habilitat,
       entrena: !!l.entrena, nivell_objectiu: l.nivell_objectiu, diferencia: l.diferencia, senyal: l.senyal,
       jugador_id: l.jugador?.id ?? null })) : null,

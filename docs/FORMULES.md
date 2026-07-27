@@ -270,9 +270,10 @@ desert(j) = transferible(j, abans) = 1  I  transferible(j, ara) ≠ 1  I  j ∈ 
    [ES LLISTA UNA VEGADA. Un desert no és transferible i no es rellista: rellistar
     cada setmana és pagar `cost_llistat` per res. I un desert queda fora de TOT el
     mercat, no només de l'ordre: ni fitxa, ni avís, ni agenda]
-despatxable(j) = desert(j) I j ∈ sobrants        → decisió de PLANTILLA, no de mercat
-   [Un retingut, un rotatiu o un cos MAI s'acomiaden per anar deserts: per a ells una
-    subhasta deserta no és un veredicte sobre el jugador, és que el preu no era el bo]
+despatxable(j) = desert(j) I grup(j) = "despatxar"  → decisió de PLANTILLA, no de mercat
+   [Qui ocupa un lloc del pla —onze, entrenable, futur entrenador o porter suplent—
+    MAI s'acomiada per anar desert: per a ell una subhasta deserta no és un veredicte
+    sobre el jugador, és que el preu no era el bo]
 caixa cobrada  = la `caixa` DECLARADA del període següent    → activa el PAS 8
    [l'import d'una venda NO s'apunta: no entra a cap fórmula. Es veu a la caixa]
 ```
@@ -511,12 +512,16 @@ Cap moviment derivat encadena efectes irreversibles.
 12. RENDER PUR: cap aritmètica, comparació ni literal de domini a la
     presentació; G2 escaneja i peta.
 13. GOLDEN DE PANTALLA: render(fixture) = avaluador(fixture), valor a valor (G3).
-14. Vocabulari únic: lloc de partit · lloc entrenable · core · rotatiu · titular ·
-    cos · retingut · sobrant · mancança · flux · estoc · flux_lliure. Cap sinònim.
+14. Vocabulari únic: lloc de partit · lloc entrenable · onze · entrenable ·
+    futur entrenador · porter suplent · venda · despatxar · sobrant · mancança ·
+    sobrecost · flux · estoc · flux_lliure. Cap sinònim.
+    [FORA `core`, `rotatiu`, `titular`, `cos` i `retingut`: eren els grups de la
+     classificació del PAS 6, i el PAS 6 ara és l'assignació]
 15. PRECONDICIÓ DEL PAS 0: cap derivació que depenga del PAS 0 s'executa amb el PAS 0
     incomplet. Si falta `partits_setmana`, `pais` o `divisio`, el sistema INFORMA QUÈ
     FALTA I NO TOCA RES: no assigna rols, no genera moviments i no emet accions que en
-    depenguen. Les fórmules que no en depenen (`N_core`, `titulars`) sí que s'avaluen.
+    depenguen. Les fórmules que no en depenen (els pesos dels llocs, el nivell
+    objectiu) sí que s'avaluen.
 16. PERÍODE TANCAT: l'economia es declara SEMPRE del període ja tancat, mai de la setmana
     en curs (no està consolidada). Tot import setmanal es normalitza amb `per_periode`
     abans de barrejar-se amb la taquilla; l'ÚNIC pas a unitats setmanals és el PAS 4.

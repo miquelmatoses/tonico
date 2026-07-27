@@ -113,5 +113,7 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/090_fora_categories.sql'));
   sqlite.exec(src('../schema/091_fora_sense_categoria.sql'));
   sqlite.exec(src('../schema/092_neteja_config.sql'));
+  sqlite.exec(src('../schema/093_futur_entrenador_pom.sql'));
+  sqlite.exec(src('../schema/094_fora_regles_apagades.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

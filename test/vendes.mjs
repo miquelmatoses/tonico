@@ -1,6 +1,7 @@
 // Tonico — VENDES via API (contracte v3.1). SENSE preu proposat: Tonico no diu quant val un
-// jugador. Qui ordena la llista és la puntuació de la categoria, que és una dada pròpia, i qui
-// decidix si s'acomiada és la subhasta. node test/vendes.mjs
+// jugador. Qui ordena la llista és el SOBRECOST —el que pagues de més respecte del que el seu
+// lloc mereix (PAS 7: `ordre_venda = sobrecost DESC`)—, que és una xifra pròpia i no una
+// endevinalla de mercat. Qui decidix si s'acomiada és la subhasta. node test/vendes.mjs
 import assert from 'node:assert/strict';
 import { nova } from './_d1shim.mjs';
 import * as vendes from '../functions/api/vendes.js';
@@ -63,20 +64,37 @@ const dDesert = await (await vendes.onRequestGet({ env: { DB: db }, data: { usua
 assert.ok(!dDesert.jugadors.some((j) => j.jugador_id === 1), 'el desert desapareix de la llista');
 sqlite.exec("UPDATE vendes SET estat='pendent' WHERE jugador_id=1;");
 
-// La llista s'ordena per la PUNTUACIÓ de la categoria de venda (dada pròpia), no per cap preu.
-// Afegim un 2n venda amb més habilitat → més puntuació.
+// ── EL SOBRECOST ORDENA LA LLISTA ─────────────────────────────────────────────────────────
+// Primer cal que l'economia estiga CALIBRADA: sense prou setmanes declarades el sobrecost és
+// 0 per a tots (stopper del PAS 7), i eixe és el comportament que es comprova primer.
+{
+  const sense = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
+  assert.ok(sense.jugadors.every((j) => j.valor === 0),
+    'sense calibrar, ningú queda marcat com a sobrepagat per una lectura provisional');
+}
 sqlite.exec(`
   DELETE FROM preus_observats;
-  -- Millor que el «Venut» en tot, però per davall dels titulars a cada lloc: se'n va a venda.
-  INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (20,1,120,'Crack');
-  INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, creativitat, defensa, passades, extrem, anotacio, pilota_aturada, porteria) VALUES (1,20,'MC',25,6,6,5,5,5,5,1);
+  INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi) VALUES (1, 900000, '2026-07-25', 9000);
+  -- Vuit setmanes declarades: el mínim que el pom setmanes_mitjana demana per a calibrar.
+  INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada) VALUES
+    (1,82,9,90000,40000,'2026-05-30','2026-07-25'),(1,82,10,90000,40000,'2026-06-06','2026-07-25'),
+    (1,82,11,90000,40000,'2026-06-13','2026-07-25'),(1,82,12,90000,40000,'2026-06-20','2026-07-25'),
+    (1,82,13,90000,40000,'2026-06-27','2026-07-25'),(1,82,14,90000,40000,'2026-07-04','2026-07-25'),
+    (1,82,15,90000,40000,'2026-07-11','2026-07-25'),(1,82,16,90000,40000,'2026-07-18','2026-07-25');
+  -- Dos sobrants amb la MATEIXA habilitat i sous molt distints: l'únic que els separa és el
+  -- que cobren de més respecte del que el seu lloc mereix.
+  INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (20,1,120,'Car'),(21,1,121,'Barat');
+  INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, sou, creativitat, defensa, passades, extrem, anotacio, pilota_aturada, porteria) VALUES
+    (1,20,'MC',25,90000,5,1,1,1,1,1,1),(1,21,'MC',25,500,5,1,1,1,1,1,1);
 `);
 const d2 = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 const v = (nom) => d2.jugadors.find((j) => j.nom === nom).valor;
 assert.ok(d2.jugadors.every((j) => j.preu_proposat === undefined),
   'cap preu estimat, ni amb comparables ni sense: la taula preus_observats ja no es llig');
-assert.ok(v('Crack') > v('Venut'), `qui puntua més va davant (${v('Crack')} > ${v('Venut')})`);
-assert.ok(d2.jugadors.every((j) => j.es_sobrant === true), 'tots dos són sobrants (categoria venda)');
+assert.ok(v('Car') > 0, `el sobrepagat porta sobrecost (${v('Car')})`);
+assert.equal(v('Barat'), 0, 'i qui cobra el que toca, cap');
+assert.equal(d2.jugadors[0].nom, 'Car', 'la llista va per sobrecost DESC: primer el que més et costa');
+assert.ok(d2.jugadors.every((j) => j.es_sobrant === true), 'tots són sobrants (grup venda)');
 
 // (4) FORA LES MARQUES DE BUFFER: «cobrix X — ven-lo l'últim» és doctrina MORTA amb la
 // liquidació. Una fitxa només pot estar en un d'estos quatre estats, i els dona el MATEIX
@@ -104,4 +122,4 @@ sqlite.exec("UPDATE instantanies_jugadors SET lesio='2' WHERE jugador_id=1");
 const dl = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 assert.equal(dl.jugadors.find((j) => j.nom === 'Venut').lesionat, true, 'lesió del CSV → flag lesionat a vendes');
 
-console.log('OK — vendes v3.1: cap preu estimat, la puntuació ordena i la subhasta decidix');
+console.log('OK — vendes v3.1: cap preu estimat, el sobrecost ordena i la subhasta decidix');

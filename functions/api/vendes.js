@@ -2,8 +2,6 @@
 // seua fitxa (preu d'eixida proposat/editat, data de llistada, estat); POST upsert.
 import { onzeEstructura } from '../../lib/onze_estructura.js';
 import { economia } from '../../lib/economia.js';
-import { avaluaPuntuacio } from '../../lib/classificador.js';
-import { carregaConfigPla } from '../../lib/config_pla.js';
 import { esLesionat } from '../../public/format.js';
 import { cobertura, cosDisponible } from '../../lib/cobertura.js';
 import { entrenamentEfectiu, aplicaEntrenament } from '../../lib/entrenament_places.js';
@@ -33,23 +31,31 @@ export async function onRequestGet({ env, data }) {
   // vella (`categoria='venda'`, del PAS 6) i la pantalla de Plantilla ja no la gasta: les dues
   // llistes podien no coincidir. Ara les dues llegixen el GRUP de l'assignació d'estructura.
   const eco = await economia(env.DB, data.usuari.id);
-  const est = await onzeEstructura(env.DB, data.usuari.id, totsJugadors, eco.sou_sostenible_setmanal);
+  const est = await onzeEstructura(env.DB, data.usuari.id, totsJugadors, eco.sou_sostenible_setmanal, eco.calibrat);
   const jugadors = totsJugadors.filter((j) => est?.grups.get(j.jugador_id) === 'venda');
 
-  // v3.1: FORA l'estimació de preu. No es llegixen `preus_observats`, ni `base_preu_divisio`,
-  // ni `min_mostres`: Tonico no diu quant val un jugador, ho diu el mercat. Qui ordena la
-  // llista és la puntuació de la categoria de venda, que és una dada pròpia.
+  // v3.1: FORA l'estimació de preu. Tonico no diu quant val un jugador, ho diu el mercat.
+  //
+  // I fora també la que hi havia disfressada de «puntuació de la categoria de venda»: era
+  // `habilitat_max×2 + especialitat×3 + edat + lleialtat + qualificació`, o siga una
+  // estimació de valor amb un altre nom. La vara és el SOBRECOST (PAS 7: `ordre_venda =
+  // sobrecost DESC`): el que pagues de més respecte del que el seu lloc mereix. És una xifra
+  // que Tonico pot calcular —sou contra taula de salaris—, no una endevinalla de mercat.
   const pla = await env.DB.prepare('SELECT plantilla FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
-  const config = pla ? await carregaConfigPla(env.DB, pla.plantilla) : { categories: [], params: {} };
-  const vendaSpec = config.categories.find((c) => c.categoria === 'venda')?.parametres?.puntuacio;
-  const punts = jugadors.map((j) => (vendaSpec ? avaluaPuntuacio(vendaSpec, j, config.params) : null));
+  const punts = jugadors.map((j) => est?.sobrecosts.get(j.jugador_id) ?? 0);
 
   // La subhasta tanca a llistat + dies_subhasta (mecànica del tercer dia).
   const diesSubhasta = parseInt((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='dies_subhasta'").first())?.valor || '3', 10);
   const tancament = (dataLlistada) => (dataLlistada ? new Date(Date.parse(dataLlistada) + diesSubhasta * 86400000).toISOString().slice(0, 10) : null);
   // v3.1: FORA el criteri econòmic de «despatxar» per `valor_net`. Es llista una vegada i qui
   // decidix si s'acomiada és la SUBHASTA (lib/vendes.js → despatxable), no una previsió.
-  const eixida = jugadors.map((j, i) => {
+  // L'ORDE de la llista és el del PAS 7: primer el que més sobrecost té. Abans la llista
+  // eixia en l'orde de la consulta —o siga, cap— i `ordre_venda` era una línia del contracte
+  // que no feia res.
+  const orde = jugadors.map((j, i) => i).sort((a, b) => punts[b] - punts[a]
+    || (jugadors[b].sou ?? 0) - (jugadors[a].sou ?? 0));
+  const eixida = orde.map((i) => jugadors[i]).map((j, k) => {
+    const i = orde[k];
     // El valor de venda mana en la retenció (1). MATEIXA vara que el motor d'alertes: la
     // puntuació de la categoria (derivada, no la desada). Sense preu estimat, la puntuació és
     // l'única vara — i és una dada pròpia, no una previsió.
@@ -74,7 +80,7 @@ export async function onRequestGet({ env, data }) {
     const slotsCfg = aplicaEntrenament(await cfgJson('formacio'), (await entrenamentEfectiu(env.DB, data.usuari.id)).places);
     if (slotsCfg && slotsCfg.length) {
       const pomPl = async (clau, def) => parseInt((await env.DB.prepare('SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau=?').bind(pla.plantilla, clau).first())?.valor || String(def), 10);
-      const teFE = !!(await env.DB.prepare("SELECT 1 x FROM plantilles_categories WHERE plantilla=? AND categoria='futur_entrenador' AND aforament>=1").bind(pla.plantilla).first());
+      const teFE = !!Number((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='te_futur_entrenador'").bind(pla.plantilla).first())?.valor);
       cob = cobertura({ slots: slotsCfg, rols: await cfgJson('rols') }, {
         porters_minims: await pomPl('porters_minims', 2),
         futur_entrenador: teFE ? 1 : 0,

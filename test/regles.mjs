@@ -99,14 +99,13 @@ const codis = (a) => a.map((x) => x.regla_codi);
   assert.equal(REGLES.ALR_NUCLI_INCOMPLET(set(8), { objectiu: 8, urgencia: 60 }).length, 0);
 }
 
-// ALR_NUCLI_SENSE_MINUTS: no dispara per a nouvinguts (setmanes_club < 1)
-{
-  const ctx = { ...ctxBase, jugadors: [
-    { jugador_id: 1, nom: 'A', grup: 'onze', data_ultim_partit: '2026-07-10', setmanes_club: 30 }, // vell → sí
-    { jugador_id: 2, nom: 'B', grup: 'onze', data_ultim_partit: '2026-07-23', setmanes_club: 30 }, // recent → no
-    { jugador_id: 3, nom: 'C', grup: 'onze', data_ultim_partit: null, setmanes_club: 0 },          // nouvingut → no (no podia jugar)
-  ] };
-  assert.deepEqual(REGLES.ALR_NUCLI_SENSE_MINUTS(ctx, { dies_sense_partit: 7, urgencia: 80 }).map((x) => x.jugador_id), [1]);
+// LES QUATRE REGLES DESACTIVADES PER SEMPRE se n'han anat del motor (migració 094). Estaven
+// amb `activa=0` des de fa migracions i cap migració les tornava a encendre: codi que sembla
+// viu, es manté i es llig, i no pot disparar mai. El que resolen viu on toca —el que es resol
+// alineant, a les seccions d'alineació; la finestra de crida, al seu rellotge; i una subhasta
+// llistada no admet cap acció, que HT no deixa canviar res una vegada llistat.
+for (const codi of ['ALR_NUCLI_SENSE_MINUTS', 'ALR_JUVENIL_SUPLENTS', 'ALR_CRIDA_SETMANAL', 'ALR_SUBHASTA_TANCA']) {
+  assert.equal(REGLES[codi], undefined, `${codi} se n'ha anat del motor, no només de la taula`);
 }
 
 // ALR_PROMOCIO_JUVENIL i ALR_PLANTILLA_JUVENIL_MINIMA

@@ -317,4 +317,28 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   sqlite.exec('DELETE FROM vendes;');
 }
 
+// ── 10. EL SOBRECOST: cada jugador es mesura contra EL SEU LLOC ────────────────────────────
+// La vara de la venda (PAS 7). L'oracle no ix del codi: ix de la TAULA DE SALARIS de la guia,
+// llegida de la base. Un davanter s'ha de mesurar contra el que paga un davanter, no contra
+// el mig centre que mai serà — si es mesurara contra un altre lloc, el número seria un altre.
+{
+  const cfg = JSON.parse(sqlite.prepare("SELECT valor FROM constants_joc WHERE clau='taula_salaris'").get().valor);
+  const base = (id, o) => ({ id, nom: 'S' + id, sou: 1000, edat_anys: 27, edat_dies: 0,
+    porteria: 1, defensa: 1, creativitat: 1, extrem: 1, anotacio: 1, passades: 1, pilota_aturada: 1, experiencia: 1, ...o });
+  // Un davanter sobrepagat, i onze més perquè no entre a l'onze titular.
+  const dav = base(40, { anotacio: 6, sou: 60000 });
+  const equip = [...Array.from({ length: 11 }, (_, i) => base(50 + i, { defensa: 9, creativitat: 9, anotacio: 9, extrem: 9, porteria: 9 })), dav];
+  const r = await onzeEstructura(db, 1, equip, 10291, true);
+  const lloc = r.onze.find((l) => l.bucket === 'davanter');
+  const escala = cfg[lloc.habilitat];
+  // `nivell_objectiu` de la fila ve en l'escala de HT; la taula de salaris va en la seua.
+  const off = Number(sqlite.prepare("SELECT valor FROM constants_joc WHERE clau='nivell_habilitat_offset'").get().valor);
+  const esperat = Math.max(0, dav.sou - (escala[String(lloc.nivell_objectiu - off)] ?? 0));
+  assert.equal(r.sobrecosts.get(40), esperat,
+    `el davanter es mesura contra el que paga el seu lloc (${esperat})`);
+  const sense = await onzeEstructura(db, 1, equip, 10291, false);
+  assert.equal(sense.sobrecosts.get(40), 0,
+    'i sense calibrar, ningú queda marcat com a sobrepagat (stopper del PAS 7)');
+}
+
 console.log('OK — l\'onze d\'estructura: tots els jugadors, lloc a lloc, un jugador un lloc');

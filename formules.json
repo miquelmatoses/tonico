@@ -816,10 +816,11 @@
       "pas": "P7",
       "pasTitol": "VENDRE (allibera sou i genera caixa)",
       "clau": "despatxable",
-      "linia": "despatxable(j) = desert(j) I j ∈ sobrants        → decisió de PLANTILLA, no de mercat",
+      "linia": "despatxable(j) = desert(j) I grup(j) = \"despatxar\"  → decisió de PLANTILLA, no de mercat",
       "entrades": [
         "desert",
-        "sobrants"
+        "despatxar",
+        "grup"
       ],
       "poms": [],
       "taules": []

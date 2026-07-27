@@ -118,11 +118,7 @@ assert.equal(r3c.onze.find((s) => s.bucket === 'mc').jugador_id, 1, '3c: la pla�
 assert.equal(r3c.onze.find((s) => s.motiu === 'estructura').jugador_id, 2, '3c: el capat (guany 0) a estructura, per alt que siga el nivell');
 
 // ── Regles ──
-const juvenils = [{ jugador_id: 10, nom: 'M', pipeline: pipeDesc, estat: 'seguiment' }];
-assert.equal(REGLES.ALR_CRIDA_SETMANAL({ juvenils, juvenil_objectiu: 10 }, { urgencia: 54 }).length, 1, '1 ≤ 10 → crida');
-assert.equal(REGLES.ALR_CRIDA_SETMANAL({ juvenils: new Array(11).fill({}), juvenil_objectiu: 10 }, { urgencia: 54 }).length, 0, '11 > 10 → no crida');
 const sob = REGLES.ALR_JUVENIL_SOBRANT({ juvenils: js, juvenil_objectiu: 2 }, { urgencia: 56 });
 assert.equal(sob.length, 1); assert.equal(sob[0].parametres.sobren, 1);
-assert.equal(REGLES.ALR_JUVENIL_SUPLENTS({ juvenils: totsJuguen }, { urgencia: 88 }).length, 1, 'sense suplent → alerta');
 
 console.log('OK — juvenil v2: Revelable (desconegut≠venda), llenguatge pla, juga/no juga, fre de suplents, rànquing i regles');
