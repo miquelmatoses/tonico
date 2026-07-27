@@ -48,7 +48,6 @@ lesionat(j)     = csv.lesio(j) ≥ 1                      [font: buit | N setman
 sancionat(j)    = csv.amonestacions(j) ≥ `amonestacions_suspensio`   [3; només lliga]
 edat_d(j)       = anys(j)×112 + dies(j)   ·   dies_aniversari(j) = 112 − dies(j)
 fase_mercat(d)  = BUSCA(`fases_mercat`; setmana(d)) → modificador (FRACCIÓ, mai enter)
-horitzo_eixida(j) = temporada en què edat_d(j) assoleix `edat_pic_venda`×112
 ```
 
 ---
@@ -198,24 +197,28 @@ prioritat(lloc) = mancança(lloc) × pes(lloc)
 ## PAS 6 — PLANTILLA (qui es queda, derivat)
 
 ```
-core      = PRIMERS(N_core;  ORDENA(FILTRA(plantilla; hab(j,A) ≥ `core_a_min`);
-                                    hab(j,A) DESC, edat_d ASC))
-rotatius  = PRIMERS(N_rotatius; ORDENA(FILTRA(plantilla − core;
-                     edat_d ∈ [17×112, `edat_pic_venda`×112]); hab(j,A) DESC))
-titulars  = PER lloc ∉ pos_A: PRIMER(ORDENA(FILTRA(plantilla − core − rotatius;
+core      = PRIMERS(N_core;  ORDENA(plantilla; hab(j,A) DESC, edat_d ASC))
+   [sense mínim: `core_a_min` estava a 0 i no filtrava res des del primer dia. El
+    llistó de veres és `entrenable_creativitat_min`, que sí que s'aplica]
+titulars  = PER lloc ∉ pos_A: PRIMER(ORDENA(FILTRA(plantilla − core;
                      compatible(j, lloc)); hab(j, habilitat_lloc) DESC, sou ASC))
+   [FORA ELS ROTATIUS: eren els joves que doblaven els llocs del 100%, triats per
+    una finestra d'edat (`edat_pic_venda`). Eixa figura són ara els ENTRENABLES, que
+    ixen del RESIDU de l'assignació d'estructura amb un criteri que una finestra
+    d'edat no pot expressar: que la pròxima pujada de nivell els caiga abans del
+    límit. Amb ells se'n va el pom]
 porters_n = 1 × partits_setmana
-cossos_n  = ARREDONIX.AMUNT((llocs_partit − llocs_ocupats(core, rotatius, titulars,
+cossos_n  = ARREDONIX.AMUNT((llocs_partit − llocs_ocupats(core, titulars,
                              porters)) / partits_setmana)
 cossos    = PRIMERS(cossos_n; ORDENA(plantilla restant; sou ASC))
-retinguts = core ∪ rotatius ∪ titulars ∪ porters ∪ cossos
+retinguts = core ∪ titulars ∪ porters ∪ cossos
 venda     = plantilla − retinguts        [categoria sencera; cap marca dins]
 ```
 
 ## PAS 7 — VENDRE (allibera sou i genera caixa)
 
 ```
-motiu_venda(j) = SI(j ∈ rotatius I temporada ≥ horitzo_eixida(j); "pic de valor";
+motiu_venda(j) = SI(j ∉ cap grup de l'assignació;                  "sobrant";
                  SI(calibrat I sobrecost(j) > 0;                   "sou desproporcionat";
                  SI(j ∈ venda;                                     "sobrant"; ∅)))
    [SENSE CALIBRAR NO ES DESFÀ DE NINGÚ PEL SOU. `sobrecost` penja de
@@ -304,26 +307,29 @@ capacitat_objectiu   = configuració NRG de `url_calculadora_estadi`   [declarad
     calculadora; Tonico només diu QUAN toca]
 ```
 
-## PAS 9 — ALINEACIONS
+## PAS 9 — ELS DOS ONZES
 
 ```
-llocs ordenats per pes DESC, partit ASC
-disponible(j, lloc) = j ∈ retinguts I ¬llistat(j) I ¬lesionat(j)
-                    I ¬(sancionat(j) I partit = lliga)
-                    I partits_assignats(j) < max_partits(j)
-   [NO hi ha `compatible`: l'assignació és MAXIMITZACIÓ PURA. Qui discrimina és
-    valor(j, lloc) — un porter en un lloc de defensa hi val la seua defensa, i per
-    tant el perd contra un defensa de veres.]
-valor(j, lloc)  = SI(entrenable(lloc) I j ∈ core ∪ rotatius; `pes_entrenament`;
-                     hab(j, habilitat_lloc(lloc)))
-jugador(lloc)   = PRIMER(ORDENA(FILTRA(retinguts; disponible); valor DESC,
-                                partits_assignats ASC, sou ASC))
-   11A (competitiu) = els millors per valor · 11B = onze d'entrenament: garantix
-   els minuts dels rotatius i dels juvenils promocionats; la resta, cossos
-buit(lloc) = ∅ → juga amb un menys; excepció declarada si cal moure un entrenable
-   [INVARIANT: cap lloc queda buit havent-hi un retingut disponible.]
-comptabilitat(j) = SUMA(pct dels llocs assignats)
+onze_A = assignació d'estructura                      [el del PAS 6: l'onze ideal]
+
+onze_B = es COMPON damunt de l'onze_A, en este orde:
+   llocs que entrenen al 100%  → els ENTRENABLES, per orde de tria
+      [eixe és el seu motiu d'existir: si els ocuparen els titulars no
+       entrenarien mai. Sense entrenable per a la plaça, es queda BUIDA]
+   llocs que entrenen al 50%   → els mateixos de l'onze_A
+      [el seu lloc TAMBÉ és entrenament: no es cedix a ningú, doblen ells]
+   porteria                    → el PORTER SUPLENT
+      [el porter no dobla: és l'únic lloc que obliga a mantindre algú a posta]
+   futur entrenador            → el millor lloc DELS QUE QUEDEN, si no juga ja
+      [hi va per EXPERIÈNCIA, que és el que abarateix reconvertir-lo, no perquè
+       siga millor que qui desplaça: per això no toca cap lloc que entrene]
+   la resta                    → els mateixos de l'onze_A, que doblen
+
+buit(lloc) = ∅ → es juga amb un menys, i es diu
+   [una plaça d'entrenament buida NO s'omplí amb un titular: seria entrenament
+    perdut sense guanyar res]
 ```
+
 
 ## PAS 10 — JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius
 

@@ -3,7 +3,7 @@
 // res cablejat. node test/entrenament_places.mjs
 import assert from 'node:assert/strict';
 import { placesEntrenament, aplicaEntrenament } from '../lib/entrenament_places.js';
-import { alineaOnzes } from '../lib/onze.js';
+import { assignaEstructura } from '../lib/onze.js';
 import { cobertura } from '../lib/cobertura.js';
 
 const TAULA = { porteria: ['porter'], defensa: ['defensa'], creativitat: ['mc'], passades: ['mc', 'extrem', 'davanter'], extrem: ['extrem'], anotacio: ['davanter'], pilota_aturada: ['porter'] };
@@ -46,16 +46,18 @@ const squad = Array.from({ length: 8 }, (_, i) => ({ jugador_id: i + 1, nom: 'E'
 const llocsDe = (slots) => slots.map((sl, i) => ({ lloc: `${sl.bucket}${i + 1}`, bucket: sl.bucket,
   entrena: !!sl.entrena, pct: sl.pct ?? 100, habilitat: { porter: 'porteria', defensa: 'defensa',
   mc: 'creativitat', extrem: 'extrem', davanter: 'anotacio' }[sl.bucket], pes: 1 }));
-const rCrea = alineaOnzes(squad, llocsDe(slotsCrea), rols, { pes_entrenament: 1000 });
-const entrenaEn = (r, bucket) => ['A', 'B'].reduce((n, k) => n + r.onze[k].filter((s) => s.bucket === bucket && s.jugador && s.entrena).length, 0);
+const rCrea = assignaEstructura(squad, llocsDe(slotsCrea));
+// L'assignació torna UN onze (l'estructura); el segon es compon damunt d'ell al PAS 9.
+const entrenaEn = (r, bucket) => r.onze.filter((s) => s.bucket === bucket && s.jugador && s.entrena).length;
 assert.ok(entrenaEn(rCrea, 'mc') > 0, 'creativitat: hi ha entrenables entrenant d\'MC');
 assert.equal(entrenaEn(rCrea, 'defensa'), 0, 'creativitat: cap entrenable entrena de defensa');
 
-const rDef = alineaOnzes(squad, llocsDe(slotsDef), rols, { pes_entrenament: 1000 });
+const rDef = assignaEstructura(squad, llocsDe(slotsDef));
 assert.ok(entrenaEn(rDef, 'defensa') > 0, 'defensa: ara els entrenables entrenen de DEFENSA');
 assert.equal(entrenaEn(rDef, 'mc'), 0, 'defensa: ja NINGÚ entrena d\'MC');
 // I la comptabilitat reflectix el 100% en un sol partit (buckets al 100%, no doblen).
-assert.ok(rDef.comptabilitat.some((c) => c.total === 100), 'defensa: els entrenables arriben al 100%');
+// La comptabilitat de minuts era de l'alineació vella (dos partits, un repartiment). L'onze
+// d'estructura no reparteix minuts: assigna llocs, i el segon onze es compon damunt d'ell.
 
 console.log('OK — motor d\'entrenament sènior general: places, %, cobertura i alineació es deriven del que es tria');
 

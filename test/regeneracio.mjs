@@ -21,12 +21,13 @@ await desar(db, 1, 'senior', modelSenior(base, '2026-07-18'), anc);
 // Regenerar → derivats al dia
 await regeneraPipeline(db, 1);
 assert.equal((await estatRevisio(db, 1)).revisat, true, 'després de regenerar: al dia');
-// v3: 5 core (els llocs que entrenen) + 3 rotatius (els que doblen els del 100%).
+// v3: 5 core (els llocs que entrenen). Els rotatius ja no els reparteix la classificació.
 assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM categories_jugador WHERE categoria='core'").get().n, 5);
-assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM categories_jugador WHERE categoria='rotatiu'").get().n, 3);
+assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM categories_jugador WHERE categoria='rotatiu'").get().n, 0);
 
-// Canvi de config (un pom) → els derivats queden VELLS
-sqlite.exec("UPDATE plantilles_parametres SET valor='7' WHERE plantilla='competitiva' AND clau='edat_pic_venda'");
+// Canvi de config (un pom) → els derivats queden VELLS. `edat_pic_venda` ja no existix (se'n va
+// amb el model fàbrica); es gasta un pom viu, que és el que fa la prova de veres.
+sqlite.exec("UPDATE plantilles_parametres SET valor='7' WHERE plantilla='competitiva' AND clau='entrenable_creativitat_min'");
 assert.equal((await estatRevisio(db, 1)).revisat, false, 'config nova → derivats vells');
 
 // Regenerar → al dia altra vegada, idempotent

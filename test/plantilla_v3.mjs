@@ -58,9 +58,11 @@ const r = construeixPlantilla(squad, LLOCS, {
 
 // CORE: els 5 millors en creativitat
 assert.deepEqual(r.core.map((j) => j.jugador_id), [1, 2, 3, 4, 5], 'core = els millors en l\'habilitat entrenada');
-// ROTATIUS: els 3 següents dins de la finestra d'edat (el 7, de 30 anys, en queda fora)
-assert.equal(r.rotatius.length, 3);
-assert.ok(!r.rotatius.some((j) => j.jugador_id === 7), 'un jugador passat del pic de venda no és rotatiu');
+// ROTATIUS: la categoria ja no existix. Eren els joves que doblaven els llocs del 100%, triats
+// per una finestra d'edat (`edat_pic_venda`, del model fàbrica). Eixa figura són ara els
+// ENTRENABLES, que ixen del residu de l'assignació amb un criteri que la finestra no podia
+// expressar: que la pròxima pujada de nivell els caiga abans del límit.
+assert.deepEqual(r.rotatius, [], 'la classificació ja no reparteix rotatius');
 // TITULARS: un per lloc que no entrena, el millor de la seua habilitat
 const titPer = Object.fromEntries(r.titulars.map((t) => [t.lloc, t.jugador_id]));
 assert.equal(titPer.por, 10, 'el millor porter és el titular de porteria');

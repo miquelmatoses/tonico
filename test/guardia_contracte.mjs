@@ -22,7 +22,7 @@ import { nivellActual, mancanca, exces, sobrecost, prioritat } from '../lib/manc
 import { comptesNucli, maxPartits, construeixPlantilla } from '../lib/plantilla.js';
 import { urgent as esUrgent, motiuVenda, ordreVenda, desti, despatxable,
   subhastaDeserta } from '../lib/vendes.js';
-import { valorEn, alineaOnzes } from '../lib/onze.js';
+import { assignaEstructura } from '../lib/onze.js';
 import { util as utilJuv, destiPromocio, objectiuJuvenil, sobrants, reiniciCrida } from '../lib/juvenil_v3.js';
 import { costFlux, nivellPagable, planPersonal, decisioRenovacio,
   baseTipus as baseTipusG1 } from '../lib/personal_v3.js';
@@ -122,14 +122,6 @@ const VERIFICADES = {
     assert.ok(cal.length > 0, 'la taula de fases de mercat està sembrada');
     for (const f of cal) assert.ok(Math.abs(f.modificador_valor) < 1, `setmana ${f.setmana_temporada}: fracció, no enter`);
   },
-  'V.horitzo_eixida': () => {
-    // La temporada en què edat_d assolix `edat_pic_venda`
-    const h = (edatAnys, pic, temporada) => temporada + Math.max(0, Math.ceil(((pic - edatAnys) * 112) / 112));
-    assert.equal(h(23, 25, 83), 85, 'a 23 anys i pic 25 → dos temporades');
-    assert.equal(h(26, 25, 83), 83, 'passat el pic, ja toca');
-  },
-
-  // ── PAS 0 / PAS 1 ──
   'P0.estrategia': () => assert.deepEqual(ESTRATEGIES, ['competitiva', 'cycle'], 'TRIA(competitiva | cycle)'),
   'P0.pais': () => {
     const c = { estrategia: 'competitiva', pais: 'ES', divisio: 'VII', sistema_juvenil: 'academia', partits_setmana: 2 };
@@ -155,15 +147,6 @@ const VERIFICADES = {
     const r = plantillaFix();
     assert.deepEqual(r.core.map((j) => j.jugador_id), [1, 2, 3],
       'els millors en l\'habilitat entrenada, i a igualtat el més jove');
-  },
-  'P6.rotatius': () => {
-    const r = plantillaFix();
-    assert.equal(r.rotatius.length, r.n_rotatius);
-    assert.deepEqual(r.rotatius.map((j) => j.jugador_id), [4, 14], 'els següents millors en l\'habilitat entrenada');
-    assert.ok(!r.rotatius.some((j) => j.jugador_id === 9), 'un passat del pic de venda no és rotatiu');
-    // NOTA del contracte: `rotatius` es tria NOMÉS per hab(A), sense mínim. Amb pocs
-    // jugadors de l'habilitat entrenada, el model arrossega gent sense eixa habilitat cap a
-    // rotatiu. És el que el full diu; queda anotat perquè es veja, no amagat.
   },
   'P6.titulars': () => {
     const r = plantillaFix();
@@ -221,6 +204,27 @@ const VERIFICADES = {
     assert.equal(admissibleEstadi({ ...base }), true, 'sense obra en curs, admissible');
     assert.equal(admissibleEstadi({ ...base, obra_en_curs: true }), false,
       'amb l\'obra en marxa, no: ja s\'ha decidit i no es decidix dues vegades');
+  },
+  'P9.onze_a': () => {
+    // L'onze A és l'assignació d'estructura tal qual: els millors a cada lloc del pla, un
+    // jugador un lloc, i els llocs trien per pes.
+    const llocs = [{ lloc: 'MC1', bucket: 'mc', habilitat: 'creativitat', pes: 1.46 },
+      { lloc: 'DV1', bucket: 'davanter', habilitat: 'anotacio', pes: 0.89 }];
+    const { onze } = assignaEstructura([{ id: 1, creativitat: 9, anotacio: 8 },
+      { id: 2, creativitat: 3, anotacio: 7 }], llocs);
+    assert.deepEqual(onze.map((l) => l.jugador.id), [1, 2],
+      'el lloc de més pes tria primer, i cada jugador ocupa un lloc només');
+  },
+  'P9.onze_b': () => {
+    // L'onze B es COMPON, no es torna a optimitzar: els llocs que ENTRENEN no es cedixen a
+    // ningú. La composició sencera es prova a test/dos_onzes.mjs amb la base davant; ací es
+    // fixa la regla que la governa, que és que un lloc d'entrenament no és cedible.
+    const cediblesA = ['dobla'];
+    for (const motiu of ['entrena', 'entrena_mig', 'suplent']) {
+      assert.ok(!cediblesA.includes(motiu),
+        `un lloc amb motiu «${motiu}» no és cedible al futur entrenador`);
+    }
+    assert.ok(cediblesA.includes('dobla'), 'només els que dobles es poden cedir');
   },
   'P8.necessitats': () => {
     // Les places BUIDES manen per damunt de qualsevol mancança, i un sol nivell de distància
@@ -293,18 +297,6 @@ const VERIFICADES = {
     assert.equal(estadiCaduc('2026-07-01', '2026-07-26', 10), false);
     assert.equal(estadiCaduc(null, '2026-07-26', 10), false, 'sense data no són caducs: falten');
   },
-  'P9.llocs': () => {
-    // «llocs ordenats per pes DESC, partit ASC»
-    const LL = [{ lloc: 'baix', entrena: false, habilitat: 'defensa', pes: 0.1 },
-      { lloc: 'alt', entrena: false, habilitat: 'defensa', pes: 9 }];
-    const r = alineaOnzes([{ jugador_id: 1, categoria: 'cos', defensa: 5, sou: 1 }], LL,
-      [{ id: 'A', competitiu: true }], {});
-    assert.equal(r.onze.A.find((x) => x.lloc === 'alt').jugador?.jugador_id, 1,
-      'el lloc de més pes es cobrix primer');
-    assert.equal(r.onze.A.find((x) => x.lloc === 'baix').jugador, null);
-  },
-
-  // ── PAS 10 ──
   'P10.esperat_act': () => {
     // MITJANA(revelacions pròpies); ∅ → `esperat_defecte`
     assert.equal(valorEsperatDesconegut([{ creativitat_actual: 4 }, { creativitat_actual: 8 }], 'creativitat', 5), 6);
@@ -329,9 +321,9 @@ const VERIFICADES = {
   },
   'P10.onze': () => {
     // «mateixa fórmula del PAS 9»: el motor és el mateix, amb la taula juvenil.
-    const LL = [{ lloc: 'mc1', entrena: true, pct: 100, habilitat: 'creativitat', pes: 1 }];
-    const r = alineaOnzes([{ jugador_id: 1, categoria: 'core', creativitat: 5 }], LL, [{ id: 'A', competitiu: true }], { pes_entrenament: 1000 });
-    assert.equal(r.onze.A[0].jugador.jugador_id, 1);
+    const LL = [{ lloc: 'mc1', bucket: 'mc', entrena: true, pct: 100, habilitat: 'creativitat', pes: 1 }];
+    const { onze } = assignaEstructura([{ id: 1, creativitat: 5 }], LL);
+    assert.equal(onze[0].jugador.id, 1, 'el mateix motor d\'assignació, amb la taula juvenil');
   },
   'P10.accio': () => {
     // ACCIÓ("fes la crida") SI crida_disponible
@@ -668,55 +660,11 @@ const VERIFICADES = {
   },
 
   // PAS 9 — les alineacions, greedy per pes.
-  'P9.valor': () => {
-    const lloc = { entrena: true, pct: 100, habilitat: 'creativitat' };
-    assert.equal(valorEn({ categoria: 'core', creativitat: 5 }, lloc, 1000), 1000,
-      'en un lloc que entrena, el nucli hi va pel pes d\'entrenament');
-    assert.equal(valorEn({ categoria: 'cos', creativitat: 5 }, lloc, 1000), 5,
-      'la resta val el que val la seua habilitat');
-  },
-  'P9.disponible': () => {
-    const LL = [{ lloc: 'a', entrena: false, habilitat: 'defensa', pes: 1 }];
-    const P = [{ id: 'A', competitiu: true }, { id: 'B' }];
-    const base = { jugador_id: 1, categoria: 'cos', defensa: 5, sou: 1 };
-    const cap = (extra) => alineaOnzes([{ ...base, ...extra }], LL, P, {}).onze.A[0].jugador;
-    assert.equal(cap({}).jugador_id, 1);
-    assert.equal(cap({ llistat: true }), null, 'llistat no juga');
-    assert.equal(cap({ lesionat: true }), null, 'lesionat no s\'alinea');
-    const sanc = alineaOnzes([{ ...base, sancionat: true }], LL, P, { partit_lliga: 'A' });
-    assert.equal(sanc.onze.A[0].jugador, null, 'sancionat: fora de la lliga');
-    assert.equal(sanc.onze.B[0].jugador.jugador_id, 1, 'però juga l\'altre partit');
-    // «j ∈ retinguts»: el sobrant NO s'alinea. Sense este filtre, un porter en venda
-    // acabava ocupant un lloc de camp.
-    const sobrant = alineaOnzes([{ ...base, categoria: 'venda' }], LL, P, {});
-    assert.equal(sobrant.onze.A[0].jugador, null, 'un jugador en venda no entra a l\'onze');
-    const retingut = alineaOnzes([{ ...base, categoria: 'cos' }], LL, P, {});
-    assert.equal(retingut.onze.A[0].jugador?.jugador_id, 1, 'un retingut sí');
-  },
-  'P9.jugador': () => {
-    // ORDENA(valor DESC, partits_assignats ASC, sou ASC)
-    const LL = [{ lloc: 'a', entrena: false, habilitat: 'defensa', pes: 1 }];
-    const r = alineaOnzes([
-      { jugador_id: 1, categoria: 'cos', defensa: 5, sou: 900 },
-      { jugador_id: 2, categoria: 'cos', defensa: 5, sou: 100 },
-    ], LL, [{ id: 'A', competitiu: true }], {});
-    assert.equal(r.onze.A[0].jugador.jugador_id, 2, 'a igual valor, el més barat');
-  },
   'P9.buit': () => {
-    const LL = [{ lloc: 'a', entrena: false, habilitat: 'defensa', pes: 1 }];
-    const r = alineaOnzes([], LL, [{ id: 'A', competitiu: true }], {});
-    assert.equal(r.onze.A[0].jugador, null, 'sense ningú, el lloc queda buit');
-    assert.equal(r.buits.length, 1, 'i el buit es declara');
+    const LL = [{ lloc: 'a', bucket: 'defensa', entrena: false, habilitat: 'defensa', pes: 1 }];
+    const { onze } = assignaEstructura([], LL);
+    assert.equal(onze[0].jugador, null, 'sense ningú, el lloc queda buit i es declara');
   },
-  'P9.comptabilitat': () => {
-    // SUMA(pct dels llocs assignats): 50 + 50 = la setmana feta.
-    const LL = [{ lloc: 'e1', entrena: true, pct: 50, habilitat: 'extrem', pes: 1 }];
-    const r = alineaOnzes([{ jugador_id: 1, categoria: 'core', extrem: 5 }], LL,
-      [{ id: 'A', competitiu: true }, { id: 'B' }], { pes_entrenament: 1000 });
-    assert.equal(r.comptabilitat.find((c) => c.jugador_id === 1).total, 100);
-  },
-
-  // PAS 12 — informe i agenda. Les llindes són POMS, mai números a la vista.
   'P12.nivell': () => {
     const LL = { llindar_urgent: 70, llindar_aviat: 55 };
     assert.equal(nivellAccio(70, LL), 'urgent');

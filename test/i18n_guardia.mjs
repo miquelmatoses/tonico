@@ -51,7 +51,6 @@ function motiusDelCodi() {
   // fitxers sencers, que arrossegarien `motiu` d'altres espais de noms (bucle d'estoc,
   // destí de venda, pipeline juvenil) que es renderitzen amb altres prefixos.
   const PRODUCTORS = [
-    ['../lib/orquestra_alineacio.js', 'avisosOnze'],
     ['../lib/juvenils_vista.js', 'avaluaCrida'],
   ];
   const vals = new Set();
@@ -69,7 +68,10 @@ function motiusDelCodi() {
     }
     for (const m of cos.matchAll(/motiu:\s*'([a-z_]+)'/g)) vals.add(m[1]);
   }
-  assert.ok(vals.size >= 5,
+  // CANARI: si el regex deixa de casar, la comprovació passaria en buit. L'únic productor que
+  // queda de l'espai `motiu.*` és la crida juvenil (n'emet quatre); els de l'onze d'entrenament
+  // viuen a `alineacio.motiu_*`, que és un altre espai i el cobrix el guardià de famílies.
+  assert.ok(vals.size >= 4,
     `el domini de motius ha eixit quasi buit (${vals.size}): el guardià no llig els productors`);
   return [...vals];
 }

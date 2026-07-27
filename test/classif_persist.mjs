@@ -26,9 +26,10 @@ const idDe = (htnom) => sqlite.prepare('SELECT id FROM jugadors WHERE nom=?').ge
 // ── Pujada 1: classificació inicial ──
 await desar(db, 1, 'senior', modelSenior(files, '2026-07-18'), ancora);
 const r1 = await classificaEquip(db, 1, 1, 'competitiva');
-// v3: 5 core + 3 rotatius són el nucli que entrena (abans, 8 «entrenables»).
+// v3: 5 core (els llocs que entrenen). Els «rotatius» ja no els reparteix la classificació:
+// són els ENTRENABLES, i ixen del residu de l'assignació d'estructura.
 assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM categories_jugador WHERE categoria='core'").get().n, 5);
-assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM categories_jugador WHERE categoria IN ('core','rotatiu')").get().n, 8);
+assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM categories_jugador WHERE categoria='rotatiu'").get().n, 0);
 // CONTRACTE CENTRAL: equip verge → tot és assignació inicial (auto), mai desplaçament.
 assert.equal(r1.autos, 25, 'primera pujada: els 25 jugadors reben categoria auto');
 assert.equal(r1.moviments, 0, 'primera pujada: ZERO moviments');

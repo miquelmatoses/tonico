@@ -1,0 +1,15 @@
+-- Tonico — migració 089 · fora els dos últims poms del model fàbrica.
+--
+-- `edat_pic_venda` (20) triava els ROTATIUS per una finestra d'edat. Eixa figura ara són els
+-- ENTRENABLES, i no ixen d'una classificació prèvia sinó del residu de l'assignació
+-- d'estructura, amb un criteri que una finestra d'edat no pot expressar: que la PRÒXIMA PUJADA
+-- DE NIVELL els caiga abans del límit (`entrenable_edat_limit`). Un de 20 anys que puja d'ací a
+-- cinc setmanes encara cobra eixa pujada; un de 19 que no pujaria fins passats els 21, no.
+--
+-- `core_a_min` (0) era el mínim d'habilitat per a entrar al nucli. A ZERO no filtrava res —era
+-- una línia del full que no feia res des del primer dia— i el llistó de veres ara és
+-- `entrenable_creativitat_min`, que sí que s'aplica.
+--
+-- Els llegien la classificació (PAS 6) i l'alineació vella. L'alineació vella se n'ha anat
+-- sencera: `functions/api/alineacio.js`, `lib/orquestra_alineacio.js` i `alineaOnzes`.
+DELETE FROM plantilles_parametres WHERE clau IN ('edat_pic_venda', 'core_a_min');

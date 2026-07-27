@@ -139,21 +139,6 @@
       ]
     },
     {
-      "id": "V.horitzo_eixida",
-      "pas": "V",
-      "pasTitol": "VARIABLES BASE (una font cadascuna)",
-      "clau": "horitzo_eixida",
-      "linia": "horitzo_eixida(j) = temporada en què edat_d(j) assoleix `edat_pic_venda`×112",
-      "entrades": [
-        "edat_d",
-        "temporada"
-      ],
-      "poms": [
-        "edat_pic_venda"
-      ],
-      "taules": []
-    },
-    {
       "id": "P0.estrategia",
       "pas": "P0",
       "pasTitol": "CONFIGURACIÓ (l'única entrada d'usuari inicial)",
@@ -477,7 +462,6 @@
       "linia": "pressupost_sou(lloc)  = sou_sostenible_setmanal × pes(lloc) / SUMA(pesos de tots els llocs)",
       "entrades": [
         "lloc",
-        "llocs",
         "pes",
         "sou_sostenible_setmanal"
       ],
@@ -535,7 +519,6 @@
       "clau": "ocupant",
       "linia": "ocupant(lloc)   = el jugador assignat al lloc (PAS 8) o ∅",
       "entrades": [
-        "jugador",
         "lloc"
       ],
       "poms": [],
@@ -620,27 +603,12 @@
       "pas": "P6",
       "pasTitol": "PLANTILLA (qui es queda, derivat)",
       "clau": "core",
-      "linia": "core      = PRIMERS(N_core;  ORDENA(FILTRA(plantilla; hab(j,A) ≥ `core_a_min`);",
+      "linia": "core      = PRIMERS(N_core;  ORDENA(plantilla; hab(j,A) DESC, edat_d ASC))",
       "entrades": [
         "A",
         "N_core",
+        "edat_d",
         "hab",
-        "plantilla"
-      ],
-      "poms": [
-        "core_a_min"
-      ],
-      "taules": []
-    },
-    {
-      "id": "P6.rotatius",
-      "pas": "P6",
-      "pasTitol": "PLANTILLA (qui es queda, derivat)",
-      "clau": "rotatius",
-      "linia": "rotatius  = PRIMERS(N_rotatius; ORDENA(FILTRA(plantilla − core;",
-      "entrades": [
-        "N_rotatius",
-        "core",
         "plantilla"
       ],
       "poms": [],
@@ -651,13 +619,12 @@
       "pas": "P6",
       "pasTitol": "PLANTILLA (qui es queda, derivat)",
       "clau": "titulars",
-      "linia": "titulars  = PER lloc ∉ pos_A: PRIMER(ORDENA(FILTRA(plantilla − core − rotatius;",
+      "linia": "titulars  = PER lloc ∉ pos_A: PRIMER(ORDENA(FILTRA(plantilla − core;",
       "entrades": [
         "core",
         "lloc",
         "plantilla",
-        "pos_A",
-        "rotatius"
+        "pos_A"
       ],
       "poms": [],
       "taules": []
@@ -679,11 +646,10 @@
       "pas": "P6",
       "pasTitol": "PLANTILLA (qui es queda, derivat)",
       "clau": "cossos_n",
-      "linia": "cossos_n  = ARREDONIX.AMUNT((llocs_partit − llocs_ocupats(core, rotatius, titulars,",
+      "linia": "cossos_n  = ARREDONIX.AMUNT((llocs_partit − llocs_ocupats(core, titulars,",
       "entrades": [
         "core",
         "llocs_partit",
-        "rotatius",
         "titulars"
       ],
       "poms": [],
@@ -708,11 +674,10 @@
       "pas": "P6",
       "pasTitol": "PLANTILLA (qui es queda, derivat)",
       "clau": "retinguts",
-      "linia": "retinguts = core ∪ rotatius ∪ titulars ∪ porters ∪ cossos",
+      "linia": "retinguts = core ∪ titulars ∪ porters ∪ cossos",
       "entrades": [
         "core",
         "cossos",
-        "rotatius",
         "titulars"
       ],
       "poms": [],
@@ -736,13 +701,8 @@
       "pas": "P7",
       "pasTitol": "VENDRE (allibera sou i genera caixa)",
       "clau": "motiu_venda",
-      "linia": "motiu_venda(j) = SI(j ∈ rotatius I temporada ≥ horitzo_eixida(j); \"pic de valor\";",
-      "entrades": [
-        "horitzo_eixida",
-        "rotatius",
-        "temporada",
-        "valor"
-      ],
+      "linia": "motiu_venda(j) = SI(j ∉ cap grup de l'assignació;                  \"sobrant\";",
+      "entrades": [],
       "poms": [],
       "taules": []
     },
@@ -1031,58 +991,25 @@
       "taules": []
     },
     {
-      "id": "P9.llocs",
+      "id": "P9.onze_a",
       "pas": "P9",
-      "pasTitol": "ALINEACIONS",
-      "clau": "llocs",
-      "linia": "llocs ordenats per pes DESC, partit ASC",
+      "pasTitol": "ELS DOS ONZES",
+      "clau": "onze_A",
+      "linia": "onze_A = assignació d'estructura                      [el del PAS 6: l'onze ideal]",
       "entrades": [
-        "pes"
+        "onze"
       ],
       "poms": [],
       "taules": []
     },
     {
-      "id": "P9.disponible",
+      "id": "P9.onze_b",
       "pas": "P9",
-      "pasTitol": "ALINEACIONS",
-      "clau": "disponible",
-      "linia": "disponible(j, lloc) = j ∈ retinguts I ¬llistat(j) I ¬lesionat(j)",
+      "pasTitol": "ELS DOS ONZES",
+      "clau": "onze_B",
+      "linia": "onze_B = es COMPON damunt de l'onze_A, en este orde:",
       "entrades": [
-        "lesionat",
-        "llistat",
-        "retinguts"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P9.valor",
-      "pas": "P9",
-      "pasTitol": "ALINEACIONS",
-      "clau": "valor",
-      "linia": "valor(j, lloc)  = SI(entrenable(lloc) I j ∈ core ∪ rotatius; `pes_entrenament`;",
-      "entrades": [
-        "core",
-        "entrenable",
-        "lloc",
-        "rotatius"
-      ],
-      "poms": [
-        "pes_entrenament"
-      ],
-      "taules": []
-    },
-    {
-      "id": "P9.jugador",
-      "pas": "P9",
-      "pasTitol": "ALINEACIONS",
-      "clau": "jugador",
-      "linia": "jugador(lloc)   = PRIMER(ORDENA(FILTRA(retinguts; disponible); valor DESC,",
-      "entrades": [
-        "disponible",
-        "retinguts",
-        "valor"
+        "onze_A"
       ],
       "poms": [],
       "taules": []
@@ -1090,24 +1017,10 @@
     {
       "id": "P9.buit",
       "pas": "P9",
-      "pasTitol": "ALINEACIONS",
+      "pasTitol": "ELS DOS ONZES",
       "clau": "buit",
-      "linia": "buit(lloc) = ∅ → juga amb un menys; excepció declarada si cal moure un entrenable",
-      "entrades": [
-        "entrenable"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P9.comptabilitat",
-      "pas": "P9",
-      "pasTitol": "ALINEACIONS",
-      "clau": "comptabilitat",
-      "linia": "comptabilitat(j) = SUMA(pct dels llocs assignats)",
-      "entrades": [
-        "llocs"
-      ],
+      "linia": "buit(lloc) = ∅ → es juga amb un menys, i es diu",
+      "entrades": [],
       "poms": [],
       "taules": []
     },
