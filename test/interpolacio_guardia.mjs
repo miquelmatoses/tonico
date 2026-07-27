@@ -29,8 +29,10 @@ sqlite.exec(`
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (1,1,'2026-07-25',83,1);
   INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (1,1,100,'A');
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, sou) VALUES (1,1,5000);
-  INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi, taquilla_s1, patrocini_s1, taquilla_s2, patrocini_s2)
-    VALUES (1,100000,'2026-07-25',3000,21127,40500,0,40500);
+  INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi)
+    VALUES (1,100000,'2026-07-25',3000);
+  INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada) VALUES
+    (1,83,1,21127,40500,'2026-07-19','2026-07-25'),(1,83,2,0,40500,'2026-07-25','2026-07-25');
 `);
 const e = await economia(db, 1);
 // La secció passa objectes de l'avaluador a estes claus: no ha de quedar cap {…}.

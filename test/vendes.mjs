@@ -53,8 +53,8 @@ d = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 
 assert.equal(d.jugadors[0].estat, 'llistat');
 assert.equal(d.jugadors[0].data_llistada, '2026-07-25');
 assert.equal(d.jugadors[0].preu_eixida, undefined, 'cap preu a l\'eixida, ni el que s\'ha enviat');
-assert.equal(sqlite.prepare('SELECT preu_eixida FROM vendes WHERE jugador_id=1').get().preu_eixida, null,
-  'i tampoc s\'escriu a la BD: la porta està tancada, no només amagada');
+assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM pragma_table_info('vendes') WHERE name='preu_eixida'").get().n, 0,
+  'ni la columna existix ja: la porta està tancada, no només amagada');
 // UN DESERT NO TORNA MAI A VENDES. Va eixir a subhasta, ningú el va voler i ja no és
 // transferible: ni fitxa, ni píndola, ni missatge. L'única cosa que se'n pot fer és
 // despatxar-lo, i eixa decisió és de PLANTILLA.

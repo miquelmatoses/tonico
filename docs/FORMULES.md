@@ -4,10 +4,13 @@
 > 2026-07-26). Mana sobre
 > qualsevol codi, doctrina o document anterior. El codi de Tonico és un avaluador
 > d'estes fórmules i res més. Mirall llegible per màquina:
-> [`formules.json`](../formules.json). Pla de reconstrucció:
-> [`docs/DIFF_FORMULES.md`](DIFF_FORMULES.md). Estat del sistema d'abans:
-> [`docs/FORMULES_ACTUALS.md`](FORMULES_ACTUALS.md). Contracte anterior (retirat):
-> [`docs/FORMULES_v2_SUPERAT.md`](FORMULES_v2_SUPERAT.md).
+> [`formules.json`](../formules.json). El rastre de què es va decidir i per què:
+> [`docs/DECISIONS.md`](DECISIONS.md).
+>
+> [Els documents del model anterior —el pla de reconstrucció, la foto del sistema
+> d'abans, el contracte v2 i la doctrina de classificació— s'han esborrat: la
+> reconstrucció està feta i descrivien codi que ja no existix. Un document que
+> descriu mòduls esborrats no és història, és una trampa.]
 >
 > **REGLA DE PROCÉS (invariant 11):** tot arreglament de símptoma modifica
 > `formules.json` o l'avaluador — MAI una secció de presentació. Els tres guardians
@@ -336,7 +339,11 @@ ACCIÓ("remodela l'estadi")  SI admissible(estadi) I ¬estadi_caduc
 
 -- opció FITXATGE (només si l'estadi ja no demana res)
 necessitats = places BUIDES d'entrenament i de porter suplent  → distància = ∞
+            ∪ llocs de l'onze SENSE OCUPANT                     → distància = ∞
             ∪ llocs de l'onze amb distància ≥ `distancia_min`   [PAS 5]
+   [un lloc sense ningú és el senyal més fort que hi ha, i anava amb els altres
+    buits per doctrina («buit → es juga amb un menys, i es diu», PAS 9) però no a
+    la llista: `diferència` és ∅ quan no hi ha ocupant i el filtre el treia]
    [una plaça d'entrenament buida és entrenament perdut cada setmana i no es
     recupera; un lloc de l'onze fluix, almenys, juga. Per això les buides manen.
     I un sol nivell de distància s'arregla entrenant o esperant: no és un forat]
@@ -618,6 +625,5 @@ amb la demostració de cada error, a [`docs/FORATS.md`](FORATS.md).
 ## PROCÉS
 
 1. Aprovat → `docs/FORMULES.md`; mana sobre tot; `formules.json` regenerat.
-2. DIFF fórmula a fórmula contra `docs/FORMULES_ACTUALS.md` → lots.
-3. Reconstrucció per lots autoritzats: canvi + test «mateixa entrada → mateix
+2. Cada canvi: fórmula al full + referència a G1 + test «mateixa entrada → mateix
    número» + G1-G3 verds + verificació per propietat a prod.

@@ -85,7 +85,14 @@ assert.equal(motiuVenda({}, { sobrecost: 99999, calibrat: e.calibrat }), 'sou_de
 // és exactament el cas de Miquel— les dues discrepaven en una temporada sencera.
 {
   const { sqlite: s2, db: db2 } = nova(import.meta.url);
+  // Este bloc REPRODUÏX el backfill de la 075, o siga que ha de reconstruir la forma que la
+  // taula tenia llavors: les quatre columnes de declaració vigent, que la 097 ja ha llevat
+  // de la base viva perquè cap consulta les nomenava des que l'històric va per setmanes.
   s2.exec(`
+    ALTER TABLE finances ADD COLUMN taquilla_s1 INTEGER;
+    ALTER TABLE finances ADD COLUMN patrocini_s1 INTEGER;
+    ALTER TABLE finances ADD COLUMN taquilla_s2 INTEGER;
+    ALTER TABLE finances ADD COLUMN patrocini_s2 INTEGER;
     INSERT INTO usuaris (id, correu, contrasenya) VALUES (9,'q','w');
     INSERT INTO finances (usuari_id, caixa, caixa_data, taquilla_s1, patrocini_s1, taquilla_s2, patrocini_s2)
       VALUES (9,1,'2026-07-26',21127,40500,0,40500);`);

@@ -117,5 +117,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/094_fora_regles_apagades.sql'));
   sqlite.exec(src('../schema/095_taules_orfes.sql'));
   sqlite.exec(src('../schema/096_porter_suplent_llindar.sql'));
+  sqlite.exec(src('../schema/097_columnes_mortes.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

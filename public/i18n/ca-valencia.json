@@ -581,5 +581,6 @@
   "alerta.compra_entrenable_preu_n": "Tens {n} places d'entrenament buides i no sé quant costa omplir-les. Mira les últimes transferències d'un jove de creativitat {nivell} o més i apunta-m'ho a Mercat.",
   "alineacio.motiu_porteria_buida": "sense porter suplent: el titular no pot doblar",
   "estoc.de_quants": "({i} de {n})",
-  "estoc.cost_acumulat": "{cost} · {acumulat} en total"
+  "estoc.cost_acumulat": "{cost} · {acumulat} en total",
+  "mercat.nec_lloc_buit": "ningú juga ahí"
 }

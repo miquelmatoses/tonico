@@ -12,7 +12,7 @@ res d'IA. Puges les dades de la setmana i l'app et diu què fer.
 > MAI una secció de presentació. Tres guardians al CI ho fan complir (un commit que els
 > trenque no arriba a prod): **G1** contracte-full (`avaluador = referència`), **G2**
 > render-pur (cap lògica de domini a la vista), **G3** golden-pantalla (render = avaluador).
-> El pla de reconstrucció viu a [`docs/DIFF_FORMULES.md`](docs/DIFF_FORMULES.md).
+> El rastre de què es va decidir i per què viu a [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 ## Estat: Fase 0 completa
 

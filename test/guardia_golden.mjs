@@ -35,7 +35,7 @@ sqlite.exec(`
     VALUES (1, 500000, '2026-07-25', 7100, 9000, 200000, '2026-07-25');
   INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada) VALUES
     (1,83,1,21127,40500,'2026-07-19','2026-07-26'),(1,83,2,0,40500,'2026-07-26','2026-07-26');
-  INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou, setmanes_contracte) VALUES (1,'especialista','metge',2,2040,4);
+  INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou, data_fi_contracte) VALUES (1,'especialista','metge',2,2040,'2026-11-04');
 `);
 const ctx = { env: { DB: db }, data: { usuari: { id: 1 } } };
 const json = async (mod, fn = 'onRequestGet') => (await mod[fn](ctx)).json();

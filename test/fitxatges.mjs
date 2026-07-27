@@ -23,15 +23,22 @@ const est = {
     { bucket: 'defensa', nivell_objectiu: 8, diferencia: 0 },
     { bucket: 'porter', nivell_objectiu: 5, diferencia: 4 },   // sobrat: no es compra
     { bucket: 'extrem', nivell_objectiu: 9, diferencia: 1 },   // un sol nivell: no compta
+    { bucket: 'lateral', nivell_objectiu: 7, diferencia: null },   // SENSE NINGÚ
   ],
 };
 const n = necessitats(est, { entrenable_min: 6 });
 
 // ── 1. Les places buides manen ──
 assert.equal(n[0].tipus === 'entrenable' || n[0].tipus === 'porter_suplent', true);
-const buides = n.filter((x) => x.distancia === Infinity).map((x) => x.tipus);
-assert.deepEqual(buides.sort(), ['entrenable', 'porter_suplent'],
-  'dues places buides, i les dues per damunt de qualsevol mancança');
+// UN LLOC DE L'ONZE SENSE NINGÚ va amb els altres buits, per damunt de tot: és el senyal
+// més fort que hi ha. Abans no eixia a la llista —`diferencia` és null quan no hi ha
+// ocupant i el filtre el treia—, o siga que l'única cosa que no produïa res era justament
+// «ahí no juga ningú».
+const buides = n.filter((x) => x.distancia === Infinity).map((x) => x.motiu ?? x.tipus);
+assert.deepEqual(buides.sort(), ['lloc_buit', 'placa_entrenament_buida', 'sense_porter_suplent'],
+  'les tres menes de buit van per damunt de qualsevol distància');
+assert.equal(n.find((x) => x.motiu === 'lloc_buit').nivell, 7,
+  'i es diu quin nivell demana el lloc que s\'ha quedat sense ningú');
 assert.equal(n.find((x) => x.tipus === 'entrenable').quants, 2, 'en falten dos dels tres');
 
 // ── 2. Un sol nivell de distància NO és un fitxatge ──
@@ -58,8 +65,8 @@ assert.equal(n.filter((x) => x.bucket === 'mc' && x.tipus === 'lloc').length, 1,
 
 // ── 4. L'ORDE: qui més lluny està del seu objectiu ──
 const nomesLlocs = n.filter((x) => x.tipus === 'lloc');
-assert.deepEqual(nomesLlocs.map((x) => x.clau), ['davanter:9', 'mc:9'],
-  'davanter −4 abans que mig centre −3: qui més lluny està');
+assert.deepEqual(nomesLlocs.map((x) => x.clau), ['lateral:7:buit', 'davanter:9', 'mc:9'],
+  'el lloc sense ningú primer; després davanter −4 i mig centre −3: qui més lluny està');
 
 // ── 5. SENSE PREU no es decidix ──
 {

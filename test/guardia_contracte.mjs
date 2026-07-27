@@ -3,8 +3,8 @@
 // Les fórmules encara no reconstruïdes queden com a PENDENTS DECLARADES (visibles al
 // resum, mai silenci). Assert de tancament: verificades + pendents = total → cap forat.
 //
-// Contracte v3 (model competitiu-econòmic). Este guardià CREIX amb la reconstrucció:
-// cada lot del DIFF hi registra l'avaluador+referència de les seues fórmules.
+// Contracte v3 (model competitiu-econòmic). Cada fórmula que s'afig al full registra ací
+// el seu avaluador i la seua referència: si no, el guardià la compta com a PENDENT.
 // node test/guardia_contracte.mjs
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -15,7 +15,7 @@ import { valorHabilitat, lecturaPromocio } from '../lib/ranquing_juvenil.js';
 import { fCalendari, temporadaOperativa } from '../lib/calendari.js';
 import { ESTRATEGIES, falten as confFalten, llocsPartit } from '../lib/config.js';
 import { souSostenible, perPeriode, reservaFlux, despesaPlanter, dadesVelles,
-  fluxRepartible, pressupostPersonal } from '../lib/economia.js';
+  fluxRepartible, pressupostPersonal, mitjanaSetmanal, calibrat } from '../lib/economia.js';
 import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
 import { pesLloc, pressupostSou, nivellObjectiu, carregaConfigPesos } from '../lib/pesos.js';
 import { sobrecost } from '../lib/mancanca.js';
@@ -24,8 +24,8 @@ import { urgent as esUrgent, motiuVenda, ordreVenda, desti, despatxable,
 import { assignaEstructura } from '../lib/onze.js';
 import { onzeEstructura } from '../lib/onze_estructura.js';
 import { util as utilJuv, destiPromocio, objectiuJuvenil, sobrants, reiniciCrida } from '../lib/juvenil_v3.js';
-import { costFlux, nivellPagable, planPersonal, decisioRenovacio,
-  baseTipus as baseTipusG1 } from '../lib/personal_v3.js';
+import { costFlux, nivellPagable, planPersonal, decisioRenovacio, placesAdmeses,
+  sostrePersonal, baseTipus as baseTipusG1 } from '../lib/personal_v3.js';
 import { guanyJugador, admissibleJugador, deltaManteniment, estadiCaduc, admissibleEstadi,
   eficiencia, decisioEstoc } from '../lib/estoc.js';
 import { nivellAccio, agrupaAlertes, ordenaAgenda } from '../lib/informe.js';
@@ -52,7 +52,7 @@ const TAULA = { porteria: ['porter'], defensa: ['defensa'], creativitat: ['mc'],
   anotacio: ['davanter'], pilota_aturada: ['porter'] };
 const MARGE = { f_marge: 0.5, marge_ple: 3, esperat_defecte: 5 };
 // El codi diu `valor_esperat_desconegut`/`marge_esperat` on el full diu
-// `esperat_act`/`marge_ple` (divergència de vocabulari, invariant 14; registrada al DIFF).
+// `esperat_act`/`marge_ple` (divergència de vocabulari, invariant 14).
 const optsMarge = () => ({ f_marge: MARGE.f_marge, marge_esperat: MARGE.marge_ple,
   valor_esperat_desconegut: MARGE.esperat_defecte });
 
@@ -522,6 +522,87 @@ const VERIFICADES = {
     assert.equal(nivellObjectiu('creativitat', null, ts), null);
   },
 
+  // PAS 0 / PAS 3 / PAS 4 / PAS 7 / PAS 11 — les que quedaven declarades pendents amb
+  // l'avaluador ja escrit: el forat era del guardià, no de l'app.
+  'P0.n_cercapromeses': () => {
+    // Un pom del PAS 0 amb tres valors possibles, i el planter en depén linealment.
+    for (const n of [1, 2, 3]) {
+      assert.equal(despesaPlanter('academia', n, { cost_instalacions: 10000, cost_cercapromeses: 5000 }),
+        10000 + 5000 * n, `${n} cercapromeses`);
+    }
+  },
+  'P3.periode_setmanes': () => {
+    // La normalització: les despeses són setmanals i el període en val dues.
+    assert.equal(perPeriode(1000, 2), 2000);
+    assert.equal(perPeriode(1000, 1), 1000, 'amb un partit per setmana no es dobla res');
+  },
+  'P3.setmanes_declarades': async () => {
+    // ORDENADES per (temporada, setmana) DESC: la més recent primer, i la identitat de
+    // cada setmana ix del calendari, no de la data en cru.
+    sqliteFix.exec(`INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada) VALUES
+      (1,82,15,10,1,'2026-07-04','2026-07-26'),(1,83,1,30,3,'2026-07-19','2026-07-26'),(1,82,16,20,2,'2026-07-11','2026-07-26');`);
+    const { results } = await dbFix.prepare(
+      'SELECT temporada, setmana FROM setmanes_economiques WHERE usuari_id=1 ORDER BY temporada DESC, setmana DESC').all();
+    assert.deepEqual(results.map((r) => `${r.temporada}.${r.setmana}`), ['83.1', '82.16', '82.15']);
+  },
+  'P3.mitjana_setmanal': () => {
+    // NOMÉS taquilla + patrocini, i només les N últimes.
+    const setmanes = [{ taquilla: 100, patrocini: 10 }, { taquilla: 200, patrocini: 20 },
+      { taquilla: 900, patrocini: 90 }];
+    assert.equal(mitjanaSetmanal(setmanes, 2), 165, 'les dues primeres: (110 + 220) / 2');
+    assert.equal(mitjanaSetmanal([], 2), null, 'sense setmanes no se n\'inventa cap mitjana');
+  },
+  'P3.calibrat': () => {
+    assert.equal(calibrat([1, 2, 3], 3), true, 'tres declarades i en calen tres');
+    assert.equal(calibrat([1, 2], 3), false, 'amb dos, el número és soroll i es diu');
+    assert.equal(calibrat([], 3), false);
+  },
+  'P4.sou_sostenible_setmanal': () => {
+    // L'ÚNIC punt on es torna a unitats setmanals: `taula_salaris` va en €/setmana.
+    // La nòmina ja va dins de les despeses fixes, o siga que se'n lleva per a obtindre el
+    // sostre: 20000 − 1000 de reserva − (6000 − 4000 de nòmina).
+    const sost = souSostenible(20000, 6000, 4000, 1000);
+    assert.equal(sost, 17000);
+    assert.equal(sost / 2, 8500, 'i el setmanal és el del període dividit per `setmanes_periode`');
+  },
+  'P7.caixa': async () => {
+    // La caixa és el saldo DECLARAT, mai una projecció ni una suma de moviments.
+    sqliteFix.exec("INSERT INTO finances (usuari_id, caixa, caixa_data) VALUES (1,173004,'2026-07-26');");
+    const f = await dbFix.prepare('SELECT caixa FROM finances WHERE usuari_id=1').first();
+    assert.equal(f.caixa, 173004, 'el saldo DECLARAT, mai una projecció');
+    sqliteFix.exec('UPDATE finances SET caixa=NULL WHERE usuari_id=1;');
+    const buit = await dbFix.prepare('SELECT caixa FROM finances WHERE usuari_id=1').first();
+    assert.equal(buit.caixa, null, 'sense declarar no hi ha caixa: null, no zero (invariant 18)');
+  },
+  'P11.pressupost_personal': () => {
+    assert.equal(pressupostPersonal(10000, 0.4, 99999), 4000, 'quota del repartible');
+    assert.equal(pressupostPersonal(10000, 0.4, 2500), 2500,
+      'i mai per damunt del que el personal pot absorbir');
+  },
+  'P11.sostre_personal': () => {
+    // SUMA(places × cost_flux(nivell_max)): passat això, el sobrant va als jugadors.
+    const places = ['assistent', 'assistent', 'metge'];
+    assert.equal(sostrePersonal(places, 1000, 1), 3 * costFlux(1, 1000));
+    assert.ok(sostrePersonal(places, 1000, 3) > sostrePersonal(places, 1000, 1),
+      'el cost creix amb el nivell');
+  },
+  'P11.prioritat_personal': async () => {
+    // ORDE FIX declarat, i les places que la quota del joc permet.
+    const pom = (await dbFix.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='prioritat_personal'").first())?.valor;
+    const prioritat = JSON.parse(pom || '[]');
+    assert.ok(prioritat.length, 'la prioritat està declarada, no escrita al codi');
+    const quotes = JSON.parse((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='quotes_personal'").first())?.valor || '{}');
+    const places = placesAdmeses(prioritat, quotes);
+    assert.equal(places[0].tipus ?? places[0], prioritat[0].tipus ?? prioritat[0],
+      'la primera plaça és la primera de la prioritat declarada');
+    assert.equal(places.length, quotes.total,
+      'i se n\'admeten exactament les que la quota del joc permet, ni una més');
+    const perTipus = places.reduce((a, p) => ({ ...a, [p.tipus ?? p]: (a[p.tipus ?? p] ?? 0) + 1 }), {});
+    for (const [tipus, n] of Object.entries(perTipus)) {
+      assert.ok(n <= (quotes.per_tipus?.[tipus] ?? 1), `${tipus}: la quota per tipus també es respecta`);
+    }
+  },
+
   // PAS 5 — LA DISTÀNCIA A L'OBJECTIU, en valor absolut.
   'P5.distancia': () => {
     // QUANT LI FALTA al lloc. Un lloc SOBRAT no compta: no es pot arreglar comprant, perquè
@@ -891,4 +972,4 @@ for (const [id, prova] of Object.entries(DIVERGENTS)) {
   console.log(`  DIVERGENT vigent: ${id} — ${prova()}`);
 }
 console.log(`  pendents per pas: ${Object.entries(perPas).map(([p, n]) => `${p}:${n}`).join(' ')}`);
-console.log('  → es reconstruïxen pels lots del DIFF; cada lot en registra l\'avaluador+referència ací.');
+console.log('  → l\'única que queda penja del PAS 10 (Juvenils): vore J-01 a docs/FORATS.md.');

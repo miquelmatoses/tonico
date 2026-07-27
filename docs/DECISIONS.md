@@ -1082,7 +1082,7 @@ s'interpreta: `docs/FORMULES.md` actualitzat i `formules.json` regenerat abans d
 - **3 el juvenil A sense punts (3a vegada) — arrel:** la puntuació es llegia de
   `categories_jugador` (snapshot ranci; un desplaçat ESTABLE mai es reescriu). Fix
   robust: `functions/api/plantilla.js` DERIVA la puntuació de la instantània actual i
-  la config (principi de derivació). *Verificat a prod: «el juvenil A» (l'ÚNIC amb
+  la config (principi de derivació). *Verificat a prod: el juvenil A (l'ÚNIC amb
   puntuació NULL) → venda derivada = 6·2 + 0 + (25−21) + 20·0,05 + 3,5·0,2 = 17,7.*
 - **4 Llenguatge honest a la taula juvenil:** «Per determinar — cal descobrir la
   creativitat» i «Sí (descobriment)» en compte de «revela»/«revelar» (coherent amb
