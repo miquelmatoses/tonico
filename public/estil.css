@@ -166,9 +166,21 @@ button { font-family: var(--font); cursor: pointer; }
 .fila { display: grid;
   grid-template-columns: minmax(0,2.4fr) 64px 78px minmax(0,1.6fr) 104px;
   align-items: center; gap: 12px; padding: 9px 16px; border-top: 1px solid var(--vora-suau); }
+/* Les files d'ENTRENABLES porten «10,2 (6,0)» a la columna de valor: necessita més ample que
+   un «+2». Ample fix igual, que és el que manté les unitats alineades entre files.
+   VA ACÍ, ABANS DEL RESPONSIU: estava al final del full i guanyava a la regla del mòbil per
+   orde de font (mateixa especificitat). Resultat: al mòbil la fila d'entrenables es quedava
+   amb les CINC pistes d'escriptori —286px de pistes fixes en una targeta de 347— i al nom li
+   quedaven vint píxels. */
+.fila.ent { grid-template-columns: minmax(0,2.4fr) 104px 78px minmax(0,1.6fr) 104px; }
 .fila:first-child { border-top: 0; }
 .fila:nth-child(even) { background: #fbf9f0; }
 .fila-qui { display: flex; align-items: center; gap: 9px; min-width: 0; }
+/* El bloc de nom+meta ha de poder ENCONGIR. Per defecte un fill flex té `min-width: auto`, o
+   siga que no baixa del seu contingut: l'ellipsi de `.fila-nom` no s'activava mai i el text
+   se n'eixia per damunt de la columna del costat. Es veia sobretot als llocs buits, on el
+   text és llarg («— cap jugador per a este lloc —») i s'encavalcava amb la xifra. */
+.fila-qui > div { min-width: 0; }
 .pos { width: 34px; height: 26px; flex-shrink: 0; display: grid; place-items: center; border-radius: 7px;
   background: var(--verd-fosc); color: var(--llima); font-weight: 800; font-size: 11px; }
 /* Mateixa paleta de posició que les fitxes del camp (consistència en tota l'app). */
@@ -321,10 +333,17 @@ ul { margin: 0 0 12px; padding-left: 18px; }
 /* ══ RESPONSIU ══ */
 @media (max-width: 60rem) {
   /* Al mòbil se n'amaguen dues, o siga que en queden TRES visibles: qui, punts i l'última
-     (la vara o el selector de categoria). Amb dues pistes, la tercera se n'anava a una fila
-     nova i la targeta es trencava. */
-  .fila { grid-template-columns: 1fr 64px auto; gap: 8px; }
-  .fila.ent { grid-template-columns: 1fr 104px auto; }
+     (la vara). Amb dues pistes, la tercera se n'anava a una fila nova i la targeta es trencava.
+
+     I LA TERCERA PISTA VA AMB AMPLE FIX, no `auto`. Amb `auto` cada fila calcula l'ample
+     segons EL SEU contingut —«CR 9» ocupa menys que «PILOTA ATURADA 7», i una fila buida no
+     ocupa res—, o siga que ni les xifres ni les etiquetes queien a la mateixa columna: la
+     targeta es llegia com un escaló. És el mateix motiu pel qual a pantalla ampla ja anava
+     fixa; el mòbil s'havia quedat arrere. */
+  .fila { grid-template-columns: minmax(0,1fr) 56px 76px; gap: 8px; }
+  /* Amb 76px, «pilota aturada» no cap en una línia: es talla amb ellipsi i el número, que és
+     el que es compara, mai es mou. */
+  .vara-hab { overflow: hidden; text-overflow: ellipsis; }
   .fila .skills, .fila .tsi { display: none; }
   .hdr-caixa { display: none; }
 }
@@ -369,10 +388,14 @@ main:has(.auth) { max-width: none; padding: 0; }
   font-weight: 700; font-size: 13px; color: var(--verd-fosc); box-shadow: var(--o2); margin: 0 0 16px; }
 
 /* ══ MOVIMENTS ══ */
-.mov-fila { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--vora-suau); font-size: 13px; }
+/* Les files amb text + controls (la crida, els motius de baixa) han de poder BAIXAR DE LÍNIA.
+   Sense `flex-wrap`, al mòbil el text s'esclafava en una columna de vint caràcters i l'últim
+   botó se n'eixia de la targeta. El text ocupa la línia i els controls van davall. */
+.mov-fila { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 0; border-top: 1px solid var(--vora-suau); font-size: 13px; }
 .mov-fila:first-child { border-top: 0; }
 .mov-punt { width: 8px; height: 8px; border-radius: 50%; background: var(--llima); border: 1px solid var(--tinta); flex-shrink: 0; }
-.mov-text { flex: 1; }
+.mov-text { flex: 1; min-width: 0; }
 
 /* ══ RÀNQUING JUVENIL ══ */
 .rank-fila { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 10px;
@@ -396,10 +419,10 @@ main:has(.auth) { max-width: none; padding: 0; }
    porten inputs. Els controls omplin la seua cel·la (width:100%), sense forçar-la. */
 .c-venda { grid-template-columns: minmax(0,2.2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.6fr); }
 .c-pla { grid-template-columns: minmax(0,.7fr) minmax(0,.7fr) minmax(0,2fr) minmax(0,1fr); }
-/* Estes dos files no tenien columnes definides: queien a la columna implícita, o siga que
+/* Estes dos graelles no tenien columnes definides: queien a la columna implícita, o siga que
    capçalera i fila resolien amplades distintes i les xifres no quadraven amb el seu títol.
-   L'opció i l'acció són text; el guany, el cost i el rendiment són xifres i van a la dreta. */
-.c-estoc { grid-template-columns: minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr); }
+   Què i per què són text; el cost és una xifra i va a la dreta. */
+.c-estoc { grid-template-columns: minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.2fr); }
 .c-flux  { grid-template-columns: minmax(0,1.6fr) minmax(0,.7fr) minmax(0,1.2fr) minmax(0,1.4fr); }
 /* Camp xic dins d'una fila: etiqueta damunt, en xicotet, i el camp a tot l'ample de la
    columna. Així el número és sempre llegible i l'etiqueta no empeny la fila. */
@@ -439,16 +462,19 @@ main:has(.auth) { max-width: none; padding: 0; }
 .peu { max-width: 1180px; margin: 0 auto; padding: 24px 20px 40px; border-top: 2px solid var(--vora-suau);
   font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--gris); }
 
+/* ══ RESPONSIU (2): el que es declara després del primer bloc ══
+   Les regles de mòbil han d'anar DARRERE de les que sobreescriuen. Amb la mateixa
+   especificitat mana l'orde de font, i més d'una vegada la regla d'escriptori s'ha declarat
+   després del @media i ha guanyat en silenci. */
 @media (max-width: 60rem) {
   .c-venda, .c-pla, .c-estoc, .c-flux { grid-template-columns: 1fr auto; }
-  /* El personal porta tres camps i dos botons: en pantalla estreta la fila es tanca en una
-     columna i cada camp queda a tot l'ample, que és el que el fa teclejable. */
-  /* Estes dos files no tenien columnes definides: queien a la columna implícita, o siga que
-   capçalera i fila resolien amplades distintes i les xifres no quadraven amb el seu títol.
-   L'opció i l'acció són text; el guany, el cost i el rendiment són xifres i van a la dreta. */
-.c-estoc { grid-template-columns: minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr); }
-.c-flux  { grid-template-columns: minmax(0,1.6fr) minmax(0,.7fr) minmax(0,1.2fr) minmax(0,1.4fr); }
   .graella-cap { display: none; }
+  /* El text es queda la línia sencera i els controls baixen: en 375px, text i dos botons de
+     costat deixaven el text en una columna de vint caràcters i el segon botó fora. */
+  .mov-text { flex: 1 1 100%; }
+  /* Les files d'entrenables: ample fix a la tercera pista, com la resta (vore el bloc de
+     dalt). Ací perquè la regla d'escriptori es declara més avall. */
+  .fila.ent { grid-template-columns: minmax(0,1fr) 92px 76px; }
 }
 /* Un formulari dins d'una targeta és un bloc: la graella de camps ha d'ocupar tot l'ample. */
 form.card-cos { display: block; }
@@ -566,6 +592,3 @@ form.card-cos { display: block; }
 .fila.buit .fila-nom { color: var(--roig); font-style: italic; font-weight: 700; }
 .fila.buit .pos { opacity: .45; }
 
-/* Les files d'ENTRENABLES porten «10,2 (6,0)» a la columna de valor: necessita més ample que
-   un «+2». Ample fix igual, que és el que manté les unitats alineades entre files. */
-.fila.ent { grid-template-columns: minmax(0,2.4fr) 104px 78px minmax(0,1.6fr) 104px; }

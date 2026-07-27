@@ -34,25 +34,40 @@ assert.ok(m.estoc.sou_sostenible > 0, 'i el sou que el flux sosté');
 assert.ok(Array.isArray(m.estoc.opcions), 'amb les opcions ordenades');
 assert.ok(Array.isArray(m.estoc.mancances), 'i les mancances que les justifiquen');
 
-// SENSE PREU DECLARAT NO ES SUGGERIX MAI. A Hattrick el preu no el calcula el joc: suggerir una
-// compra sense saber què costa és decidir a cegues. L'opció es VEU, amb «falta el preu», i no
-// pot arribar a recomanació per molta prioritat que tinga.
+// «QUÈ COMPENSA COMPRAR» NOMÉS PORTA EL QUE ET POTS PERMETRE. Sense preu declarat no et pots
+// permetre res, per definició: si no saps què costa, no saps si el pots pagar. Eixa necessitat
+// es veu a «què falta fitxar», amb la casella per a apuntar el número.
 {
-  const fitxatges = m.estoc.opcions.filter((o) => o.tipus === 'jugador');
-  assert.ok(fitxatges.length, 'hi ha fitxatges pendents al fixture');
-  assert.ok(fitxatges.every((o) => o.falta === 'preu' && !o.admissible),
-    'sense preu declarat, cap fitxatge és admissible');
-  assert.notEqual(m.estoc.recomanada?.tipus, 'jugador',
-    'i cap arriba a recomanació');
+  assert.equal(m.estoc.opcions.filter((o) => o.tipus === 'jugador').length, 0,
+    'sense cap preu declarat, la taula de compres està buida');
+  assert.ok(m.necessaris.length, 'però la necessitat es veu a l\'altra llista');
+  assert.notEqual(m.estoc.recomanada?.tipus, 'jugador', 'i no pot arribar a recomanació');
 
-  // Declarat el preu, i cabent a la caixa, el mateix fitxatge ja es pot decidir.
-  const clau = fitxatges[0].clau;
+  // Declarat el preu i cabent a la caixa, el fitxatge ja apareix i es pot decidir.
+  const clau = m.necessaris[0].clau;
   sqlite.prepare("INSERT INTO preus_referencia (usuari_id, clau, preu, data) VALUES (1,?,?,?)")
     .run(clau, 1000, '2026-07-26');
   const m1b = await (await mercat.onRequestGet(ctx)).json();
   const ara = m1b.estoc.opcions.find((o) => o.clau === clau);
+  assert.ok(ara, 'amb preu declarat, ja entra a la llista de compres');
   assert.equal(ara.cost, 1000, 'el cost és el preu declarat, no un invent');
   assert.equal(ara.admissible, true, 'i amb caixa suficient ja es pot comprar');
+
+  // UNA LÍNIA PER FITXATGE: pots tindre pressupost per a un i no per a dos.
+  const nec = m.necessaris.find((n) => n.clau === clau);
+  const linies = m1b.estoc.opcions.filter((o) => o.clau === clau);
+  assert.equal(linies.length, Math.min(nec.quants, Math.floor(m1b.estoc.caixa / 1000)),
+    'tantes línies com fitxatges d\'eixe tipus caben a la caixa');
+  assert.deepEqual(linies.map((o) => o.acumulat), linies.map((o, k) => 1000 * (k + 1)),
+    'i cada línia porta el que hauràs gastat amb ella i les de damunt');
+
+  // Un preu que no cap a la caixa no ix: no és una opció, és un desig.
+  sqlite.prepare('DELETE FROM preus_referencia').run();
+  sqlite.prepare("INSERT INTO preus_referencia (usuari_id, clau, preu, data) VALUES (1,?,?,?)")
+    .run(clau, 99999999, '2026-07-26');
+  const m1c = await (await mercat.onRequestGet(ctx)).json();
+  assert.equal(m1c.estoc.opcions.filter((o) => o.tipus === 'jugador').length, 0,
+    'un preu per damunt de la caixa no arriba ni a eixir');
   sqlite.prepare('DELETE FROM preus_referencia').run();
 }
 assert.equal(m.estoc.estadi_declarat, false, 'sense números d\'estadi, no hi ha obra a proposar');

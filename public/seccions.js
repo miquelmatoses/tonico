@@ -695,21 +695,22 @@ function bucleEstoc(main, e) {
   } else {
     cos.append(el('p', { class: 'nota-peu', text: t('estoc.cap_opcio') }));
   }
-  // LA TAULA DE FITXATGES. Ara cada fila és un TIPUS de fitxatge (no un lloc solt) i porta el
-  // que costa: el preu declarat. Sense preu, la fila hi és amb «falta el preu» — es veu la
-  // necessitat però no es pot decidir, i eixa distinció és la que val.
+  // LA TAULA DE FITXATGES: UNA LÍNIA PER FITXATGE, i només els que et pots permetre. La
+  // columna «ara mateix» deia sempre el mateix i se n'ha anat amb els que no es podien pagar.
+  // Quan d'un tipus en caben diversos, cada línia porta el seu ordinal i el TOTAL acumulat.
   const g = graellaAmbFiles('c-estoc',
-    ['col_que', 'col_per_que', 'col_cost', 'col_estat'].map((k) => t('estoc.' + k)),
+    ['col_que', 'col_per_que', 'col_cost'].map((k) => t('estoc.' + k)),
     e.opcions.filter((o) => o.tipus === 'jugador').map((o) => el('div', { class: 'graella-fila-d c-estoc' },
-      el('span', { text: o.motiu === 'placa_entrenament_buida'
-        ? tp('mercat.nec_entrenable', o.quants, { n: o.quants, nivell: o.nivell_objectiu })
+      el('span', { text: (o.motiu === 'placa_entrenament_buida'
+        ? t('mercat.nec_entrenable_1', { n: 1, nivell: o.nivell_objectiu })
         : o.motiu === 'sense_porter_suplent' ? t('mercat.nec_porter_suplent')
-          : tp('mercat.nec_lloc', o.quants, { n: o.quants,
-              lloc: t('hab.' + (BUCKET_HAB[o.bucket] || o.bucket)), nivell: o.nivell_objectiu }) }),
+          : t('mercat.nec_lloc_1', { n: 1,
+              lloc: t('hab.' + (BUCKET_HAB[o.bucket] || o.bucket)), nivell: o.nivell_objectiu }))
+        + (o.varis ? ' ' + t('estoc.de_quants', { i: o.ordinal, n: o.de }) : '') }),
       el('span', { text: t('mercat.nec_' + o.motiu) }),
-      el('span', { text: o.cost == null ? '—' : diners(o.cost) }),
-      el('span', { class: 'graella-val', text: o.admissible ? t('estoc.es_pot')
-        : t('estoc.falta_' + (o.falta || 'res')) }))));
+      el('span', { class: 'graella-val', text: o.varis
+        ? t('estoc.cost_acumulat', ambXifres({ cost: o.cost, acumulat: o.acumulat }, ['cost', 'acumulat']))
+        : diners(o.cost) }))));
   if (g) cos.append(g);
   if (!e.estadi_declarat) cos.append(el('p', { class: 'nota-peu', text: t('estoc.estadi_falta') }));
   c.append(cos); main.append(c);
