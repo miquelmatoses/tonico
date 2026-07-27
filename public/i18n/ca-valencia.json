@@ -301,7 +301,6 @@
   "juvenils.entrenament_titol": "Entrenament juvenil",
   "juvenils.tactica_reminder": "Recorda: tàctica «Joc d'especialitats» a tots els partits juvenils (maximitza el descobriment d'especialitats; els resultats són irrellevants).",
   "plantilla.col_especialitat": "Especialitat",
-  "plantilla.prima": "(prima de mercat)",
   "vendes.titol": "Fitxes de venda",
   "vendes.buit": "Cap jugador en venda ara mateix.",
   "vendes.col_jugador": "Jugador",
@@ -580,5 +579,10 @@
   "plantilla.reconversio": "A entrenador sòlid",
   "plantilla.sou_setmanal": "Sou",
   "plantilla.futur_entrenador_nota": "El de més experiència de la plantilla ({nivell}, lideratge {lideratge}). No ha de jugar per a res d'això: l'experiència ja li dona, i el lideratge se'l queda gratis. Fa falta que porte 16 setmanes al club.",
-  "plantilla.porter_suplent_nota": "El porter no dobla partit, així que en fa falta un segon. Eixe lloc no compra res: es tria el més barat."
+  "plantilla.porter_suplent_nota": "El porter no dobla partit, així que en fa falta un segon. Eixe lloc no compra res: es tria el més barat.",
+  "plantilla.venda": "Venda",
+  "plantilla.despatxar": "Despatxar",
+  "plantilla.despatxar_nota": "Estos ja van eixir a subhasta i ningú els va voler: no es tornen a llistar (ja no són transferibles) i cada setmana cobren. L'única eixida és despatxar-los.",
+  "alerta.despatxar_1": "Tens 1 jugador que ja va eixir a subhasta i ningú va voler, i et costa {sou_total} cada setmana. No es pot tornar a llistar: despatxa'l.",
+  "alerta.despatxar_n": "Tens {n} jugadors que ja van eixir a subhasta i ningú va voler, i et costen {sou_total} cada setmana. No es poden tornar a llistar: despatxa'ls."
 }

@@ -302,7 +302,6 @@
   "juvenils.entrenament_titol": "Youth training",
   "juvenils.tactica_reminder": "Reminder: use the «Play Creatively» specialty tactic in all youth matches (maximizes specialty discovery; results are irrelevant).",
   "plantilla.col_especialitat": "Specialty",
-  "plantilla.prima": "(market premium)",
   "vendes.titol": "Sale cards",
   "vendes.buit": "No player on sale right now.",
   "vendes.col_jugador": "Player",
@@ -580,5 +579,10 @@
   "plantilla.reconversio": "To solid coach",
   "plantilla.sou_setmanal": "Wage",
   "plantilla.futur_entrenador_nota": "The most experienced player in the squad ({nivell}, leadership {lideratge}). He doesn't need to play for any of this: the experience is already there and leadership carries over free. He must have been 16 weeks at the club.",
-  "plantilla.porter_suplent_nota": "The keeper doesn't play twice a week, so a second one is needed. That slot buys nothing: the cheapest one is picked."
+  "plantilla.porter_suplent_nota": "The keeper doesn't play twice a week, so a second one is needed. That slot buys nothing: the cheapest one is picked.",
+  "plantilla.venda": "For sale",
+  "plantilla.despatxar": "To release",
+  "plantilla.despatxar_nota": "These already went to auction and nobody wanted them: they can't be listed again and they draw a wage every week. The only way out is to release them.",
+  "alerta.despatxar_1": "You have 1 player who went to auction unsold, costing you {sou_total} a week. He can't be listed again: release him.",
+  "alerta.despatxar_n": "You have {n} players who went to auction unsold, costing you {sou_total} a week. They can't be listed again: release them."
 }

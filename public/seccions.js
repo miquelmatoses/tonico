@@ -336,20 +336,17 @@ export async function alineacio(main) {
 export async function plantilla(main) {
   capcalera(main, 4, 'plantilla');
   // Vocabulari del contracte v3 (invariant 14). No hi ha «entrenable» ni «farciment».
-  // «core» se'n va de la llista de categories: el seu lloc el pren l'ONZE TITULAR, que no és
-  // una categoria decidida abans sinó el resultat de col·locar TOTS els jugadors lloc a lloc.
-  const ORDRE = ['rotatiu', 'titular', 'porter', 'futur_entrenador', 'cos', 'venda'];
-  const CATS = ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'];
-  const { instantania, jugadors, valor_especialitats: valorEsp = [], onze_titular: onze,
-    entrenables, futur_entrenador: futurE, porter_suplent: porterS } = await api('/api/plantilla');
+  // FORA LES CATEGORIES. Ja no hi ha «core», «rotatiu», «titular», «porter» ni «cos»: eren la
+  // classificació del PAS 6, que decidia qui es quedava ABANS de saber qui ocupa cada lloc. Les
+  // seccions ixen ara de l'assignació, i el que no hi entra se'n va a venda o a despatxar.
+  const { instantania, jugadors, onze_titular: onze,
+    entrenables, futur_entrenador: futurE, porter_suplent: porterS,
+    venda: aVenda, despatxar: aDespatxar } = await api('/api/plantilla');
   if (!instantania) { main.append(el('p', { text: t('plantilla.buit') })); return; }
   main.append(el('p', { text: t('plantilla.instantania', { temporada: instantania.temporada, setmana: instantania.setmana_temporada, data: instantania.data }) }));
   const hab = (j) => `PO${j.porteria} DF${j.defensa} CR${j.creativitat} EX${j.extrem} PA${j.passades} AN${j.anotacio} PP${j.pilota_aturada}`;
-  // Especialitat + prima de mercat (G.14): a Venda, si l'especialitat és valuosa.
-  const cellaEsp = (j, c) => el('td', { text: (j.especialitat || '—') + (j.especialitat && c === 'venda' && valorEsp.includes(j.especialitat) ? ' ' + t('plantilla.prima') : '') });
   // L'ONZE TITULAR va primer i porta els seus ONZE LLOCS, buits inclosos: un lloc sense ningú
   // és el senyal més fort que hi ha. Els qui hi entren no es repetixen a les altres targetes.
-  const enOnze = new Set((onze || []).map((l) => l.jugador_id).filter((x) => x != null));
   if (onze) {
     const perId = new Map(jugadors.map((j) => [j.id, j]));
     const tarja = card(t('plantilla.onze_titular'), onze.length, 'llima');
@@ -392,7 +389,6 @@ export async function plantilla(main) {
   // ENTRENABLES: van just darrere de l'onze perquè són la seua continuació — els joves que
   // ocuparan els llocs del motor quan els titulars descansen. Es mesuren contra la MATEIXA
   // vara que eixos llocs, que és el que diu si el jove servix o no.
-  const enEntrenables = new Set((entrenables?.jugadors || []).map((x) => x.id));
   if (entrenables?.places) {
     const perId = new Map(jugadors.map((j) => [j.id, j]));
     const nivell = entrenables.nivell_objectiu;
@@ -425,64 +421,53 @@ export async function plantilla(main) {
   // Un perquè el sou ja el pagues mentre esperes els diners de la reconversió; l'altre perquè
   // el porter és l'únic que no dobla. Van en files d'una sola targeta cada un.
   const perId2 = new Map(jugadors.map((j) => [j.id, j]));
-  const filaSolta = (j, sigla, etiqueta, valor, punts) => el('div', { class: 'fila' },
+  // Sense columna de valor: la puntuació de la categoria no vol dir res en este format, i la
+  // «prima de mercat» tampoc — eren les dues de la classificació vella.
+  const filaSolta = (j, sigla, etiqueta, valor) => el('div', { class: 'fila' },
     el('div', { class: 'fila-qui' },
       el('div', { class: posCls(sigla), text: sigla }),
       el('div', {}, el('div', { class: 'fila-nom', text: j.nom }),
         el('div', { class: 'fila-meta' },
           el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` })))),
-    el('div', { class: 'punts', text: punts }),
+    el('div', { class: 'punts' }),
     el('div', { class: 'tsi', text: 'TSI ' + (j.tsi ?? '—') }),
     el('div', { class: 'skills', text: hab(j) }),
     el('div', { class: 'vara' }, el('span', { class: 'vara-hab', text: etiqueta }), el('b', { text: valor })));
-  const solts = new Set();
   if (futurE && perId2.has(futurE.jugador_id)) {
-    solts.add(futurE.jugador_id);
     const c = card(t('plantilla.futur_entrenador'));
     c.append(filaSolta(perId2.get(futurE.jugador_id), 'ENT', t('plantilla.reconversio'),
-      futurE.reconversio?.solid ? diners(futurE.reconversio.solid) : '—', String(futurE.experiencia ?? '—')));
+      futurE.reconversio?.solid ? diners(futurE.reconversio.solid) : '—'));
     c.append(cos(el('p', { class: 'nota-peu', text: t('plantilla.futur_entrenador_nota', {
       nivell: t('nivell_ht.' + futurE.experiencia), lideratge: futurE.lideratge ?? '—' }) })));
     main.append(c);
   }
   if (porterS && perId2.has(porterS.jugador_id)) {
-    solts.add(porterS.jugador_id);
     const c = card(t('plantilla.porter_suplent'));
     c.append(filaSolta(perId2.get(porterS.jugador_id), 'POR', t('plantilla.sou_setmanal'),
-      diners(porterS.sou), String(porterS.porteria ?? '—')));
+      diners(porterS.sou)));
     c.append(cos(el('p', { class: 'nota-peu', text: t('plantilla.porter_suplent_nota') })));
     main.append(c);
   }
 
-  // Una targeta per categoria, amb files denses (el disseny: xip de posició, nom,
-  // meta amb píndoles, punts, TSI i habilitats en monoespai).
-  for (const c of ORDRE) {
-    const grup = jugadors.filter((j) => j.categoria === c && !enOnze.has(j.id) && !enEntrenables.has(j.id) && !solts.has(j.id));
-    if (!grup.length) continue;
-    const tarja = card(t('categoria.' + c), grup.length, c === 'core' ? 'llima' : c === 'venda' ? 'roig' : null);
-    for (const j of grup) tarja.append(filaSegura(() => {
-      // Override de categoria (punt 4a)
-      const selCat = el('select', { 'aria-label': t('plantilla.col_categoria') }, ...CATS.map((x) => { const o = el('option', { value: x, text: t('categoria.' + x) }); if (x === j.categoria) o.setAttribute('selected', ''); return o; }));
-      selCat.addEventListener('change', () => api('/api/categoria', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.id, categoria: selCat.value }) }).then(() => location.reload()).catch(() => {}));
-      const meta = el('div', { class: 'fila-meta' },
-        el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` }));
-      if (j.especialitat && c === 'venda' && valorEsp.includes(j.especialitat)) meta.append(el('span', { class: 'pill ok', text: t('plantilla.prima') }));
-      if (esLesionat(j.lesio)) meta.append(el('span', { class: 'pill perill', text: t('comu.lesionat_durada', { n: duradaLesio(j.lesio) ?? '?' }) }));
-      if (j.origen === 'manual') meta.append(el('span', { class: 'pill info', text: t('plantilla.manual') }));
-      // DESPATXABLE: sobrant que ha eixit a subhasta i ningú l'ha volgut. No té lloc a cap dels
-      // dos onzes i cada setmana cobra: la decisió és de plantilla, no de mercat.
-      if (j.despatxar) meta.append(el('span', { class: 'pill perill', text: t('plantilla.despatxable') }));
-      return el('div', { class: 'fila' },
-        el('div', { class: 'fila-qui' },
-          el('div', { class: posCls(j.posicio), text: j.posicio || '—' }),
-          el('div', {}, el('div', { class: 'fila-nom', text: j.nom }), meta)),
-        el('div', { class: 'punts', text: decimal(j.puntuacio) }),
-        el('div', { class: 'tsi', text: 'TSI ' + (j.tsi ?? '—') }),
-        el('div', { class: 'skills', text: hab(j) }),
-        el('div', { class: 'cel-cat' }, selCat));
-    }, 1));
+  // ── VENDA i DESPATXAR: tot el que no ha entrat en cap de les quatre seccions ────────
+  // Fora «rotatiu», «titular», «porter» i «cos»: eren la classificació del PAS 6, que
+  // decidia qui es quedava ABANS de saber qui ocupa cada lloc. Ara si no ocupes un lloc del
+  // pla, no entrenes i no eres el futur entrenador ni el porter suplent, cobres sense fer res.
+  //
+  // I els que ja van eixir a subhasta sense comprador van a banda: no es tornen a llistar
+  // (ja no són transferibles) i l'única cosa que se'n pot fer és despatxar-los.
+  const grup = (titol, ids, variant, etiqueta) => {
+    if (!ids || !ids.length) return;
+    const tarja = card(t(titol), ids.length, variant);
+    for (const id of ids) {
+      const j = perId2.get(id);
+      if (j) tarja.append(filaSegura(() => filaSolta(j, j.posicio || '—', etiqueta, diners(j.sou)), 1));
+    }
     main.append(tarja);
-  }
+  };
+  grup('plantilla.venda', aVenda, 'roig', t('plantilla.sou_setmanal'));
+  grup('plantilla.despatxar', aDespatxar, 'roig', t('plantilla.sou_setmanal'));
+  if (aDespatxar?.length) main.append(el('p', { class: 'nota-peu', text: t('plantilla.despatxar_nota') }));
 }
 
 // ── 5. Juvenils ──

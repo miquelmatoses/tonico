@@ -75,7 +75,7 @@ assert.equal((await desertsDesats(db, 1)).size, 2, 'el fet no s\'esborra tot sol
 
 // ── 3. NI CAP MISSATGE. La regla el proposava cada setmana per la mateixa raó que
 // l'hauria d'haver descartat: «no és transferible». ──
-const jugadors = [{ jugador_id: 1, nom: 'Sobrant', categoria: 'venda', transferible: null, sou: 9000, edat_dies: 50 }];
+const jugadors = [{ jugador_id: 1, nom: 'Sobrant', grup: 'venda', transferible: null, sou: 9000, edat_dies: 50 }];
 const params = { urgencia: 70, dies_urgencia: 14, posicio_porter: 'PO' };
 assert.ok(REGLES.ALR_LLISTAR_VENDA({ jugadors, any_dies: 112, deserts: new Set() }, params).length > 0,
   'control: sense la marca, la regla el proposaria (és el bug)');
@@ -90,5 +90,22 @@ assert.equal(sobrant.desert, true, 'el fet arriba a la plantilla');
 assert.equal(sobrant.despatxar, true, 'i el sobrant desert és despatxable');
 assert.equal(retingut.desert, true, 'el retingut també ha quedat desert');
 assert.equal(retingut.despatxar, false, 'però no es despatxa: continua tenint lloc a l\'onze');
+
+// ── 5. I PACO EN PARLA. El desert no torna al mercat, però tampoc desapareix: cobra cada
+// setmana sense ocupar cap lloc del pla, i l'única eixida és despatxar-lo. L'alerta va
+// agregada perquè és una decisió de plantilla, no un avís per cap.
+{
+  const jugadors = [
+    { jugador_id: 1, nom: 'A', grup: 'despatxar', sou: 4000 },
+    { jugador_id: 2, nom: 'B', grup: 'despatxar', sou: 3000 },
+    { jugador_id: 3, nom: 'C', grup: 'onze', sou: 9000 },
+  ];
+  const a = REGLES.ALR_DESPATXAR({ jugadors }, { urgencia: 72 });
+  assert.equal(a.length, 1, 'una sola alerta per a tots: és una decisió, no onze avisos');
+  assert.equal(a[0].parametres.n, 2, 'els dos que no es poden vendre');
+  assert.equal(a[0].parametres.sou_total, 7000, 'i el que et costen cada setmana, sumat');
+  assert.deepEqual(REGLES.ALR_DESPATXAR({ jugadors: [jugadors[2]] }, { urgencia: 72 }), [],
+    'sense cap desert, cap alerta');
+}
 
 console.log('OK — la subhasta deserta es desa: fora de Vendes per sempre, i despatxable només si sobra');

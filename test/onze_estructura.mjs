@@ -200,4 +200,38 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
     'sense segon porter no se n\'inventa: és una plaça que et falta');
 }
 
+// ── 10. VENDA i DESPATXAR: el residu es partix en dos, i cada jugador té UN grup i només un.
+{
+  const base = (id, o) => ({ id, nom: 'Y' + id, sou: 1000, edat_anys: 26, edat_dies: 0,
+    porteria: 1, defensa: 1, creativitat: 1, extrem: 1, passades: 1, anotacio: 1,
+    pilota_aturada: 1, experiencia: 1, lideratge: 1, ...o });
+  const equip = [
+    base(1, { porteria: 9 }), base(2, { defensa: 8 }), base(3, { defensa: 7 }),
+    base(4, { creativitat: 9 }), base(5, { creativitat: 8 }), base(6, { creativitat: 7 }),
+    base(7, { extrem: 7 }), base(8, { extrem: 6 }),
+    base(9, { anotacio: 8 }), base(10, { anotacio: 7 }), base(11, { anotacio: 6 }),
+    base(30, { anotacio: 2 }), base(31, { anotacio: 2 }),   // sobrants, sense experiència
+  ];
+  // El 31 ja va eixir a subhasta i ningú el va voler. `vendes` referencia `jugadors`, o siga
+  // que la fila ha d'existir: el fixture d'este bloc és en memòria i la base no el coneix.
+  sqlite.exec("INSERT OR IGNORE INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (31,1,931,'Y31');");
+  sqlite.exec("INSERT OR REPLACE INTO vendes (jugador_id, usuari_id, estat) VALUES (31,1,'desert');");
+  const r = await onzeEstructura(db, 1, equip, 10291);
+  // Cap dels dos pot ser entrenador (experiència 1, i la taula comença en 4), o siga que no
+  // se n'assenyala cap: van els dos al residu.
+  assert.equal(r.futur_entrenador, null, 'amb experiència 1 no hi ha futur entrenador possible');
+  assert.deepEqual(r.venda.map((j) => j.id), [30],
+    'el sobrant que encara es pot vendre va a VENDA');
+  assert.deepEqual(r.despatxar.map((j) => j.id), [31],
+    'i el que ja ningú va voler, a DESPATXAR: no es torna a llistar');
+
+  // UN GRUP I NOMÉS UN per jugador, i tots coberts. Si un caiguera en dos, es pintaria dues
+  // vegades i Paco l'avisaria dues vegades.
+  assert.equal(r.grups.size, equip.length, 'tots els jugadors tenen grup');
+  assert.equal(r.grups.get(1), 'onze');
+  assert.equal(r.grups.get(30), 'venda');
+  assert.equal(r.grups.get(31), 'despatxar');
+  sqlite.exec('DELETE FROM vendes;');
+}
+
 console.log('OK — l\'onze d\'estructura: tots els jugadors, lloc a lloc, un jugador un lloc');

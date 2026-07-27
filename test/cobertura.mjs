@@ -76,16 +76,16 @@ assert.equal(cobertura(cfgCreativitat, { futur_entrenador: 1, porters_minims: 3 
   const { retencioCobertura } = await import('../lib/cobertura.js');
   // 3 porters, tots de venda; el mínim en demana 2 i no hi ha cap porter no-venda.
   const porters = [
-    { jugador_id: 1, posicio: 'PO', categoria: 'venda', sou: 500, valor: 800 },
-    { jugador_id: 2, posicio: 'PO', categoria: 'venda', sou: 900, valor: 6000 },
-    { jugador_id: 3, posicio: 'PO', categoria: 'venda', sou: 700, valor: 300 },
+    { jugador_id: 1, posicio: 'PO', grup: 'venda', sou: 500, valor: 800 },
+    { jugador_id: 2, posicio: 'PO', grup: 'venda', sou: 900, valor: 6000 },
+    { jugador_id: 3, posicio: 'PO', grup: 'venda', sou: 700, valor: 300 },
   ];
   const r = retencioCobertura(porters, { porters_minims: 2, cos_porter: 3, posicio_porter: 'PO' });
   assert.equal(r.porters, 2, 'reté 2 porters per a no baixar del mínim de porteria');
   assert.ok(r.ids.has(3) && r.ids.has(1), 'reté els 2 porters de MENYS valor (deixa vendre el bo)');
   assert.ok(!r.ids.has(2), 'el porter de més valor és llistable');
   // Camp i porteria alhora: cada classe honra el seu mínim de manera independent.
-  const barreja = [...porters, { jugador_id: 9, posicio: 'DC', categoria: 'venda', sou: 400, valor: 100 }];
+  const barreja = [...porters, { jugador_id: 9, posicio: 'DC', grup: 'venda', sou: 400, valor: 100 }];
   const r2 = retencioCobertura(barreja, { porters_minims: 2, cos_porter: 3, camp_minim: 1, cos_camp: 1, posicio_porter: 'PO' });
   assert.equal(r2.porters, 2, 'porteria protegida');
   assert.equal(r2.camp, 1, 'camp protegit');
@@ -96,11 +96,11 @@ assert.equal(cobertura(cfgCreativitat, { futur_entrenador: 1, porters_minims: 3 
 // QUEDEN (com fa el sistema a cada instantània). En cap moment es baixa del mínim.
 {
   let restants = [
-    { jugador_id: 1, posicio: 'PO', categoria: 'venda', sou: 500, valor: 300 },
-    { jugador_id: 2, posicio: 'PO', categoria: 'venda', sou: 500, valor: 9000 },
-    { jugador_id: 3, posicio: 'DC', categoria: 'venda', sou: 500, valor: 200 },
-    { jugador_id: 4, posicio: 'DC', categoria: 'venda', sou: 500, valor: 8000 },
-    { jugador_id: 5, posicio: 'DC', categoria: 'venda', sou: 500, valor: 7000 },
+    { jugador_id: 1, posicio: 'PO', grup: 'venda', sou: 500, valor: 300 },
+    { jugador_id: 2, posicio: 'PO', grup: 'venda', sou: 500, valor: 9000 },
+    { jugador_id: 3, posicio: 'DC', grup: 'venda', sou: 500, valor: 200 },
+    { jugador_id: 4, posicio: 'DC', grup: 'venda', sou: 500, valor: 8000 },
+    { jugador_id: 5, posicio: 'DC', grup: 'venda', sou: 500, valor: 7000 },
   ];
   const PORTERS_MIN = 1, CAMP_MIN = 1;
   const nP = (arr) => arr.filter((j) => j.posicio === 'PO').length;
@@ -145,10 +145,10 @@ assert.equal(cobertura(cfgCreativitat, { futur_entrenador: 1, porters_minims: 3 
 // han de coincidir EXACTAMENT amb les files marcades llistables. ──
 {
   const venda = [
-    { jugador_id: 1, nom: 'A', categoria: 'venda', posicio: 'DC', sou: 3000, valor: 10000, edat_dies: 40, edat_anys: 22 },
-    { jugador_id: 2, nom: 'B', categoria: 'venda', posicio: 'DC', sou: 2000, valor: 9000, edat_dies: 40, edat_anys: 22 },
-    { jugador_id: 3, nom: 'L', categoria: 'venda', posicio: 'DC', sou: 7000, valor: 8000, edat_dies: 40, edat_anys: 22, lesio: '2' },
-    { jugador_id: 4, nom: 'R', categoria: 'venda', posicio: 'DC', sou: 500, valor: 100, edat_dies: 40, edat_anys: 22 },
+    { jugador_id: 1, nom: 'A', grup: 'venda', posicio: 'DC', sou: 3000, valor: 10000, edat_dies: 40, edat_anys: 22 },
+    { jugador_id: 2, nom: 'B', grup: 'venda', posicio: 'DC', sou: 2000, valor: 9000, edat_dies: 40, edat_anys: 22 },
+    { jugador_id: 3, nom: 'L', grup: 'venda', posicio: 'DC', sou: 7000, valor: 8000, edat_dies: 40, edat_anys: 22, lesio: '2' },
+    { jugador_id: 4, nom: 'R', grup: 'venda', posicio: 'DC', sou: 500, valor: 100, edat_dies: 40, edat_anys: 22 },
   ];
   const opts = { camp_minim: 1, cos_camp: 3, posicio_porter: 'PO' };
   const conj = conjuntLiquidacio(venda, opts);
@@ -179,8 +179,8 @@ assert.equal(cobertura(cfgCreativitat, { futur_entrenador: 1, porters_minims: 3 
     cobertura: { camp_minim: 2, cos_camp: 2 },
     mercat: { depressio: false, modificador: 0 },
     jugadors: [
-      { jugador_id: 1, nom: 'A', categoria: 'venda', posicio: 'DC', edat_dies: 40, edat_anys: 22, sou: 1000 },
-      { jugador_id: 2, nom: 'B', categoria: 'venda', posicio: 'DC', edat_dies: 40, edat_anys: 22, sou: 2000 },
+      { jugador_id: 1, nom: 'A', grup: 'venda', posicio: 'DC', edat_dies: 40, edat_anys: 22, sou: 1000 },
+      { jugador_id: 2, nom: 'B', grup: 'venda', posicio: 'DC', edat_dies: 40, edat_anys: 22, sou: 2000 },
     ],
   };
   const p = { urgencia: 72, urgencia_normal: 55, dies_aniversari: 14, posicio_porter: 'PO', depressio_profunda: -20 };
@@ -190,7 +190,7 @@ assert.equal(cobertura(cfgCreativitat, { futur_entrenador: 1, porters_minims: 3 
 
 // I l'objectiu del nucli es deriva de la cobertura, no del pom.
 {
-  const ctx = { jugadors: Array.from({ length: 6 }, (_, i) => ({ jugador_id: i, categoria: 'core' })), cobertura: { entrenables_objectiu: 10 } };
+  const ctx = { jugadors: Array.from({ length: 6 }, (_, i) => ({ jugador_id: i, grup: 'onze' })), cobertura: { entrenables_objectiu: 10 } };
   const a = REGLES.ALR_NUCLI_INCOMPLET(ctx, { objectiu: 8, urgencia: 60 });
   assert.equal(a.length, 1, '6 < 10 derivat → alerta');
   assert.equal(a[0].parametres.objectiu, 10, 'l\'objectiu ve de la cobertura derivada, no del pom 8');

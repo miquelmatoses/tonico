@@ -198,7 +198,7 @@ const VERIFICADES = {
   },
   'P7.venda_activa': () => {
     // venda_activa(j) = motiu_venda ≠ ∅ I ¬desert(j). Un desert queda fora de TOT el mercat.
-    const jugadors = [{ jugador_id: 7, nom: 'D', categoria: 'venda', transferible: null, sou: 9000, edat_dies: 50 }];
+    const jugadors = [{ jugador_id: 7, nom: 'D', grup: 'venda', transferible: null, sou: 9000, edat_dies: 50 }];
     const p = { urgencia: 70, dies_urgencia: 14, posicio_porter: 'PO' };
     assert.ok(REGLES.ALR_LLISTAR_VENDA({ jugadors, any_dies: 112, deserts: new Set() }, p).length > 0,
       'sense la marca es proposaria');

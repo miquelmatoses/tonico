@@ -92,7 +92,11 @@ export async function onRequestGet({ env, data }) {
           lideratge: est.futur_entrenador.lideratge, reconversio: est.reconversio } : null,
     porter_suplent: est?.porter_suplent
       ? { jugador_id: est.porter_suplent.id, porteria: est.porter_suplent.porteria,
-          sou: est.porter_suplent.sou } : null });
+          sou: est.porter_suplent.sou } : null,
+    // El que no entra en cap de les quatre seccions se'n va: a VENDA, o a DESPATXAR si ja va
+    // eixir a subhasta i ningú el va voler (eixos no es tornen a llistar).
+    venda: est ? est.venda.map((j) => j.id) : null,
+    despatxar: est ? est.despatxar.map((j) => j.id) : null });
 }
 
 const json = (obj, status = 200) =>
