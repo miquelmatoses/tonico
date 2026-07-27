@@ -18,20 +18,6 @@ tests: `test/flux_estoc.mjs` i `test/guardia_golden.mjs` reprodueixen els seus n
 
 # OBERTS
 
-## N-07 · EL PAS 8 NO TÉ CANDIDATS DE MERCAT REALS
-
-**OBERT · gravetat: mitjana · afecta PAS 8 · nou 2026-07-26**
-
-Amb l'estimació de preu retirada, l'opció JUGADOR del bucle d'estoc ja **no s'inventa un cost**:
-torna `cost: null`, `eficiencia: null` i `falta: 'candidat'`. Les mancances segueixen ordenades per
-`mancança × pes`, que és la mètrica que val, però **no es pot proposar cap fitxatge concret** fins
-que hi haja un candidat de mercat amb el seu preu llistat real.
-
-Això no és una regressió: abans es feia servir `base_preu_divisio` com a escala, o siga un número
-inventat que es feia passar per cost. Ara el sistema diu què li falta. Però queda per connectar
-`lib/mercat_cerca.js` (cerca de mercat) amb el PAS 8 perquè l'opció JUGADOR arribe a ser
-accionable.
-
 ## F-11 · `docs/ENTRADES_MANUALS.md` PARLA DEL MODEL ANTERIOR
 
 **OBERT · gravetat: cosmètica**

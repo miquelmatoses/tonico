@@ -29,8 +29,12 @@ ARREDONIX.AMUNT, ∈, ∪, ∅.
    sou pots sostindre** → i d'ahí **quin nivell** pots tindre a cada lloc. L'*estoc*
    (caixa cobrada) decidix **què pots comprar hui**. Res s'anticipa: *ven, cobra,
    compra*, sempre en eixe orde.
-2. **Una sola mètrica.** `mancança(lloc) × pes(lloc)` ordena compres i vendes.
-   L'estadi no hi competix: va primer, perquè és l'únic que mou el flux (canvi 6).
+2. **Cada costat, la seua vara, i una sola per costat.** Comprar s'ordena per
+   **distància** (quants nivells li falten al lloc, PAS 5); vendre i retindre, per
+   **sobrecost** (quant pagues de més del que el lloc mereix, PAS 5). L'estadi no
+   competix amb res: va primer, perquè és l'únic que mou el flux (canvi 6).
+   [No hi ha cap mètrica composta que valga per als dos. `mancança × pes` ho
+    pretenia i el número no es pintava enlloc: l'únic que se'n veia era l'orde]
 
 ---
 
@@ -538,7 +542,7 @@ Cap moviment derivat encadena efectes irreversibles.
     presentació; G2 escaneja i peta.
 13. GOLDEN DE PANTALLA: render(fixture) = avaluador(fixture), valor a valor (G3).
 14. Vocabulari únic: lloc de partit · lloc entrenable · onze · entrenable ·
-    futur entrenador · porter suplent · venda · despatxar · sobrant · mancança ·
+    futur entrenador · porter suplent · venda · despatxar · sobrant · distància ·
     sobrecost · flux · estoc · flux_lliure. Cap sinònim.
     [FORA `core`, `rotatiu`, `titular`, `cos` i `retingut`: eren els grups de la
      classificació del PAS 6, i el PAS 6 ara és l'assignació]
@@ -570,7 +574,8 @@ Cap moviment derivat encadena efectes irreversibles.
    game over real).
 4. **Flux i estoc separats:** el flux fixa el nivell sostenible, l'estoc fixa la
    compra. Cap projecció dins d'una decisió.
-5. **Mètrica única `mancança × pes`** per a comprar i vendre.
+5. **Una vara per costat:** `distància` per a comprar, `sobrecost` per a vendre i
+   retindre. Cap mètrica composta que valga per als dos.
 6. **L'estadi va PRIMER, no competix** (v3.1): és l'única compra que mou el flux, i
    per tant no és comparable amb un fitxatge per eficiència.
 7. **El personal és bucle de flux** (contractar = comprometre setmanes;
