@@ -91,6 +91,24 @@ assert.equal(sobrant.despatxar, true, 'i el sobrant desert és despatxable');
 assert.equal(retingut.desert, true, 'el retingut també ha quedat desert');
 assert.equal(retingut.despatxar, false, 'però no es despatxa: continua tenint lloc a l\'onze');
 
+// ── 4b. LA TRANSICIÓ VELLA TAMBÉ COMPTA. Mirar només les dues últimes instantànies només
+// veu les subhastes que van quedar desertes EIXA setmana: si el termini es va acabar fa tres
+// pujades, la transició ja no és entre consecutives d'ara i el jugador no es marcava mai. Ací
+// hi ha un jugador que va ser transferible al principi de tot i mai més.
+{
+  sqlite.exec(`
+    INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (3,1,102,'Vell');
+    INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (3,'venda','auto');
+    INSERT INTO instantanies_jugadors (instantania_id, jugador_id, transferible, ${HAB}) VALUES
+      (1,3,1,'DV',29,1,1,1,1,1,1,1), (2,3,NULL,'DV',29,1,1,1,1,1,1,1),
+      (3,3,NULL,'DV',29,1,1,1,1,1,1,1);
+  `);
+  sqlite.exec("DELETE FROM vendes;");
+  const tots = await marcaDeserts(db, 1);
+  assert.ok(tots.has(3),
+    'la subhasta que va quedar deserta fa dues pujades també es recupera: es mira TOT l\'històric');
+}
+
 // ── 5. I PACO EN PARLA. El desert no torna al mercat, però tampoc desapareix: cobra cada
 // setmana sense ocupar cap lloc del pla, i l'única eixida és despatxar-lo. L'alerta va
 // agregada perquè és una decisió de plantilla, no un avís per cap.
