@@ -402,7 +402,11 @@ export async function plantilla(main) {
           el('div', { class: 'fila-meta' },
             el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` })))),
       el('div', { class: 'punts ' + (j.senyal ?? ''), text: signat(j.diferencia) }),
-      el('div', { class: 'tsi', text: 'TSI ' + (j.tsi ?? '—') }),
+      // «10(6)»: el que li costarà el nivell següent i el que li va costar l'actual. El segon
+      // només hi és si la pujada va passar mentre es pujava CSV — si no, no s'inventa.
+      el('div', { class: 'tsi', text: j.setmanes_seguent == null ? ''
+        : t('plantilla.setmanes_nivell', { seguent: decimal(j.setmanes_seguent),
+            anterior: j.setmanes_anterior == null ? '—' : decimal(j.setmanes_anterior) }) }),
       el('div', { class: 'skills', text: hab(j) }),
       el('div', { class: 'vara' },
         el('span', { class: 'vara-hab', text: t('hab.' + entrenables.habilitat) }),

@@ -584,5 +584,6 @@
   "plantilla.despatxar": "To release",
   "plantilla.despatxar_nota": "These already went to auction and nobody wanted them: they can't be listed again and they draw a wage every week. The only way out is to release them.",
   "alerta.despatxar_1": "You have 1 player who went to auction unsold, costing you {sou_total} a week. He can't be listed again: release him.",
-  "alerta.despatxar_n": "You have {n} players who went to auction unsold, costing you {sou_total} a week. They can't be listed again: release them."
+  "alerta.despatxar_n": "You have {n} players who went to auction unsold, costing you {sou_total} a week. They can't be listed again: release them.",
+  "plantilla.setmanes_nivell": "{seguent} ({anterior}) wks"
 }
