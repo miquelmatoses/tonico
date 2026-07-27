@@ -26,10 +26,6 @@ sqlite.exec(`
     (1,5,'MC',25,9,1,1,1,1,1,1),(1,6,'MC',25,8,1,1,1,1,1,1),(1,7,'MC',25,7,1,1,1,1,1,1),
     (1,8,'EX',25,1,1,1,7,1,1,1),(1,9,'EX',25,1,1,1,6,1,1,1),
     (1,10,'DV',25,1,1,1,1,8,1,1),(1,11,'DV',25,1,1,1,1,7,1,1),(1,12,'DV',25,1,1,1,1,6,1,1);
-  INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES
-    (1,'venda','auto'),(2,'porter','auto'),(3,'titular','auto'),(4,'titular','auto'),
-    (5,'core','auto'),(6,'core','auto'),(7,'core','auto'),(8,'core','auto'),(9,'core','auto'),
-    (10,'titular','auto'),(11,'titular','auto'),(12,'titular','auto');
   INSERT INTO preus_observats (usuari_id, posicio, edat, habilitat, preu, data) VALUES (1,'MC',25,7,100000,'2026-07-18'),(1,'MC',25,7,200000,'2026-07-18'),(1,'MC',25,7,300000,'2026-07-18');
 `);
 const ctx = (body) => ({ request: new Request('http://t', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }), env: { DB: db }, data: { usuari: { id: 1 } } });
@@ -74,7 +70,6 @@ sqlite.exec(`
   -- Millor que el «Venut» en tot, però per davall dels titulars a cada lloc: se'n va a venda.
   INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (20,1,120,'Crack');
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, creativitat, defensa, passades, extrem, anotacio, pilota_aturada, porteria) VALUES (1,20,'MC',25,6,6,5,5,5,5,1);
-  INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (20,'venda','auto');
 `);
 const d2 = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 const v = (nom) => d2.jugadors.find((j) => j.nom === nom).valor;

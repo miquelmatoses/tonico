@@ -31,7 +31,6 @@ sqlite.exec(`
   INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (1,1,100,'A'),(2,1,101,'B');
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, sou, creativitat, defensa, porteria, anotacio, extrem, passades)
     VALUES (1,1,'MC',22,3000,5,1,1,1,1,1),(1,2,'DC',24,2000,1,6,1,1,1,1);
-  INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (1,'core','auto'),(2,'titular','auto');
   INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi, estadi_manteniment, estadi_cost_obra, estadi_data)
     VALUES (1, 500000, '2026-07-25', 7100, 9000, 200000, '2026-07-25');
   INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada) VALUES
@@ -111,7 +110,6 @@ const igual = (vist, esperat, què) => { assert.deepEqual(vist, esperat, `golden
 // ── VENDES: la fitxa NO pot mostrar ni demanar cap preu (v3.1) ──
 {
   sqlite.exec("INSERT INTO vendes (jugador_id, usuari_id, estat) VALUES (2,1,'pendent');");
-  sqlite.exec("UPDATE categories_jugador SET categoria='venda' WHERE jugador_id=2;");
   const v = await json(apiVendes);
   for (const j of v.jugadors) {
     igual(j.preu_proposat, undefined, `${j.nom}: cap preu estimat a la fitxa`);

@@ -52,11 +52,6 @@ sqlite.exec(`
     -- I el JOVE: creativitat 6, que és el mínim per a entrenar, i pitjor que els tres titulars
     -- de MC, o siga que cau al residu i és el que ha de portar el càlcul a la pantalla.
     (1,14,'MC',18,10,900,700,NULL,6,1,1,1,1,1,1),(2,14,'MC',18,17,900,700,NULL,6,1,1,1,1,1,1);
-  INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES
-    (1,'core','auto'),(2,'titular','auto'),(3,'venda','auto'),(4,'core','auto'),
-    (5,'core','auto'),(6,'core','auto'),(7,'titular','auto'),(8,'titular','auto'),
-    (9,'titular','auto'),(10,'titular','auto'),(11,'titular','auto'),(12,'cos','auto'),
-    (13,'cos','auto'),(14,'cos','auto');
   INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou, data_fi_contracte, coach_entrenament) VALUES
     (1,'especialista','assistent',2,2040,'2026-11-04',NULL),(1,'entrenador','entrenador',NULL,5000,NULL,'passable');
   INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi, estadi_manteniment, estadi_cost_obra, estadi_data)

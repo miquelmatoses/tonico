@@ -110,5 +110,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/087_finestra_entrenable.sql'));
   sqlite.exec(src('../schema/088_preus_referencia.sql'));
   sqlite.exec(src('../schema/089_fora_poms_fabrica.sql'));
+  sqlite.exec(src('../schema/090_fora_categories.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

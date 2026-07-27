@@ -33,7 +33,6 @@ sqlite.exec(`
     (10,1,110,'F1',NULL),(11,1,111,'F2',NULL),(12,1,112,'F3',NULL),(13,1,113,'F4',NULL),
     (14,1,114,'F5',NULL),(15,1,115,'F6',NULL),(16,1,116,'F7',NULL),(17,1,117,'F8',NULL),
     (18,1,118,'F9',NULL),(19,1,119,'F10',NULL),(20,1,120,'F11',NULL);
-  INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (1,'venda','auto'), (2,'core','auto');
   -- LA SETMANA PASSADA: tots dos llistats (transferible=1).
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (1,1,'2026-07-19',83,1);
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, transferible, ${HAB}) VALUES
@@ -58,11 +57,9 @@ await regeneraPipeline(db, 1, '2026-07-26');
 assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM vendes WHERE estat='desert'").get().n, 2,
   'la regeneració del pipeline desa els deserts: sense això, la deducció es perd');
 sqlite.exec('DELETE FROM vendes');
-// La regeneració també RECLASSIFICA, i amb dos jugadors al fixture els posa tots dos al nucli.
-// Ací el que es prova és el mecanisme del desert, no el classificador: es torna a fixar la
-// categoria que fa falta (un sobrant i un retingut) i s'ha acabat.
-sqlite.exec("UPDATE categories_jugador SET categoria='venda' WHERE jugador_id=1;");
-sqlite.exec("UPDATE categories_jugador SET categoria='core' WHERE jugador_id=2;");
+// El grup ja no es desa, i ací el que es prova és el mecanisme del DESERT, no qui és sobrant:
+// `marcaDeserts` mira la transició de `transferible` entre les dues últimes instantànies i no
+// pregunta a quin grup pertany ningú.
 
 // I la funció, cridada a soles, fa el mateix i és idempotent.
 const deserts = await marcaDeserts(db, 1);
@@ -123,7 +120,6 @@ assert.equal(retingut.despatxar, false, 'però no es despatxa: continua tenint l
 {
   sqlite.exec(`
     INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (3,1,102,'Vell');
-    INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (3,'venda','auto');
     INSERT INTO instantanies_jugadors (instantania_id, jugador_id, transferible, ${HAB}) VALUES
       (1,3,1,'DV',29,1,1,1,1,1,1,1), (2,3,NULL,'DV',29,1,1,1,1,1,1,1),
       (3,3,NULL,'DV',29,1,1,1,1,1,1,1);
