@@ -72,13 +72,17 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
       VALUES (1,'competitiva','ES','VII','cap',2);
     INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');
     INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'E','senior');
+    -- Cal entrenador: sense el seu nivell no hi ha velocitat, i sense velocitat no es pot dir
+    -- si la pròxima pujada cau abans del límit d'edat — o siga que no hi hauria entrenables.
+    INSERT INTO personal_membres (usuari_id, rol, tipus, sou, coach_entrenament)
+      VALUES (1,'entrenador','entrenador',5000,'passable');
   `);
   // Amb EDAT: sense ella tots passaven per joves i la prova dels entrenables no volia dir res.
   // Estos són els de sempre, ja passada l'edat de pic de venda.
   const plantilla = Array.from({ length: 14 }, (_, i) => ({
     id: i + 1, nom: 'J' + (i + 1), sou: 1000, edat_anys: 26, edat_dies: 0,
     porteria: i === 0 ? 9 : 1, defensa: i > 0 && i < 4 ? 8 - i : 1,
-    creativitat: i >= 4 && i < 8 ? 9 - i % 4 : 1,
+    creativitat: i >= 4 && i < 8 ? 13 - (i - 4) : 1,
     extrem: i >= 8 && i < 11 ? 7 : 1, anotacio: i >= 11 ? 8 : 1,
   }));
   const { onze, sobrants } = await onzeEstructura(db, 1, plantilla);
@@ -110,9 +114,10 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   // Un titular JOVE i bo en creativitat: si els entrenables no isqueren del RESIDU sinó de
   // tota la plantilla, este eixiria als dos llocs alhora.
   plantilla[4] = { ...plantilla[4], edat_anys: 18, creativitat: 12 };
+  // Per damunt del mínim de creativitat (6): per davall ja no són candidats a entrenar.
   const joves = [...plantilla, ...Array.from({ length: 4 }, (_, i) => ({
     id: 100 + i, nom: 'Jove' + i, sou: 500, edat_anys: 18, edat_dies: 0,
-    porteria: 1, defensa: 1, creativitat: 6 - i, extrem: 1, anotacio: 1,
+    porteria: 1, defensa: 1, creativitat: 9 - i, extrem: 1, anotacio: 1,
   }))];
   const r = await onzeEstructura(db, 1, joves, 10291);
   assert.equal(r.entrenables_max, 3, 'tres places: 3 llocs al 100% × (2 partits − 1)');
@@ -215,6 +220,8 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   const vells = Array.from({ length: 11 }, (_, i) => b(i + 1, { edat_anys: 30,
     porteria: i === 0 ? 9 : 1, defensa: i > 0 && i < 3 ? 7 : 1,
     creativitat: i >= 3 && i < 6 ? 8 : 1, extrem: i >= 6 && i < 8 ? 6 : 1, anotacio: i >= 8 ? 7 : 1 }));
+  // El 40 es queda per davall del mínim de creativitat: no és candidat, i això és el que es
+  // comprova ara a més del desempat.
   const joves = [b(40, { creativitat: 2 }), b(41, { creativitat: 6 }), b(42, { creativitat: 6 }), b(43, { creativitat: 6 })];
   // Sense ENTRENADOR declarat no hi ha velocitat, i per tant tampoc desempat: la fórmula no
   // se l'inventa. El desempat només pot actuar quan el càlcul es pot fer.
@@ -228,14 +235,52 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   `);
   const r = await onzeEstructura(db, 1, [...vells, ...joves], 10291);
   const tria = r.entrenables.map((j) => j.id);
-  assert.ok(!tria.includes(40), 'el de creativitat 2 NO entra, encara que puge en 2,6 setmanes');
+  assert.ok(!tria.includes(40), 'el de creativitat 2 NO entra: per davall del mínim per a entrenar');
   assert.equal(tria[0], 42, 'i entre els de creativitat 6, primer el que està més a prop de pujar');
-  // I sense entrenador, el número no existix i el desempat calla: no s'inventa una velocitat.
+  // Sense entrenador no hi ha velocitat, i sense velocitat no es pot dir si la pròxima pujada
+  // cau abans del límit d'edat: per tant no hi ha entrenables. No s'inventa cap número.
   sqlite.exec("DELETE FROM personal_membres WHERE rol='entrenador';");
   const sense = await onzeEstructura(db, 1, [...vells, ...joves], 10291);
-  assert.equal(sense.entrenables[0].setmanes_seguent, null,
-    'sense entrenador declarat no hi ha velocitat, i per tant tampoc desempat');
+  assert.deepEqual(sense.entrenables, [],
+    'sense entrenador declarat no es pot dir qui val la pena entrenar');
+  sqlite.exec("INSERT INTO personal_membres (usuari_id, rol, tipus, sou, coach_entrenament) VALUES (1,'entrenador','entrenador',5000,'passable');");
   sqlite.exec('DELETE FROM instantanies_jugadors WHERE instantania_id IN (90,91); DELETE FROM instantanies WHERE id IN (90,91);');
+}
+
+// ── 9c. LA FINESTRA D'ENTRENAMENT NO ÉS UN TALL D'EDAT ────────────────────────────────────
+// El criteri no és «menys de 20 anys» sinó «la pròxima pujada li cau abans dels 21». Un de 20
+// i escaig que puja d'ací a poc encara cobra eixa pujada; un que no pujarà fins passats els 21
+// ja no la cobrarà mai, tinga l'edat que tinga. I com que pujar el fa més vell i la següent
+// pujada és més lenta, el criteri el trau tot sol JUST DESPRÉS d'haver pujat.
+{
+  const b = (id, o) => ({ id, nom: 'W' + id, sou: 1000, edat_anys: 30, edat_dies: 0,
+    porteria: 1, defensa: 1, creativitat: 1, extrem: 1, passades: 1, anotacio: 1,
+    pilota_aturada: 1, experiencia: 1, lideratge: 1, ...o });
+  const vells = Array.from({ length: 11 }, (_, i) => b(i + 1, {
+    porteria: i === 0 ? 9 : 1, defensa: i > 0 && i < 3 ? 7 : 1,
+    creativitat: i >= 3 && i < 6 ? 14 : 1, extrem: i >= 6 && i < 8 ? 6 : 1, anotacio: i >= 8 ? 7 : 1 }));
+
+  // Dos de creativitat 6, un de 20 anys i un de 19: amb el tall pla d'abans, el de 20 quedava
+  // fora i el de 19 dins. Amb la finestra, els dos pugen abans dels 21 i els dos entren.
+  const a20 = b(60, { creativitat: 6, edat_anys: 20, edat_dies: 0 });
+  const a19 = b(61, { creativitat: 6, edat_anys: 19, edat_dies: 0 });
+  let r = await onzeEstructura(db, 1, [...vells, a20, a19], 10291);
+  const ids = r.entrenables.map((j) => j.id);
+  assert.ok(ids.includes(60), 'un de 20 anys que encara puja abans dels 21 SEGUIX entrenant');
+  assert.ok(ids.includes(61), 'i el de 19 també');
+
+  // I un de 20 anys i 100 dies: la pujada li cau ja passats els 21 → fora, i cap a venda.
+  const tard = b(62, { creativitat: 6, edat_anys: 20, edat_dies: 100 });
+  r = await onzeEstructura(db, 1, [...vells, tard], 10291);
+  assert.deepEqual(r.entrenables.map((j) => j.id), [],
+    'si la pròxima pujada cau passat el límit, ja no val la pena entrenar-lo');
+  assert.ok(r.venda.some((j) => j.id === 62), 'i se\'n va a venda tot sol');
+
+  // I EL MÍNIM DE CREATIVITAT: un jove boníssim d'edat però fluix no entra.
+  const fluix = b(63, { creativitat: 3, edat_anys: 17, edat_dies: 0 });
+  r = await onzeEstructura(db, 1, [...vells, fluix], 10291);
+  assert.deepEqual(r.entrenables.map((j) => j.id), [],
+    'per davall del mínim de creativitat no es gasten setmanes d\'entrenament');
 }
 
 // ── 10. VENDA i DESPATXAR: el residu es partix en dos, i cada jugador té UN grup i només un.

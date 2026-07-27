@@ -44,13 +44,14 @@ sqlite.exec(`
     (2,1,'MC',22,17,3000,5000,NULL,5,1,1,1,1,4,1),(2,2,'DC',24,27,2000,4000,NULL,1,6,1,1,1,1,1),
     (2,3,'DV',28,37,9000,3000,NULL,1,1,1,5,1,1,1),
     -- Tres MC millors que el jove, per a que l'onze se'ls emporte i ell caiga a ENTRENABLE.
-    (2,5,'MC',24,0,3000,4000,NULL,8,1,1,1,1,1,1),(2,6,'MC',25,0,3000,4000,NULL,7,1,1,1,1,1,1),
-    (2,7,'MC',26,0,3000,4000,NULL,6,1,1,1,1,1,1),
+    (2,5,'MC',24,0,3000,4000,NULL,9,1,1,1,1,1,1),(2,6,'MC',25,0,3000,4000,NULL,8,1,1,1,1,1,1),
+    (2,7,'MC',26,0,3000,4000,NULL,7,1,1,1,1,1,1),
     (2,8,'DC',27,0,2000,3000,NULL,1,6,1,1,1,1,1),(2,9,'EX',24,0,2000,3000,NULL,1,1,1,1,6,1,1),
     (2,10,'EX',25,0,2000,3000,NULL,1,1,1,1,5,1,1),(2,11,'DV',26,0,2000,3000,NULL,1,1,1,6,1,1,1),
     (2,12,'DV',27,0,2000,3000,NULL,1,1,1,5,1,1,1),(2,13,'POR',28,0,2000,3000,NULL,1,1,7,1,1,1,1),
-    -- I el JOVE, que és el que ha de portar el càlcul a la pantalla.
-    (1,14,'MC',18,10,900,700,NULL,4,1,1,1,1,1,1),(2,14,'MC',18,17,900,700,NULL,4,1,1,1,1,1,1);
+    -- I el JOVE: creativitat 6, que és el mínim per a entrenar, i pitjor que els tres titulars
+    -- de MC, o siga que cau al residu i és el que ha de portar el càlcul a la pantalla.
+    (1,14,'MC',18,10,900,700,NULL,6,1,1,1,1,1,1),(2,14,'MC',18,17,900,700,NULL,6,1,1,1,1,1,1);
   INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES
     (1,'core','auto'),(2,'titular','auto'),(3,'venda','auto'),(4,'core','auto'),
     (5,'core','auto'),(6,'core','auto'),(7,'titular','auto'),(8,'titular','auto'),
