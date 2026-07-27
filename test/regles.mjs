@@ -119,16 +119,19 @@ const codis = (a) => a.map((x) => x.regla_codi);
   assert.equal(REGLES.ALR_PLANTILLA_JUVENIL_MINIMA(ctx, { minim: 11, urgencia: 50 }).length, 1);  // 2 < 11
 }
 
-// ALR_COMPRA_ENTRENABLE: filtre concret + la CAIXA declarada (la MATEIXA xifra que Mercat).
-// Ja no hi ha `caixa_disponible`: sense reserva d'estoc era la caixa dita dues vegades.
+// ALR_COMPRA_ENTRENABLE: ix de les mateixes NECESSITATS que pinta Mercat, no d'una segona
+// derivació. I sense preu declarat no diu «compra», diu «mira quant costa»: a Hattrick el preu
+// no el calcula el joc, i suggerir sense saber-lo és decidir a cegues.
 {
-  const filtres = [{ rol: 'core', posicions: ['MC'], edat_max: 18, creativitat_min: 6, falten: 1 }];
-  const amb = REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres, caixa: 150000 } }, { urgencia: 72 });
-  assert.equal(amb[0].missatge_clau, 'alerta.compra_core');
-  assert.equal(amb[0].parametres.pressupost, 150000);   // la caixa sencera, sense repartir ni retallar
-  const sense = REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres, caixa: 0 } }, { urgencia: 72 });
-  assert.equal(sense[0].missatge_clau, 'alerta.compra_core_sense_caixa');
-  assert.equal(REGLES.ALR_COMPRA_ENTRENABLE({ compra: { filtres: [{ rol: 'core', falten: 0 }], caixa: 1 } }, { urgencia: 72 }).length, 0);
+  const necs = [{ tipus: 'entrenable', quants: 2, nivell: 6, preu: null }];
+  const sensePreu = REGLES.ALR_COMPRA_ENTRENABLE({ compra: { necessitats: necs, caixa: 150000 } }, { urgencia: 72 });
+  assert.equal(sensePreu[0].missatge_clau, 'alerta.compra_entrenable_preu',
+    'sense preu, es demana el número en compte de proposar la compra');
+  const ambPreu = REGLES.ALR_COMPRA_ENTRENABLE({ compra: { necessitats: [{ ...necs[0], preu: 120000 }], caixa: 150000 } }, { urgencia: 72 });
+  assert.equal(ambPreu[0].missatge_clau, 'alerta.compra_entrenable', 'amb preu, ja es proposa');
+  assert.equal(ambPreu[0].parametres.preu, 120000, 'i el preu és el declarat');
+  assert.deepEqual(REGLES.ALR_COMPRA_ENTRENABLE({ compra: { necessitats: [] } }, { urgencia: 72 }), [],
+    'sense places buides, cap alerta');
 }
 
 // ALR_SENSE_CATEGORIA

@@ -116,8 +116,16 @@ console.log('OK — alertes: creació, idempotència, ignora preservada i resolu
 {
   const fila = () => sqlite.prepare(
     "SELECT missatge_clau, diners, compte FROM alertes WHERE missatge_clau LIKE 'alerta.compra%' AND estat!='resolta'").get();
+  // L'alerta de compra només porta `diners` si hi ha PREU DECLARAT: sense ell no diu
+  // «compra», diu «mira quant costa». Es declara ací perquè el test prove el refresc i no
+  // la falta de preu. El nivell ix del pom, no d'un número escrit al test (invariant 8).
+  sqlite.exec(`INSERT INTO preus_referencia (usuari_id, clau, preu, data)
+               SELECT 1, 'entrenable:' || valor, 120000, '2026-07-18'
+                 FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='entrenable_creativitat_min';`);
+  await generaAlertes(db, 1);
   // Es força una alerta amb els dos declarats i es buiden a mà, com estaven a prod.
   const abans = fila();
+  assert.ok(abans?.diners, 'amb preu declarat, l\'alerta de compra ha de portar `diners`');
   assert.ok(abans, "el fixture ha de tindre l'alerta amb compte declarat: si no, este test no prova res");
   {
     sqlite.exec("UPDATE alertes SET diners=NULL, compte=NULL WHERE missatge_clau LIKE 'alerta.compra%';");

@@ -101,10 +101,14 @@ assert.equal(m5.estoc.opcions.find((o) => o.tipus === 'estadi').admissible, fals
   'marcada en marxa, deixa de ser admissible i no bloqueja la resta');
 sqlite.prepare('UPDATE finances SET estadi_obra_inici=NULL WHERE usuari_id=1').run();
 
+// El FILTRE I LA NECESSITAT són la mateixa fitxa: cada cosa que falta porta els criteris de
+// cerca enganxats. Abans eren dues llistes derivades per camins distints i podien discrepar.
+assert.ok(m3.necessaris?.length, 'la pantalla de mercat diu què falta');
+for (const n of m3.necessaris) assert.ok(n.cerca, 'i cada necessitat porta la seua cerca');
 // L'edat de compra és un RANG: el cercador de HT demana els dos extrems, no un sostre.
-for (const f of m3.filtres.filter((x) => x.rol === 'core')) {
-  assert.ok(f.edat_min != null && f.edat_max != null, 'el filtre porta els dos extrems d\'edat');
-  assert.ok(f.edat_min <= f.edat_max, 'i en este ordre');
+for (const n of m3.necessaris.filter((x) => x.tipus === 'entrenable')) {
+  assert.ok(n.cerca.edat_min != null && n.cerca.edat_max != null, 'el filtre porta els dos extrems d\'edat');
+  assert.ok(n.cerca.edat_min <= n.cerca.edat_max, 'i en este ordre');
 }
 
 // ── PERSONAL: el pla de flux arriba a la pantalla ──

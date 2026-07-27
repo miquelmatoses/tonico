@@ -7,7 +7,7 @@
 // I el PREU no s'estima: a Hattrick no el calcula el joc, el paga un altre mànager. Mentre no
 // estiga declarat, la necessitat es veu però no es pot decidir.
 import assert from 'node:assert/strict';
-import { necessitats, ambPreus, clauFitxatge } from '../lib/fitxatges.js';
+import { necessitats, ambPreus, cercaDe, clauFitxatge } from '../lib/fitxatges.js';
 
 const est = {
   entrenables: [{ id: 1 }], entrenables_max: 3, porter_suplent: null,
@@ -74,6 +74,24 @@ assert.deepEqual(nomesLlocs.map((x) => x.clau), ['mc:9', 'davanter:9'],
   assert.equal(amb.find((x) => x.clau === 'mc:9').preu_vell, true, 'dotze setmanes és massa');
   const fresc = ambPreus(n, new Map([['mc:9', { preu: 120000, data: '2026-07-20' }]]), 173004, 4, '2026-07-26');
   assert.equal(fresc.find((x) => x.clau === 'mc:9').preu_vell, false, 'una setmana no');
+}
+
+// ── 8. La CERCA d'una necessitat: cada tipus busca una cosa distinta, i qui decidix si hi ha
+// caixa és ací, no la vista (invariant 12: la vista tria text, no compara). ──
+{
+  const opts = { posicions: { mc: ['MC'] }, habilitats: { mc: 'creativitat' }, edat_min: 17, edat_max: 20 };
+  const ent = cercaDe({ tipus: 'entrenable', bucket: 'mc', nivell: 6 }, { ...opts, caixa: 173004 });
+  assert.equal(ent.edat_min, 17, "l'entrenable es busca jove");
+  assert.equal(ent.habilitat.min, 6, 'i per damunt del mínim');
+  assert.equal(ent.sense_caixa, false, 'amb caixa declarada, hi ha pressupost');
+  assert.equal(cercaDe({ tipus: 'lloc', bucket: 'mc', nivell: 9 }, opts).edat_min, undefined,
+    "a un lloc de l'onze l'edat no li importa: el que es vol és que arribe");
+  assert.equal(cercaDe({ tipus: 'porter_suplent', bucket: 'porter' }, opts).mes_barat, true,
+    'i el porter suplent es vol barat, res més');
+  assert.equal(cercaDe({ tipus: 'lloc', bucket: 'mc', nivell: 9 }, { ...opts, caixa: 0 }).sense_caixa, true,
+    'caixa a zero és no tindre caixa, no tindre-la declarada a zero');
+  assert.equal(cercaDe({ tipus: 'lloc', bucket: 'mc', nivell: 9 }, opts).sense_caixa, true,
+    'i sense caixa, la vista ho ha de saber sense comparar res');
 }
 
 console.log('OK — fitxatges: les places buides manen, un nivell no és forat, i sense preu no es decidix');

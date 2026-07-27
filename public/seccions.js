@@ -754,12 +754,8 @@ function bucleEstoc(main, e) {
 
 export async function mercat(main) {
   capcalera(main, 7, 'mercat');
-  const { filtres, estoc, necessaris } = await api('/api/mercat');
+  const { estoc, necessaris } = await api('/api/mercat');
   if (estoc) bucleEstoc(main, estoc);
-  const pres = (v) => (v > 0 ? diners(v) : t('mercat.sense_pressupost'));
-  // ELS FILTRES SÓN INSTRUCCIONS, no una llista. Miquel se'ls ha de copiar al cercador de HT,
-  // així que cada camp va etiquetat i separat en compte d'amagat dins d'una frase.
-  const utils = filtres.filter((f) => f.falten > 0);
   // ── QUÈ FA FALTA FITXAR, i quant costa ──────────────────────────────────────────────
   // El preu no es deriva: a Hattrick el paga un altre mànager. Ací es diu QUÈ buscar i es
   // demana el número que Miquel veja a les últimes transferències. Sense eixe número la
@@ -776,13 +772,26 @@ export async function mercat(main) {
       const etiqueta = n.tipus === 'porter_suplent' ? t('mercat.nec_porter_suplent')
         : n.tipus === 'entrenable' ? tp('mercat.nec_entrenable', n.quants, { n: n.quants, nivell: n.nivell })
           : tp('mercat.nec_lloc', n.quants, { n: n.quants, lloc: t('hab.' + (BUCKET_HAB[n.bucket] || n.bucket)), nivell: n.nivell });
+      // ELS CRITERIS DE CERCA, al costat del preu: és el que Miquel ha de teclejar a Hattrick
+      // per a mirar les últimes transferències i tornar el número.
+      const camps = el('div', { class: 'filtre-camps' });
+      const camp = (clau, valor) => { if (valor == null || valor === '') return;
+        camps.append(el('div', { class: 'filtre-camp' },
+          el('span', { class: 'filtre-et', text: t('mercat.camp_' + clau) }),
+          el('b', { text: String(valor) }))); };
+      const c = n.cerca || {};
+      camp('posicions', (c.posicions || []).join(' / '));
+      if (c.edat_min != null && c.edat_max != null) camp('edat', t('mercat.rang', { min: c.edat_min, max: c.edat_max }));
+      if (c.habilitat?.camp) camp('habilitat', `${t('hab.' + c.habilitat.camp)} ≥ ${c.habilitat.min}`);
+      if (c.mes_barat) camp('criteri', t('mercat.mes_barat'));
+      camp('pressupost', c.sense_caixa ? t('mercat.sense_pressupost') : diners(c.pressupost));
+      camps.append(el('label', { class: 'decl-camp' },
+        el('span', { class: 'decl-et', text: t('mercat.preu_ref') }), preu));
       cnc.append(el('div', { class: 'filtre' },
         el('div', { class: 'filtre-cap' },
           el('b', { text: etiqueta }),
-          el('span', { class: 'filtre-falten', text: n.prioritat === null ? '' : t('mercat.nec_' + n.motiu) })),
-        el('div', { class: 'filtre-camps' },
-          el('label', { class: 'decl-camp' },
-            el('span', { class: 'decl-et', text: t('mercat.preu_ref') }), preu)),
+          el('span', { class: 'filtre-falten', text: t('mercat.nec_' + n.motiu) })),
+        camps,
         ...(n.preu_vell ? [el('p', { class: 'desquadre', text: t('mercat.preu_vell', { data: n.preu_data }) })] : [])));
     }
     cn.append(cnc);
@@ -790,36 +799,6 @@ export async function mercat(main) {
     main.append(cn);
   }
 
-  const cf = card(t('mercat.filtres_titol'), utils.length, 'llima');
-  const cfc = el('div', { class: 'card-cos' });
-  if (utils.length) {
-    for (const f of utils) {
-      const camps = el('div', { class: 'filtre-camps' });
-      const camp = (clau, valor) => { if (valor == null || valor === '') return;
-        camps.append(el('div', { class: 'filtre-camp' },
-          el('span', { class: 'filtre-et', text: t('mercat.camp_' + clau) }),
-          el('b', { text: String(valor) }))); };
-      camp('posicions', (f.posicions || []).join(' / '));
-      if (f.rol === 'core') {
-        // L'edat és un RANG: el cercador de HT demana els dos extrems, no un sostre.
-        camp('edat', f.edat_min == null || f.edat_max == null ? (f.edat_max ?? f.edat_min)
-          : t('mercat.rang', { min: f.edat_min, max: f.edat_max }));
-        camp('creativitat_min', f.creativitat_min);
-      } else if (f.habilitat) {
-        camp('habilitat', `${t('hab.' + f.habilitat.camp)} ${f.habilitat.op} ${f.habilitat.valor}`);
-      }
-      camp('pressupost', pres(f.pressupost));
-      cfc.append(el('div', { class: 'filtre' },
-        el('div', { class: 'filtre-cap' },
-          el('b', { text: t('mercat.filtre_rol_' + f.rol) }),
-          el('span', { class: 'filtre-falten', text: tp('mercat.filtre_falten', f.falten, { n: f.falten }) })),
-        camps,
-        ...(f.previsio_venda ? [el('p', { class: 'nota-peu', text: t('mercat.filtre_previsio', { noms: f.previsio_venda.join(', ') }) })] : [])));
-    }
-  } else cfc.append(el('p', { class: 'nota-peu', text: t('mercat.sense_filtres') }));
-  cf.append(cfc); main.append(cf);
-  // FORA la targeta de «comparables apuntats». Amb l'estimació de preu retirada (v3.1) cap
-  // fórmula llig `preus_observats`: era una taula que es demanava omplir i que no decidia res.
   await fitxesVenda(main);
 }
 

@@ -1,45 +1,17 @@
-// Tonico — mercat (Fase 6.2). GET filtres de cerca (segons buits) + preus
-// observats; POST registra un preu comparable; DELETE l'esborra.
-import { carregaConfigPla } from '../../lib/config_pla.js';
-import { filtresCompra } from '../../lib/mercat_cerca.js';
+// Tonico — MERCAT (PAS 8). GET: què fa falta fitxar, amb els criteris de cerca i el preu
+// declarat de cada tipus. POST: declarar eixe preu.
+//
+// El FILTRE i la NECESSITAT són la mateixa fitxa. Abans eren dues llistes derivades per camins
+// distints —una comptava categories del PAS 6 i l'altra mirava l'assignació d'estructura— i
+// podien discrepar sobre què falta.
 import { economia } from '../../lib/economia.js';
 import { estatEstoc } from '../../lib/orquestra_estoc.js';
-import { sqlCategoriaVigent } from '../../lib/categoria_vigent.js';
 import { onzeEstructura } from '../../lib/onze_estructura.js';
-import { necessitats, ambPreus } from '../../lib/fitxatges.js';
+import { necessitats, ambPreus, cercaDe } from '../../lib/fitxatges.js';
 import { carregaConfigPesos, pesosFormacio } from '../../lib/pesos.js';
 
 export async function onRequestGet({ env, data }) {
   const pla = await env.DB.prepare('SELECT plantilla FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
-  let filtres = [];
-  if (pla) {
-    const config = await carregaConfigPla(env.DB, pla.plantilla);
-    const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id=? AND tipus='senior'").bind(data.usuari.id).first();
-    const inst = equip ? await env.DB.prepare('SELECT id FROM instantanies WHERE equip_id=? ORDER BY data DESC, id DESC LIMIT 1').bind(equip.id).first() : null;
-    let squad = [];
-    if (inst) {
-      squad = (await env.DB.prepare(
-        `SELECT j.nom, ij.posicio_ultim_partit AS posicio, c.categoria FROM instantanies_jugadors ij
-           JOIN jugadors j ON j.id = ij.jugador_id
-           LEFT JOIN ${sqlCategoriaVigent(['categoria'])} c
-                  ON c.jugador_id = ij.jugador_id
-          WHERE ij.instantania_id = ?`
-      ).bind(inst.id).all()).results;
-    }
-    // El cercador de HT demana un RANG d'edat, no un sostre: els dos extrems són poms.
-    const pomEnter = async (clau) => {
-      const r = await env.DB.prepare('SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau=?').bind(pla.plantilla, clau).first();
-      return r?.valor == null ? null : parseInt(r.valor, 10);
-    };
-    const compra = {
-      edat_min: await pomEnter('compra_edat_min'),
-      edat_max: await pomEnter('compra_edat_max'),
-      creativitat_min: await pomEnter('compra_creativitat_min'),
-      posicions: JSON.parse((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='compra_posicions'").bind(pla.plantilla).first())?.valor || '["MC"]'),
-    };
-    const { caixa } = await economia(env.DB, data.usuari.id);
-    filtres = filtresCompra(config, squad, caixa, compra);
-  }
   const estoc = await estatEstoc(env.DB, data.usuari.id);
 
   // ── QUÈ FA FALTA FITXAR, i què costa ────────────────────────────────────────────────────
@@ -64,11 +36,19 @@ export async function onRequestGet({ env, data }) {
     const pom = async (clau) => (await env.DB.prepare('SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau=?').bind(pla.plantilla, clau).first())?.valor ?? null;
     const llista = necessitats(est, { entrenable_min: Number(await pom('entrenable_creativitat_min')), pesos });
     const { results: files } = await env.DB.prepare('SELECT clau, preu, data FROM preus_referencia WHERE usuari_id=?').bind(data.usuari.id).all();
-    necessaris = ambPreus(llista, new Map(files.map((f) => [f.clau, f])), eco2.caixa,
+    const ambP = ambPreus(llista, new Map(files.map((f) => [f.clau, f])), eco2.caixa,
       Number(await pom('setmanes_caducitat_preu')) || null, hui());
+    // I ELS CRITERIS DE CERCA a la mateixa fitxa: el filtre diu QUÈ teclejar a Hattrick i la
+    // necessitat diu PER QUÈ fa falta. Abans eren dues llistes derivades per camins distints.
+    const posicions = JSON.parse((await pom('buckets_alineacio')) || '{}');
+    const habilitats = JSON.parse((await pom('taula_habilitat_lloc')) || '{}');
+    const opcs = { posicions, habilitats, caixa: eco2.caixa,
+      edat_min: Number(await pom('compra_edat_min')) || null,
+      edat_max: Number(await pom('compra_edat_max')) || null };
+    necessaris = ambP.map((n) => ({ ...n, cerca: cercaDe(n, opcs) }));
   }
 
-  return json({ filtres, estoc, necessaris });
+  return json({ estoc, necessaris });
 }
 
 // Declarar el preu de referència d'un TIPUS de fitxatge. La clau la construïx l'avaluador
