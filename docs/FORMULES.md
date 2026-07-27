@@ -182,11 +182,13 @@ nivell_objectiu_ht(lloc) = nivell_objectiu(lloc) + `nivell_habilitat_offset`
 ## PAS 5 — LA DISTÀNCIA A L'OBJECTIU
 
 ```
-distància(lloc) = |diferència(lloc)|          [diferència: vore PAS 6]
-   [EN VALOR ABSOLUT: per dalt o per baix. Un lloc amb algú tres nivells per
-    damunt del que el flux paga està tan fora de lloc com un amb algú tres per
-    davall — en un et falta rendiment, en l'altre pagues un nivell que eixe lloc
-    no necessita]
+distància(lloc) = MAX(0; −diferència(lloc))          [diferència: vore PAS 6]
+   [QUANT LI FALTA al lloc per a arribar al que el flux paga. Un lloc amb algú
+    per DAMUNT està igual de fora de lloc, però no compta ací: no es pot arreglar
+    comprant. L'assignació tria per a cada lloc el millor de l'habilitat, o siga
+    que si fitxes algú al nivell prescrit, el que ja hi era —que és millor— es
+    torna a quedar el lloc i el nou se'n va al residu. L'única acció possible és
+    vendre el sobrat, i eixa la diu el `sobrecost`]
    [EN L'ESCALA DE HATTRICK als dos costats. Restar l'índex de la taula de
     salaris d'un `hab(jugador)` deixava TOTES les distàncies quatre nivells
     curtes: un objectiu de «Formidable» (HT 9) contra un jugador amb CR 8
@@ -196,13 +198,9 @@ compta(lloc)    = distància(lloc) ≥ `distancia_min`
 sobrecost(j)    = MAX(0; sou(j) − BUSCA(`taula_salaris`; habilitat_lloc(lloc(j));
                                         nivell_objectiu(lloc(j))))
 
-ORDRE DE LES NECESSITATS = places buides PRIMER;
-                           després distància DESC;
-                           i a igualtat, primer els que van CURTS
+ORDRE DE LES NECESSITATS = places buides PRIMER; després distància DESC
    [una plaça d'entrenament buida o un porter suplent que falta van per damunt de
     tot: entrenament perdut cada setmana no es recupera, i el porter no dobla]
-   [a igualtat de distància mana el que va curt: eixe et costa partits, el sobrat
-    només diners — i el que en pagues de més ja ho diu el `sobrecost`, al PAS 7]
    [FORA `mancança × pes`. Multiplicar la distància pel pes del lloc donava un
     número que no es pintava enlloc: l'únic que se'n veia era quina fitxa anava
     dalt de Mercat, i per a decidir això no cal una mètrica composta que no es pot
@@ -341,10 +339,6 @@ necessitats = places BUIDES d'entrenament i de porter suplent  → distància = 
 clau(necessitat) = el TIPUS de fitxatge (bucket + nivell), no el lloc
    [«un mig centre de nivell 9» val el mateix per als tres llocs de mig centre:
     és una sola cerca i un sol preu]
-comprable(n) = la necessitat va CURTA (o és una plaça buida)
-   [UN LLOC SOBRAT NO ÉS UNA COMPRA: ix a la llista perquè està fora de lloc, però
-    no té preu que declarar ni pot arribar a recomanació. El que en pagues de més
-    ho diu el `sobrecost` (PAS 7)]
 cost        = `preus_referencia`[clau]                → DECLARAT, mai estimat
    [a Hattrick el preu NO el calcula el joc: el paga un altre mànager en una
     subhasta. La velocitat d'entrenament sí que és fórmula i es va desxifrar;
@@ -355,7 +349,7 @@ admissible  = cost ≠ ∅  I  cost ≤ caixa
     arribar a recomanació. Suggerir una compra sense saber què costa és decidir a
     cegues, i és el que feia el `base_preu_divisio` que vam llevar al v3.1]
 eficiència  = distància / cost
-ACCIÓ = PRIMER(ORDENA(FILTRA(necessitats; admissible); ORDRE DEL PAS 5,
+ACCIÓ = PRIMER(ORDENA(FILTRA(necessitats; admissible); distància DESC,
                                                        eficiència DESC))
 
 capacitat_objectiu   = configuració NRG de `url_calculadora_estadi`   [declarada]

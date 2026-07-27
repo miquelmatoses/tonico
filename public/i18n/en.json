@@ -584,9 +584,5 @@
   "alerta.compra_entrenable_n": "You have {n} empty training slots. A youngster with playmaking {nivell} or more costs {preu} each: every empty week is training lost.",
   "alerta.compra_entrenable_preu_1": "You have 1 empty training slot and I don't know what it costs to fill. Check recent transfers for a youngster with playmaking {nivell} or more and note it in Market.",
   "alerta.compra_entrenable_preu_n": "You have {n} empty training slots and I don't know what it costs to fill. Check recent transfers for a youngster with playmaking {nivell} or more and note it in Market.",
-  "alineacio.motiu_porteria_buida": "no backup keeper: the starter cannot play twice",
-  "mercat.nec_lloc_sobrat_1": "1 {lloc} slot with someone above level {nivell}",
-  "mercat.nec_lloc_sobrat_n": "{n} {lloc} slots with someone above level {nivell}",
-  "mercat.nec_excedeix_1": "is 1 level above what the cash flow pays for",
-  "mercat.nec_excedeix_n": "is {n} levels above what the cash flow pays for"
+  "alineacio.motiu_porteria_buida": "no backup keeper: the starter cannot play twice"
 }

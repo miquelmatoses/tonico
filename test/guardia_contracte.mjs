@@ -218,16 +218,7 @@ const VERIFICADES = {
     assert.equal(clauFitxatge('lloc', 'mc', 9), clauFitxatge('lloc', 'mc', 9));
     assert.notEqual(clauFitxatge('lloc', 'mc', 9), clauFitxatge('lloc', 'mc', 10));
   },
-  'P8.comprable': () => {
-    // Un lloc SOBRAT ix a la llista —està fora de lloc— però no es compra: ni preu que
-    // declarar, ni pot arribar mai a recomanació.
-    const est = { entrenables: [1], entrenables_max: 1, porter_suplent: {},
-      onze: [{ bucket: 'porter', nivell_objectiu: 5, diferencia: 4 }] };
-    const [n] = ambPreus(necessitats(est, {}), new Map(), 999999);
-    assert.equal(n.motiu, 'excedeix');
-    assert.equal(n.falta, null, 'no espera cap preu');
-    assert.equal(n.admissible, false, 'i no pot arribar a recomanació de compra');
-  },
+
   'P8.eficiencia': () => {
     // eficiència = prioritat / cost, i el cost és el preu DECLARAT.
     const amb = ambPreus([{ clau: 'mc:9', prioritat: 4.38 }], new Map([['mc:9', { preu: 100000 }]]), 200000);
@@ -533,30 +524,28 @@ const VERIFICADES = {
 
   // PAS 5 — LA DISTÀNCIA A L'OBJECTIU, en valor absolut.
   'P5.distancia': () => {
-    // Per dalt o per baix: la distància és la mateixa, i el que canvia és qui va primer.
+    // QUANT LI FALTA al lloc. Un lloc SOBRAT no compta: no es pot arreglar comprant, perquè
+    // l'assignació torna a donar el lloc al millor i el fitxatge se'n va al residu.
     const n = necessitats({ entrenables: [], entrenables_max: 0, porter_suplent: {}, onze: [
       { bucket: 'mc', nivell_objectiu: 9, diferencia: -3 },
       { bucket: 'porter', nivell_objectiu: 5, diferencia: 4 }] }, {});
-    assert.equal(n.find((x) => x.bucket === 'mc').distancia, 3, 'tres per davall → distància 3');
-    assert.equal(n.find((x) => x.bucket === 'porter').distancia, 4, 'quatre per damunt → distància 4');
-    assert.equal(n.find((x) => x.bucket === 'porter').sota, false, 'i es diu de quin costat va');
+    assert.deepEqual(n.map((x) => x.bucket), ['mc'], 'el sobrat no és una necessitat de mercat');
+    assert.equal(n[0].distancia, 3, 'tres per davall → distància 3');
   },
   'P5.compta': () => {
     const n = necessitats({ entrenables: [], entrenables_max: 0, porter_suplent: {}, onze: [
       { bucket: 'mc', nivell_objectiu: 9, diferencia: -1 },
-      { bucket: 'extrem', nivell_objectiu: 9, diferencia: 1 },
       { bucket: 'davanter', nivell_objectiu: 9, diferencia: -2 }] }, {});
     assert.deepEqual(n.map((x) => x.bucket), ['davanter'],
-      'un sol nivell no és un forat, ni per dalt ni per baix: s\'arregla entrenant');
+      'un sol nivell no és un forat: s\'arregla entrenant o esperant');
   },
   'P5.ordre': () => {
     const n = necessitats({ entrenables: [], entrenables_max: 2, porter_suplent: null, onze: [
       { bucket: 'mc', nivell_objectiu: 9, diferencia: -2 },
-      { bucket: 'davanter', nivell_objectiu: 9, diferencia: 3 },
       { bucket: 'extrem', nivell_objectiu: 9, diferencia: -3 }] }, { entrenable_min: 6 });
     assert.deepEqual(n.map((x) => x.tipus === 'lloc' ? x.bucket : x.tipus),
-      ['entrenable', 'porter_suplent', 'extrem', 'davanter', 'mc'],
-      'places buides primer; després distància DESC; i a igualtat de 3, primer el que va curt');
+      ['entrenable', 'porter_suplent', 'extrem', 'mc'],
+      'places buides primer, i després qui més lluny està');
   },
   'P4.nivell_objectiu_ht': () => {
     // DUES ESCALES. La taula de salaris comença en «Inadequate» (el 5é de HT) i les habilitats

@@ -584,9 +584,5 @@
   "alerta.compra_entrenable_n": "Tens {n} places d'entrenament buides. Un jove de creativitat {nivell} o més costa {preu} cada un: cada setmana buida és entrenament perdut.",
   "alerta.compra_entrenable_preu_1": "Tens 1 plaça d'entrenament buida i no sé quant costa omplir-la. Mira les últimes transferències d'un jove de creativitat {nivell} o més i apunta-m'ho a Mercat.",
   "alerta.compra_entrenable_preu_n": "Tens {n} places d'entrenament buides i no sé quant costa omplir-les. Mira les últimes transferències d'un jove de creativitat {nivell} o més i apunta-m'ho a Mercat.",
-  "alineacio.motiu_porteria_buida": "sense porter suplent: el titular no pot doblar",
-  "mercat.nec_lloc_sobrat_1": "1 lloc de {lloc} amb algú per damunt del nivell {nivell}",
-  "mercat.nec_lloc_sobrat_n": "{n} llocs de {lloc} amb algú per damunt del nivell {nivell}",
-  "mercat.nec_excedeix_1": "va 1 nivell per damunt del que el flux paga",
-  "mercat.nec_excedeix_n": "va {n} nivells per damunt del que el flux paga"
+  "alineacio.motiu_porteria_buida": "sense porter suplent: el titular no pot doblar"
 }

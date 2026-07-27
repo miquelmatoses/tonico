@@ -479,7 +479,7 @@
       "pas": "P5",
       "pasTitol": "LA DISTÀNCIA A L'OBJECTIU",
       "clau": "distància",
-      "linia": "distància(lloc) = |diferència(lloc)|          [diferència: vore PAS 6]",
+      "linia": "distància(lloc) = MAX(0; −diferència(lloc))          [diferència: vore PAS 6]",
       "entrades": [
         "diferència",
         "lloc"
@@ -523,8 +523,9 @@
       "pas": "P5",
       "pasTitol": "LA DISTÀNCIA A L'OBJECTIU",
       "clau": "ORDRE",
-      "linia": "ORDRE DE LES NECESSITATS = places buides PRIMER;",
+      "linia": "ORDRE DE LES NECESSITATS = places buides PRIMER; després distància DESC",
       "entrades": [
+        "distància",
         "places"
       ],
       "poms": [],
@@ -912,16 +913,6 @@
       "taules": []
     },
     {
-      "id": "P8.comprable",
-      "pas": "P8",
-      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
-      "clau": "comprable",
-      "linia": "comprable(n) = la necessitat va CURTA (o és una plaça buida)",
-      "entrades": [],
-      "poms": [],
-      "taules": []
-    },
-    {
       "id": "P8.cost",
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
@@ -966,10 +957,10 @@
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "ACCIÓ",
-      "linia": "ACCIÓ = PRIMER(ORDENA(FILTRA(necessitats; admissible); ORDRE DEL PAS 5,",
+      "linia": "ACCIÓ = PRIMER(ORDENA(FILTRA(necessitats; admissible); distància DESC,",
       "entrades": [
-        "ORDRE",
         "admissible",
+        "distància",
         "necessitats"
       ],
       "poms": [],

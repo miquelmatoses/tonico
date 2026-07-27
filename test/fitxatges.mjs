@@ -1,9 +1,9 @@
 // Tonico — QUÈ FA FALTA FITXAR i què costa. node test/fitxatges.mjs
 //
-// L'ORDE ÉS LA DISTÀNCIA A L'OBJECTIU, en valor absolut: per dalt o per baix. Un lloc amb algú
-// tres nivells per damunt del que el flux paga està tan fora de lloc com un amb algú tres per
-// davall. A igualtat de distància van primer els que van CURTS: eixos et costen partits, els
-// altres només diners. I menys de dos nivells no compta: això s'arregla entrenant.
+// L'ORDE ÉS LA DISTÀNCIA A L'OBJECTIU: quants nivells li falten al lloc. Menys de dos no
+// compta —s'arregla entrenant o esperant— i un lloc SOBRAT tampoc: no es pot arreglar
+// comprant, perquè l'assignació torna a donar el lloc al millor i el fitxatge se'n va al
+// residu. El sobrat el governa el `sobrecost`, a Vendes.
 //
 // Per damunt de tot, les PLACES BUIDES: una plaça d'entrenament buida és entrenament perdut
 // cada setmana i no es recupera; un lloc de l'onze fluix continua jugant.
@@ -21,8 +21,8 @@ const est = {
     { bucket: 'mc', nivell_objectiu: 9, diferencia: -1 },   // un sol nivell: no és forat
     { bucket: 'davanter', nivell_objectiu: 9, diferencia: -4 },
     { bucket: 'defensa', nivell_objectiu: 8, diferencia: 0 },
-    { bucket: 'porter', nivell_objectiu: 5, diferencia: 4 },   // sobrat: també és estar fora de lloc
-    { bucket: 'extrem', nivell_objectiu: 9, diferencia: 1 },   // un sol nivell per dalt: no compta
+    { bucket: 'porter', nivell_objectiu: 5, diferencia: 4 },   // sobrat: no es compra
+    { bucket: 'extrem', nivell_objectiu: 9, diferencia: 1 },   // un sol nivell: no compta
   ],
 };
 const n = necessitats(est, { entrenable_min: 6 });
@@ -38,45 +38,34 @@ assert.equal(n.find((x) => x.tipus === 'entrenable').quants, 2, 'en falten dos d
 assert.ok(!n.some((x) => x.tipus === 'lloc' && x.bucket === 'defensa'),
   'qui arriba al seu nivell no es toca');
 assert.ok(!n.some((x) => x.tipus === 'lloc' && x.bucket === 'extrem'),
-  'ni un sol nivell per dalt: la distància es mira en valor absolut, però el llindar és el mateix');
+  'ni un sol nivell de distància');
 const mc = n.find((x) => x.clau === 'mc:9');
 assert.equal(mc.quants, 2, 'els dos llocs de mig centre a dos o més nivells, no el de −1');
 assert.equal(mc.distancia, 3, 'i la distància que mana és la pitjor de les seues');
 
-// ── 2b. PER DALT també compta, i no es compra ──
-const sobrat = n.find((x) => x.motiu === 'excedeix');
-assert.ok(sobrat, 'el porter, quatre nivells per damunt del que el flux paga, ix a la llista');
-assert.equal(sobrat.sota, false);
-assert.equal(sobrat.distancia, 4);
-assert.equal(cercaDe(sobrat, {}), null, 'un lloc sobrat no es busca al mercat');
+// ── 2b. PER DALT NO COMPTA ──
+// El porter va quatre nivells per damunt del que el flux paga. Està fora de lloc, però no hi
+// ha cap compra que ho arregle: l'assignació tria el millor de l'habilitat per a cada lloc, o
+// siga que un porter del nivell prescrit se n'aniria al residu i el de 9 es quedaria el lloc.
+// Qui diu «ahí pagues de més» és el sobrecost, a Vendes.
+assert.ok(!n.some((x) => x.bucket === 'porter' && x.tipus === 'lloc'),
+  'un lloc sobrat no és una necessitat de mercat');
 
 // ── 3. Un TIPUS de fitxatge, no un lloc: dos llocs iguals són una sola cerca ──
 assert.equal(clauFitxatge('lloc', 'mc', 9), 'mc:9');
 assert.equal(n.filter((x) => x.bucket === 'mc' && x.tipus === 'lloc').length, 1,
   'els dos llocs de mig centre es demanen una vegada');
 
-// ── 4. L'ORDE: distància absoluta, i els que van curts primer a igualtat ──
+// ── 4. L'ORDE: qui més lluny està del seu objectiu ──
 const nomesLlocs = n.filter((x) => x.tipus === 'lloc');
-assert.deepEqual(nomesLlocs.map((x) => x.clau), ['davanter:9', 'porter:5:sobrat', 'mc:9'],
-  'davanter −4 · porter +4 (empatats, primer el que va curt) · mig centre −3');
-{
-  // L'EMPAT: mateixa distància, un per baix i un per dalt. Mana el que va curt.
-  const empat = necessitats({ entrenables: [], entrenables_max: 0, porter_suplent: {}, onze: [
-    { bucket: 'davanter', nivell_objectiu: 9, diferencia: 3 },
-    { bucket: 'mc', nivell_objectiu: 9, diferencia: -3 },
-  ] }, {});
-  assert.deepEqual(empat.map((x) => x.motiu), ['distancia', 'excedeix'],
-    'a igualtat, el que va curt: eixe et costa partits, l\'altre només diners');
-}
+assert.deepEqual(nomesLlocs.map((x) => x.clau), ['davanter:9', 'mc:9'],
+  'davanter −4 abans que mig centre −3: qui més lluny està');
 
 // ── 5. SENSE PREU no es decidix ──
 {
   const buit = ambPreus(n, new Map(), 173004);
-  assert.ok(buit.filter((x) => x.sota !== false).every((x) => x.falta === 'preu' && !x.admissible),
+  assert.ok(buit.every((x) => x.falta === 'preu' && !x.admissible),
     'mentre no hi haja preu declarat, es veu la necessitat però no es pot comprar');
-  const sobrer = buit.find((x) => x.sota === false);
-  assert.equal(sobrer.falta, null, 'un lloc sobrat no espera cap preu: no hi ha res a comprar');
-  assert.equal(sobrer.admissible, false, 'i no pot arribar mai a recomanació de compra');
 }
 
 // ── 6. Amb preu, mana la CAIXA ──
@@ -117,4 +106,4 @@ assert.deepEqual(nomesLlocs.map((x) => x.clau), ['davanter:9', 'porter:5:sobrat'
     'i sense caixa, la vista ho ha de saber sense comparar res');
 }
 
-console.log('OK — fitxatges: les places buides manen, la distància ordena (per dalt i per baix) i sense preu no es decidix');
+console.log('OK — fitxatges: les places buides manen, la distància ordena i sense preu no es decidix');
