@@ -6,7 +6,6 @@ import { readFileSync } from 'node:fs';
 import { nova } from './_d1shim.mjs';
 import { modelSenior } from '../lib/adaptador.js';
 import { desar, carregaAncora } from '../functions/api/pujar.js';
-import { classificaEquip } from '../lib/orquestra_classificacio.js';
 import { generaAlertes } from '../lib/orquestra_alertes.js';
 import { estatPla } from '../lib/pla.js';
 
@@ -19,7 +18,6 @@ const ancora = await carregaAncora(db);
 const senior = readFileSync(new URL('../data/fixtures/players.csv', import.meta.url), 'utf8').replace(/\r/g, '').split('\n').filter((l) => l !== '').map((l) => l.split(','));
 
 await desar(db, 1, 'senior', modelSenior(senior, '2026-07-18'), ancora);
-await classificaEquip(db, 1, 1, 'competitiva');
 
 // Estat del pla
 const e = await estatPla(db, 1);

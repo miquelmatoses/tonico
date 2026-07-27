@@ -237,44 +237,6 @@
       "taules": []
     },
     {
-      "id": "P2.n_core",
-      "pas": "P2",
-      "pasTitol": "LLOCS I PESOS",
-      "clau": "N_core",
-      "linia": "N_core     = COMPTA(pos_A)                     [5: 3 MC + 2 extrems]",
-      "entrades": [
-        "pos_A"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P2.n_rotatius",
-      "pas": "P2",
-      "pasTitol": "LLOCS I PESOS",
-      "clau": "N_rotatius",
-      "linia": "N_rotatius = SUMA(pos_A amb pct=100: partits_setmana − 1)   [3: els MC del bloc B]",
-      "entrades": [
-        "B",
-        "partits_setmana",
-        "pos_A"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P2.max_partits",
-      "pas": "P2",
-      "pasTitol": "LLOCS I PESOS",
-      "clau": "max_partits",
-      "linia": "max_partits(j) = SI(pct(lloc(j)) < 100 O rol(j) ∈ {futur_entrenador, cos}; 2; 1)",
-      "entrades": [
-        "lloc"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
       "id": "P3.periode_setmanes",
       "pas": "P3",
       "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
@@ -599,86 +561,136 @@
       "taules": []
     },
     {
-      "id": "P6.core",
+      "id": "P6.onze",
       "pas": "P6",
-      "pasTitol": "PLANTILLA (qui es queda, derivat)",
-      "clau": "core",
-      "linia": "core      = PRIMERS(N_core;  ORDENA(plantilla; hab(j,A) DESC, edat_d ASC))",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "onze",
+      "linia": "onze      = PER lloc en ORDENA(llocs; pes(lloc) DESC):",
       "entrades": [
-        "A",
-        "N_core",
-        "edat_d",
-        "hab",
+        "lloc",
+        "pes"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P6.sobrants",
+      "pas": "P6",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "sobrants",
+      "linia": "sobrants  = plantilla − onze",
+      "entrades": [
+        "onze",
         "plantilla"
       ],
       "poms": [],
       "taules": []
     },
     {
-      "id": "P6.titulars",
+      "id": "P6.diferencia",
       "pas": "P6",
-      "pasTitol": "PLANTILLA (qui es queda, derivat)",
-      "clau": "titulars",
-      "linia": "titulars  = PER lloc ∉ pos_A: PRIMER(ORDENA(FILTRA(plantilla − core;",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "diferència",
+      "linia": "diferència(lloc) = hab(ocupant, habilitat_lloc) − nivell_objectiu_ht(lloc)",
       "entrades": [
-        "core",
+        "hab",
+        "habilitat_lloc",
         "lloc",
-        "plantilla",
-        "pos_A"
+        "nivell_objectiu_ht",
+        "ocupant"
       ],
       "poms": [],
       "taules": []
     },
     {
-      "id": "P6.porters_n",
+      "id": "P6.entrenables_n",
       "pas": "P6",
-      "pasTitol": "PLANTILLA (qui es queda, derivat)",
-      "clau": "porters_n",
-      "linia": "porters_n = 1 × partits_setmana",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "entrenables_n",
+      "linia": "entrenables_n = COMPTA(llocs que entrenen al 100%) × (`partits_setmana` − 1)",
       "entrades": [
+        "entrenen",
         "partits_setmana"
       ],
-      "poms": [],
+      "poms": [
+        "partits_setmana"
+      ],
       "taules": []
     },
     {
-      "id": "P6.cossos_n",
+      "id": "P6.entrenables",
       "pas": "P6",
-      "pasTitol": "PLANTILLA (qui es queda, derivat)",
-      "clau": "cossos_n",
-      "linia": "cossos_n  = ARREDONIX.AMUNT((llocs_partit − llocs_ocupats(core, titulars,",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "entrenables",
+      "linia": "entrenables   = PRIMERS(entrenables_n; ORDENA(FILTRA(sobrants;",
       "entrades": [
-        "core",
-        "llocs_partit",
-        "titulars"
+        "entrenables_n",
+        "sobrants"
       ],
       "poms": [],
       "taules": []
     },
     {
-      "id": "P6.cossos",
+      "id": "P6.cap_a_temps",
       "pas": "P6",
-      "pasTitol": "PLANTILLA (qui es queda, derivat)",
-      "clau": "cossos",
-      "linia": "cossos    = PRIMERS(cossos_n; ORDENA(plantilla restant; sou ASC))",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "cap_a_temps",
+      "linia": "cap_a_temps(j) = edat_d(j) + setmanes_seguent(j) × 7 < `entrenable_edat_limit` × `any_dies`",
       "entrades": [
-        "cossos_n",
-        "plantilla",
-        "sou"
+        "edat_d"
+      ],
+      "poms": [
+        "any_dies",
+        "entrenable_edat_limit"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P6.futur_entrenador",
+      "pas": "P6",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "futur_entrenador",
+      "linia": "futur_entrenador = PRIMER(ORDENA(FILTRA(sobrants − entrenables;",
+      "entrades": [
+        "entrenables",
+        "sobrants"
       ],
       "poms": [],
       "taules": []
     },
     {
-      "id": "P6.retinguts",
+      "id": "P6.porter_suplent",
       "pas": "P6",
-      "pasTitol": "PLANTILLA (qui es queda, derivat)",
-      "clau": "retinguts",
-      "linia": "retinguts = core ∪ titulars ∪ porters ∪ cossos",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "porter_suplent",
+      "linia": "porter_suplent   = PRIMER(ORDENA(FILTRA(resta; és_porter(j)); sou ASC))",
       "entrades": [
-        "core",
-        "cossos",
-        "titulars"
+        "sou",
+        "és_porter"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P6.es_porter",
+      "pas": "P6",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "és_porter",
+      "linia": "és_porter(j)     = porteria(j) > hab(j, h) per a TOTA h ≠ porteria",
+      "entrades": [
+        "hab"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P6.despatxar",
+      "pas": "P6",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "despatxar",
+      "linia": "despatxar = FILTRA(resta; desert(j))        [vore desert(j) al PAS 7]",
+      "entrades": [
+        "desert"
       ],
       "poms": [],
       "taules": []
@@ -686,12 +698,40 @@
     {
       "id": "P6.venda",
       "pas": "P6",
-      "pasTitol": "PLANTILLA (qui es queda, derivat)",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
       "clau": "venda",
-      "linia": "venda     = plantilla − retinguts        [categoria sencera; cap marca dins]",
+      "linia": "venda     = resta − despatxar",
       "entrades": [
-        "plantilla",
-        "retinguts"
+        "despatxar"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P6.grup",
+      "pas": "P6",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "grup",
+      "linia": "grup(j)   = onze | entrenable | futur_entrenador | porter_suplent | venda | despatxar",
+      "entrades": [
+        "despatxar",
+        "entrenable",
+        "futur_entrenador",
+        "onze",
+        "porter_suplent",
+        "venda"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P6.entrenen",
+      "pas": "P6",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "entrenen",
+      "linia": "entrenen  = ocupants dels llocs que entrenen ∪ entrenables",
+      "entrades": [
+        "entrenables"
       ],
       "poms": [],
       "taules": []
@@ -702,7 +742,9 @@
       "pasTitol": "VENDRE (allibera sou i genera caixa)",
       "clau": "motiu_venda",
       "linia": "motiu_venda(j) = SI(j ∉ cap grup de l'assignació;                  \"sobrant\";",
-      "entrades": [],
+      "entrades": [
+        "grup"
+      ],
       "poms": [],
       "taules": []
     },
@@ -776,7 +818,8 @@
       "clau": "despatxable",
       "linia": "despatxable(j) = desert(j) I j ∈ sobrants        → decisió de PLANTILLA, no de mercat",
       "entrades": [
-        "desert"
+        "desert",
+        "sobrants"
       ],
       "poms": [],
       "taules": []

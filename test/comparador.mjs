@@ -45,7 +45,6 @@ await desar(db, 1, 'senior', modelSenior(snap3, '2026-07-26'), ancora);
 const d2 = await (await comparador.onRequestGet({ request: new Request('http://t/api/comparador'), env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 const alta = d2.nous.find((f) => f.nom === 'Alta Test');
 assert.ok(alta && alta.edat_anys === 17, 'alta declarada amb edat');
-assert.ok('categoria' in alta, 'l\'alta porta la categoria (pot ser null sense classificar)');
 assert.ok(d2.desapareguts.some((f) => f.nom === baixa), 'baixa declarada');
 
 console.log('OK — comparador: parella per defecte, pops, frontera de temporada, repuja i altes/baixes');

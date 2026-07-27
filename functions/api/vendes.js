@@ -7,10 +7,9 @@ import { normalitzaDivisio } from '../../lib/divisio.js';
 import { avaluaPuntuacio } from '../../lib/classificador.js';
 import { carregaConfigPla } from '../../lib/config_pla.js';
 import { esLesionat } from '../../public/format.js';
-import { cobertura } from '../../lib/cobertura.js';
+import { cobertura, cosDisponible } from '../../lib/cobertura.js';
 import { entrenamentEfectiu, aplicaEntrenament } from '../../lib/entrenament_places.js';
 import { conjuntLiquidacio, estatLiquidacio } from '../../lib/liquidacio.js';
-import { sqlCategoriaVigent } from '../../lib/categoria_vigent.js';
 
 const ESTATS = ['pendent', 'llistat', 'venut', 'desert', 'despatxat'];
 const enter = (x) => (x == null || x === '' ? null : Math.round(Number(x)));
@@ -27,10 +26,8 @@ export async function onRequestGet({ env, data }) {
             ij.lleialtat, ij.qualificacio_ultim_partit, ij.sou, ij.lesio, ij.transferible,
             ij.edat_dies, ij.experiencia, ij.lideratge, ij.tsi,
             ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada,
-            v.data_llistada, v.estat, v.resultat_pendent, c.categoria
+            v.data_llistada, v.estat, v.resultat_pendent
        FROM instantanies_jugadors ij JOIN jugadors j ON j.id = ij.jugador_id
-       LEFT JOIN ${sqlCategoriaVigent(['categoria'])} c
-         ON c.jugador_id = j.id
        LEFT JOIN vendes v ON v.jugador_id = j.id
       WHERE ij.instantania_id = ?`
   ).bind(inst.id).all();
@@ -99,17 +96,11 @@ export async function onRequestGet({ env, data }) {
         futur_entrenador: teFE ? 1 : 0,
       });
       const porterPos = (await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='posicio_porter'").bind(pla.plantilla).first())?.valor || 'PO';
-      // Cos DISPONIBLE per classe (no entrenables, no llistats): camp i porteria per separat.
-      const disp = async (esPorter) => (await env.DB.prepare(
-        `SELECT COUNT(*) n FROM instantanies_jugadors ij
-           LEFT JOIN ${sqlCategoriaVigent(['categoria'])} c
-                  ON c.jugador_id = ij.jugador_id
-           LEFT JOIN vendes v ON v.jugador_id = ij.jugador_id
-          WHERE ij.instantania_id=? AND COALESCE(c.categoria,'') NOT IN ('core','rotatiu')
-            AND ij.posicio_ultim_partit ${esPorter ? '=' : '<>'} ? AND ij.transferible IS NOT 1
-            AND COALESCE(v.estat,'') <> 'llistat'`
-      ).bind(inst.id, porterPos).first())?.n ?? 0;
-      const cosCamp = await disp(false), cosPorter = await disp(true);
+      // Cos DISPONIBLE: el MATEIX compte que fa el motor d'alertes, i per això la mateixa
+      // funció. Qui entrena ix del GRUP (`est.entrenen`), no d'una categoria que ja no existix.
+      const { cos_camp: cosCamp, cos_porter: cosPorter } = cosDisponible(totsJugadors,
+        est?.entrenen ?? new Set(), { posicio_porter: porterPos,
+          llistats: new Set(totsJugadors.filter((j) => j.estat === 'llistat').map((j) => j.jugador_id)) });
       // MATEIXA FONT que l'alerta agregada: venda − llistats − lesionats − retinguts (camp + porters).
       const conj = conjuntLiquidacio(eixida.filter((j) => j.estat === 'pendent'), { ...cob, cos_camp: cosCamp, cos_porter: cosPorter, posicio_porter: porterPos });
       for (const j of eixida) j.estat_liquidacio = estatLiquidacio(j, conj);

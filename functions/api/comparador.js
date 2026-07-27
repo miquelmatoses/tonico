@@ -2,7 +2,6 @@
 // l'anterior del MATEIX equip; admet selecció manual (a, b). Torna pops
 // d'habilitat, deltes de TSI/sou, nous/desapareguts, dies reals entre les dos
 // (la velocitat mai assumix «una setmana») i marca la frontera de temporada.
-import { categoriesVigents } from '../../lib/categoria_vigent.js';
 
 const HABILITATS = ['porteria', 'defensa', 'creativitat', 'extrem', 'passades', 'anotacio', 'pilota_aturada'];
 
@@ -33,7 +32,6 @@ export async function onRequestGet({ request, env, data }) {
   };
   const [fa, fb] = [await files(aId), await files(bId)];
   // Categoria vigent per jugador (per a declarar les altes: «Alta: X (17a, venda)»).
-  const catDe = await categoriesVigents(env.DB);
 
   const dies = Math.round((Date.parse(B.data) - Date.parse(A.data)) / 86400000);
   const setmanes = dies / 7;
@@ -49,7 +47,7 @@ export async function onRequestGet({ request, env, data }) {
       sou_a: a.sou, sou_b: b.sou, delta_sou: (b.sou ?? 0) - (a.sou ?? 0) });
   }
   // Altes i baixes declarades (una línia cadascuna), amb edat i categoria vigent.
-  const fitxa = (r) => ({ jugador_id: r.jugador_id, nom: r.nom, edat_anys: r.edat_anys, edat_dies: r.edat_dies, categoria: catDe.get(r.jugador_id) || null });
+  const fitxa = (r) => ({ jugador_id: r.jugador_id, nom: r.nom, edat_anys: r.edat_anys, edat_dies: r.edat_dies });
   const nous = [...fb.values()].filter((b) => !fa.has(b.jugador_id)).map(fitxa);
   const desapareguts = [...fa.values()].filter((a) => !fb.has(a.jugador_id)).map(fitxa);
 

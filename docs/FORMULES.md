@@ -94,9 +94,9 @@ pes(lloc)  = SUMA(sectors: aportacio(lloc, sector) × pes_sector(sector))
       mig                    = `pes_mig`   [pom; decidix QUI té l'ocasió, no on]
       atac/defensa central   = `pes_central` [0,36 — 36% de les ocasions pel mig]
       bandes (cada costat)   = `pes_banda`   [0,255 — 25,5% per costat]
-N_core     = COMPTA(pos_A)                     [5: 3 MC + 2 extrems]
-N_rotatius = SUMA(pos_A amb pct=100: partits_setmana − 1)   [3: els MC del bloc B]
-max_partits(j) = SI(pct(lloc(j)) < 100 O rol(j) ∈ {futur_entrenador, cos}; 2; 1)
+   [FORA `N_core`, `N_rotatius` i `max_partits`: comptaven places de la
+    classificació vella (core, rotatiu, cos), que no existix. El que en queda viu
+    —quantes places d'entrenament hi ha— és `entrenables_n`, al PAS 6]
 ```
 
 ## PAS 3 — ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)
@@ -194,25 +194,52 @@ sobrecost(j)    = MAX(0; sou(j) − BUSCA(`taula_salaris`; habilitat_lloc(lloc(j
 prioritat(lloc) = mancança(lloc) × pes(lloc)
 ```
 
-## PAS 6 — PLANTILLA (qui es queda, derivat)
+## PAS 6 — L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)
+
+Ací ja no es CLASSIFICA. La classificació vella —core, rotatiu, titular, porter, cos—
+decidia qui es quedava **abans** de saber qui ocupa cada lloc, i el resultat es desava en
+taula: estat derivat que es quedava ranci i que cada pantalla tornava a derivar pel seu
+compte. Ara es reparteixen **tots** els jugadors, lloc a lloc, i el que sobra és el residu.
 
 ```
-core      = PRIMERS(N_core;  ORDENA(plantilla; hab(j,A) DESC, edat_d ASC))
-   [sense mínim: `core_a_min` estava a 0 i no filtrava res des del primer dia. El
-    llistó de veres és `entrenable_creativitat_min`, que sí que s'aplica]
-titulars  = PER lloc ∉ pos_A: PRIMER(ORDENA(FILTRA(plantilla − core;
-                     compatible(j, lloc)); hab(j, habilitat_lloc) DESC, sou ASC))
-   [FORA ELS ROTATIUS: eren els joves que doblaven els llocs del 100%, triats per
-    una finestra d'edat (`edat_pic_venda`). Eixa figura són ara els ENTRENABLES, que
-    ixen del RESIDU de l'assignació d'estructura amb un criteri que una finestra
-    d'edat no pot expressar: que la pròxima pujada de nivell els caiga abans del
-    límit. Amb ells se'n va el pom]
-porters_n = 1 × partits_setmana
-cossos_n  = ARREDONIX.AMUNT((llocs_partit − llocs_ocupats(core, titulars,
-                             porters)) / partits_setmana)
-cossos    = PRIMERS(cossos_n; ORDENA(plantilla restant; sou ASC))
-retinguts = core ∪ titulars ∪ porters ∪ cossos
-venda     = plantilla − retinguts        [categoria sencera; cap marca dins]
+onze      = PER lloc en ORDENA(llocs; pes(lloc) DESC):
+               PRIMER(ORDENA(FILTRA(lliures); hab(j, habilitat_lloc) DESC,
+                                              sou ASC, id ASC))
+   [PER PES: el lloc que més aporta tria primer. A igualtat d'habilitat mana el
+    SOU, perquè dos que rendixen igual no valen igual]
+sobrants  = plantilla − onze
+diferència(lloc) = hab(ocupant, habilitat_lloc) − nivell_objectiu_ht(lloc)
+   [el senyal de la fila: negatiu = curt, positiu = passat de nivell]
+
+entrenables_n = COMPTA(llocs que entrenen al 100%) × (`partits_setmana` − 1)
+   [un per cada partit EXTRA de la setmana: és quan el titular descansa]
+entrenables   = PRIMERS(entrenables_n; ORDENA(FILTRA(sobrants;
+                   hab(j, A) ≥ `entrenable_creativitat_min`  I  cap_a_temps(j));
+                   hab(j, A) DESC, setmanes_seguent ASC, edat_d ASC))
+cap_a_temps(j) = edat_d(j) + setmanes_seguent(j) × 7 < `entrenable_edat_limit` × `any_dies`
+   [NO és un tall d'edat pla. Un de 20 i escaig que puja d'ací a cinc setmanes
+    encara cobra eixa pujada; un de 19 que no pujarà fins passats els 21 no la
+    cobrarà mai. I com que pujar el fa més vell i la següent pujada és més lenta,
+    el criteri el trau tot sol JUST DESPRÉS d'haver pujat, que és quan val més]
+
+futur_entrenador = PRIMER(ORDENA(FILTRA(sobrants − entrenables;
+                      experiència(j) ≥ MÍNIM(`coach_preu_reconversio`));
+                      experiència DESC, lideratge DESC))
+   [només si es pot reconvertir: per davall del primer esglaó de la taula de la
+    guia no hi ha cap nivell d'entrenador possible, i assenyalar «el de més
+    experiència» d'una plantilla on tots en tenen 1 seria assenyalar per no res]
+porter_suplent   = PRIMER(ORDENA(FILTRA(resta; és_porter(j)); sou ASC))
+és_porter(j)     = porteria(j) > hab(j, h) per a TOTA h ≠ porteria
+   [ESTRICTAMENT per damunt: amb ≥, un descart amb totes les habilitats a 1
+    comptava com a porter i es quedava la plaça del suplent]
+
+despatxar = FILTRA(resta; desert(j))        [vore desert(j) al PAS 7]
+venda     = resta − despatxar
+grup(j)   = onze | entrenable | futur_entrenador | porter_suplent | venda | despatxar
+   [UNA SOLA FONT. La pantalla el pinta i el motor d'alertes el consumix: si cada
+    u el derivara pel seu compte tornarien a dir coses distintes]
+entrenen  = ocupants dels llocs que entrenen ∪ entrenables
+   [qui NO hi és, és cos disponible per a cobrir partits]
 ```
 
 ## PAS 7 — VENDRE (allibera sou i genera caixa)

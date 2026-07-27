@@ -207,52 +207,16 @@ function pintaAgenda(main, agenda) {
   main.append(c);
 }
 
-// ── 2. Moviments (fets automàticament amb Desfés + preguntes d'overrides + motius) ──
+// ── 2. Decisions ──
+// Ja no hi ha MOVIMENTS ni PREGUNTES: eren la reconciliació del PAS 6 —«t'he canviat este de
+// core a rotatiu, desfés-ho si vols»—, i sense categories desades no hi ha res a reconciliar.
+// El grup d'un jugador es deriva cada volta de qui ocupa cada lloc, i això no cal desfer-ho.
+//
+// El que queda és el que de veres necessita la teua paraula: per què se n'ha anat un jugador
+// que ja no ix a la instantània. Això no es pot derivar de res.
 export async function decisions(main) {
   capcalera(main, 2, 'decisions');
-  const boto = (id, accio, text, cls = 'b-xic neutre') => { const b = el('button', { type: 'button', class: cls, text }); b.addEventListener('click', async () => { await api('/api/intercanvis', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, accio }) }); location.reload(); }); return b; };
-  const { moviments, historial = [], preguntes } = await api('/api/intercanvis');
-  const liniaMov = (x) => {
-    const dif = decimal(x.diferencia);
-    const txt = x.entrant ? t('moviments.mov', { entrant: x.entrant, eixent: x.eixent, desti: t('categoria.' + x.desti_eixent), diferencia: dif })
-      : t('moviments.mov_solo', { eixent: x.eixent, categoria: t('categoria.' + x.categoria), desti: t('categoria.' + x.desti_eixent) });
-    return el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
-      el('span', { class: 'mov-text', text: txt }), boto(x.id, 'desfer', t('moviments.desfes'), 'b-enllac'));
-  };
-
-  const duo = el('div', { class: 'duo' });
-  // Fets automàticament (informa + Desfés) — només els RECENTS.
-  const subF = card(t('moviments.fets_titol'), moviments.length, 'llima');
-  const cosF = el('div', { class: 'card-cos' });
-  if (!moviments.length) cosF.append(el('p', { class: 'nota-peu', text: t('moviments.cap_fet') }));
-  for (const x of moviments) cosF.append(liniaMov(x));
-  subF.append(cosF);
-  // Historial plegable: caducats per temps o per la pujada següent; el Desfés hi és mentres siga reversible.
-  if (historial.length) {
-    const det = el('details', {}, el('summary', { text: t('moviments.historial', { n: historial.length }) }));
-    for (const x of historial) det.append(liniaMov(x));
-    cosF.append(det);
-  }
-  duo.append(subF);
-
-  // LES DUES COLUMNES DEL DISSENY. El que s'ha FET va a la targeta sòlida; el que ESPERA la
-  // teua paraula —preguntes i motius— va junt a un panell discontinu. La jerarquia és la
-  // vora: sòlida = passat, discontínua = pendent. Abans eren tres targetes iguals i les dues
-  // pendents competien visualment amb el que ja estava resolt.
   const pend = el('div', { class: 'card-pendent' });
-
-  // Preguntes prèvies (només overrides manuals)
-  pend.append(el('h3', { class: 'pend-et', text: t('moviments.preguntes_titol') }));
-  if (!preguntes.length) pend.append(el('p', { class: 'pend-buit', text: t('moviments.cap_pregunta') }));
-  for (const x of preguntes) {
-    const dif = decimal(x.diferencia);
-    const p = el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
-      el('span', { class: 'mov-text', text: t('moviments.pregunta', { entrant: x.entrant, eixent: x.eixent, categoria: t('categoria.' + x.categoria), desti: t('categoria.' + x.desti_eixent), diferencia: dif }) }));
-    p.append(boto(x.id, 'acceptar', t('plantilla.acceptar')), boto(x.id, 'rebutjar', t('plantilla.rebutjar')));
-    pend.append(p);
-  }
-
-  // Motius de baixa (punt 4b)
   const motius = await opc(api('/api/motius'));
   const pendents = motius?.pendents || [];
   pend.append(el('h3', { class: 'pend-et', text: t('decisions.motius_titol') }));
@@ -270,8 +234,7 @@ export async function decisions(main) {
     pend.append(el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
       el('span', { class: 'mov-text', text: t('decisions.motiu_jugador', { nom: j.nom }) }), sel, origenSel, b));
   }
-  duo.append(pend);
-  main.append(duo);
+  main.append(pend);
 }
 
 // ── 3. Alineació ──
@@ -1320,8 +1283,8 @@ export async function comparador(main) {
   } else cs.append(el('p', { class: 'nota-peu', text: t('comparador.cap_pop') }));
   c.append(cs);
   // Altes i baixes (punt #10.4): declarades en una línia. Les baixes tenen el flux de
-  // motiu a «Moviments»; les altes només es declaren.
-  const decl = (clau, fitxa) => t(clau, { nom: fitxa.nom, edat: edat(fitxa.edat_anys, fitxa.edat_dies), categoria: fitxa.categoria ? t('categoria.' + fitxa.categoria) : '—' });
+  // motiu a «Decisions»; les altes només es declaren. Sense categoria: ja no n'hi ha.
+  const decl = (clau, fitxa) => t(clau, { nom: fitxa.nom, edat: edat(fitxa.edat_anys, fitxa.edat_dies) });
   if ((d.nous && d.nous.length) || (d.desapareguts && d.desapareguts.length)) {
     const ab = el('div', { class: 'card-cos' }, el('h3', { text: t('comparador.altes_baixes_titol') }));
     for (const f of d.nous || []) ab.append(el('div', { class: 'mov-fila' }, el('span', { class: 'pill ok', text: '+' }), el('span', { class: 'mov-text', text: decl('comparador.alta', f) })));

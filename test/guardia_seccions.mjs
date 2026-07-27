@@ -1,17 +1,17 @@
 // Tonico — V4 · L'ESTAT DERIVAT I LA COMPATIBILITAT ENTRE SECCIONS (regla, no cas).
-//  (a) `categories_jugador` és un HISTORIAL: la vigent és la de l'id més alt, i eixe
-//      subselect només pot viure a lib/categoria_vigent.js. Copiat-i-apegat a huit fitxers
-//      no es pot corregir una vegada, i una còpia que s'oblide de creuar la instantània
-//      pinta fitxes que ja no hi són.
-//  (b) Un jugador NO pot aparéixer a dos seccions incompatibles: retingut i a Vendes,
-//      a vendre i alineat, o alineat sense categoria. Es comprova cridant les MATEIXES API
-//      que la pantalla consumix i creuant la pertinença per jugador.
+//  (a) EL GRUP D'UN JUGADOR NO ES DESA. `categories_jugador` era estat derivat escrit a
+//      taula: només s'hi inseria fila quan canviava el rol, així que qui es quedava al
+//      mateix rol arrossegava per sempre el que s'hi haguera escrit —o el buit—. Retirat el
+//      PAS 6, cap consulta pot tornar-hi: este guardià peta si algú la torna a llegir.
+//  (b) Un jugador NO pot aparéixer a dos seccions incompatibles: retingut i a Vendes, o
+//      a vendre i alineat. Es comprova cridant les MATEIXES API que la pantalla consumix
+//      i creuant la pertinença per jugador.
 // node test/guardia_seccions.mjs
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { nova } from './_d1shim.mjs';
 
-// ── (a) una sola font del subselect ──
+// ── (a) ningú torna a llegir la taula de categories ──
 const arrel = new URL('../', import.meta.url);
 const jsDe = (dir) => {
   const out = [];
@@ -21,13 +21,12 @@ const jsDe = (dir) => {
   }
   return out;
 };
-const copies = [];
+const lectors = [];
 for (const f of [...jsDe('lib/'), ...jsDe('functions/')]) {
-  if (f.endsWith('categoria_vigent.js')) continue;
-  if (/MAX\(id\) mid FROM categories_jugador/.test(readFileSync(new URL(f, arrel), 'utf8'))) copies.push(f);
+  if (/categories_jugador/.test(readFileSync(new URL(f, arrel), 'utf8'))) lectors.push(f);
 }
-assert.deepEqual(copies, [],
-  `el subselect de la categoria vigent està copiat a ${copies.join(', ')}: ha d'eixir de sqlCategoriaVigent()`);
+assert.deepEqual(lectors, [],
+  `${lectors.join(', ')} llig categories_jugador: el grup es deriva d'onzeEstructura, no es desa`);
 
 // ── (b) compatibilitat mútua entre seccions ──
 const { sqlite, db } = nova(import.meta.url);
@@ -56,14 +55,9 @@ for (let i = 1; i <= N; i++) {
 sqlite.exec('UPDATE instantanies_jugadors SET transferible=1 WHERE jugador_id=3;');
 sqlite.exec('UPDATE instantanies_jugadors SET defensa=12, creativitat=12, extrem=12, anotacio=12, passades=12 WHERE jugador_id=3;');
 
-// UN JUGADOR QUE JA NO HI ÉS però encara duu categoria: l'estat derivat ranci no pot filtrar
-// cap a cap secció (és el residu real que hi havia en producció).
-sqlite.exec(`INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (99,1,999,'Fora');
-  INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES (99,'venda','auto');`);
-
-// El PAS 6 escriu les categories a partir de la instantània.
-const { classificaEquip } = await import('../lib/orquestra_classificacio.js');
-await classificaEquip(db, 1, 1, 'competitiva');
+// UN JUGADOR QUE JA NO HI ÉS a la instantània no pot filtrar cap a cap secció (és el residu
+// real que hi havia en producció, quan el grup es desava i sobrevivia al jugador).
+sqlite.exec("INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (99,1,999,'Fora');");
 
 const ctx = { env: { DB: db }, data: { usuari: { id: 1 } } };
 const dona = async (ruta) => (await (await import(ruta)).onRequestGet(ctx)).json();
@@ -105,22 +99,28 @@ for (const [nom, conjunt] of Object.entries(grups)) {
 }
 assert.deepEqual(repetits, [], `jugadors en dos grups alhora:\n  ${repetits.join('\n  ')}`);
 
-// ── V5: la puntuació no pot dependre que la categoria CANVIE ──
-// Només s'inserix fila de categoria quan hi ha canvi de rol. Si la puntuació només s'escriu
-// en eixa fila, qui es queda al mateix rol la conserva de la fila vella per sempre: era el
-// cas dels titulars sense marcador. Es deriva dos vegades (la segona no canvia res) i
-// s'exigix que TOTA fila de TOTA categoria duga la seua puntuació.
-// Es reprodueix l'estat HERETAT: files de categoria vigents amb el marcador buit (escrites
-// abans que la puntuació existira). Si la posada al dia no existix, la segona derivació no
-// canvia cap rol, no inserix cap fila, i eixes files es queden buides per sempre.
-sqlite.exec('UPDATE categories_jugador SET puntuacio = NULL;');
-await classificaEquip(db, 1, 1, 'competitiva');
-const pl2 = await dona('../functions/api/plantilla.js');
-const sensePunt = (pl2.jugadors || []).filter((j) => j.puntuacio == null).map((j) => `${j.nom} (${j.categoria})`);
-assert.deepEqual(sensePunt, [],
-  `files sense puntuació després de re-derivar sense canvis: ${sensePunt.join(', ')}`);
-const cats = new Set((pl2.jugadors || []).map((j) => j.categoria));
-assert.ok(cats.size >= 4, `la fixture ha de cobrir prou categories (${[...cats].join(', ')})`);
+// ── (c) EL COS DISPONIBLE no pot incloure qui ENTRENA ──────────────────────────────────
+// És el número que decidix a quanta gent es reté de la liquidació: si els que entrenen hi
+// entren, Tonico es pensa que té més cos del que té i deixa de retindre ningú. Abans eixia
+// d'un `categoria NOT IN ('core','rotatiu')` dins d'una consulta SQL, i el dia que es va
+// deixar d'escriure la categoria hauria contat TOTHOM sense dir res.
+//
+// L'oracle NO ix de Vendes: ix de Plantilla —l'altra pantalla— creuada amb la instantània.
+// Dos camins distints han de donar el mateix número.
+const entrenen = new Set([...(pl.onze_titular || []).filter((l) => l.entrena && l.jugador_id).map((l) => l.jugador_id),
+  ...(pl.entrenables?.jugadors || []).map((x) => x.id)]);
+assert.ok(entrenen.size > 0, 'el fixture ha de tindre gent entrenant: si no, açò no prova res');
+// I un LLISTAT tampoc és cos: ja té un peu fora. Se n'apunta un que no entrena i que no és
+// transferible, per a que l'única cosa que el trau del compte siga la fitxa de venda.
+const candidat = [...Array(N).keys()].map((i) => i + 1).find((i) => !entrenen.has(i) && i !== 3);
+sqlite.prepare("INSERT INTO vendes (usuari_id, jugador_id, estat) VALUES (1, ?, 'llistat')").run(candidat);
+const ve2 = await dona('../functions/api/vendes.js');
+const deLaInstantania = sqlite.prepare(
+  'SELECT jugador_id, posicio_ultim_partit p, transferible FROM instantanies_jugadors WHERE instantania_id=1').all();
+const espera = (esPorter) => deLaInstantania.filter((r) => !entrenen.has(r.jugador_id)
+  && r.transferible !== 1 && r.jugador_id !== candidat && (esPorter ? r.p === 'PO' : r.p !== 'PO')).length;
+assert.equal(ve2.cobertura.cos_camp, espera(false), 'el cos de camp exclou qui entrena i qui ja està llistat');
+assert.equal(ve2.cobertura.cos_porter, espera(true), 'i el de porteria igual');
 
-console.log(`OK — V4: font única de la categoria vigent · ${vistos.size} jugadors amb un sol grup,` +
-  ` Vendes i Plantilla/Venda idèntiques · V5: ${cats.size} categories, cap fila sense puntuació`);
+console.log(`OK — V4: ningú desa el grup · ${vistos.size} jugadors amb un sol grup,`
+  + ` Mercat/fitxes de venda i Plantilla/Venda idèntiques · cos disponible ${ve2.cobertura.cos_camp}+${ve2.cobertura.cos_porter}`);

@@ -19,10 +19,10 @@ import { souSostenible, perPeriode, reservaFlux, despesaPlanter, dadesVelles,
 import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
 import { pesLloc, pressupostSou, nivellObjectiu, carregaConfigPesos } from '../lib/pesos.js';
 import { nivellActual, mancanca, exces, sobrecost, prioritat } from '../lib/mancanca.js';
-import { comptesNucli, maxPartits, construeixPlantilla } from '../lib/plantilla.js';
 import { urgent as esUrgent, motiuVenda, ordreVenda, desti, despatxable,
   subhastaDeserta } from '../lib/vendes.js';
 import { assignaEstructura } from '../lib/onze.js';
+import { onzeEstructura } from '../lib/onze_estructura.js';
 import { util as utilJuv, destiPromocio, objectiuJuvenil, sobrants, reiniciCrida } from '../lib/juvenil_v3.js';
 import { costFlux, nivellPagable, planPersonal, decisioRenovacio,
   baseTipus as baseTipusG1 } from '../lib/personal_v3.js';
@@ -56,28 +56,31 @@ const MARGE = { f_marge: 0.5, marge_ple: 3, esperat_defecte: 5 };
 const optsMarge = () => ({ f_marge: MARGE.f_marge, marge_esperat: MARGE.marge_ple,
   valor_esperat_desconegut: MARGE.esperat_defecte });
 
-// Fixture del PAS 6, compartit per les seues fórmules.
-function plantillaFix() {
-  const LL = [
-    { lloc: 'mc1', entrena: true, pct: 100, habilitat: 'creativitat' },
-    { lloc: 'mc2', entrena: true, pct: 100, habilitat: 'creativitat' },
-    { lloc: 'ext1', entrena: true, pct: 50, habilitat: 'extrem' },
-    { lloc: 'dc1', entrena: false, habilitat: 'defensa' },
-    { lloc: 'dc2', entrena: false, habilitat: 'defensa' },
-  ];
-  const j = (id, o) => ({ jugador_id: id, edat_anys: 20, edat_dies: 0, sou: 1000,
-    creativitat: 1, extrem: 1, porteria: 1, defensa: 1, anotacio: 1, ...o });
-  const squad = [
-    j(1, { creativitat: 9 }), j(2, { creativitat: 8 }), j(3, { creativitat: 7 }),
-    j(4, { creativitat: 6 }), j(14, { creativitat: 5 }),
-    j(9, { creativitat: 6, edat_anys: 30 }),   // passat del pic: no pot ser rotatiu
-    j(5, { defensa: 9 }), j(6, { defensa: 8, sou: 500 }), j(7, { defensa: 8 }),
-    j(8, { porteria: 9 }), j(10, { porteria: 7 }),
-    j(11, { sou: 200 }), j(12, { sou: 250 }), j(13, { sou: 9000 }),
-  ];
-  return construeixPlantilla(squad, LL, { A: 'creativitat', core_a_min: 0, edat_pic_venda: 25,
-    any_dies: 112, partits_setmana: 2, llocs_partit: 8, habilitat_porter: 'porteria' });
-}
+// Fixture del PAS 6, compartit per les seues fórmules. Els llocs arriben en l'orde de la
+// formació i amb PESOS distints, per a que es veja que qui tria primer és el pes.
+const LLOCS6 = [
+  { lloc: 'dav1', bucket: 'davanter', habilitat: 'anotacio', pes: 0.9, entrena: false },
+  { lloc: 'mc1', bucket: 'mc', habilitat: 'creativitat', pes: 1.4, entrena: true, pct: 100 },
+  { lloc: 'mc2', bucket: 'mc', habilitat: 'creativitat', pes: 1.4, entrena: true, pct: 100 },
+  { lloc: 'ext1', bucket: 'extrem', habilitat: 'extrem', pes: 1.1, entrena: true, pct: 50 },
+];
+const j6 = (id, o) => ({ id, nom: 'J' + id, sou: 1000, edat_anys: 26, edat_dies: 0,
+  porteria: 1, defensa: 1, creativitat: 1, extrem: 1, anotacio: 1, passades: 1, pilota_aturada: 1, ...o });
+const SQUAD6 = [j6(1, { creativitat: 9 }), j6(2, { creativitat: 7 }), j6(3, { anotacio: 9, creativitat: 5 }),
+  j6(4, { extrem: 8 }), j6(5, {}), j6(6, { sou: 400 })];
+
+// La BD del PAS 6: formació de veres, entrenador declarat (sense el seu nivell no hi ha
+// velocitat, i sense velocitat no es pot dir si la pròxima pujada cau abans del límit).
+sqliteFix.exec(`INSERT INTO personal_membres (usuari_id, rol, tipus, sou, coach_entrenament)
+    VALUES (1,'entrenador','entrenador',5000,'passable');`);
+const VELLS6 = Array.from({ length: 14 }, (_, i) => j6(i + 1, {
+  porteria: i === 0 ? 9 : 1, defensa: i > 0 && i < 4 ? 8 - i : 1,
+  creativitat: i >= 4 && i < 8 ? 13 - (i - 4) : 1,
+  extrem: i >= 8 && i < 11 ? 7 : 1, anotacio: i >= 11 ? 8 : 1 }));
+const JOVES6 = Array.from({ length: 4 }, (_, i) => j6(100 + i,
+  { sou: 500, edat_anys: 18, creativitat: 9 - i, experiencia: 1 }));
+let EST6 = null;
+const est6 = async () => (EST6 ??= await onzeEstructura(dbFix, 1, [...VELLS6, ...JOVES6], 10291));
 
 // REGISTRE de fórmules ja reconciliades: id → prova que compara la transcripció literal
 // del full (avaluador) amb el codi actual (referència). Igualtat = contracte satisfet.
@@ -136,40 +139,13 @@ const VERIFICADES = {
     assert.equal(p.intensitat, 100);
     assert.ok(p.resistencia != null, 'resistencia_pct declarada');
   },
-  // ── PAS 4 / PAS 6 ──
+  // ── PAS 4 ──
   'P4.habilitat_lloc': async () => {
     const cfg = await carregaConfigPesos(dbFix, 'competitiva');
     assert.equal(cfg.taula_habilitat_lloc.mc, 'creativitat', 'MC → creativitat');
     assert.equal(cfg.taula_habilitat_lloc.porter, 'porteria', 'POR → porteria');
     assert.equal(cfg.taula_habilitat_lloc.davanter, 'anotacio', 'DAV → anotació');
   },
-  'P6.core': () => {
-    const r = plantillaFix();
-    assert.deepEqual(r.core.map((j) => j.jugador_id), [1, 2, 3],
-      'els millors en l\'habilitat entrenada, i a igualtat el més jove');
-  },
-  'P6.titulars': () => {
-    const r = plantillaFix();
-    const t = Object.fromEntries(r.titulars.map((x) => [x.lloc, x.jugador_id]));
-    assert.equal(t.dc1, 5, 'el millor de l\'habilitat del lloc');
-    assert.equal(t.dc2, 6, 'i a igualtat d\'habilitat, el més barat');
-  },
-  'P6.porters_n': () => assert.equal(plantillaFix().porters_n, 2, '1 × partits_setmana'),
-  'P6.cossos_n': () => {
-    const r = plantillaFix();
-    assert.equal(r.cossos_n, Math.max(0, Math.ceil((8 - r.llocs_ocupats) / 2)), 'CEIL((llocs_partit − ocupats)/partits)');
-  },
-  'P6.cossos': () => {
-    const r = plantillaFix();
-    const sous = r.cossos.map((j) => j.sou);
-    assert.deepEqual(sous, [...sous].sort((a, b) => a - b), 'els més barats primer (sou ASC)');
-  },
-  'P6.retinguts': () => {
-    const r = plantillaFix();
-    assert.equal(r.retinguts.length, r.core.length + r.rotatius.length + r.titulars.length + r.porters.length + r.cossos.length,
-      'retinguts = core ∪ rotatius ∪ titulars ∪ porters ∪ cossos');
-  },
-
   // ── PAS 7 / PAS 8 / PAS 9 ──
   'P7.desert': () => {
     assert.equal(subhastaDeserta({ transferible_abans: 1, transferible_ara: null, en_plantilla: true }), true,
@@ -588,43 +564,99 @@ const VERIFICADES = {
     assert.equal(prioritat(0, 1.5), 0);
   },
 
-  // PAS 2/6 — qui es queda, derivat. Vocabulari del full: core/rotatiu/titular/cos.
-  'P2.n_core': () => {
-    const slots = [{ entrena: true, pct: 100 }, { entrena: true, pct: 100 },
-      { entrena: true, pct: 100 }, { entrena: true, pct: 50 }, { entrena: true, pct: 50 }];
-    assert.equal(comptesNucli(slots, 2).n_core, 5, 'N_core = COMPTA(pos_A)');
-    // N_core NO depén de partits_setmana: el full no l'hi lliga. Fer-ho buidava el core
-    // sencer quan el PAS 0 estava incomplet.
-    assert.equal(comptesNucli(slots, null).n_core, 5, 'N_core no depén del PAS 0');
-    assert.equal(comptesNucli(slots, null).n_rotatius, null, 'N_rotatius sí que en depén');
+  // PAS 6 — L'ASSIGNACIÓ. Es reparteixen TOTS els jugadors, lloc a lloc, i el que sobra és
+  // el residu. Ja no hi ha classificació prèvia (core/rotatiu/titular/porter/cos).
+  'P6.onze': () => {
+    const { onze } = assignaEstructura(SQUAD6, LLOCS6);
+    // Els MC pesen més i trien primer: s'enduen els dos millors creatius encara que el 3
+    // fora millor davanter. El davanter tria després, amb el que li queda.
+    assert.deepEqual(onze.map((l) => l.jugador?.id), [3, 1, 2, 4],
+      'els llocs de més PES trien primer, i l\'eixida va en l\'orde de la formació');
+    const ids = onze.map((l) => l.jugador?.id).filter(Boolean);
+    assert.equal(new Set(ids).size, ids.length, 'un jugador, un lloc');
   },
-  'P2.n_rotatius': () => {
-    // SUMA(pos_A amb pct=100: partits_setmana − 1)
-    const slots = [{ entrena: true, pct: 100 }, { entrena: true, pct: 100 }, { entrena: true, pct: 100 },
-      { entrena: true, pct: 50 }, { entrena: true, pct: 50 }];
-    assert.equal(comptesNucli(slots, 2).n_rotatius, 3);
-    assert.equal(comptesNucli(slots, 1).n_rotatius, 0, 'amb un partit no calen rotatius');
+  'P6.sobrants': () => {
+    const { onze, sobrants } = assignaEstructura(SQUAD6, LLOCS6);
+    assert.equal(onze.filter((l) => l.jugador).length + sobrants.length, SQUAD6.length,
+      'onze ∪ sobrants = plantilla, sense repetits ni perduts');
+    assert.deepEqual(sobrants.map((x) => x.id).sort((a, b) => a - b), [5, 6]);
   },
-  'P2.max_partits': () => {
-    assert.equal(maxPartits('core', 50), 2, 'un lloc que no entrena al 100% es dobla');
-    assert.equal(maxPartits('core', 100), 1);
-    assert.equal(maxPartits('cos', 100), 2);
-    assert.equal(maxPartits('futur_entrenador', 100), 2);
+  'P6.diferencia': () => {
+    const llocs = LLOCS6.map((l) => ({ ...l, nivell_objectiu: 8 }));
+    const { onze } = assignaEstructura(SQUAD6, llocs);
+    assert.equal(onze.find((l) => l.lloc === 'mc1').diferencia, 1, 'CR 9 contra objectiu 8');
+    assert.equal(onze.find((l) => l.lloc === 'mc2').diferencia, -1, 'i CR 7, un per davall');
+    assert.equal(onze.find((l) => l.lloc === 'mc2').senyal, 'baix');
   },
-  'P6.venda': () => {
-    // venda = plantilla − retinguts, categoria SENCERA i sense marques dins.
-    const llocs = [{ lloc: 'mc', entrena: true, pct: 100, habilitat: 'creativitat' },
-      { lloc: 'por', entrena: false, habilitat: 'porteria' }];
-    const squad = [
-      { jugador_id: 1, creativitat: 9, porteria: 1, sou: 900, edat_anys: 20, edat_dies: 0 },
-      { jugador_id: 2, creativitat: 1, porteria: 9, sou: 800, edat_anys: 20, edat_dies: 0 },
-      { jugador_id: 3, creativitat: 1, porteria: 1, sou: 100, edat_anys: 20, edat_dies: 0 },
-    ];
-    const r = construeixPlantilla(squad, llocs, { A: 'creativitat', core_a_min: 0, edat_pic_venda: 25,
-      any_dies: 112, partits_setmana: 1, llocs_partit: 2 });
-    const tots = [...r.retinguts, ...r.venda].map((j) => j.jugador_id).sort();
-    assert.deepEqual(tots, [1, 2, 3], 'retinguts ∪ venda = plantilla');
-    assert.ok(r.venda.every((j) => !r.rol[j.jugador_id]), 'cap marca de retenció dins de venda');
+  'P6.entrenables_n': async () => {
+    const r = await est6();
+    assert.equal(r.entrenables_max, 3, '3 llocs al 100% × (2 partits − 1)');
+  },
+  'P6.entrenables': async () => {
+    const r = await est6();
+    assert.deepEqual(r.entrenables.map((x) => x.id), [100, 101, 102],
+      'els millors en l\'habilitat entrenada, i només dels que NO han entrat a l\'onze');
+    const dins = new Set(r.onze.map((l) => l.jugador?.id));
+    assert.ok(r.entrenables.every((x) => !dins.has(x.id)), 'ixen del residu, no es dupliquen');
+  },
+  'P6.cap_a_temps': async () => {
+    // Un de 30 anys amb la mateixa creativitat que els joves NO entra: la pròxima pujada li
+    // cau passat el límit, i un entrenable és per a vendre'l car quan haja crescut.
+    const vell = j6(200, { sou: 500, edat_anys: 30, creativitat: 9 });
+    const r = await onzeEstructura(dbFix, 1, [...VELLS6, vell], 10291);
+    assert.ok(!r.entrenables.some((x) => x.id === 200), 'la pujada li cau passat el límit');
+  },
+  'P6.futur_entrenador': async () => {
+    const r = await est6();
+    assert.equal(r.futur_entrenador, null,
+      'amb experiència per davall del primer esglaó de la taula, no s\'assenyala ningú');
+    const ambExp = [...VELLS6.map((x) => ({ ...x, experiencia: 1 })),
+      { ...j6(300, { sou: 500 }), experiencia: 7, lideratge: 4 }];
+    const r2 = await onzeEstructura(dbFix, 1, ambExp, 10291);
+    assert.equal(r2.futur_entrenador?.id, 300, 'el del residu amb més experiència');
+  },
+  'P6.porter_suplent': async () => {
+    const r = await est6();
+    // Cap dels sobrants té la porteria estrictament per damunt de la resta.
+    assert.equal(r.porter_suplent, null);
+    const ambPorter = [...VELLS6, j6(301, { porteria: 6, sou: 700 }), j6(302, { porteria: 5, sou: 300 })];
+    const r2 = await onzeEstructura(dbFix, 1, ambPorter, 10291);
+    assert.equal(r2.porter_suplent?.id, 302, 'entre porters, mana el SOU: eixe lloc no compra res');
+  },
+  'P6.es_porter': async () => {
+    // ESTRICTAMENT per damunt: un descart amb TOTES les habilitats iguals no és porter.
+    const pla = [...VELLS6, j6(303, { porteria: 1, sou: 100 })];
+    const r = await onzeEstructura(dbFix, 1, pla, 10291);
+    assert.notEqual(r.porter_suplent?.id, 303, 'tot a 1 no és un porter, és un descart');
+  },
+  'P6.venda': async () => {
+    const r = await est6();
+    const tots = new Set([...r.onze.map((l) => l.jugador?.id).filter(Boolean),
+      ...r.entrenables.map((x) => x.id), ...r.venda.map((x) => x.id), ...r.despatxar.map((x) => x.id),
+      ...(r.futur_entrenador ? [r.futur_entrenador.id] : []),
+      ...(r.porter_suplent ? [r.porter_suplent.id] : [])]);
+    assert.equal(tots.size, VELLS6.length + JOVES6.length, 'tots els jugadors caben en un grup i només un');
+    assert.ok(r.venda.length > 0, 'i qui no ocupa cap lloc del pla se\'n va');
+  },
+  'P6.despatxar': async () => {
+    const r = await est6();
+    // Sense cap subhasta deserta desada, ningú va a despatxar: és un FET, no una previsió.
+    assert.deepEqual(r.despatxar, []);
+  },
+  'P6.grup': async () => {
+    const r = await est6();
+    const compta = new Map();
+    for (const g of r.grups.values()) compta.set(g, (compta.get(g) ?? 0) + 1);
+    assert.equal(compta.get('onze'), 11, 'els onze ocupants porten el grup «onze»');
+    assert.equal(compta.get('entrenable'), r.entrenables.length);
+    assert.equal([...r.grups.keys()].length, new Set(r.grups.keys()).size, 'un jugador, un grup');
+  },
+  'P6.entrenen': async () => {
+    const r = await est6();
+    const dels100 = r.onze.filter((l) => l.entrena && l.jugador).map((l) => l.jugador.id);
+    assert.deepEqual([...r.entrenen].sort((a, b) => a - b),
+      [...new Set([...dels100, ...r.entrenables.map((x) => x.id)])].sort((a, b) => a - b),
+      'ocupants dels llocs que entrenen ∪ entrenables');
   },
 
   // PAS 7 — vendre. SENSE estimació de preu (v3.1): la subhasta decidix.

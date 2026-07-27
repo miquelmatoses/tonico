@@ -1,7 +1,6 @@
 // Tonico — ELS DOS ONZES a la pantalla d'Alineació.
 import { dosOnzes } from '../../lib/dos_onzes.js';
 import { economia } from '../../lib/economia.js';
-import { sqlCategoriaVigent } from '../../lib/categoria_vigent.js';
 
 export async function onRequestGet({ env, data }) {
   const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id=? AND tipus='senior'").bind(data.usuari.id).first();
@@ -12,10 +11,8 @@ export async function onRequestGet({ env, data }) {
   const { results: jugadors } = await env.DB.prepare(
     `SELECT j.id, j.nom, j.especialitat, ij.posicio_ultim_partit AS posicio, ij.edat_anys, ij.edat_dies,
             ij.sou, ij.tsi, ij.experiencia, ij.lideratge, ij.lesio, ij.transferible,
-            ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada,
-            c.categoria
+            ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada
        FROM instantanies_jugadors ij JOIN jugadors j ON j.id = ij.jugador_id
-       LEFT JOIN ${sqlCategoriaVigent(['categoria'])} c ON c.jugador_id = j.id
       WHERE ij.instantania_id = ?`
   ).bind(inst.id).all();
 

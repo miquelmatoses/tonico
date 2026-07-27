@@ -6,7 +6,6 @@ import { readFileSync } from 'node:fs';
 import { nova } from './_d1shim.mjs';
 import { modelSenior, modelJuvenil } from '../lib/adaptador.js';
 import { desar, carregaAncora } from '../functions/api/pujar.js';
-import { classificaEquip } from '../lib/orquestra_classificacio.js';
 import { generaAlertes, estatRevisio } from '../lib/orquestra_alertes.js';
 
 const { sqlite, db } = nova(import.meta.url);
@@ -22,7 +21,6 @@ const actives = () => sqlite.prepare("SELECT COUNT(*) n FROM alertes WHERE estat
 const teMinima = () => sqlite.prepare("SELECT COUNT(*) n FROM alertes a JOIN regles r ON r.id=a.regla_id WHERE r.codi='ALR_PLANTILLA_JUVENIL_MINIMA' AND a.estat IN ('nova','vista')").get().n;
 
 await desar(db, 1, 'senior', modelSenior(senior, '2026-07-18'), ancora);
-await classificaEquip(db, 1, 1, 'competitiva');
 const youth9 = [youth[0], ...youth.slice(1, 10)];   // capçalera + 9 juvenils (mínim = 10)
 await desar(db, 1, 'juvenil', modelJuvenil(youth9, '2026-07-18'), ancora);
 

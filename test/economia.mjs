@@ -10,7 +10,6 @@ import { readFileSync } from 'node:fs';
 import { nova } from './_d1shim.mjs';
 import { modelSenior } from '../lib/adaptador.js';
 import { desar, carregaAncora } from '../functions/api/pujar.js';
-import { classificaEquip } from '../lib/orquestra_classificacio.js';
 import { economia } from '../lib/economia.js';
 
 const { sqlite, db } = nova(import.meta.url);
@@ -24,7 +23,6 @@ const senior = readFileSync(new URL('../data/fixtures/players.csv', import.meta.
   .replace(/\r/g, '').split('\n').filter((l) => l !== '').map((l) => l.split(','));
 
 await desar(db, 1, 'senior', modelSenior(senior, '2026-07-18'), ancora);
-await classificaEquip(db, 1, 1, 'competitiva');
 
 // ── 1. Sense declarar res: la nòmina ja es DERIVA, però no hi ha flux ni caixa ──
 let e = await economia(db, 1, '2026-07-26');

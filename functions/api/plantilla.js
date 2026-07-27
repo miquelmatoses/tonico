@@ -1,11 +1,8 @@
-// Tonico — vista de plantilla sènior: jugadors de l'última instantània amb la
-// seua categoria vigent (puntuació + justificació + origen).
-// La PUNTUACIÓ es DERIVA de la instantània actual i la config (no del valor desat
-// a categories_jugador, que pot ser ranci/null en desplaçats estables).
+// Tonico — vista de plantilla sènior: els jugadors de l'última instantània, repartits en
+// les sis seccions que derivа l'assignació d'estructura. Ja no hi ha CATEGORIA: el PAS 6
+// decidia qui es quedava abans de saber qui ocupa cada lloc, i cap secció el gastava.
 import { temporadaOperativa } from '../../lib/calendari.js';
-import { avaluaPuntuacio } from '../../lib/classificador.js';
 import { carregaConfigPla } from '../../lib/config_pla.js';
-import { sqlCategoriaVigent } from '../../lib/categoria_vigent.js';
 import { desertsDesats } from '../../lib/vendes.js';
 import { onzeEstructura } from '../../lib/onze_estructura.js';
 import { economia } from '../../lib/economia.js';
@@ -29,13 +26,10 @@ export async function onRequestGet({ env, data }) {
     `SELECT j.id, j.nom, j.especialitat, ij.posicio_ultim_partit AS posicio,
             ij.edat_anys, ij.edat_dies, ij.tsi, ij.sou, ij.experiencia, ij.lideratge,
             ij.lleialtat, ij.qualificacio_ultim_partit, ij.lesio, ij.transferible,
-            ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada,
-            c.categoria, c.puntuacio, c.justificacio, c.origen
+            ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada
        FROM instantanies_jugadors ij
        JOIN jugadors j ON j.id = ij.jugador_id
-       LEFT JOIN ${sqlCategoriaVigent(['categoria', 'puntuacio', 'justificacio', 'origen'])} c ON c.jugador_id = j.id
-      WHERE ij.instantania_id = ?
-      ORDER BY c.puntuacio DESC`
+      WHERE ij.instantania_id = ?`
   ).bind(inst.id).all();
 
   // DESPATXABLE viu ací i no a la fitxa de venda: és la decisió de qui es queda a la
@@ -43,26 +37,12 @@ export async function onRequestGet({ env, data }) {
   // entre instantànies, que es perd a la pujada següent. Només val per als sobrants: per a un
   // retingut, una subhasta deserta no és un veredicte sobre el jugador.
 
-  const { results: intercanvis } = await env.DB.prepare(
-    `SELECT x.id, x.categoria, x.diferencia, x.desti_eixent, x.puntuacio_entrant, x.puntuacio_eixent,
-            je.nom AS entrant, js.nom AS eixent
-       FROM intercanvis x
-       LEFT JOIN jugadors je ON je.id = x.entrant_id
-       JOIN jugadors js ON js.id = x.eixent_id
-      WHERE x.usuari_id = ? AND x.estat = 'pendent' ORDER BY x.diferencia DESC`
-  ).bind(data.usuari.id).all();
-
-  // Config de la plantilla per DERIVAR la puntuació de cada jugador a la seua categoria.
+  // L'ORDE de cada secció el posa la mateixa secció (l'onze va per formació, els entrenables
+  // per setmanes, la venda pel sobrecost). Ací ja no s'ordena res: ordenar per la puntuació
+  // de la categoria era ordenar onze jugadors mesurats amb fórmules distintes.
   const pla = await env.DB.prepare('SELECT plantilla FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
-  const config = pla ? await carregaConfigPla(env.DB, pla.plantilla) : { categories: [], params: {} };
-  const specCat = new Map(config.categories.map((c) => [c.categoria, c.parametres?.puntuacio]));
+  const config = pla ? await carregaConfigPla(env.DB, pla.plantilla) : { params: {} };
   const valorEsp = config.params?.valor_especialitats || [];
-  for (const j of jugadors) {
-    const spec = specCat.get(j.categoria);
-    const p = spec ? avaluaPuntuacio(spec, j, config.params) : null;
-    j.puntuacio = p != null ? p : (j.puntuacio ?? null);     // deriva; si la categoria no puntua, conserva el desat
-  }
-  jugadors.sort((a, b) => (b.puntuacio ?? -Infinity) - (a.puntuacio ?? -Infinity));
 
   // L'ONZE TITULAR: tots els jugadors col·locats lloc a lloc, no una categoria decidida abans.
   // Els llocs es recorren per pes i cada jugador n'ocupa un: els que sobren són el residu, no
@@ -78,7 +58,7 @@ export async function onRequestGet({ env, data }) {
     j.despatxar = est?.grups.get(j.id) === 'despatxar';
   }
 
-  return json({ instantania: inst, jugadors, intercanvis, valor_especialitats: valorEsp,
+  return json({ instantania: inst, jugadors, valor_especialitats: valorEsp,
     onze_titular: est ? est.onze.map((l) => ({ bucket: l.bucket, habilitat: l.habilitat,
       entrena: !!l.entrena, nivell_objectiu: l.nivell_objectiu, diferencia: l.diferencia, senyal: l.senyal,
       jugador_id: l.jugador?.id ?? null })) : null,

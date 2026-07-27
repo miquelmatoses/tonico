@@ -29,11 +29,7 @@ export async function onRequestGet({ request, env, data }) {
     return { ...s, pops };
   });
 
-  const { results: categories } = await env.DB.prepare(
-    'SELECT categoria, origen, puntuacio, justificacio, data_assignacio FROM categories_jugador WHERE jugador_id = ? ORDER BY id'
-  ).bind(id).all();
-
-  return json({ jugador, instantanies, categories });
+  return json({ jugador, instantanies });
 }
 
 const json = (obj, status = 200) =>

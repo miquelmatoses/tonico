@@ -88,7 +88,6 @@ const families = {
   // moure el nivell és soroll amb un altre nom; l'espai de la píndola es queda buit.
   'flux.accio_': ['contracta','contracta_n','renova','renova_al_nivell_n','no_renoves'],
   'estoc': ['col_que', 'col_per_que', 'col_cost', 'col_estat'],
-  'categoria': ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'],
   // Els 16 nivells d'habilitat, pel NOM de Hattrick. L'escala de Tonico compta des d'on el sou
   // deixa de ser el mínim: nivell 1 = «Insuficient» (HT 5), o siga Tonico n = HT n+4.
   'nivell_ht': Array.from({ length: 16 }, (_, i) => String(i + 1)),
@@ -114,8 +113,7 @@ const families = {
   // Columnes construïdes des d'arrays (t('prefix.' + k)):
   'personal': ['tipus', 'nivell', 'sou', 'data_fi_contracte'],
   'juvenils': ['col_jugador', 'col_nivell', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_potencial', 'col_promocio', 'col_aterratge', 'col_estat'],
-  'plantilla': ['col_jugador', 'col_posicio', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_tsi', 'col_puntuacio', 'col_categoria'],
-  'jugador': ['col_data', 'col_temporada', 'col_edat', 'col_tsi', 'col_sou', 'col_habilitats', 'col_pops', 'col_categoria', 'col_origen', 'col_puntuacio'],
+  'jugador': ['col_data', 'col_temporada', 'col_edat', 'col_tsi', 'col_sou', 'col_habilitats', 'col_pops'],
 };
 for (const [prefix, vals] of Object.entries(families)) for (const v of vals) {
   const k = prefix.endsWith('_') ? prefix + v : `${prefix}.${v}`;   // capital_/estat_ uneixen amb «_»
@@ -224,7 +222,6 @@ const EXEMPTS_PLURAL = new Set([
   'comu.lesionat_durada',              // «🤕 {n} setm.» — abreviatura invariable
   'alerta.lesio_venda',                // «({setmanes} setm.)» — idem
   'alerta.llistar_lesionat',           // idem
-  'moviments.historial',               // «Historial ({n})» — compte entre parèntesis
   'alineacio.onze_sub',                // «{n} entrenant» — gerundi invariable
   'juvenils.onze_repartiment',           // comptes + gerundis, cap plural que concorde
   'vendes.retingut_cobertura',         // «{n} de camp» — sense nom en plural
