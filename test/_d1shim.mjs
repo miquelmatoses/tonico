@@ -108,5 +108,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/085_velocitat_entrenament.sql'));
   sqlite.exec(src('../schema/086_seccio_entrenament.sql'));
   sqlite.exec(src('../schema/087_finestra_entrenable.sql'));
+  sqlite.exec(src('../schema/088_preus_referencia.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

@@ -44,6 +44,8 @@ const CAMP = {
   davanter: { y: 27, cls: 'dv', xs: { 1: [50], 2: [38, 62], 3: [28, 50, 72] } },
 };
 const BUCKET_SIGLA = { porter: 'POR', defensa: 'DC', mc: 'MC', extrem: 'EX', davanter: 'DV' };
+// L'habilitat que mesura cada lloc: per a dir «un de creativitat 9» i no «un de mc 9».
+const BUCKET_HAB = { porter: 'porteria', defensa: 'defensa', mc: 'creativitat', extrem: 'extrem', davanter: 'anotacio' };
 // slots: [{bucket, jugador?/nom}]; opts.anell(s)→''|'ple'|'mig'|'doble'|'descobriment'|'buit',
 // opts.nom(s), opts.titol(s). El color del xip és la POSICIÓ; l'ANELL és l'entrenament.
 function campDeJoc(slots, opts) {
@@ -747,12 +749,42 @@ function bucleEstoc(main, e) {
 
 export async function mercat(main) {
   capcalera(main, 7, 'mercat');
-  const { filtres, estoc } = await api('/api/mercat');
+  const { filtres, estoc, necessaris } = await api('/api/mercat');
   if (estoc) bucleEstoc(main, estoc);
   const pres = (v) => (v > 0 ? diners(v) : t('mercat.sense_pressupost'));
   // ELS FILTRES SÓN INSTRUCCIONS, no una llista. Miquel se'ls ha de copiar al cercador de HT,
   // així que cada camp va etiquetat i separat en compte d'amagat dins d'una frase.
   const utils = filtres.filter((f) => f.falten > 0);
+  // ── QUÈ FA FALTA FITXAR, i quant costa ──────────────────────────────────────────────
+  // El preu no es deriva: a Hattrick el paga un altre mànager. Ací es diu QUÈ buscar i es
+  // demana el número que Miquel veja a les últimes transferències. Sense eixe número la
+  // necessitat es veu, però «què compensa comprar» no la pot decidir.
+  if (necessaris?.length) {
+    const cn = card(t('mercat.necessaris_titol'), necessaris.length, 'llima');
+    const cnc = el('div', { class: 'card-cos' });
+    for (const n of necessaris) {
+      const preu = el('input', { type: 'number', 'aria-label': t('mercat.preu_ref') });
+      if (n.preu != null) preu.value = n.preu;
+      const desar = () => api('/api/mercat', { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ clau: n.clau, preu: preu.value || null }) }).then(() => location.reload());
+      preu.addEventListener('change', desar);
+      const etiqueta = n.tipus === 'porter_suplent' ? t('mercat.nec_porter_suplent')
+        : n.tipus === 'entrenable' ? tp('mercat.nec_entrenable', n.quants, { n: n.quants, nivell: n.nivell })
+          : tp('mercat.nec_lloc', n.quants, { n: n.quants, lloc: t('hab.' + (BUCKET_HAB[n.bucket] || n.bucket)), nivell: n.nivell });
+      cnc.append(el('div', { class: 'filtre' },
+        el('div', { class: 'filtre-cap' },
+          el('b', { text: etiqueta }),
+          el('span', { class: 'filtre-falten', text: n.prioritat === null ? '' : t('mercat.nec_' + n.motiu) })),
+        el('div', { class: 'filtre-camps' },
+          el('label', { class: 'decl-camp' },
+            el('span', { class: 'decl-et', text: t('mercat.preu_ref') }), preu)),
+        ...(n.preu_vell ? [el('p', { class: 'desquadre', text: t('mercat.preu_vell', { data: n.preu_data }) })] : [])));
+    }
+    cn.append(cnc);
+    cn.append(cos(el('p', { class: 'nota-peu', text: t('mercat.necessaris_nota') })));
+    main.append(cn);
+  }
+
   const cf = card(t('mercat.filtres_titol'), utils.length, 'llima');
   const cfc = el('div', { class: 'card-cos' });
   if (utils.length) {
