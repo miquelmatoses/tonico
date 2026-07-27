@@ -78,7 +78,11 @@ export async function onRequestGet({ env, data }) {
   return json({ instantania: inst, jugadors, intercanvis, valor_especialitats: valorEsp,
     onze_titular: est ? est.onze.map((l) => ({ bucket: l.bucket, habilitat: l.habilitat,
       entrena: !!l.entrena, nivell_objectiu: l.nivell_objectiu,
-      jugador_id: l.jugador?.id ?? null })) : null });
+      jugador_id: l.jugador?.id ?? null })) : null,
+    // ENTRENABLES: els joves que entrenaran als llocs del motor quan els titulars descansen, i
+    // que es venen cars quan han crescut. Ixen del residu de l'onze, no d'una categoria.
+    entrenables: est ? { habilitat: est.habilitat_entrenament, places: est.entrenables_max,
+      jugadors: est.entrenables.map((j) => j.id) } : null });
 }
 
 const json = (obj, status = 200) =>

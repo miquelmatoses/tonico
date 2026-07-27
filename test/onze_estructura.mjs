@@ -71,9 +71,11 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
     INSERT INTO plans (usuari_id, plantilla, fase_actual) VALUES (1,'competitiva','competitiva');
     INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'E','senior');
   `);
+  // Amb EDAT: sense ella tots passaven per joves i la prova dels entrenables no volia dir res.
+  // Estos són els de sempre, ja passada l'edat de pic de venda.
   const plantilla = Array.from({ length: 14 }, (_, i) => ({
-    id: i + 1, nom: 'J' + (i + 1), sou: 1000,
-    porteria: i === 0 ? 9 : 1, defensa: i < 4 ? 8 - i : 1,
+    id: i + 1, nom: 'J' + (i + 1), sou: 1000, edat_anys: 26, edat_dies: 0,
+    porteria: i === 0 ? 9 : 1, defensa: i > 0 && i < 4 ? 8 - i : 1,
     creativitat: i >= 4 && i < 8 ? 9 - i % 4 : 1,
     extrem: i >= 8 && i < 11 ? 7 : 1, anotacio: i >= 11 ? 8 : 1,
   }));
@@ -99,6 +101,35 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
     'amb 3 davanters i 2 defenses, l\'atac no pot quedar per davall de la defensa');
   const sense = await onzeEstructura(db, 1, plantilla, null);
   assert.equal(sense.onze[0].nivell_objectiu, null, 'sense sostre de sou, cap objectiu inventat');
+
+  // ── 7. ENTRENABLES: els joves del motor, trets del RESIDU de l'onze. Tres, no cinc: només
+  // els llocs que entrenen AL 100% (els mig centres) i un per cada partit extra de la setmana.
+  // Els extrems entrenen al 50% i no compten.
+  // Un titular JOVE i bo en creativitat: si els entrenables no isqueren del RESIDU sinó de
+  // tota la plantilla, este eixiria als dos llocs alhora.
+  plantilla[4] = { ...plantilla[4], edat_anys: 18, creativitat: 12 };
+  const joves = [...plantilla, ...Array.from({ length: 4 }, (_, i) => ({
+    id: 100 + i, nom: 'Jove' + i, sou: 500, edat_anys: 18, edat_dies: 0,
+    porteria: 1, defensa: 1, creativitat: 6 - i, extrem: 1, anotacio: 1,
+  }))];
+  const r = await onzeEstructura(db, 1, joves, 10291);
+  assert.equal(r.entrenables_max, 3, 'tres places: 3 llocs al 100% × (2 partits − 1)');
+  assert.equal(r.habilitat_entrenament, 'creativitat', 'i es mesuren en el que s\'entrena');
+  assert.deepEqual(r.entrenables.map((j) => j.id), [100, 101, 102],
+    'els millors en creativitat dels que NO han entrat a l\'onze, per orde');
+  const dinsOnze = new Set(r.onze.map((l) => l.jugador?.id));
+  assert.ok(r.entrenables.every((j) => !dinsOnze.has(j.id)),
+    'cap entrenable està a l\'onze: ixen del residu, no es dupliquen');
+  assert.ok(dinsOnze.has(plantilla[4].id) && !r.entrenables.some((j) => j.id === plantilla[4].id),
+    'i el titular jove amb la millor creativitat es queda a l\'onze, no baixa a entrenable');
+
+  // I els VELLS no hi entren, per molta creativitat que tinguen: es venen cars quan creixen, i
+  // un de 26 anys ja no creix.
+  const vell = [...plantilla, { id: 200, nom: 'Vell', sou: 500, edat_anys: 30, edat_dies: 0,
+    porteria: 1, defensa: 1, creativitat: 9, extrem: 1, anotacio: 1 }];
+  const r2 = await onzeEstructura(db, 1, vell, 10291);
+  assert.ok(!r2.entrenables.some((j) => j.id === 200),
+    'passada l\'edat de pic de venda, ja no és entrenable');
 }
 
 console.log('OK — l\'onze d\'estructura: tots els jugadors, lloc a lloc, un jugador un lloc');

@@ -340,7 +340,8 @@ export async function plantilla(main) {
   // una categoria decidida abans sinó el resultat de col·locar TOTS els jugadors lloc a lloc.
   const ORDRE = ['rotatiu', 'titular', 'porter', 'futur_entrenador', 'cos', 'venda'];
   const CATS = ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'];
-  const { instantania, jugadors, valor_especialitats: valorEsp = [], onze_titular: onze } = await api('/api/plantilla');
+  const { instantania, jugadors, valor_especialitats: valorEsp = [], onze_titular: onze,
+    entrenables } = await api('/api/plantilla');
   if (!instantania) { main.append(el('p', { text: t('plantilla.buit') })); return; }
   main.append(el('p', { text: t('plantilla.instantania', { temporada: instantania.temporada, setmana: instantania.setmana_temporada, data: instantania.data }) }));
   const hab = (j) => `PO${j.porteria} DF${j.defensa} CR${j.creativitat} EX${j.extrem} PA${j.passades} AN${j.anotacio} PP${j.pilota_aturada}`;
@@ -372,7 +373,7 @@ export async function plantilla(main) {
       // i va a la mateixa fila que l'ocupant per a poder-los llegir d'un colp d'ull.
       const vara = el('div', { class: 'vara' },
         el('span', { class: 'vara-hab', text: t('hab.' + l.habilitat) }),
-        el('b', { text: l.nivell_objectiu ? t('nivell_ht.' + l.nivell_objectiu) : '—' }));
+        el('b', { text: l.nivell_objectiu ?? '—' }));
       return el('div', { class: j ? 'fila' : 'fila buit' },
         el('div', { class: 'fila-qui' },
           el('div', { class: posCls(sigla), text: sigla }),
@@ -385,10 +386,41 @@ export async function plantilla(main) {
     main.append(tarja);
   }
 
+  // ENTRENABLES: van just darrere de l'onze perquè són la seua continuació — els joves que
+  // ocuparan els llocs del motor quan els titulars descansen. Es mesuren contra la MATEIXA
+  // vara que eixos llocs, que és el que diu si el jove servix o no.
+  const enEntrenables = new Set(entrenables?.jugadors || []);
+  if (entrenables?.places) {
+    const perId = new Map(jugadors.map((j) => [j.id, j]));
+    const nivell = onze?.find((l) => l.habilitat === entrenables.habilitat)?.nivell_objectiu ?? null;
+    const tarja = card(t('plantilla.entrenables'), entrenables.places);
+    const files = entrenables.jugadors.map((id) => perId.get(id)).filter(Boolean);
+    for (const j of files) tarja.append(filaSegura(() => el('div', { class: 'fila' },
+      el('div', { class: 'fila-qui' },
+        el('div', { class: posCls('MC'), text: t('plantilla.entrenable_curt') }),
+        el('div', {}, el('div', { class: 'fila-nom', text: j.nom }),
+          el('div', { class: 'fila-meta' },
+            el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` })))),
+      el('div', { class: 'punts', text: decimal(j.puntuacio) }),
+      el('div', { class: 'tsi', text: 'TSI ' + (j.tsi ?? '—') }),
+      el('div', { class: 'skills', text: hab(j) }),
+      el('div', { class: 'vara' },
+        el('span', { class: 'vara-hab', text: t('hab.' + entrenables.habilitat) }),
+        el('b', { text: nivell ?? '—' }))), 1));
+    // Les places que no s'omplin es diuen: una plaça d'entrenament buida és entrenament perdut.
+    for (let i = files.length; i < entrenables.places; i++) tarja.append(el('div', { class: 'fila buit' },
+      el('div', { class: 'fila-qui' },
+        el('div', { class: posCls('MC'), text: t('plantilla.entrenable_curt') }),
+        el('div', {}, el('div', { class: 'fila-nom', text: t('plantilla.lloc_buit') }))),
+      el('div', { class: 'punts', text: '—' }), el('div', { class: 'tsi' }),
+      el('div', { class: 'skills' }), el('div', { class: 'vara' })));
+    main.append(tarja);
+  }
+
   // Una targeta per categoria, amb files denses (el disseny: xip de posició, nom,
   // meta amb píndoles, punts, TSI i habilitats en monoespai).
   for (const c of ORDRE) {
-    const grup = jugadors.filter((j) => j.categoria === c && !enOnze.has(j.id));
+    const grup = jugadors.filter((j) => j.categoria === c && !enOnze.has(j.id) && !enEntrenables.has(j.id));
     if (!grup.length) continue;
     const tarja = card(t('categoria.' + c), grup.length, c === 'core' ? 'llima' : c === 'venda' ? 'roig' : null);
     for (const j of grup) tarja.append(filaSegura(() => {

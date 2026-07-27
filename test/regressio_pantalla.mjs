@@ -181,6 +181,17 @@ assert.ok(/if \(!files \|\| !files\.length\) return null;/.test(vista),
     assert.ok(/text-align:\s*right/.test(regla), `.${classe}: els números van alineats a la dreta`);
   }
 
+  // LES COLUMNES DE NÚMERO NO PODEN ESCLAFAR-SE. `.fila` porta dues cel·les de xifres (punts i
+  // TSI) entre columnes elàstiques: si van amb `auto` pelat i una cel·la nova s'emporta l'espai,
+  // la columna baixa per davall del text, la xifra alineada a la dreta se n'ix per l'esquerra i
+  // la TSI ix tallada («T: 2040»). Han de dur un mínim propi.
+  {
+    const plantilla = css.match(/\.fila\s*\{[^}]*grid-template-columns:\s*([^;]+);/)?.[1] || '';
+    const ambMinim = [...plantilla.matchAll(/minmax\(\s*(\d+)px/g)].length;
+    assert.ok(ambMinim >= 2,
+      `.fila: les columnes de número necessiten un mínim en px (n'hi ha ${ambMinim})\n  ${plantilla}`);
+  }
+
   // I cap pista pot tindre un mínim FIX més ample que un telèfon estret (360 − 40 de marges):
   // la pista no encongix per davall del seu mínim i la pàgina es desplaça de costat. L'idioma
   // segur és `minmax(min(Npx, 100%), 1fr)`.

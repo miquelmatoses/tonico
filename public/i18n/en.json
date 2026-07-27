@@ -572,5 +572,7 @@
   "flux.sense_sou_1": "You haven't told me 1 member's wage, so that total is incomplete.",
   "flux.sense_sou_n": "You haven't told me {n} members' wages, so that total is incomplete.",
   "plantilla.onze_titular": "Starting eleven",
-  "plantilla.lloc_buit": "— no player for this slot —"
+  "plantilla.lloc_buit": "— no player for this slot —",
+  "plantilla.entrenables": "Trainees",
+  "plantilla.entrenable_curt": "TRN"
 }

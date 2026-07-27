@@ -158,7 +158,11 @@ button { font-family: var(--font); cursor: pointer; }
 .card-cos { padding: 16px; }
 
 /* ══ FILA DE JUGADOR (plantilla, juvenils, vendes) ══ */
-.fila { display: grid; grid-template-columns: minmax(0,2.4fr) auto auto minmax(0,1.6fr) auto;
+/* Les columnes de NÚMERO porten mínim propi: si no, la cel·la s'esclafa per davall del text,
+   la xifra alineada a la dreta se n'ix per l'esquerra i la columna es llig dentada. Qui cedix
+   espai és `.skills`, que ja té ellipsi. */
+.fila { display: grid;
+  grid-template-columns: minmax(0,2.4fr) minmax(58px,auto) minmax(76px,auto) minmax(0,1.6fr) auto;
   align-items: center; gap: 12px; padding: 9px 16px; border-top: 1px solid var(--vora-suau); }
 .fila:first-child { border-top: 0; }
 .fila:nth-child(even) { background: #fbf9f0; }
@@ -311,7 +315,10 @@ ul { margin: 0 0 12px; padding-left: 18px; }
 
 /* ══ RESPONSIU ══ */
 @media (max-width: 60rem) {
-  .fila { grid-template-columns: 1fr auto; gap: 8px; }
+  /* Al mòbil se n'amaguen dues, o siga que en queden TRES visibles: qui, punts i l'última
+     (la vara o el selector de categoria). Amb dues pistes, la tercera se n'anava a una fila
+     nova i la targeta es trencava. */
+  .fila { grid-template-columns: 1fr auto auto; gap: 8px; }
   .fila .skills, .fila .tsi { display: none; }
   .hdr-caixa { display: none; }
 }

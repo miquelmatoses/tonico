@@ -572,5 +572,7 @@
   "flux.sense_sou_1": "No m'has dit el sou d'1 membre, així que eixa suma està coixa.",
   "flux.sense_sou_n": "No m'has dit el sou de {n} membres, així que eixa suma està coixa.",
   "plantilla.onze_titular": "Onze titular",
-  "plantilla.lloc_buit": "— cap jugador per a este lloc —"
+  "plantilla.lloc_buit": "— cap jugador per a este lloc —",
+  "plantilla.entrenables": "Entrenables",
+  "plantilla.entrenable_curt": "ENT"
 }
