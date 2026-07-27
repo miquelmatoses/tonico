@@ -220,7 +220,7 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   // se l'inventa. El desempat només pot actuar quan el càlcul es pot fer.
   // I el 42 porta setmanes al seu nivell: se li ha vist arribar-hi fa temps.
   sqlite.exec(`
-    INSERT OR REPLACE INTO personal_membres (usuari_id, rol, tipus, nivell, sou) VALUES (1,'entrenador','entrenador',6,5000);
+    INSERT OR REPLACE INTO personal_membres (usuari_id, rol, tipus, nivell, sou, coach_entrenament) VALUES (1,'entrenador','entrenador',NULL,5000,'passable');
     INSERT OR IGNORE INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (42,1,942,'Z42');
     INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES
       (90,1,'2026-04-01',83,1),(91,1,'2026-06-01',83,9);

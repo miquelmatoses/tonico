@@ -106,5 +106,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/083_escala_habilitats.sql'));
   sqlite.exec(src('../schema/084_grups_derivats.sql'));
   sqlite.exec(src('../schema/085_velocitat_entrenament.sql'));
+  sqlite.exec(src('../schema/086_seccio_entrenament.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

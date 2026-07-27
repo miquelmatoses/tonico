@@ -477,9 +477,81 @@ export async function plantilla(main) {
   if (aDespatxar?.length) main.append(el('p', { class: 'nota-peu', text: t('plantilla.despatxar_nota') }));
 }
 
-// ── 5. Juvenils ──
+// ── 5. Entrenament ──
+// EL QUE S'ENTRENA ES PRESCRIU. Ací no hi ha res a triar: ix del pipeline (quines habilitats
+// alimenten els llocs que entrenen). El que SÍ que es declara és l'ENTRENADOR, perquè el seu
+// nivell entra a la velocitat d'entrenament i no es deriva de res.
+//
+// Viu ací i no a Personal: no és especialista, no gasta cap de les 4 places, no cobra per
+// l'escala d'especialistes i no té contracte de 16 setmanes.
+export async function entrenament(main) {
+  capcalera(main, 5, 'entrenament');
+  const d = await api('/api/entrenament');
+
+  // 1 · La PRESCRIPCIÓ, que es llig i prou.
+  const c = card(t('entrenament.prescrit_titol'), null, 'llima');
+  c.append(el('div', { class: 'card-cos' },
+    el('p', { class: 'instruccio', text: d.prescrit?.skill
+      ? t('entrenament.posa', { a: t('hab.' + d.prescrit.skill), b: t('hab.' + d.prescrit.skill_b),
+          intensitat: d.intensitat, resistencia: d.resistencia })
+      : t('entrenament.sense_prescripcio') }),
+    el('p', { class: 'nota-peu', text: t('entrenament.prescrit_nota') })));
+  main.append(c);
+
+  // 2 · L'ENTRENADOR, que sí que es declara. El llapis obri l'editor, com a Configuració.
+  const e = d.entrenador || {};
+  const llapis = el('button', { type: 'button', class: 'b-icona', text: '✎',
+    title: t('entrenament.edita'), 'aria-label': t('entrenament.edita') });
+  const ce = card(t('entrenament.entrenador_titol'), null, null, llapis);
+  const cos_ = el('div', { class: 'card-cos' });
+  const fila = (clau, valor) => el('div', { class: 'graella-fila' },
+    el('b', { text: t('entrenament.' + clau) }), el('span', { class: 'graella-val', text: valor }));
+  cos_.append(
+    fila('nivell', e.coach_entrenament ? t('coach.' + e.coach_entrenament) : '—'),
+    fila('eficiencia', e.coach_entrenament && d.eficiencia?.[e.coach_entrenament] != null
+      ? percent(d.eficiencia[e.coach_entrenament]) : '—'),
+    fila('lideratge', e.coach_lideratge != null ? String(e.coach_lideratge) : '—'),
+    fila('sou', e.sou != null ? diners(e.sou) : '—'),
+    fila('assistents', tp('entrenament.assistents_n', d.assistents, { n: d.assistents })));
+  if (!e.coach_entrenament) cos_.append(el('p', { class: 'desquadre', text: t('entrenament.falta_entrenador') }));
+  ce.append(cos_);
+
+  // L'editor: el nivell ix de la taula d'eficiències, no d'una llista escrita ací.
+  const ed = el('div', { class: 'card-editor amagat' });
+  const f = el('form', { class: 'card-cos' });
+  const sel = el('select', { 'aria-label': t('entrenament.nivell') },   // precarrega
+    ...Object.keys(d.eficiencia || {}).map((k) => {
+      const o = el('option', { value: k, text: t('coach.' + k) });
+      if (k === e.coach_entrenament) o.setAttribute('selected', '');   // precarrega
+      return o;
+    }));
+  const num = (clau, val) => { const i = el('input', { type: 'number', 'aria-label': t('entrenament.' + clau) });
+    if (val != null) i.value = val; return i; };
+  const lid = num('lideratge', e.coach_lideratge);
+  const sou = num('sou', e.sou);
+  f.append(el('div', { class: 'form-graella' },
+    el('label', {}, t('entrenament.nivell'), sel),
+    el('label', {}, t('entrenament.lideratge'), lid),
+    el('label', {}, t('entrenament.sou'), sou)),
+    el('button', { type: 'submit', class: 'b-prim', text: t('entrenament.desa') }));
+  f.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    await api('/api/entrenament', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ coach_entrenament: sel.value, coach_lideratge: lid.value || null, sou: sou.value || null }) });
+    location.reload();
+  });
+  ed.append(f);
+  ce.append(ed);
+  llapis.addEventListener('click', () => {
+    const obert = ed.classList.toggle('amagat');
+    llapis.classList.toggle('actiu', !obert);
+  });
+  main.append(ce);
+}
+
+// ── 6. Juvenils ──
 export async function juvenils(main) {
-  capcalera(main, 5, 'juvenils');
+  capcalera(main, 6, 'juvenils');
   const ESTATS = ['seguiment', 'elegit', 'cua_eixida'];
   const val = (v) => (v == null ? '-' : v === 'desconegut' ? t('juvenils.desconegut') : v);
   const d = await api('/api/juvenils');
@@ -696,7 +768,7 @@ function bucleEstoc(main, e) {
 }
 
 export async function mercat(main) {
-  capcalera(main, 6, 'mercat');
+  capcalera(main, 7, 'mercat');
   const { filtres, estoc } = await api('/api/mercat');
   if (estoc) bucleEstoc(main, estoc);
   const pres = (v) => (v > 0 ? diners(v) : t('mercat.sense_pressupost'));
@@ -802,7 +874,7 @@ const graellaAmbFiles = (classe, capçaleres, files) => {
 
 const eur = (obj, ...keys) => ambXifres(obj, keys);   // àlies curt: els noms de clau són els diners
 export async function economia(main) {
-  capcalera(main, 7, 'economia');
+  capcalera(main, 8, 'economia');
   const { economia: e } = await api('/api/finances');
   // Les xifres del PAS 3: ESTOC (la caixa) i FLUX (i el sou que sosté). Ja no hi ha targeta
   // de «disponible per a comprar»: sense reserva d'estoc era la caixa dita dues vegades.
@@ -943,7 +1015,7 @@ function formEstadi(main, e) {
 
 // ── 8. Pla mestre ──
 export async function configuracio(main) {
-  capcalera(main, 8, 'configuracio');
+  capcalera(main, 9, 'configuracio');
   const { config, falten } = await api('/api/config');
 
   // UN LLAPIS, no un segon panell. El formulari repetia les mateixes sis dades just davall de
@@ -1143,7 +1215,7 @@ function plaFlux(main, p) {
 }
 
 export async function personal(main) {
-  capcalera(main, 9, 'personal');
+  capcalera(main, 10, 'personal');
   const d = await api('/api/personal');
   if (d.error) { main.append(el('p', { text: t('personal.sense_config') })); return; }
   // El pla de places és l'ÚNICA llista de personal: cada píndola porta el seu llapis.
@@ -1197,7 +1269,7 @@ function formMembre(main) {
 const ACCEPTA_CSV = '.csv,.txt,text/csv,text/plain,application/csv,application/vnd.ms-excel,application/octet-stream';
 
 export function pujada(main, teAcademia = true) {
-  capcalera(main, 10, 'comparador');
+  capcalera(main, 11, 'comparador');
   const c = card(t('pujada.titol'), null, 'llima');
   const form = el('form', { class: 'card-cos' });
   const graella = el('div', { class: 'form-graella' });

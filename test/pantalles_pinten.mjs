@@ -71,7 +71,7 @@ globalThis.location = { href: '', reload() {} };
 const arrel = new URL('../public/', import.meta.url);
 const API = {};
 for (const nom of ['finances', 'personal', 'mercat', 'plantilla', 'juvenils', 'vendes',
-  'config', 'equips', 'alertes', 'pla', 'alineacio', 'categoria', 'intercanvis']) {
+  'config', 'equips', 'alertes', 'pla', 'alineacio', 'categoria', 'intercanvis', 'entrenament']) {
   try { API[nom] = await import(`../functions/api/${nom}.js`); } catch { /* no existix: 404 */ }
 }
 const resposta = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json' } });
@@ -97,7 +97,7 @@ let renyades = [];
 const errOriginal = console.error;
 console.error = (...a) => { renyades.push(a.map(String).join(' ')); };
 
-const PANTALLES = ['economia', 'personal', 'mercat', 'plantilla', 'juvenils', 'esta_setmana',
+const PANTALLES = ['economia', 'personal', 'mercat', 'plantilla', 'entrenament', 'juvenils', 'esta_setmana',
   'alineacio', 'configuracio', 'decisions'];
 const trencades = [];
 for (const nom of PANTALLES) {
