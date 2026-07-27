@@ -115,5 +115,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/092_neteja_config.sql'));
   sqlite.exec(src('../schema/093_futur_entrenador_pom.sql'));
   sqlite.exec(src('../schema/094_fora_regles_apagades.sql'));
+  sqlite.exec(src('../schema/095_taules_orfes.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

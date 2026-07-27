@@ -27,7 +27,6 @@ sqlite.exec(`
     (1,5,'MC',25,9,1,1,1,1,1,1),(1,6,'MC',25,8,1,1,1,1,1,1),(1,7,'MC',25,7,1,1,1,1,1,1),
     (1,8,'EX',25,1,1,1,7,1,1,1),(1,9,'EX',25,1,1,1,6,1,1,1),
     (1,10,'DV',25,1,1,1,1,8,1,1),(1,11,'DV',25,1,1,1,1,7,1,1),(1,12,'DV',25,1,1,1,1,6,1,1);
-  INSERT INTO preus_observats (usuari_id, posicio, edat, habilitat, preu, data) VALUES (1,'MC',25,7,100000,'2026-07-18'),(1,'MC',25,7,200000,'2026-07-18'),(1,'MC',25,7,300000,'2026-07-18');
 `);
 const ctx = (body) => ({ request: new Request('http://t', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }), env: { DB: db }, data: { usuari: { id: 1 } } });
 
@@ -73,7 +72,6 @@ sqlite.exec("UPDATE vendes SET estat='pendent' WHERE jugador_id=1;");
     'sense calibrar, ningú queda marcat com a sobrepagat per una lectura provisional');
 }
 sqlite.exec(`
-  DELETE FROM preus_observats;
   INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi) VALUES (1, 900000, '2026-07-25', 9000);
   -- Vuit setmanes declarades: el mínim que el pom setmanes_mitjana demana per a calibrar.
   INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada) VALUES
@@ -89,8 +87,7 @@ sqlite.exec(`
 `);
 const d2 = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 const v = (nom) => d2.jugadors.find((j) => j.nom === nom).valor;
-assert.ok(d2.jugadors.every((j) => j.preu_proposat === undefined),
-  'cap preu estimat, ni amb comparables ni sense: la taula preus_observats ja no es llig');
+assert.ok(d2.jugadors.every((j) => j.preu_proposat === undefined), 'cap preu estimat a la fitxa');
 assert.ok(v('Car') > 0, `el sobrepagat porta sobrecost (${v('Car')})`);
 assert.equal(v('Barat'), 0, 'i qui cobra el que toca, cap');
 assert.equal(d2.jugadors[0].nom, 'Car', 'la llista va per sobrecost DESC: primer el que més et costa');

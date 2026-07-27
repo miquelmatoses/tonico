@@ -31,7 +31,6 @@ sqlite.exec(`
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, sou) VALUES (1,1,5000);
   INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi, taquilla_s1, patrocini_s1, taquilla_s2, patrocini_s2)
     VALUES (1,100000,'2026-07-25',3000,21127,40500,0,40500);
-  INSERT INTO preus_observats (usuari_id, posicio, edat, habilitat, preu, data) VALUES (1,'MC',20,7,120000,'2026-07-18');
 `);
 const e = await economia(db, 1);
 // La secció passa objectes de l'avaluador a estes claus: no ha de quedar cap {…}.

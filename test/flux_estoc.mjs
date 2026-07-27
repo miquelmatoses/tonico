@@ -59,7 +59,7 @@ assert.equal(dadesVelles(null, '2026-07-26', 7), false, 'sense declarar no és �
 
 // ── 1. Sense res declarat: ni flux ni estoc, i es nota (no es fabrica un zero) ──
 let e = await economia(db, 1, '2026-07-26');
-assert.equal(e.caixa, null, 'caixa no declarada → null, MAI SUM(transaccions)');
+assert.equal(e.caixa, null, 'caixa no declarada → null: no se n\'inventa cap');
 assert.equal(e.caixa, null);
 assert.equal(e.flux, null, 'sense ingressos declarats no hi ha flux');
 assert.equal(e.sou_sostenible, null);
@@ -68,10 +68,8 @@ assert.equal(e.nomina, 5000, 'la nòmina sí que es deriva dels sous (setmanal)'
 assert.equal(e.setmanes_periode, 2, 'el període ve del pom');
 assert.equal(e.planter_derivat, 5000, 'mode «cap» amb 1 cercapromeses: 5.000 €/setmana');
 
-// La caixa NO pot vindre dels moviments: encara que n'hi haja, segueix sense declarar.
-sqlite.exec("INSERT INTO transaccions (usuari_id, tipus, import, data) VALUES (1,'venda',200000,'2026-07-20');");
-e = await economia(db, 1, '2026-07-26');
-assert.equal(e.caixa, null, 'amb moviments però sense declaració: seguix null');
+// No hi ha cap segona font d'on la caixa puga eixir: la taula de moviments ja no existix (095).
+assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE name='transaccions'").get().n, 0);
 
 // ── 2. Ingressos BI-SETMANALS declarats del període tancat ──
 
@@ -104,7 +102,9 @@ assert.equal(e.sou_sostenible,
 
 // ── 4. Res que no siga taquilla o patrocini pot moure el sostre de sou ──
 const abans = e.ingressos_recurrents;
-sqlite.exec("INSERT INTO transaccions (usuari_id, tipus, import, data) VALUES (1,'venda',99999,'2026-07-20');");
+// Una setmana amb una xifra que NO és ni taquilla ni patrocini no pot moure el sostre: només
+// entren eixos dos camps a l'històric.
+sqlite.exec("UPDATE finances SET caixa=caixa+99999 WHERE usuari_id=1;");
 e = await economia(db, 1, '2026-07-26');
 assert.equal(e.ingressos_recurrents, abans,
   'res de fora de l\'històric mou el sostre de sou');

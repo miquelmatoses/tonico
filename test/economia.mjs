@@ -73,11 +73,14 @@ assert.ok(e.sou_sostenible != null && e.sou_sostenible_setmanal === e.sou_sosten
   sqlite.exec("DELETE FROM personal_membres WHERE rol='entrenador';");
 }
 
-// ── 3. La caixa NO pot vindre dels moviments, encara que la taula en tinga ──
-// La taula `transaccions` es queda (té apunts vells de Miquel) però ja no la llig ningú.
-sqlite.exec("INSERT INTO transaccions (usuari_id, tipus, import, data) VALUES (1,'venda',500000,'2026-07-20');");
+// ── 3. La caixa és la DECLARADA, i prou ──
+// Abans ací s'apuntava mig milió a `transaccions` per a comprovar que la caixa no en feia
+// cas. Eixa taula ja no existix (095): no hi ha comptabilitat de moviments, o siga que no hi
+// ha una segona font de la qual la caixa puga vindre. Es comprova que la taula no torne.
+assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE name='transaccions'").get().n, 0,
+  'cap comptabilitat de moviments: la caixa no pot tindre una segona font');
 sqlite.exec('UPDATE finances SET caixa=NULL WHERE usuari_id=1;');
 assert.equal((await economia(db, 1, '2026-07-26')).caixa, null,
-  'mig milió apuntat als moviments i la caixa segueix null: la caixa és la declarada');
+  'sense declarar, la caixa és null: no se n\'inventa cap');
 
 console.log('OK — economia e2e: CSV → nòmina derivada → quatre xifres declarades → flux');

@@ -25,8 +25,10 @@ assert.deepEqual(await items(), ['estadi'], 'queda l\'estadi, que es declara de 
 sqlite.prepare('UPDATE finances SET estadi_manteniment=?, estadi_cost_obra=? WHERE usuari_id=1').run(6000, 250000);
 assert.deepEqual(await items(), [], 'amb tot declarat, «em falten» s\'apaga');
 
-// Encara amb 0 moviments/personal_declarat (les fonts velles): no ha d'importar.
-assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM transaccions').get().n, 0);
-assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM personal_declarat').get().n, 0);
+// Les fonts velles ja no hi són: `falten` només mira les vives.
+// Les fonts velles ja no existixen (095): no poden competir amb les vives.
+for (const t of ['transaccions', 'personal_declarat', 'preus_observats']) {
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM sqlite_master WHERE name=?').get(t).n, 0, `${t} no pot tornar`);
+}
 
 console.log('OK — falten: fonts vives (finances + personal_membres), l\'ítem s\'apaga en posar la dada');
