@@ -924,27 +924,37 @@
       "taules": []
     },
     {
-      "id": "P8.candidat",
+      "id": "P8.necessitats",
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
-      "clau": "candidat",
-      "linia": "candidat(lloc)  = jugador de mercat amb hab(habilitat_lloc) ≥ nivell_objectiu(lloc)",
+      "clau": "necessitats",
+      "linia": "necessitats = places BUIDES d'entrenament i de porter suplent  → prioritat = ∞",
       "entrades": [
-        "hab",
-        "habilitat_lloc",
-        "jugador",
-        "lloc",
-        "nivell_objectiu"
+        "places",
+        "prioritat"
       ],
       "poms": [],
       "taules": []
     },
     {
-      "id": "P8.guany",
+      "id": "P8.clau",
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
-      "clau": "guany",
-      "linia": "guany(jugador)  = mancança(lloc) × pes(lloc)",
+      "clau": "clau",
+      "linia": "clau(necessitat) = el TIPUS de fitxatge (bucket + nivell), no el lloc",
+      "entrades": [
+        "lloc",
+        "nivell"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P8.prioritat",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
+      "clau": "prioritat",
+      "linia": "prioritat   = mancança × pes(lloc)                    [la mètrica única]",
       "entrades": [
         "lloc",
         "mancança",
@@ -958,13 +968,13 @@
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "cost",
-      "linia": "cost(jugador)   = preu de mercat del candidat        [preu real llistat, no estimat]",
+      "linia": "cost        = `preus_referencia`[clau]                → DECLARAT, mai estimat",
       "entrades": [
-        "candidat",
-        "llistat",
-        "preu"
+        "clau"
       ],
-      "poms": [],
+      "poms": [
+        "preus_referencia"
+      ],
       "taules": []
     },
     {
@@ -972,13 +982,10 @@
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "admissible",
-      "linia": "admissible      = preu ≤ caixa  I  sou ≤ pressupost_sou(lloc)",
+      "linia": "admissible  = cost ≠ ∅  I  cost ≤ caixa",
       "entrades": [
         "caixa",
-        "lloc",
-        "pressupost_sou",
-        "preu",
-        "sou"
+        "cost"
       ],
       "poms": [],
       "taules": []
@@ -988,10 +995,10 @@
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "eficiència",
-      "linia": "eficiència(jugador) = guany / cost",
+      "linia": "eficiència  = prioritat / cost",
       "entrades": [
         "cost",
-        "guany"
+        "prioritat"
       ],
       "poms": [],
       "taules": []
@@ -1001,10 +1008,12 @@
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "ACCIÓ",
-      "linia": "ACCIÓ = PRIMER(ORDENA(FILTRA(candidats; admissible); eficiència DESC))",
+      "linia": "ACCIÓ = PRIMER(ORDENA(FILTRA(necessitats; admissible); prioritat DESC, eficiència DESC))",
       "entrades": [
         "admissible",
-        "eficiència"
+        "eficiència",
+        "necessitats",
+        "prioritat"
       ],
       "poms": [],
       "taules": []

@@ -73,13 +73,25 @@ const caduc = decisioEstoc([
 ]);
 assert.equal(caduc.id, 'a', 'amb els números caducs l\'estadi no es recomana: es demana refer-los');
 
-// Sense candidat de mercat no hi ha preu (v3.1: fora l'estimació) → s'ordena pel guany, que
-// és la mètrica única, en compte d'inventar-se un cost.
-const senseCost = decisioEstoc([
-  { tipus: 'jugador', id: 'poc', admissible: true, eficiencia: null, guany: 1 },
-  { tipus: 'jugador', id: 'molt', admissible: true, eficiencia: null, guany: 7 },
+// SENSE PREU DECLARAT NO ES SUGGERIX MAI. A Hattrick el preu no el calcula el joc, i suggerir
+// una compra sense saber què costa és decidir a cegues: eixes opcions no són admissibles i no
+// poden arribar mai a recomanació, per molta mancança que tinguen.
+assert.equal(decisioEstoc([
+  { tipus: 'jugador', id: 'sensepreu', admissible: false, falta: 'preu', prioritat: 99 },
+]), null, 'una opció sense preu no es recomana, encara que siga la més urgent');
+
+// MANA LA PRIORITAT: una plaça buida (infinita) va per damunt de qualsevol mancança, i entre
+// iguals decidix l'eficiència — el que rendix més per euro.
+const buida = decisioEstoc([
+  { tipus: 'jugador', id: 'forat', admissible: true, prioritat: 4.4, eficiencia: 9 },
+  { tipus: 'jugador', id: 'placa', admissible: true, prioritat: Infinity, eficiencia: 0.1 },
 ]);
-assert.equal(senseCost.id, 'molt', 'sense preu real, manda mancança × pes');
+assert.equal(buida.id, 'placa', 'una plaça d\'entrenament buida va primer siga com siga');
+const empat = decisioEstoc([
+  { tipus: 'jugador', id: 'car', admissible: true, prioritat: 4.4, eficiencia: 1 },
+  { tipus: 'jugador', id: 'barat', admissible: true, prioritat: 4.4, eficiencia: 8 },
+]);
+assert.equal(empat.id, 'barat', 'a igualtat de prioritat, el que rendix més per euro');
 
 assert.equal(decisioEstoc([{ tipus: 'jugador', admissible: false, eficiencia: 1 }]), null,
   'sense cap opció admissible, cap compra: només es ven');

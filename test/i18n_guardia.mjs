@@ -85,7 +85,7 @@ const families = {
   // «res» fora: quan no hi ha res a fer NO ES DIU RES. Explicar cada setmana per què no toca
   // moure el nivell és soroll amb un altre nom; l'espai de la píndola es queda buit.
   'flux.accio_': ['contracta','contracta_n','renova','renova_al_nivell_n','no_renoves'],
-  'estoc': ['col_opcio', 'col_nivell', 'col_mancanca', 'col_guany'],
+  'estoc': ['col_que', 'col_per_que', 'col_cost', 'col_estat'],
   'categoria': ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'],
   // Els 16 nivells d'habilitat, pel NOM de Hattrick. L'escala de Tonico compta des d'on el sou
   // deixa de ser el mínim: nivell 1 = «Insuficient» (HT 5), o siga Tonico n = HT n+4.

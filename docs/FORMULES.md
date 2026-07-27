@@ -277,14 +277,28 @@ ACCIÓ("remodela l'estadi")  SI admissible(estadi) I ¬estadi_caduc
    [NO es projecta el que l'obra ingressarà (invariant 3): no fa falta predir-ho,
     s'OBSERVA al període següent quan es declara la taquilla nova]
 
--- opció JUGADOR (només si l'estadi ja no demana res)
-candidat(lloc)  = jugador de mercat amb hab(habilitat_lloc) ≥ nivell_objectiu(lloc)
-guany(jugador)  = mancança(lloc) × pes(lloc)
-cost(jugador)   = preu de mercat del candidat        [preu real llistat, no estimat]
-admissible      = preu ≤ caixa  I  sou ≤ pressupost_sou(lloc)
-eficiència(jugador) = guany / cost
-ACCIÓ = PRIMER(ORDENA(FILTRA(candidats; admissible); eficiència DESC))
-   SI cap opció admissible: cap compra; el sistema optimitza NOMÉS venent (PAS 7)
+-- opció FITXATGE (només si l'estadi ja no demana res)
+necessitats = places BUIDES d'entrenament i de porter suplent  → prioritat = ∞
+            ∪ llocs de l'onze amb (nivell_objectiu_ht − hab(ocupant)) ≥ 2
+   [una plaça d'entrenament buida és entrenament perdut cada setmana i no es
+    recupera; un lloc de l'onze fluix, almenys, juga. Per això les buides manen.
+    I un sol nivell de distància s'arregla entrenant o esperant: no és un forat]
+clau(necessitat) = el TIPUS de fitxatge (bucket + nivell), no el lloc
+   [«un mig centre de nivell 9» val el mateix per als tres llocs de mig centre:
+    és una sola cerca i un sol preu]
+prioritat   = mancança × pes(lloc)                    [la mètrica única]
+cost        = `preus_referencia`[clau]                → DECLARAT, mai estimat
+   [a Hattrick el preu NO el calcula el joc: el paga un altre mànager en una
+    subhasta. La velocitat d'entrenament sí que és fórmula i es va desxifrar;
+    esta no existix, i cap eina en publica cap (Transfer Compare, HTPE i HAM són
+    estimadors estadístics sobre vendes recents). Caduca a `setmanes_caducitat_preu`]
+admissible  = cost ≠ ∅  I  cost ≤ caixa
+   [SENSE PREU NO ES SUGGERIX MAI: l'opció es veu amb «falta el preu», però no pot
+    arribar a recomanació. Suggerir una compra sense saber què costa és decidir a
+    cegues, i és el que feia el `base_preu_divisio` que vam llevar al v3.1]
+eficiència  = prioritat / cost
+ACCIÓ = PRIMER(ORDENA(FILTRA(necessitats; admissible); prioritat DESC, eficiència DESC))
+
 capacitat_objectiu   = configuració NRG de `url_calculadora_estadi`   [declarada]
    [l'obra concreta —dimensió i repartiment de graderies— es delega a la
     calculadora; Tonico només diu QUAN toca]

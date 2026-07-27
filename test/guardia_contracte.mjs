@@ -29,6 +29,7 @@ import { costFlux, nivellPagable, planPersonal, decisioRenovacio,
 import { guanyJugador, admissibleJugador, deltaManteniment, estadiCaduc, admissibleEstadi,
   eficiencia, decisioEstoc } from '../lib/estoc.js';
 import { nivellAccio, agrupaAlertes, ordenaAgenda } from '../lib/informe.js';
+import { necessitats, ambPreus, clauFitxatge } from '../lib/fitxatges.js';
 import { REGLES } from '../lib/regles.js';
 import { entrenamentPrescrit, placesEntrenament } from '../lib/entrenament_places.js';
 import { valorHabilitat as valorHab, valorEsperatDesconegut, ranquingJuvenil } from '../lib/ranquing_juvenil.js';
@@ -221,6 +222,44 @@ const VERIFICADES = {
     assert.equal(admissibleEstadi({ ...base, obra_en_curs: true }), false,
       'amb l\'obra en marxa, no: ja s\'ha decidit i no es decidix dues vegades');
   },
+  'P8.necessitats': () => {
+    // Les places BUIDES manen per damunt de qualsevol mancança, i un sol nivell de distància
+    // no és un forat: s'arregla entrenant o esperant.
+    const est = { entrenables: [], entrenables_max: 2, porter_suplent: null,
+      onze: [{ bucket: 'mc', nivell_objectiu: 9, diferencia: -1 },
+             { bucket: 'davanter', nivell_objectiu: 9, diferencia: -3 }] };
+    const n = necessitats(est, { entrenable_min: 6, pesos: { mc: 1.46, davanter: 0.89 } });
+    assert.equal(n[0].prioritat, Infinity, 'una plaça buida va primer');
+    assert.ok(!n.some((x) => x.bucket === 'mc' && x.tipus === 'lloc'), 'un sol nivell no és forat');
+    assert.ok(n.some((x) => x.clau === 'davanter:9'), 'i tres nivells sí');
+  },
+  'P8.clau': () => {
+    // La clau és el TIPUS de fitxatge, no el lloc: dos llocs iguals són una sola cerca.
+    assert.equal(clauFitxatge('lloc', 'mc', 9), clauFitxatge('lloc', 'mc', 9));
+    assert.notEqual(clauFitxatge('lloc', 'mc', 9), clauFitxatge('lloc', 'mc', 10));
+  },
+  'P8.prioritat': () => {
+    const est = { entrenables: [1], entrenables_max: 1, porter_suplent: {},
+      onze: [{ bucket: 'mc', nivell_objectiu: 9, diferencia: -3 },
+             { bucket: 'davanter', nivell_objectiu: 9, diferencia: -4 }] };
+    const n = necessitats(est, { pesos: { mc: 1.46, davanter: 0.89 } });
+    assert.deepEqual(n.map((x) => x.clau), ['mc:9', 'davanter:9'],
+      'mc 3×1,46 per damunt de davanter 4×0,89: mana mancança × pes');
+  },
+  'P8.eficiencia': () => {
+    // eficiència = prioritat / cost, i el cost és el preu DECLARAT.
+    const amb = ambPreus([{ clau: 'mc:9', prioritat: 4.38 }], new Map([['mc:9', { preu: 100000 }]]), 200000);
+    assert.equal(amb[0].preu, 100000);
+    assert.equal(amb[0].admissible, true);
+  },
+  'P8.accio_3': () => {
+    // SENSE PREU NO ES SUGGERIX MAI, i entre admissibles mana la prioritat.
+    assert.equal(decisioEstoc([{ tipus: 'jugador', admissible: false, falta: 'preu', prioritat: 99 }]), null);
+    assert.equal(decisioEstoc([
+      { tipus: 'jugador', id: 'a', admissible: true, prioritat: 4, eficiencia: 9 },
+      { tipus: 'jugador', id: 'b', admissible: true, prioritat: Infinity, eficiencia: 0.1 },
+    ]).id, 'b', 'la plaça buida va primer');
+  },
   'P8.pregunta': () => {
     // Es DEMANA a l'inici de cada temporada, de la calculadora: els camps existixen i
     // l'adreça és una constant, no un text a la vista.
@@ -234,12 +273,6 @@ const VERIFICADES = {
     // «configuració NRG de la calculadora»: Tonico NO la calcula, la rep declarada.
     const url = sqliteFix.prepare("SELECT valor, nota FROM constants_joc WHERE clau='url_calculadora_estadi'").get();
     assert.ok(/delega|declara/i.test(url.nota), 'queda escrit que es delega i es declara');
-  },
-  'P8.candidat': () => {
-    // candidat(lloc) = de mercat amb hab(habilitat_lloc) ≥ nivell_objectiu(lloc)
-    const cand = (j, hab, obj) => Number(j[hab] ?? 0) >= obj;
-    assert.equal(cand({ creativitat: 9 }, 'creativitat', 8), true);
-    assert.equal(cand({ creativitat: 7 }, 'creativitat', 8), false);
   },
   'P8.admissible': () => {
     // admissible(estadi): cost DECLARAT (no modelat) contra caixa cobrada, i el flux ha de
@@ -704,7 +737,6 @@ const VERIFICADES = {
     ['2026-07-28', '2026-08-03'], 'per data'),
 
   // PAS 8 — el bucle d'estoc: L'ESTADI VA PRIMER i no es puntua (v3.1).
-  'P8.guany': () => assert.equal(guanyJugador(3, 1.5), 4.5, 'mancança × pes'),
   'P8.cost': () => assert.equal(eficiencia(4.5, 50000), 0.00009, 'guany/cost'),
   'P8.admissible': () => {
     assert.equal(admissibleJugador({ preu: 50000, sou: 900 }, { caixa: 100000, pressupost_sou_lloc: 1000 }), true);

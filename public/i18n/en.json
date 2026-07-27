@@ -515,11 +515,6 @@
   "estoc.opcio_jugador_n": "a {habilitat} player for slot {lloc}: {mancanca} levels short of the {nivell} your flow pays for.",
   "estoc.opcio_estadi": "stadium works: {cost} up front, and maintenance rises by {manteniment} per week. It comes before any signing: it's the only purchase that moves the flow.",
   "estoc.cap_opcio": "Nothing is worth it right now: raise cash by selling and we'll look again.",
-  "estoc.col_opcio": "Slot",
-  "estoc.col_nivell": "Level needed",
-  "estoc.col_mancanca": "Short by",
-  "estoc.col_guany": "Gain",
-  "estoc.lloc": "Slot {lloc}",
   "estoc.estadi_falta": "Give me the stadium figures and it'll join the comparison too.",
   "flux.titol": "The staff the flow supports",
   "element.assistent": "Assistant coach",
@@ -631,5 +626,13 @@
   "mercat.nec_sense_porter_suplent": "THE STARTER MUST PLAY TWICE",
   "mercat.nec_distancia": "by distance to target",
   "mercat.preu_vell": "This price is from {data}: the market has moved, check it again.",
-  "mercat.necessaris_nota": "Check recent transfers in Hattrick with the filters below and note the average price here. Tonico doesn't make it up: in Hattrick the price isn't computed by the game, another manager pays it."
+  "mercat.necessaris_nota": "Check recent transfers in Hattrick with the filters below and note the average price here. Tonico doesn't make it up: in Hattrick the price isn't computed by the game, another manager pays it.",
+  "estoc.col_que": "What",
+  "estoc.col_per_que": "Why",
+  "estoc.col_cost": "Cost",
+  "estoc.col_estat": "Right now",
+  "estoc.es_pot": "can be bought",
+  "estoc.falta_preu": "price missing",
+  "estoc.falta_caixa": "not enough cash",
+  "estoc.falta_res": "—"
 }

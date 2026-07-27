@@ -515,11 +515,6 @@
   "estoc.opcio_jugador_n": "un jugador de {habilitat} per al lloc {lloc}: li falten {mancanca} nivells per a arribar al {nivell} que el teu flux paga.",
   "estoc.opcio_estadi": "l'obra d'estadi: {cost} de colp, i el manteniment puja {manteniment} cada setmana. Va abans que cap fitxatge: és l'única compra que mou el flux.",
   "estoc.cap_opcio": "Ara mateix res no compensa: fes caixa venent i ja ho tornarem a mirar.",
-  "estoc.col_opcio": "Lloc",
-  "estoc.col_nivell": "Nivell que demana",
-  "estoc.col_mancanca": "Li falta",
-  "estoc.col_guany": "Guany",
-  "estoc.lloc": "Lloc {lloc}",
   "estoc.estadi_falta": "Si em passes els números de l'estadi, també entrarà a la comparació.",
   "flux.titol": "El personal que el flux aguanta",
   "element.assistent": "Entrenador assistent",
@@ -631,5 +626,13 @@
   "mercat.nec_sense_porter_suplent": "EL TITULAR HA DE DOBLAR",
   "mercat.nec_distancia": "per distància a l'objectiu",
   "mercat.preu_vell": "Este preu és del {data}: el mercat s'ha mogut, torna a mirar-lo.",
-  "mercat.necessaris_nota": "Mira les últimes transferències a Hattrick amb els filtres de baix i apunta ací el preu mitjà que veges. Tonico no se l'inventa: a Hattrick el preu no el calcula el joc, el paga un altre mànager."
+  "mercat.necessaris_nota": "Mira les últimes transferències a Hattrick amb els filtres de baix i apunta ací el preu mitjà que veges. Tonico no se l'inventa: a Hattrick el preu no el calcula el joc, el paga un altre mànager.",
+  "estoc.col_que": "Què",
+  "estoc.col_per_que": "Per què",
+  "estoc.col_cost": "Cost",
+  "estoc.col_estat": "Ara mateix",
+  "estoc.es_pot": "es pot comprar",
+  "estoc.falta_preu": "falta el preu",
+  "estoc.falta_caixa": "no arriba la caixa",
+  "estoc.falta_res": "—"
 }

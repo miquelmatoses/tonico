@@ -732,16 +732,21 @@ function bucleEstoc(main, e) {
   } else {
     cos.append(el('p', { class: 'nota-peu', text: t('estoc.cap_opcio') }));
   }
-  // La taula és NOMÉS de llocs: tres columnes que sempre tenen valor. Les de «cost» i
-  // «rendiment» eren sempre buides (sense candidat de mercat no hi ha preu) i una taula de
-  // guions no és informació. El que val és l'ORDRE de les mancances i el nivell que demanen.
+  // LA TAULA DE FITXATGES. Ara cada fila és un TIPUS de fitxatge (no un lloc solt) i porta el
+  // que costa: el preu declarat. Sense preu, la fila hi és amb «falta el preu» — es veu la
+  // necessitat però no es pot decidir, i eixa distinció és la que val.
   const g = graellaAmbFiles('c-estoc',
-    ['col_opcio', 'col_nivell', 'col_mancanca', 'col_guany'].map((k) => t('estoc.' + k)),
+    ['col_que', 'col_per_que', 'col_cost', 'col_estat'].map((k) => t('estoc.' + k)),
     e.opcions.filter((o) => o.tipus === 'jugador').map((o) => el('div', { class: 'graella-fila-d c-estoc' },
-      el('span', { text: t('estoc.lloc', { lloc: o.lloc }) }),
-      el('span', { text: o.nivell_objectiu ? t('nivell_ht.' + o.nivell_objectiu) : '—' }),
-      el('span', { text: o.mancanca == null ? '—' : decimal(o.mancanca) }),
-      el('span', { class: 'graella-val', text: o.guany == null ? '—' : decimal(o.guany) }))));
+      el('span', { text: o.motiu === 'placa_entrenament_buida'
+        ? tp('mercat.nec_entrenable', o.quants, { n: o.quants, nivell: o.nivell_objectiu })
+        : o.motiu === 'sense_porter_suplent' ? t('mercat.nec_porter_suplent')
+          : tp('mercat.nec_lloc', o.quants, { n: o.quants,
+              lloc: t('hab.' + (BUCKET_HAB[o.bucket] || o.bucket)), nivell: o.nivell_objectiu }) }),
+      el('span', { text: t('mercat.nec_' + o.motiu) }),
+      el('span', { text: o.cost == null ? '—' : diners(o.cost) }),
+      el('span', { class: 'graella-val', text: o.admissible ? t('estoc.es_pot')
+        : t('estoc.falta_' + (o.falta || 'res')) }))));
   if (g) cos.append(g);
   if (!e.estadi_declarat) cos.append(el('p', { class: 'nota-peu', text: t('estoc.estadi_falta') }));
   c.append(cos); main.append(c);
