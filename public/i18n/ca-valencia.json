@@ -574,5 +574,11 @@
   "plantilla.onze_titular": "Onze titular",
   "plantilla.lloc_buit": "— cap jugador per a este lloc —",
   "plantilla.entrenables": "Entrenables",
-  "plantilla.entrenable_curt": "ENT"
+  "plantilla.entrenable_curt": "ENT",
+  "plantilla.futur_entrenador": "Futur entrenador",
+  "plantilla.porter_suplent": "Porter suplent",
+  "plantilla.reconversio": "A entrenador sòlid",
+  "plantilla.sou_setmanal": "Sou",
+  "plantilla.futur_entrenador_nota": "El de més experiència de la plantilla ({nivell}, lideratge {lideratge}). No ha de jugar per a res d'això: l'experiència ja li dona, i el lideratge se'l queda gratis. Fa falta que porte 16 setmanes al club.",
+  "plantilla.porter_suplent_nota": "El porter no dobla partit, així que en fa falta un segon. Eixe lloc no compra res: es tria el més barat."
 }

@@ -83,7 +83,16 @@ export async function onRequestGet({ env, data }) {
     // que es venen cars quan han crescut. Ixen del residu de l'onze, no d'una categoria.
     entrenables: est ? { habilitat: est.habilitat_entrenament, places: est.entrenables_max,
       nivell_objectiu: est.entrenables_objectiu,
-      jugadors: est.entrenables.map((j) => ({ id: j.id, diferencia: j.diferencia, senyal: j.senyal })) } : null });
+      jugadors: est.entrenables.map((j) => ({ id: j.id, diferencia: j.diferencia, senyal: j.senyal })) } : null,
+    // FUTUR ENTRENADOR: el del residu amb més experiència, i què val reconvertir-lo. PORTER
+    // SUPLENT: el porter més barat que queda — és l'únic lloc de la segona alineació que
+    // obliga a mantindre algú expressament, perquè el porter no dobla.
+    futur_entrenador: est?.futur_entrenador
+      ? { jugador_id: est.futur_entrenador.id, experiencia: est.futur_entrenador.experiencia,
+          lideratge: est.futur_entrenador.lideratge, reconversio: est.reconversio } : null,
+    porter_suplent: est?.porter_suplent
+      ? { jugador_id: est.porter_suplent.id, porteria: est.porter_suplent.porteria,
+          sou: est.porter_suplent.sou } : null });
 }
 
 const json = (obj, status = 200) =>

@@ -13,6 +13,9 @@ import { nova } from './_d1shim.mjs';
 import { assignaEstructura } from '../lib/onze.js';
 import { onzeEstructura } from '../lib/onze_estructura.js';
 
+// Una sola base per a tot el fitxer: els blocs 5 i 9 la comparteixen.
+const { sqlite, db } = nova(import.meta.url);
+
 // ── 1. La mecànica, en net. Els llocs arriben en l'ORDE DE LA FORMACIÓ (el davanter primer)
 // per a que es veja que qui mana en la tria és el PES i no la posició a la llista. ──
 const llocs = [
@@ -63,7 +66,6 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
 
 // ── 5. I d'extrem a extrem, amb la formació de veres: 2-5-3 ──
 {
-  const { sqlite, db } = nova(import.meta.url);
   sqlite.exec(`
     INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
     INSERT INTO config_usuari (usuari_id, estrategia, pais, divisio, sistema_juvenil, partits_setmana)
@@ -149,6 +151,53 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   assert.equal(sensObj.diferencia, null, 'sense objectiu no se n\'inventa cap diferència');
   const buit = assignaEstructura([], llocs2).onze[0];
   assert.equal(buit.diferencia, null, 'ni per a un lloc sense ningú');
+}
+
+// ── 9. FUTUR ENTRENADOR i PORTER SUPLENT: els altres dos que la segona alineació necessita.
+{
+  const base = (id, o) => ({ id, nom: 'X' + id, sou: 1000, edat_anys: 26, edat_dies: 0,
+    porteria: 1, defensa: 1, creativitat: 1, extrem: 1, passades: 1, anotacio: 1,
+    pilota_aturada: 1, experiencia: 1, lideratge: 1, ...o });
+  const equip = [
+    base(1, { porteria: 9 }), base(2, { defensa: 8 }), base(3, { defensa: 7 }),
+    // Un TITULAR amb més experiència que el veterà: el futur entrenador ha d'eixir del RESIDU,
+    // o si no ens quedaríem sense mig centre per a convertir-lo en entrenador.
+    base(4, { creativitat: 9, experiencia: 15 }), base(5, { creativitat: 8 }), base(6, { creativitat: 7 }),
+    base(7, { extrem: 7 }), base(8, { extrem: 6 }),
+    base(9, { anotacio: 8 }), base(10, { anotacio: 7 }), base(11, { anotacio: 6 }),
+    base(12, { creativitat: 5, edat_anys: 18 }), base(13, { creativitat: 4, edat_anys: 18 }),
+    base(14, { creativitat: 3, edat_anys: 18 }),
+    base(20, { anotacio: 4, experiencia: 12, lideratge: 6 }),   // el veterà
+    // Molt de lideratge i gens d'experiència: si el criteri fora el lideratge, guanyaria este.
+    base(23, { anotacio: 3, experiencia: 2, lideratge: 20 }),
+    // El més barat de tota la plantilla, i NO és porter: si «porter» no es deduïx, se'l tria.
+    base(24, { anotacio: 2, sou: 150 }),
+    base(21, { porteria: 5, sou: 400 }), base(22, { porteria: 6, sou: 900 }),
+  ];
+  const r = await onzeEstructura(db, 1, equip, 10291);
+
+  // El FUTUR ENTRENADOR: el de més experiència del residu, i el preu ix de la taula de la guia
+  // indexada per experiència. No es tria per com juga: el que compta és l'experiència.
+  assert.equal(r.futur_entrenador.id, 20, 'el de més EXPERIÈNCIA del residu, encara que jugue mal');
+  assert.notEqual(r.futur_entrenador.id, 23, 'i no el de més lideratge: el lideratge no és el criteri');
+  assert.notEqual(r.futur_entrenador.id, 4, 'ni un titular, per molta experiència que tinga');
+  assert.equal(r.reconversio.solid, 430000, 'i el preu ix de la seua fila de la taula');
+  assert.ok(!r.onze.some((l) => l.jugador?.id === 20), 'ix del residu, no de l\'onze');
+
+  // El PORTER SUPLENT: el porter més barat que queda. «Porter» es DEDUÏX (la porteria és la
+  // seua millor habilitat); si no, el més barat de la plantilla seria un davanter amb PO 1.
+  assert.equal(r.porter_suplent.id, 21, 'el porter més barat dels que queden');
+  assert.notEqual(r.porter_suplent.id, 24, 'i no el més barat a seques, que és un davanter');
+  assert.notEqual(r.porter_suplent.id, r.onze.find((l) => l.bucket === 'porter').jugador?.id,
+    'i mai el que ja para a l\'onze');
+  // Amb només DOS porters, el suplent és simplement el que queda.
+  const dos = equip.filter((j) => j.id !== 22);
+  assert.equal((await onzeEstructura(db, 1, dos, 10291)).porter_suplent.id, 21,
+    'amb dos porters, el suplent és el que no para');
+  // I sense cap més porter, no se n'inventa cap.
+  const un = equip.filter((j) => j.id !== 21 && j.id !== 22);
+  assert.equal((await onzeEstructura(db, 1, un, 10291)).porter_suplent, null,
+    'sense segon porter no se n\'inventa: és una plaça que et falta');
 }
 
 console.log('OK — l\'onze d\'estructura: tots els jugadors, lloc a lloc, un jugador un lloc');

@@ -574,5 +574,11 @@
   "plantilla.onze_titular": "Starting eleven",
   "plantilla.lloc_buit": "— no player for this slot —",
   "plantilla.entrenables": "Trainees",
-  "plantilla.entrenable_curt": "TRN"
+  "plantilla.entrenable_curt": "TRN",
+  "plantilla.futur_entrenador": "Future coach",
+  "plantilla.porter_suplent": "Backup keeper",
+  "plantilla.reconversio": "To solid coach",
+  "plantilla.sou_setmanal": "Wage",
+  "plantilla.futur_entrenador_nota": "The most experienced player in the squad ({nivell}, leadership {lideratge}). He doesn't need to play for any of this: the experience is already there and leadership carries over free. He must have been 16 weeks at the club.",
+  "plantilla.porter_suplent_nota": "The keeper doesn't play twice a week, so a second one is needed. That slot buys nothing: the cheapest one is picked."
 }

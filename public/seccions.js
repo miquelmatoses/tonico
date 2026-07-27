@@ -341,7 +341,7 @@ export async function plantilla(main) {
   const ORDRE = ['rotatiu', 'titular', 'porter', 'futur_entrenador', 'cos', 'venda'];
   const CATS = ['core', 'rotatiu', 'titular', 'porter', 'cos', 'venda', 'futur_entrenador'];
   const { instantania, jugadors, valor_especialitats: valorEsp = [], onze_titular: onze,
-    entrenables } = await api('/api/plantilla');
+    entrenables, futur_entrenador: futurE, porter_suplent: porterS } = await api('/api/plantilla');
   if (!instantania) { main.append(el('p', { text: t('plantilla.buit') })); return; }
   main.append(el('p', { text: t('plantilla.instantania', { temporada: instantania.temporada, setmana: instantania.setmana_temporada, data: instantania.data }) }));
   const hab = (j) => `PO${j.porteria} DF${j.defensa} CR${j.creativitat} EX${j.extrem} PA${j.passades} AN${j.anotacio} PP${j.pilota_aturada}`;
@@ -421,10 +421,43 @@ export async function plantilla(main) {
     main.append(tarja);
   }
 
+  // ── FUTUR ENTRENADOR i PORTER SUPLENT: els altres dos que la segona alineació necessita.
+  // Un perquè el sou ja el pagues mentre esperes els diners de la reconversió; l'altre perquè
+  // el porter és l'únic que no dobla. Van en files d'una sola targeta cada un.
+  const perId2 = new Map(jugadors.map((j) => [j.id, j]));
+  const filaSolta = (j, sigla, etiqueta, valor, punts) => el('div', { class: 'fila' },
+    el('div', { class: 'fila-qui' },
+      el('div', { class: posCls(sigla), text: sigla }),
+      el('div', {}, el('div', { class: 'fila-nom', text: j.nom }),
+        el('div', { class: 'fila-meta' },
+          el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` })))),
+    el('div', { class: 'punts', text: punts }),
+    el('div', { class: 'tsi', text: 'TSI ' + (j.tsi ?? '—') }),
+    el('div', { class: 'skills', text: hab(j) }),
+    el('div', { class: 'vara' }, el('span', { class: 'vara-hab', text: etiqueta }), el('b', { text: valor })));
+  const solts = new Set();
+  if (futurE && perId2.has(futurE.jugador_id)) {
+    solts.add(futurE.jugador_id);
+    const c = card(t('plantilla.futur_entrenador'));
+    c.append(filaSolta(perId2.get(futurE.jugador_id), 'ENT', t('plantilla.reconversio'),
+      futurE.reconversio?.solid ? diners(futurE.reconversio.solid) : '—', String(futurE.experiencia ?? '—')));
+    c.append(cos(el('p', { class: 'nota-peu', text: t('plantilla.futur_entrenador_nota', {
+      nivell: t('nivell_ht.' + futurE.experiencia), lideratge: futurE.lideratge ?? '—' }) })));
+    main.append(c);
+  }
+  if (porterS && perId2.has(porterS.jugador_id)) {
+    solts.add(porterS.jugador_id);
+    const c = card(t('plantilla.porter_suplent'));
+    c.append(filaSolta(perId2.get(porterS.jugador_id), 'POR', t('plantilla.sou_setmanal'),
+      diners(porterS.sou), String(porterS.porteria ?? '—')));
+    c.append(cos(el('p', { class: 'nota-peu', text: t('plantilla.porter_suplent_nota') })));
+    main.append(c);
+  }
+
   // Una targeta per categoria, amb files denses (el disseny: xip de posició, nom,
   // meta amb píndoles, punts, TSI i habilitats en monoespai).
   for (const c of ORDRE) {
-    const grup = jugadors.filter((j) => j.categoria === c && !enOnze.has(j.id) && !enEntrenables.has(j.id));
+    const grup = jugadors.filter((j) => j.categoria === c && !enOnze.has(j.id) && !enEntrenables.has(j.id) && !solts.has(j.id));
     if (!grup.length) continue;
     const tarja = card(t('categoria.' + c), grup.length, c === 'core' ? 'llima' : c === 'venda' ? 'roig' : null);
     for (const j of grup) tarja.append(filaSegura(() => {
