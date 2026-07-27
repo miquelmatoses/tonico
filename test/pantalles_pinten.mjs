@@ -82,9 +82,12 @@ globalThis.location = { href: '', reload() {} };
 // ── `fetch` encaminat a les API de veres: així el que es pinta té la FORMA real. ──
 const arrel = new URL('../public/', import.meta.url);
 const API = {};
+// SENSE try/catch: un nom que ja no existix ha de PETAR ací. Amb el catch, la llista podia
+// mentir —encara nomenava `categoria` i `intercanvis`, esborrats— i el test passava igual
+// mentre les pantalles es pintaven contra una API que no hi era.
 for (const nom of ['finances', 'personal', 'mercat', 'plantilla', 'juvenils', 'vendes',
-  'config', 'equips', 'alertes', 'pla', 'alineacio', 'categoria', 'intercanvis', 'entrenament', 'onzes']) {
-  try { API[nom] = await import(`../functions/api/${nom}.js`); } catch { /* no existix: 404 */ }
+  'config', 'equips', 'alertes', 'pla', 'entrenament', 'onzes', 'motius', 'comparador']) {
+  API[nom] = await import(`../functions/api/${nom}.js`);
 }
 const resposta = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json' } });
 globalThis.fetch = async (path) => {

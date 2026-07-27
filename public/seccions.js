@@ -2,7 +2,7 @@
 // funció fa el seu fetch i pinta dins del seu contenidor. Els errors s'aïllen
 // per secció (una que falla no tomba la pàgina). HTML semàntic, reset mínim.
 import { api, el, t, tp, filaSegura } from '/comu.js';
-import { diners, milers, decimal, percent, signat, edat, notes, esLesionat, duradaLesio, ambXifres, rendiment } from '/format.js';
+import { diners, milers, decimal, percent, signat, edat, notes, esLesionat, duradaLesio, ambXifres } from '/format.js';
 
 const SIGLA = { porteria: 'PO', defensa: 'DF', creativitat: 'CR', extrem: 'EX', passades: 'PA', anotacio: 'AN', pilota_aturada: 'PP' };
 const opc = async (p) => { try { return await p; } catch { return null; } };
@@ -833,7 +833,6 @@ const graellaAmbFiles = (classe, capçaleres, files) => {
   return g;
 };
 
-const eur = (obj, ...keys) => ambXifres(obj, keys);   // àlies curt: els noms de clau són els diners
 export async function economia(main) {
   capcalera(main, 8, 'economia');
   const { economia: e } = await api('/api/finances');

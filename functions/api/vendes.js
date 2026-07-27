@@ -1,9 +1,7 @@
 // Tonico — fitxes de venda (Àrea E). GET els jugadors en categoria 'venda' amb la
 // seua fitxa (preu d'eixida proposat/editat, data de llistada, estat); POST upsert.
-import { habilitatMax } from '../../lib/vendes.js';
 import { onzeEstructura } from '../../lib/onze_estructura.js';
 import { economia } from '../../lib/economia.js';
-import { normalitzaDivisio } from '../../lib/divisio.js';
 import { avaluaPuntuacio } from '../../lib/classificador.js';
 import { carregaConfigPla } from '../../lib/config_pla.js';
 import { esLesionat } from '../../public/format.js';
@@ -12,7 +10,6 @@ import { entrenamentEfectiu, aplicaEntrenament } from '../../lib/entrenament_pla
 import { conjuntLiquidacio, estatLiquidacio } from '../../lib/liquidacio.js';
 
 const ESTATS = ['pendent', 'llistat', 'venut', 'desert', 'despatxat'];
-const enter = (x) => (x == null || x === '' ? null : Math.round(Number(x)));
 
 export async function onRequestGet({ env, data }) {
   const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id=? AND tipus='senior'").bind(data.usuari.id).first();
@@ -44,42 +41,29 @@ export async function onRequestGet({ env, data }) {
   // llista és la puntuació de la categoria de venda, que és una dada pròpia.
   const pla = await env.DB.prepare('SELECT plantilla FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
   const config = pla ? await carregaConfigPla(env.DB, pla.plantilla) : { categories: [], params: {} };
-  const habLloc = JSON.parse((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='taula_habilitat_lloc'").bind(config.plantilla ?? 'competitiva').first())?.valor || '{}');
   const vendaSpec = config.categories.find((c) => c.categoria === 'venda')?.parametres?.puntuacio;
   const punts = jugadors.map((j) => (vendaSpec ? avaluaPuntuacio(vendaSpec, j, config.params) : null));
-  const positius = punts.filter((p) => p != null && p > 0);
-  const mitjana = positius.length ? positius.reduce((a, b) => a + b, 0) / positius.length : null;
 
   // La subhasta tanca a llistat + dies_subhasta (mecànica del tercer dia).
   const diesSubhasta = parseInt((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='dies_subhasta'").first())?.valor || '3', 10);
   const tancament = (dataLlistada) => (dataLlistada ? new Date(Date.parse(dataLlistada) + diesSubhasta * 86400000).toISOString().slice(0, 10) : null);
   // v3.1: FORA el criteri econòmic de «despatxar» per `valor_net`. Es llista una vegada i qui
   // decidix si s'acomiada és la SUBHASTA (lib/vendes.js → despatxable), no una previsió.
-  // Els RELLOTGES manen sobre el despatxar (2b): un jugador amb venda FORÇADA
-  // (llistat/venut/despatxat, data de llistat activa o entrada d'agenda de llistat
-  // vigent) MAI mostra «despatxar» ni buffer — mateixa doctrina.
-  const { results: agListat } = await env.DB.prepare(
-    "SELECT jugador_id FROM alertes WHERE usuari_id=? AND estat='agenda' AND missatge_clau='agenda.llistar' AND jugador_id IS NOT NULL"
-  ).bind(data.usuari.id).all();
-  const forcadaAgenda = new Set(agListat.map((r) => r.jugador_id));
-  const forcada = (j) => j.estat === 'llistat' || j.estat === 'venut' || j.estat === 'despatxat' || !!j.data_llistada || forcadaAgenda.has(j.jugador_id);
   const eixida = jugadors.map((j, i) => {
-    const forc = forcada({ ...j, estat: j.estat || 'pendent' });
     // El valor de venda mana en la retenció (1). MATEIXA vara que el motor d'alertes: la
     // puntuació de la categoria (derivada, no la desada). Sense preu estimat, la puntuació és
     // l'única vara — i és una dada pròpia, no una previsió.
     const valor = punts[i] ?? 0;
     // Tots els d'esta llista són sobrants PER CONSTRUCCIÓ: el filtre és el grup «venda», que
     // vol dir justament «no ocupa cap lloc del pla, no entrena, i no és el futur entrenador ni
-    // el porter suplent». Ja no penja de la categoria vella.
-    const esSobrant = true;
+    // el porter suplent». Ja no penja de la categoria vella, i per això el camp és constant.
     // El DESERT no arriba ni ací: la consulta ja l'ha deixat fora. Un jugador que ha eixit a
     // subhasta i ningú l'ha volgut NO torna a Vendes mai més —ni fitxa, ni píndola, ni
     // missatge—: no és transferible i l'única cosa que se'n pot fer és despatxar-lo, que és
     // una decisió de PLANTILLA. Del mercat, amb ell, ja no es parla.
     return { ...j, estat: j.estat || 'pendent', valor, puntuacio: punts[i] ?? null,
       tancament_previst: tancament(j.data_llistada), lesionat: esLesionat(j.lesio),
-      es_sobrant: esSobrant };
+      es_sobrant: true };
   });
   // (4) FORA les marques de BUFFER («cobrix X — ven-lo l'últim»): doctrina morta amb la
   // liquidació. Una fitxa només pot estar en un d'estos estats, i els dona el MATEIX

@@ -47,7 +47,7 @@ export async function onRequestPost({ request, env, data }) {
   if (cos.accio === 'regenerar') return json(await regeneraPipeline(env.DB, data.usuari.id));
 
   if (!cos.id || !['vista', 'ignorada', 'resolta'].includes(cos.estat)) return json({ error: 'dades_invalides' }, 400);
-  const r = await env.DB.prepare('UPDATE alertes SET estat = ? WHERE id = ? AND usuari_id = ?')
+  await env.DB.prepare('UPDATE alertes SET estat = ? WHERE id = ? AND usuari_id = ?')
     .bind(cos.estat, cos.id, data.usuari.id).run();
   return json({ ok: true });
 }

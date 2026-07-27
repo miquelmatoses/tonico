@@ -34,9 +34,6 @@ export const edat = (anys, dies) => {
   return (dies == null || Number.isNaN(Number(dies))) ? `${anys}a` : `${anys}a${FIN}${dies}d`;
 };
 
-// Data: l'ISO ja és llegible; centralitzat per si un dia canvia el format.
-export const data = (iso) => iso || '—';
-
 // Lesionat: la columna «Lesions» del CSV és buida si el jugador està sa; qualsevol
 // valor no buit i distint de «0» = lesionat (setmanes de baixa). Predicat únic
 // (servidor i client) per no dispersar la interpretació de la dada.

@@ -4,48 +4,31 @@
 // El FILTRE i la NECESSITAT són la mateixa fitxa. Abans eren dues llistes derivades per camins
 // distints —una comptava categories del PAS 6 i l'altra mirava l'assignació d'estructura— i
 // podien discrepar sobre què falta.
-import { economia } from '../../lib/economia.js';
 import { estatEstoc } from '../../lib/orquestra_estoc.js';
-import { onzeEstructura } from '../../lib/onze_estructura.js';
-import { necessitats, ambPreus, cercaDe } from '../../lib/fitxatges.js';
-import { carregaConfigPesos, pesosFormacio } from '../../lib/pesos.js';
+import { cercaDe } from '../../lib/fitxatges.js';
 
 export async function onRequestGet({ env, data }) {
   const pla = await env.DB.prepare('SELECT plantilla FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
   const estoc = await estatEstoc(env.DB, data.usuari.id);
 
   // ── QUÈ FA FALTA FITXAR, i què costa ────────────────────────────────────────────────────
-  // Les places buides manen; després, els llocs de l'onze a més d'un nivell de l'objectiu. El
-  // PREU no s'estima —a Hattrick no el calcula el joc— i per això va a banda: Miquel mira les
-  // últimes transferències i el declara per TIPUS de fitxatge.
-  const equip2 = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id=? AND tipus='senior'").bind(data.usuari.id).first();
-  const inst2 = equip2 ? await env.DB.prepare('SELECT id FROM instantanies WHERE equip_id=? ORDER BY data DESC, id DESC LIMIT 1').bind(equip2.id).first() : null;
+  // La llista ja la porta `estatEstoc` (`mancances`): les places buides manen, després els
+  // llocs de l'onze a més d'un nivell de l'objectiu, i cada una amb el seu preu declarat.
+  // Ací només se li enganxen els CRITERIS DE CERCA: el filtre diu QUÈ teclejar a Hattrick i
+  // la necessitat diu PER QUÈ fa falta — són la mateixa fitxa.
+  //
+  // Abans això es tornava a derivar de zero (una altra economia, una altra instantània, una
+  // altra assignació d'estructura i sis consultes de poms) per a arribar exactament al mateix
+  // resultat. Dues derivacions de la mateixa cosa, i podien discrepar.
   let necessaris = [];
-  if (inst2 && pla) {
-    const { results: tots } = await env.DB.prepare(
-      `SELECT j.id, j.nom, ij.edat_anys, ij.edat_dies, ij.sou, ij.experiencia, ij.lideratge,
-              ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada
-         FROM instantanies_jugadors ij JOIN jugadors j ON j.id = ij.jugador_id
-        WHERE ij.instantania_id = ?`
-    ).bind(inst2.id).all();
-    const eco2 = await economia(env.DB, data.usuari.id);
-    const est = await onzeEstructura(env.DB, data.usuari.id, tots, eco2.sou_sostenible_setmanal);
-    const cfgP = await carregaConfigPesos(env.DB, pla.plantilla);
-    const pesos = pesosFormacio([...new Set((est?.onze || []).map((l) => l.bucket))],
-      cfgP.posicio_aportacio, cfgP.taula_aportacio, cfgP.pes_sector);
+  if (pla && estoc.mancances?.length) {
     const pom = async (clau) => (await env.DB.prepare('SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau=?').bind(pla.plantilla, clau).first())?.valor ?? null;
-    const llista = necessitats(est, { entrenable_min: Number(await pom('entrenable_creativitat_min')), pesos });
-    const { results: files } = await env.DB.prepare('SELECT clau, preu, data FROM preus_referencia WHERE usuari_id=?').bind(data.usuari.id).all();
-    const ambP = ambPreus(llista, new Map(files.map((f) => [f.clau, f])), eco2.caixa,
-      Number(await pom('setmanes_caducitat_preu')) || null, hui());
-    // I ELS CRITERIS DE CERCA a la mateixa fitxa: el filtre diu QUÈ teclejar a Hattrick i la
-    // necessitat diu PER QUÈ fa falta. Abans eren dues llistes derivades per camins distints.
-    const posicions = JSON.parse((await pom('buckets_alineacio')) || '{}');
-    const habilitats = JSON.parse((await pom('taula_habilitat_lloc')) || '{}');
-    const opcs = { posicions, habilitats, caixa: eco2.caixa,
+    const opcs = { posicions: JSON.parse((await pom('buckets_alineacio')) || '{}'),
+      habilitats: JSON.parse((await pom('taula_habilitat_lloc')) || '{}'),
+      caixa: estoc.caixa,
       edat_min: Number(await pom('compra_edat_min')) || null,
       edat_max: Number(await pom('compra_edat_max')) || null };
-    necessaris = ambP.map((n) => ({ ...n, cerca: cercaDe(n, opcs) }));
+    necessaris = estoc.mancances.map((n) => ({ ...n, cerca: cercaDe(n, opcs) }));
   }
 
   return json({ estoc, necessaris });

@@ -2,7 +2,7 @@
 // Venia de `fases_config`, que era el model fàbrica; ara viu als poms. node test/entrenament.mjs
 import assert from 'node:assert/strict';
 import { nova } from './_d1shim.mjs';
-import { entrenamentPrescrit } from '../lib/entrenament.js';
+import { entrenamentPrescrit } from '../lib/entrenament_places.js';
 import { REGLES } from '../lib/regles.js';
 
 const { sqlite, db } = nova(import.meta.url);
@@ -11,12 +11,12 @@ sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
 
 // El full prescriu (A,B) = (creativitat, passades), intensitat 100%, resistència 10%.
 const ent = await entrenamentPrescrit(db, 'competitiva');
-assert.equal(ent.tipus, 'creativitat');
+assert.equal(ent.skill, 'creativitat');
+assert.equal(ent.skill_b, 'passades');
 assert.equal(ent.intensitat, 100);
 assert.equal(ent.resistencia, 10);
-assert.equal(ent.principal, 'creativitat');
-assert.equal(ent.secundaria, 'passades');
-assert.equal(await entrenamentPrescrit(db, 'inexistent'), null, 'sense prescripció no se n\'inventa');
+assert.equal((await entrenamentPrescrit(db, 'inexistent')).skill, null,
+  'sense prescripció no se n\'inventa cap');
 
 // FORA L'ALERTA DE DESQUADRE. Comparava l'entrenament CONFIRMAT a HT amb el prescrit, i la
 // finestra per a confirmar-lo era el panell de Personal, que se n'ha anat: l'entrenament es

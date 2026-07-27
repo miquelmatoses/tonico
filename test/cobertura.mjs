@@ -2,7 +2,11 @@
 // d'EMERGIR de la config: dos entrenaments distints → places i mínims distints, sense
 // cap número escrit a mà. node test/cobertura.mjs
 import assert from 'node:assert/strict';
-import { cobertura, entrenablesObjectiu, retingutsPerCobertura } from '../lib/cobertura.js';
+import { cobertura, retencioCobertura } from '../lib/cobertura.js';
+// `entrenablesObjectiu` ja no s'exporta: només el crida `cobertura()`, i és el seu camp
+// `entrenables_objectiu` el que es comprova.
+// `retingutsPerCobertura` era un embolcall que només tornava els ids: es crida la font.
+const retingutsPerCobertura = (c, o) => retencioCobertura(c, o).ids;
 import { REGLES } from '../lib/regles.js';
 import { conjuntLiquidacio, estatLiquidacio } from '../lib/liquidacio.js';
 
@@ -47,8 +51,8 @@ assert.notEqual(c1.entrenables_objectiu, c2.entrenables_objectiu, 'entrenaments 
 assert.notEqual(c1.total, c2.total, 'entrenaments distints → plantilles mínimes distintes');
 
 // Règim: amb UN sol rol no hi ha rotació de 2 blocs → la meitat de capacitat.
-assert.equal(entrenablesObjectiu(cfgCreativitat.slots, 1), 4, 'un sol partit → 4 (sense rotació)');
-assert.equal(entrenablesObjectiu(cfgDefensa.slots, 1), 5);
+assert.equal(cobertura({ slots: cfgCreativitat.slots, rols: [1] }).entrenables_objectiu, 4, 'un sol partit → 4 (sense rotació)');
+assert.equal(cobertura({ slots: cfgDefensa.slots, rols: [1] }).entrenables_objectiu, 5);
 
 // El pom porters_minims mou el mínim (política); ja no hi ha marge d'absències.
 assert.equal(cobertura(cfgCreativitat, { futur_entrenador: 1, porters_minims: 3 }).total, 8 + 1 + 3 + 4);

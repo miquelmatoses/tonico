@@ -134,12 +134,10 @@ const codis = (a) => a.map((x) => x.regla_codi);
     'sense places buides, cap alerta');
 }
 
-// ALR_SENSE_CATEGORIA
-{
-  const ctx = { ...ctxBase, jugadors: [{ jugador_id: 1, nom: 'Z', categoria: null }, { jugador_id: 2, grup: 'venda' }] };
-  assert.deepEqual(REGLES.ALR_SENSE_CATEGORIA(ctx, { urgencia: 40 }).map((x) => x.jugador_id), [1]);
-}
-
+// ALR_SENSE_CATEGORIA se n'ha anat (migració 091): amb l'assignació d'estructura, un jugador
+// sense grup no pot existir —els sis grups cobrixen la plantilla sencera per construcció— i
+// l'únic cas que quedava, «no hi ha formació», feia saltar la regla per a TOTS alhora.
+assert.equal(REGLES.ALR_SENSE_CATEGORIA, undefined, 'la regla se n\'ha anat del motor');
 
 // executaRegles: ordenat per urgència; setmana tranquil·la → cap alerta
 {

@@ -98,15 +98,13 @@ export async function api(path, opts = {}) {
 }
 
 // Navegació comuna (per a les pàgines internes).
-export function pintaNav(activa) {
+export function pintaNav() {
   const nav = document.querySelector('nav');
   if (!nav) return;
   nav.append(
     el('a', { href: '/esta-setmana.html', text: t('nav.esta_setmana') }),
     document.createTextNode(' · '),
     el('a', { href: '/alineacio.html', text: t('nav.alineacio') }),
-    document.createTextNode(' · '),
-    el('a', { href: '/pla.html', text: t('nav.pla') }),
     document.createTextNode(' · '),
     el('a', { href: '/economia.html', text: t('nav.economia') }),
     document.createTextNode(' · '),

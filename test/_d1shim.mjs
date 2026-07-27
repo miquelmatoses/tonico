@@ -111,5 +111,7 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/088_preus_referencia.sql'));
   sqlite.exec(src('../schema/089_fora_poms_fabrica.sql'));
   sqlite.exec(src('../schema/090_fora_categories.sql'));
+  sqlite.exec(src('../schema/091_fora_sense_categoria.sql'));
+  sqlite.exec(src('../schema/092_neteja_config.sql'));
   return { sqlite, db: new D1(sqlite) };
 }
