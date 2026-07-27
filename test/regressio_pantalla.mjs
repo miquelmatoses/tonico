@@ -144,7 +144,11 @@ assert.ok(/if \(!files \|\| !files\.length\) return null;/.test(vista),
     assert.ok(nPistes, '`.fila` declara les seues columnes al CSS');
     const dolentes = [];
     let vistes = 0;
-    for (const m of vista.matchAll(/class: (?:'fila'|[\w.?: ]*'fila'[\w.?: ']*)\s*\}/g)) {
+    // SENSE COMENTARIS. El recorregut tracta l'apòstrof com a obertura de cadena, i un
+    // comentari amb «l'objectiu» dins es menjava les comes de la resta de la fila: la fila
+    // eixia de quatre cel·les i el guardià acusava un desquadre que no existia.
+    const net = vista.split('\n').map((l) => l.replace(/(^|[^:])\/\/.*$/, '$1')).join('\n');
+    for (const m of net.matchAll(/class: (?:'fila'|[\w.?: ]*'fila'[\w.?: ']*)\s*\}/g)) {
       // Des del `}` dels atributs fins al `)` que tanca eixe `el(`: les comes de nivell 0 (fora
       // de parèntesis i de cadenes) separen els fills.
       // Es TALLA en trossos per les comes de nivell 0 i es conten els NO BUITS. Comptar comes
@@ -152,10 +156,10 @@ assert.ok(/if \(!files \|\| !files\.length\) return null;/.test(vista),
       // per tant la fila escapçada passava el guardià.
       let prof = 0, dins = null, tros = '';
       const fills = [];
-      let i = vista.indexOf('}', m.index) + 1;
-      for (; i < vista.length; i++) {
-        const c = vista[i];
-        if (dins) { tros += c; if (c === dins && vista[i - 1] !== '\\') dins = null; continue; }
+      let i = net.indexOf('}', m.index) + 1;
+      for (; i < net.length; i++) {
+        const c = net[i];
+        if (dins) { tros += c; if (c === dins && net[i - 1] !== '\\') dins = null; continue; }
         if (c === "'" || c === '"' || c === '`') { dins = c; tros += c; continue; }
         if (c === '(' || c === '{' || c === '[') prof++;
         else if (c === '}' || c === ']') prof--;

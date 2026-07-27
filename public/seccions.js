@@ -2,7 +2,7 @@
 // funció fa el seu fetch i pinta dins del seu contenidor. Els errors s'aïllen
 // per secció (una que falla no tomba la pàgina). HTML semàntic, reset mínim.
 import { api, el, t, tp, filaSegura } from '/comu.js';
-import { diners, milers, decimal, percent, edat, notes, esLesionat, duradaLesio, ambXifres, rendiment } from '/format.js';
+import { diners, milers, decimal, percent, signat, edat, notes, esLesionat, duradaLesio, ambXifres, rendiment } from '/format.js';
 
 const SIGLA = { porteria: 'PO', defensa: 'DF', creativitat: 'CR', extrem: 'EX', passades: 'PA', anotacio: 'AN', pilota_aturada: 'PP' };
 const opc = async (p) => { try { return await p; } catch { return null; } };
@@ -378,7 +378,10 @@ export async function plantilla(main) {
         el('div', { class: 'fila-qui' },
           el('div', { class: posCls(sigla), text: sigla }),
           el('div', {}, el('div', { class: 'fila-nom', text: j ? j.nom : t('plantilla.lloc_buit') }), meta)),
-        el('div', { class: 'punts', text: j ? decimal(j.puntuacio) : '—' }),
+        // La columna diu QUANT LI FALTA O LI SOBRA per a l'objectiu del lloc, no la puntuació
+        // de la seua categoria: onze jugadors mesurats amb fórmules distintes a la mateixa
+        // columna no es podien comparar entre ells.
+        el('div', { class: 'punts ' + (l.senyal ?? ''), text: j ? signat(l.diferencia) : '—' }),
         el('div', { class: 'tsi', text: j ? 'TSI ' + (j.tsi ?? '—') : '' }),
         el('div', { class: 'skills', text: j ? hab(j) : '' }),
         vara);
@@ -389,19 +392,20 @@ export async function plantilla(main) {
   // ENTRENABLES: van just darrere de l'onze perquè són la seua continuació — els joves que
   // ocuparan els llocs del motor quan els titulars descansen. Es mesuren contra la MATEIXA
   // vara que eixos llocs, que és el que diu si el jove servix o no.
-  const enEntrenables = new Set(entrenables?.jugadors || []);
+  const enEntrenables = new Set((entrenables?.jugadors || []).map((x) => x.id));
   if (entrenables?.places) {
     const perId = new Map(jugadors.map((j) => [j.id, j]));
-    const nivell = onze?.find((l) => l.habilitat === entrenables.habilitat)?.nivell_objectiu ?? null;
+    const nivell = entrenables.nivell_objectiu;
     const tarja = card(t('plantilla.entrenables'), entrenables.places);
-    const files = entrenables.jugadors.map((id) => perId.get(id)).filter(Boolean);
+    const files = entrenables.jugadors.map((x) => ({ ...perId.get(x.id), diferencia: x.diferencia, senyal: x.senyal }))
+      .filter((j) => j.id != null);
     for (const j of files) tarja.append(filaSegura(() => el('div', { class: 'fila' },
       el('div', { class: 'fila-qui' },
         el('div', { class: posCls('MC'), text: t('plantilla.entrenable_curt') }),
         el('div', {}, el('div', { class: 'fila-nom', text: j.nom }),
           el('div', { class: 'fila-meta' },
             el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` })))),
-      el('div', { class: 'punts', text: decimal(j.puntuacio) }),
+      el('div', { class: 'punts ' + (j.senyal ?? ''), text: signat(j.diferencia) }),
       el('div', { class: 'tsi', text: 'TSI ' + (j.tsi ?? '—') }),
       el('div', { class: 'skills', text: hab(j) }),
       el('div', { class: 'vara' },

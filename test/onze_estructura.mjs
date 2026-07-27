@@ -132,4 +132,23 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
     'passada l\'edat de pic de venda, ja no és entrenable');
 }
 
+// ── 8. LA DIFERÈNCIA contra l'objectiu del lloc, signada i en l'escala de Hattrick. És el que
+// substituïx la puntuació a la columna: onze jugadors mesurats amb la fórmula de la seua
+// categoria —nucli, venda, cos— no es podien comparar entre ells a la mateixa columna.
+{
+  const llocs2 = [{ lloc: 'MC1', bucket: 'mc', habilitat: 'creativitat', pes: 1.46, nivell_objectiu: 9 }];
+  const curt = assignaEstructura([jug(1, 8, 0)], llocs2).onze[0];
+  assert.equal(curt.diferencia, -1, 'CR 8 contra un objectiu de 9: li falta 1');
+  assert.equal(curt.senyal, 'baix', 'i el senyal el tria l\'avaluador, que la vista no compara');
+  const just = assignaEstructura([jug(1, 9, 0)], llocs2).onze[0];
+  assert.equal(just.diferencia, 0, 'qui arriba just, ni li falta ni li sobra');
+  assert.equal(just.senyal, 'alt', 'i arribar compta com a arribar');
+  const sobrat = assignaEstructura([jug(1, 12, 0)], llocs2).onze[0];
+  assert.equal(sobrat.diferencia, 3, 'i qui va sobrat, ho diu en positiu');
+  const sensObj = assignaEstructura([jug(1, 8, 0)], [{ ...llocs2[0], nivell_objectiu: null }]).onze[0];
+  assert.equal(sensObj.diferencia, null, 'sense objectiu no se n\'inventa cap diferència');
+  const buit = assignaEstructura([], llocs2).onze[0];
+  assert.equal(buit.diferencia, null, 'ni per a un lloc sense ningú');
+}
+
 console.log('OK — l\'onze d\'estructura: tots els jugadors, lloc a lloc, un jugador un lloc');

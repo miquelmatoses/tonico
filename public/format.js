@@ -20,6 +20,11 @@ export const diners = (n) => (n == null || n === '' ? '—' : milers(n) + FIN + 
 export const decimal = (n, d = 1) => (n == null || n === '' ? '' : Number(n).toFixed(d).replace('.', ','));
 
 // Percentatge enter: «72%».
+// Una DIFERÈNCIA es llig amb el signe davant, també quan és positiva: «+2» diu «li sobren
+// dos» i «2» tot sol no diu res. El zero va sense signe, que és clavat.
+export const signat = (n) => (n == null || n === '' ? '—'
+  : Number(n) > 0 ? '+' + milers(n) : milers(n));
+
 export const percent = (n) => (n == null || n === '' ? '' : milers(Math.round(Number(n))) + '%');
 
 // Edat Hattrick: «17a 34d» (anys + dies). Degrada amb dades parcials: sense dies →

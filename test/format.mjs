@@ -1,7 +1,7 @@
 // Tonico — formatadors únics (polit #10.7). node test/format.mjs
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { milers, diners, decimal, percent, edat, notes, esLesionat, duradaLesio } from '../public/format.js';
+import { milers, diners, decimal, percent, edat, notes, esLesionat, duradaLesio, signat} from '../public/format.js';
 
 const FIN = ' ';
 
@@ -47,5 +47,12 @@ const prohibits = [
   [/\$\{[^}]*edat_anys[^}]*\}a\b/, 'edat formatada a mà (usa edat())'],
 ];
 for (const [re, msg] of prohibits) assert.ok(!re.test(sec), `seccions.js: ${msg}`);
+
+// Una DIFERÈNCIA es llig amb el signe davant també quan és positiva: «+2» diu «li sobren dos»
+// i «2» tot sol no diu si sobra o falta. El zero va sense signe, i el negatiu amb menys real.
+assert.equal(signat(3), '+3');
+assert.equal(signat(0), '0', 'arribar just no és ni sobrar ni faltar');
+assert.equal(signat(-1), '\u22121', 'menys real (U+2212), no guionet');
+assert.equal(signat(null), '—', 'sense diferència no se n\'inventa cap');
 
 console.log('OK — format: diners/decimal/percent/edat, nota al peu i escaneig de seccions net');
