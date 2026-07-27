@@ -585,5 +585,6 @@
   "plantilla.despatxar_nota": "Estos ja van eixir a subhasta i ningú els va voler: no es tornen a llistar (ja no són transferibles) i cada setmana cobren. L'única eixida és despatxar-los.",
   "alerta.despatxar_1": "Tens 1 jugador que ja va eixir a subhasta i ningú va voler, i et costa {sou_total} cada setmana. No es pot tornar a llistar: despatxa'l.",
   "alerta.despatxar_n": "Tens {n} jugadors que ja van eixir a subhasta i ningú va voler, i et costen {sou_total} cada setmana. No es poden tornar a llistar: despatxa'ls.",
-  "plantilla.setmanes_nivell": "{seguent} ({anterior}) set."
+  "plantilla.setmanes_nivell": "{seguent} ({anterior})",
+  "plantilla.entrenables_nota": "A la columna del mig, les setmanes que li falten per al nivell següent i, entre parèntesis, el que li va costar l'actual. Amb més entrenables que places, van primer els que estan més a prop de pujar."
 }

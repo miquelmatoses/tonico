@@ -191,12 +191,22 @@ assert.ok(/if \(!files \|\| !files\.length\) return null;/.test(vista),
   // dentada per molt que la xifra vaja alineada a la dreta. Amb `fr` passa igual, perquè el
   // repartiment depén del que ocupen les altres cel·les d'eixa fila.
   {
-    const plantilla = css.match(/\.fila\s*\{[^}]*grid-template-columns:\s*([^;]+);/)?.[1] || '';
-    const pistes = plantilla.replace(/minmax\([^)]*\)/g, 'M').split(/\s+/).filter(Boolean);
-    // Les cel·les de número són la 2a (punts) i la 3a (TSI): ni `auto` ni `fr`.
-    for (const i of [1, 2]) {
-      assert.ok(/^\d+px$/.test(pistes[i] || ''),
-        `.fila: la pista ${i + 1} (número) ha d'anar a ample fix, no «${pistes[i]}»\n  ${plantilla}`);
+    // TOTES les declaracions de `.fila`, no només la primera: les variants (`.fila.ent`) i la
+    // regla de mòbil també pinten números, i amb `auto` la seua targeta torna a eixir dentada
+    // mentres la base seguiria passant el guardià.
+    const variants = [...css.matchAll(/(\.fila(?:\.[\w-]+)?)\s*\{\s*([^}]*grid-template-columns:\s*[^;]+;)/g)]
+      .map(([, nom, cos]) => [nom, cos.match(/grid-template-columns:\s*([^;]+);/)[1]]);
+    assert.ok(variants.length >= 3,
+      `s'han de vore totes les declaracions de .fila (n'hi ha ${variants.length})`);
+    for (const [nom, plantilla] of variants) {
+      const pistes = plantilla.replace(/minmax\([^)]*\)/g, 'M').split(/\s+/).filter(Boolean);
+      // La 2a pista és la del VALOR i sempre porta número: ni `auto` ni `fr`. La 3a és la TSI,
+      // que al mòbil s'amaga (allí la graella té tres pistes i la tercera és l'última cel·la).
+      const aMirar = pistes.length > 3 ? [1, 2] : [1];
+      for (const i of aMirar) {
+        assert.ok(/^\d+px$/.test(pistes[i] || ''),
+          `${nom}: la pista ${i + 1} (número) ha d'anar a ample fix, no «${pistes[i]}»\n  ${plantilla}`);
+      }
     }
   }
 

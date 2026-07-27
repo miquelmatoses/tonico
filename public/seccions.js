@@ -395,23 +395,26 @@ export async function plantilla(main) {
     const tarja = card(t('plantilla.entrenables'), entrenables.places);
     const files = entrenables.jugadors.map((x) => ({ ...perId.get(x.id), diferencia: x.diferencia, senyal: x.senyal }))
       .filter((j) => j.id != null);
-    for (const j of files) tarja.append(filaSegura(() => el('div', { class: 'fila' },
+    for (const j of files) tarja.append(filaSegura(() => el('div', { class: 'fila ent' },
       el('div', { class: 'fila-qui' },
         el('div', { class: posCls('MC'), text: t('plantilla.entrenable_curt') }),
         el('div', {}, el('div', { class: 'fila-nom', text: j.nom }),
           el('div', { class: 'fila-meta' },
             el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` })))),
-      el('div', { class: 'punts ' + (j.senyal ?? ''), text: signat(j.diferencia) }),
-      // «10(6)»: el que li costarà el nivell següent i el que li va costar l'actual. El segon
-      // només hi és si la pujada va passar mentre es pujava CSV — si no, no s'inventa.
-      el('div', { class: 'tsi', text: j.setmanes_seguent == null ? ''
+      // «10(6)» A LA COLUMNA DE VALOR, on a l'onze va la resta contra l'objectiu. Ací el que
+      // decidix no és què li falta per a arribar, sinó QUÈ LI COSTA PUJAR: amb més entrenables
+      // que places, els primers han de ser els que estan més a prop del nivell següent.
+      // El segon número només hi és si la pujada s'ha vist — si no, no s'inventa.
+      el('div', { class: 'punts', text: j.setmanes_seguent == null ? '—'
         : t('plantilla.setmanes_nivell', { seguent: decimal(j.setmanes_seguent),
             anterior: j.setmanes_anterior == null ? '—' : decimal(j.setmanes_anterior) }) }),
+      el('div', { class: 'tsi', text: 'TSI ' + (j.tsi ?? '—') }),
       el('div', { class: 'skills', text: hab(j) }),
       el('div', { class: 'vara' },
         el('span', { class: 'vara-hab', text: t('hab.' + entrenables.habilitat) }),
         el('b', { text: nivell ?? '—' }))), 1));
     // Les places que no s'omplin es diuen: una plaça d'entrenament buida és entrenament perdut.
+    tarja.append(cos(el('p', { class: 'nota-peu', text: t('plantilla.entrenables_nota') })));
     for (let i = files.length; i < entrenables.places; i++) tarja.append(el('div', { class: 'fila buit' },
       el('div', { class: 'fila-qui' },
         el('div', { class: posCls('MC'), text: t('plantilla.entrenable_curt') }),

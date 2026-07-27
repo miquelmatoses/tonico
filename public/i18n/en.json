@@ -585,5 +585,6 @@
   "plantilla.despatxar_nota": "These already went to auction and nobody wanted them: they can't be listed again and they draw a wage every week. The only way out is to release them.",
   "alerta.despatxar_1": "You have 1 player who went to auction unsold, costing you {sou_total} a week. He can't be listed again: release him.",
   "alerta.despatxar_n": "You have {n} players who went to auction unsold, costing you {sou_total} a week. They can't be listed again: release them.",
-  "plantilla.setmanes_nivell": "{seguent} ({anterior}) wks"
+  "plantilla.setmanes_nivell": "{seguent} ({anterior})",
+  "plantilla.entrenables_nota": "The middle column shows the weeks left to the next level and, in brackets, what the current one took. With more trainees than slots, those closest to a level-up come first."
 }

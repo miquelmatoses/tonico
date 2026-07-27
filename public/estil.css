@@ -320,7 +320,8 @@ ul { margin: 0 0 12px; padding-left: 18px; }
   /* Al mòbil se n'amaguen dues, o siga que en queden TRES visibles: qui, punts i l'última
      (la vara o el selector de categoria). Amb dues pistes, la tercera se n'anava a una fila
      nova i la targeta es trencava. */
-  .fila { grid-template-columns: 1fr auto auto; gap: 8px; }
+  .fila { grid-template-columns: 1fr 64px auto; gap: 8px; }
+  .fila.ent { grid-template-columns: 1fr 104px auto; }
   .fila .skills, .fila .tsi { display: none; }
   .hdr-caixa { display: none; }
 }
@@ -561,3 +562,7 @@ form.card-cos { display: block; }
    no té ningú, que ha de cridar l'atenció sense trencar la graella. */
 .fila.buit .fila-nom { color: var(--roig); font-style: italic; font-weight: 700; }
 .fila.buit .pos { opacity: .45; }
+
+/* Les files d'ENTRENABLES porten «10,2 (6,0)» a la columna de valor: necessita més ample que
+   un «+2». Ample fix igual, que és el que manté les unitats alineades entre files. */
+.fila.ent { grid-template-columns: minmax(0,2.4fr) 104px 78px minmax(0,1.6fr) 104px; }
