@@ -30,18 +30,34 @@ sqlite.exec(`
   INSERT INTO equips (id, usuari_id, nom, tipus) VALUES (1,1,'E','senior'),(2,1,'J','juvenil');
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES
     (1,1,'2026-07-19',83,1),(2,1,'2026-07-26',83,2),(3,2,'2026-07-26',83,2);
+  -- CATORZE jugadors, no quatre: amb menys de dotze tots entren a l'onze, no queda residu i la
+  -- targeta d'entrenables ix buida — o siga que la prova no provaria res.
   INSERT INTO jugadors (id, equip_id, id_hattrick, nom, especialitat) VALUES
-    (1,1,100,'A','Ràpid'),(2,1,101,'B',NULL),(3,1,102,'C',NULL);
+    (1,1,100,'A','Ràpid'),(2,1,101,'B',NULL),(3,1,102,'C',NULL),(4,1,103,'D',NULL),
+    (5,1,104,'E',NULL),(6,1,105,'F',NULL),(7,1,106,'G',NULL),(8,1,107,'H',NULL),
+    (9,1,108,'I',NULL),(10,1,109,'J',NULL),(11,1,110,'K',NULL),(12,1,111,'L',NULL),
+    (13,1,112,'M',NULL),(14,1,113,'N',NULL);
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, edat_dies,
       sou, tsi, transferible, creativitat, defensa, porteria, anotacio, extrem, passades, pilota_aturada) VALUES
     (1,1,'MC',22,10,3000,5000,1,5,1,1,1,1,4,1),(1,2,'DC',24,20,2000,4000,NULL,1,6,1,1,1,1,1),
     (1,3,'DV',28,30,9000,3000,NULL,1,1,1,5,1,1,1),
     (2,1,'MC',22,17,3000,5000,NULL,5,1,1,1,1,4,1),(2,2,'DC',24,27,2000,4000,NULL,1,6,1,1,1,1,1),
-    (2,3,'DV',28,37,9000,3000,NULL,1,1,1,5,1,1,1);
+    (2,3,'DV',28,37,9000,3000,NULL,1,1,1,5,1,1,1),
+    -- Tres MC millors que el jove, per a que l'onze se'ls emporte i ell caiga a ENTRENABLE.
+    (2,5,'MC',24,0,3000,4000,NULL,8,1,1,1,1,1,1),(2,6,'MC',25,0,3000,4000,NULL,7,1,1,1,1,1,1),
+    (2,7,'MC',26,0,3000,4000,NULL,6,1,1,1,1,1,1),
+    (2,8,'DC',27,0,2000,3000,NULL,1,6,1,1,1,1,1),(2,9,'EX',24,0,2000,3000,NULL,1,1,1,1,6,1,1),
+    (2,10,'EX',25,0,2000,3000,NULL,1,1,1,1,5,1,1),(2,11,'DV',26,0,2000,3000,NULL,1,1,1,6,1,1,1),
+    (2,12,'DV',27,0,2000,3000,NULL,1,1,1,5,1,1,1),(2,13,'POR',28,0,2000,3000,NULL,1,1,7,1,1,1,1),
+    -- I el JOVE, que és el que ha de portar el càlcul a la pantalla.
+    (1,14,'MC',18,10,900,700,NULL,4,1,1,1,1,1,1),(2,14,'MC',18,17,900,700,NULL,4,1,1,1,1,1,1);
   INSERT INTO categories_jugador (jugador_id, categoria, origen) VALUES
-    (1,'core','auto'),(2,'titular','auto'),(3,'venda','auto');
-  INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou, data_fi_contracte) VALUES
-    (1,'especialista','assistent',2,2040,'2026-11-04'),(1,'entrenador','entrenador',NULL,5000,NULL);
+    (1,'core','auto'),(2,'titular','auto'),(3,'venda','auto'),(4,'core','auto'),
+    (5,'core','auto'),(6,'core','auto'),(7,'titular','auto'),(8,'titular','auto'),
+    (9,'titular','auto'),(10,'titular','auto'),(11,'titular','auto'),(12,'cos','auto'),
+    (13,'cos','auto'),(14,'cos','auto');
+  INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou, data_fi_contracte, coach_entrenament) VALUES
+    (1,'especialista','assistent',2,2040,'2026-11-04',NULL),(1,'entrenador','entrenador',NULL,5000,NULL,'passable');
   INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi, estadi_manteniment, estadi_cost_obra, estadi_data)
     VALUES (1,173004,'2026-07-26',7100,9000,200000,'2026-07-20');
   INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada) VALUES
@@ -113,5 +129,24 @@ for (const nom of PANTALLES) {
 }
 console.error = errOriginal;
 assert.deepEqual(trencades, [], 'pantalles que no es pinten netes:\n  ' + trencades.join('\n  '));
+
+// ── EL QUE L'AVALUADOR CALCULA HA D'ARRIBAR AL DOM ────────────────────────────────────────
+// Pintar sense petar no vol dir pintar les dades. La fila dels entrenables copiava camp a camp
+// del que servix l'API i, al moure el «10(6)» a la columna de valor, els dos camps nous es van
+// quedar fora: la pantalla pintava un guionet i semblava que el càlcul no existia.
+{
+  const { onRequestGet } = await import('../functions/api/plantilla.js');
+  const dades = await (await onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
+  const jove = (dades.entrenables?.jugadors || []).find((x) => x.setmanes_seguent != null);
+  assert.ok(jove, 'el fixture ha de tindre un entrenable amb càlcul, si no la prova no prova res');
+
+  const main = crea('main');
+  await seccions.plantilla(main);
+  const text = (n) => (n.textContent || '') + (n.fills || []).map(text).join(' ');
+  const pintat = text(main);
+  const xifra = String(jove.setmanes_seguent).replace('.', ',');
+  assert.ok(pintat.includes(xifra),
+    `les setmanes fins al nivell següent (${xifra}) no arriben a la pantalla`);
+}
 
 console.log(`OK — les ${PANTALLES.length} pantalles es pinten de veres, sense variables soltes ni claus sense resoldre`);

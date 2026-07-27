@@ -393,7 +393,10 @@ export async function plantilla(main) {
     const perId = new Map(jugadors.map((j) => [j.id, j]));
     const nivell = entrenables.nivell_objectiu;
     const tarja = card(t('plantilla.entrenables'), entrenables.places);
-    const files = entrenables.jugadors.map((x) => ({ ...perId.get(x.id), diferencia: x.diferencia, senyal: x.senyal }))
+    // TOT el que porta l'API, no una tria a mà: copiar camp a camp vol dir que el dia que
+    // n'afiges un a l'avaluador i te n'oblides ací, la pantalla pinta un guionet i sembla que
+    // les dades no hi són. És el que va passar amb `setmanes_seguent`.
+    const files = entrenables.jugadors.map((x) => ({ ...perId.get(x.id), ...x }))
       .filter((j) => j.id != null);
     for (const j of files) tarja.append(filaSegura(() => el('div', { class: 'fila ent' },
       el('div', { class: 'fila-qui' },
