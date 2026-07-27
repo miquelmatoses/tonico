@@ -35,7 +35,7 @@ const equip = [
   // justament la dels llocs d'entrenament: si el futur entrenador poguera agafar qualsevol
   // lloc, li llevaria la plaça a un entrenable. Ha d'anar al millor dels que QUEDEN, que és
   // el de davanter. Als 26 anys no és candidat a entrenable, així que no competix per ahí.
-  b(40, { creativitat: 6, anotacio: 5, experiencia: 12, lideratge: 6 }),
+  b(40, { creativitat: 6, extrem: 5, anotacio: 4, experiencia: 12, lideratge: 6 }),
 ];
 const r = await dosOnzes(db, 1, equip, 10291);
 const perCodi = (onze) => new Map(onze.map((l) => [l.lloc, l.jugador?.id ?? null]));
@@ -55,6 +55,16 @@ assert.deepEqual(r.onze_a.map((l) => l.jugador?.id), r.estructura.onze.map((l) =
   assert.ok(mc.every((l) => !mcA.includes(l.jugador?.id)), 'els titulars descansen eixe partit');
 }
 
+// ── 2b. ELS EXTREMS DOBLEN SÍ O SÍ. Entrenen al 50%, o siga que el seu lloc també és
+// entrenament: no se cedix a ningú, ni al futur entrenador. Són els mateixos de l'11A.
+{
+  const exA = r.onze_a.filter((l) => l.bucket === 'extrem').map((l) => l.jugador?.id);
+  const exB = r.onze_b.filter((l) => l.bucket === 'extrem');
+  assert.deepEqual(exB.map((l) => l.jugador?.id), exA, 'els mateixos extrems als dos onzes');
+  assert.ok(exB.every((l) => l.motiu === 'entrena_mig'),
+    'i el motiu és que ENTRENEN, no que dobles per omplir');
+}
+
 // ── 3. La PORTERIA és del suplent: el porter no dobla ──
 {
   const porA = r.onze_a.find((l) => l.bucket === 'porter').jugador?.id;
@@ -70,11 +80,13 @@ assert.deepEqual(r.onze_a.map((l) => l.jugador?.id), r.estructura.onze.map((l) =
   assert.ok(seu, 'juga a l\'11B encara que no siga dels millors: hi va per experiència');
   assert.equal(seu.motiu, 'experiencia');
   assert.equal(seu.habilitat, 'anotacio',
-    'en el millor dels llocs QUE QUEDEN: de creativitat és millor, però eixos són dels que entrenen');
+    'en el millor dels llocs QUE QUEDEN: de creativitat i d\'extrem és millor, però eixos entrenen');
   // I els entrenables conserven els seus: el futur entrenador no els desplaça.
   const mcB = r.onze_b.filter((l) => l.entrena && (l.pct ?? 100) === 100).map((l) => l.jugador?.id);
   assert.deepEqual(mcB, [20, 21, 22], 'els tres mig centres segueixen sent els entrenables');
   assert.ok(r.onze_b.find((l) => l.bucket === 'porter').jugador?.id !== 40, 'ni la porteria');
+  assert.ok(!r.onze_b.some((l) => l.bucket === 'extrem' && l.jugador?.id === 40),
+    'ni cap extrem, encara que hi valga més que de davanter: eixos llocs entrenen');
 }
 
 // ── 5. La RESTA dobla: els mateixos de l'11A ──

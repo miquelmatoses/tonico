@@ -618,5 +618,6 @@
   "alineacio.onze_a_sub_n": "the best in each slot of the plan",
   "alineacio.motiu_dobla": "plays twice (his slot does not train)",
   "alineacio.motiu_suplent": "backup keeper: the starter does not play twice",
-  "alineacio.motiu_plaça_buida": "training slot with nobody"
+  "alineacio.motiu_plaça_buida": "training slot with nobody",
+  "alineacio.motiu_entrena_mig": "trains here at 50% (and plays twice)"
 }

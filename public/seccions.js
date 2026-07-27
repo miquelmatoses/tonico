@@ -283,14 +283,15 @@ export async function alineacio(main) {
   // no dobla), el futur entrenador entra si no juga ja a l'11A, i la resta la cobrixen els
   // mateixos de l'11A, que no entrenen i poden doblar.
   const camp = (slots) => campDeJoc(slots, {
-    anell: (s) => (s.motiu === 'entrena' ? 'ple' : s.entrena && s.jugador ? 'mig' : s.jugador ? '' : 'buit'),
+    // L'anell diu QUANT D'ENTRENAMENT hi ha en joc en eixe lloc: ple al 100%, mig al 50%.
+    anell: (s) => (s.motiu === 'entrena' ? 'ple' : s.motiu === 'entrena_mig' ? 'mig' : s.jugador ? '' : 'buit'),
     nom: (s) => (s.jugador ? cognom(s.jugador.nom) : t('alineacio.buit')),
     titol: (s) => `${s.codi} · ${s.jugador ? s.jugador.nom : t('alineacio.buit')}`
       + (s.motiu ? ' · ' + t('alineacio.motiu_' + s.motiu) : ''),
   });
   const onzes = el('div', { class: 'onzes' });
   for (const [clau, slots, i] of [['onze_a', d.onze_a, 0], ['onze_b', d.onze_b, 1]]) {
-    const entrenen = slots.filter((s) => s.motiu === 'entrena').length;
+    const entrenen = slots.filter((s) => s.motiu === 'entrena' || s.motiu === 'entrena_mig').length;
     onzes.append(el('div', { class: 'onze' },
       el('div', { class: 'onze-cap' + (i ? ' b' : '') },
         el('div', { class: 'onze-titol', text: t('alineacio.' + clau) }),
