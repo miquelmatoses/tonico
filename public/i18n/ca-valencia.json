@@ -12,9 +12,9 @@
   "alineacio.col_slot": "Posició",
   "alineacio.col_jugador": "Jugador",
   "alineacio.col_motiu": "Motiu",
-  "alineacio.motiu_entrena": "del nucli — {pos} {pct}%",
+  "alineacio.motiu_entrena": "entrena ací",
   "alineacio.motiu_venda": "cos (en venda)",
-  "alineacio.motiu_experiencia": "experiència (futur entrenador)",
+  "alineacio.motiu_experiencia": "juga per experiència (futur entrenador)",
   "alineacio.motiu_porteria": "porteria",
   "alineacio.motiu_cos": "cos estructural",
   "alineacio.buit": "—",
@@ -609,5 +609,14 @@
   "coach.insuficient": "insuficient",
   "coach.passable": "passable",
   "coach.solid": "sòlid",
-  "coach.excellent": "excel·lent"
+  "coach.excellent": "excel·lent",
+  "alineacio.onze_a": "Onze competitiu",
+  "alineacio.onze_b": "Onze d'entrenament",
+  "alineacio.onze_b_sub_1": "1 lloc entrenant",
+  "alineacio.onze_b_sub_n": "{n} llocs entrenant",
+  "alineacio.onze_a_sub_1": "els millors a cada lloc del pla",
+  "alineacio.onze_a_sub_n": "els millors a cada lloc del pla",
+  "alineacio.motiu_dobla": "dobla partit (el seu lloc no entrena)",
+  "alineacio.motiu_suplent": "porter suplent: el titular no dobla",
+  "alineacio.motiu_plaça_buida": "plaça d'entrenament sense ningú"
 }

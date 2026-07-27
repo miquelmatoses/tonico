@@ -275,61 +275,33 @@ export async function decisions(main) {
 // ── 3. Alineació ──
 export async function alineacio(main) {
   capcalera(main, 3, 'alineacio');
-  const d = await api('/api/alineacio', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+  const d = await api('/api/onzes');
   if (d.error) { main.append(el('p', { text: t('plantilla.buit') })); return; }
-  const rolNom = new Map((d.rols || []).map((r) => [r.id, r.nom_clau]));
-  const rolCurt = new Map((d.rols || []).map((r) => [r.id, r.nom_clau_curt || r.nom_clau]));
-  const nom = (id) => t(rolNom.get(id) || 'alineacio.buit');            // nom complet: NOMÉS títols de taula
-  const curt = (id) => t(rolCurt.get(id) || 'alineacio.buit');         // nom curt: comptabilitat i avisos
-  // Motiu per fila (com la juvenil): derivat de la categoria i del rol del partit.
-  const motiu = (s) => {
-    if (!s.jugador) return '';
-    const c = s.jugador.categoria;
-    if (c === 'venda') return t('alineacio.motiu_venda');            // cos en venda (sense llistar: el llistat no juga)
-    if (s.bucket === 'porter') return t('alineacio.motiu_porteria');
-    if ((c === 'core' || c === 'rotatiu') && s.entrena) return t('alineacio.motiu_entrena', { pos: s.codi, pct: s.pct });
-    if (c === 'futur_entrenador') return t('alineacio.motiu_experiencia');
-    if (c === 'titular') return t('alineacio.motiu_titular');
-    return t('alineacio.motiu_cos');
-  };
+
+  // DOS ONZES i prou. L'11A és l'onze ideal tal qual; l'11B es COMPON, no es torna a
+  // optimitzar: els llocs que entrenen són dels entrenables, la porteria del suplent (el porter
+  // no dobla), el futur entrenador entra si no juga ja a l'11A, i la resta la cobrixen els
+  // mateixos de l'11A, que no entrenen i poden doblar.
   const camp = (slots) => campDeJoc(slots, {
-    anell: anellSenior,
+    anell: (s) => (s.motiu === 'entrena' ? 'ple' : s.entrena && s.jugador ? 'mig' : s.jugador ? '' : 'buit'),
     nom: (s) => (s.jugador ? cognom(s.jugador.nom) : t('alineacio.buit')),
-    titol: (s) => `${s.codi} · ${s.jugador ? s.jugador.nom : t('alineacio.buit')}${motiu(s) ? ' · ' + motiu(s) : ''}`,
+    titol: (s) => `${s.codi} · ${s.jugador ? s.jugador.nom : t('alineacio.buit')}`
+      + (s.motiu ? ' · ' + t('alineacio.motiu_' + s.motiu) : ''),
   });
   const onzes = el('div', { class: 'onzes' });
-  const ids = Object.keys(d.onze);
-  ids.forEach((partit, i) => {
-    const entrenen = d.onze[partit].filter((s) => s.entrena && s.jugador).length;
+  for (const [clau, slots, i] of [['onze_a', d.onze_a, 0], ['onze_b', d.onze_b, 1]]) {
+    const entrenen = slots.filter((s) => s.motiu === 'entrena').length;
     onzes.append(el('div', { class: 'onze' },
       el('div', { class: 'onze-cap' + (i ? ' b' : '') },
-        el('div', { class: 'onze-titol', text: nom(partit) }),
-        el('div', { class: 'onze-sub', text: t('alineacio.onze_sub', { n: entrenen }) })),
-      camp(d.onze[partit]), campLlegenda('senior')));
-  });
+        el('div', { class: 'onze-titol', text: t('alineacio.' + clau) }),
+        el('div', { class: 'onze-sub', text: tp('alineacio.' + clau + '_sub', entrenen, { n: entrenen }) })),
+      camp(slots), campLlegenda('senior')));
+  }
   main.append(onzes);
 
-  const c = card(t('alineacio.comptabilitat_titol'), d.comptabilitat.length);
-  const g = el('div', { class: 'graella' });
-  for (const x of d.comptabilitat) {
-    g.append(el('div', { class: 'graella-fila' },
-      el('b', { text: x.nom }),
-      el('span', { text: x.partits.map((p) => `${curt(p.partit)} ${p.pct}%`).join(' + ') || t('alineacio.buit') }),
-      el('span', { class: 'graella-val', text: x.total + '%' })));
-  }
-  c.append(cos(g));
-  main.append(c);
-  // Juguen per experiència, no entrenen (futur_entrenador): nota pròpia, fora de la taula.
-  for (const e of d.experiencia || []) main.append(el('p', { text: t('alineacio.experiencia_nota', { nom: e.nom }) }));
-  if (d.copa) main.append(el('p', { text: t('alineacio.copa_nota') }));
-  if (d.avisos.length) {
-    const av = d.avisos.map((v) => v.tipus === 'cobertura' ? tp('alineacio.cobertura', v.entrenen, v)
-      : v.tipus === 'una_alineacio' ? t('alineacio.una_alineacio')
-        : v.tipus === 'entrenament_perdut' ? t('alineacio.perdut', { nom: v.nom, motiu: t('motiu.' + v.motiu) })
-          : v.tipus === 'llocs_buits' ? tp('alineacio.llocs_buits', v.n)
-            : '');
-    main.append(el('section', {}, el('h3', { text: t('alineacio.avisos_titol') }), el('ul', {}, ...av.map((x) => el('li', { text: x })))));
-  }
+  // Els llocs sense ningú es diuen: una plaça d'entrenament buida és entrenament perdut.
+  const buits = d.onze_b.filter((s) => !s.jugador).length;
+  if (buits) main.append(el('p', { class: 'desquadre', text: tp('alineacio.llocs_buits', buits, { n: buits }) }));
 }
 
 // ── 4. Plantilla sènior (amb override de categoria) ──

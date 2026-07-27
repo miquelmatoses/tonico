@@ -12,9 +12,9 @@
   "alineacio.col_slot": "Position",
   "alineacio.col_jugador": "Player",
   "alineacio.col_motiu": "Reason",
-  "alineacio.motiu_entrena": "trainee — {pos} {pct}%",
+  "alineacio.motiu_entrena": "trains here",
   "alineacio.motiu_venda": "squad body (for sale)",
-  "alineacio.motiu_experiencia": "experience (future coach)",
+  "alineacio.motiu_experiencia": "plays for experience (future coach)",
   "alineacio.motiu_porteria": "goalkeeping",
   "alineacio.motiu_cos": "structural body",
   "alineacio.buit": "—",
@@ -609,5 +609,14 @@
   "coach.insuficient": "inadequate",
   "coach.passable": "passable",
   "coach.solid": "solid",
-  "coach.excellent": "excellent"
+  "coach.excellent": "excellent",
+  "alineacio.onze_a": "Competitive eleven",
+  "alineacio.onze_b": "Training eleven",
+  "alineacio.onze_b_sub_1": "1 slot training",
+  "alineacio.onze_b_sub_n": "{n} slots training",
+  "alineacio.onze_a_sub_1": "the best in each slot of the plan",
+  "alineacio.onze_a_sub_n": "the best in each slot of the plan",
+  "alineacio.motiu_dobla": "plays twice (his slot does not train)",
+  "alineacio.motiu_suplent": "backup keeper: the starter does not play twice",
+  "alineacio.motiu_plaça_buida": "training slot with nobody"
 }

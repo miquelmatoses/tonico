@@ -88,7 +88,7 @@ globalThis.location = { href: '', reload() {} };
 const arrel = new URL('../public/', import.meta.url);
 const API = {};
 for (const nom of ['finances', 'personal', 'mercat', 'plantilla', 'juvenils', 'vendes',
-  'config', 'equips', 'alertes', 'pla', 'alineacio', 'categoria', 'intercanvis', 'entrenament']) {
+  'config', 'equips', 'alertes', 'pla', 'alineacio', 'categoria', 'intercanvis', 'entrenament', 'onzes']) {
   try { API[nom] = await import(`../functions/api/${nom}.js`); } catch { /* no existix: 404 */ }
 }
 const resposta = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json' } });
