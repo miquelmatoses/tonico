@@ -200,6 +200,44 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
     'sense segon porter no se n\'inventa: és una plaça que et falta');
 }
 
+// ── 9b. EL DESEMPAT ENTRE IGUALS: qui està més a prop de pujar de nivell. Mana l'habilitat
+// —els entrenables són per a vendre'ls cars—, però entre dos amb la mateixa creativitat va
+// primer el que porta més temps en eixe nivell, perquè li queda menys per a pujar.
+//
+// I NO al revés: com més fluix és un jugador, més ràpid puja (`f(nivell)` cau amb el nivell).
+// Ordenar per «menys setmanes» posaria un de creativitat 2 (2,6 setmanes) per davant d'un de 9
+// (6,8) i els fluixos desplaçarien els bons.
+{
+  const b = (id, o) => ({ id, nom: 'Z' + id, sou: 1000, edat_anys: 18, edat_dies: 0,
+    porteria: 1, defensa: 1, creativitat: 1, extrem: 1, passades: 1, anotacio: 1,
+    pilota_aturada: 1, experiencia: 1, lideratge: 1, ...o });
+  // Onze titulars vells perquè no competisquen, i quatre joves de creativitat 6.
+  const vells = Array.from({ length: 11 }, (_, i) => b(i + 1, { edat_anys: 30,
+    porteria: i === 0 ? 9 : 1, defensa: i > 0 && i < 3 ? 7 : 1,
+    creativitat: i >= 3 && i < 6 ? 8 : 1, extrem: i >= 6 && i < 8 ? 6 : 1, anotacio: i >= 8 ? 7 : 1 }));
+  const joves = [b(40, { creativitat: 2 }), b(41, { creativitat: 6 }), b(42, { creativitat: 6 }), b(43, { creativitat: 6 })];
+  // Sense ENTRENADOR declarat no hi ha velocitat, i per tant tampoc desempat: la fórmula no
+  // se l'inventa. El desempat només pot actuar quan el càlcul es pot fer.
+  // I el 42 porta setmanes al seu nivell: se li ha vist arribar-hi fa temps.
+  sqlite.exec(`
+    INSERT OR REPLACE INTO personal_membres (usuari_id, rol, tipus, nivell, sou) VALUES (1,'entrenador','entrenador',6,5000);
+    INSERT OR IGNORE INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (42,1,942,'Z42');
+    INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES
+      (90,1,'2026-04-01',83,1),(91,1,'2026-06-01',83,9);
+    INSERT INTO instantanies_jugadors (instantania_id, jugador_id, creativitat) VALUES (90,42,6),(91,42,6);
+  `);
+  const r = await onzeEstructura(db, 1, [...vells, ...joves], 10291);
+  const tria = r.entrenables.map((j) => j.id);
+  assert.ok(!tria.includes(40), 'el de creativitat 2 NO entra, encara que puge en 2,6 setmanes');
+  assert.equal(tria[0], 42, 'i entre els de creativitat 6, primer el que està més a prop de pujar');
+  // I sense entrenador, el número no existix i el desempat calla: no s'inventa una velocitat.
+  sqlite.exec("DELETE FROM personal_membres WHERE rol='entrenador';");
+  const sense = await onzeEstructura(db, 1, [...vells, ...joves], 10291);
+  assert.equal(sense.entrenables[0].setmanes_seguent, null,
+    'sense entrenador declarat no hi ha velocitat, i per tant tampoc desempat');
+  sqlite.exec('DELETE FROM instantanies_jugadors WHERE instantania_id IN (90,91); DELETE FROM instantanies WHERE id IN (90,91);');
+}
+
 // ── 10. VENDA i DESPATXAR: el residu es partix en dos, i cada jugador té UN grup i només un.
 {
   const base = (id, o) => ({ id, nom: 'Y' + id, sou: 1000, edat_anys: 26, edat_dies: 0,
