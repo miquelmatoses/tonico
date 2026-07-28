@@ -202,4 +202,20 @@ assert.deepEqual(trencades, [], 'pantalles que no es pinten netes:\n  ' + trenca
     'i cada lloc que entrena al 50%, anell mig');
 }
 
+// ── CAP CONTROL POT ENVIAR A UN ENDPOINT QUE NO EXISTIX ──────────────────────────────────
+// El desplegable Seguiment / Elegit / Cua d'eixida va sobreviure a la mort de la seua taula i
+// del seu POST: seguia pintant-se, seguia deixant-te triar i el `.catch(() => {})` s'engolia el
+// 404. Un control que no fa res és pitjor que no tindre'l, perque pareix una decisió.
+{
+  const font = readFileSync(new URL('../public/seccions.js', import.meta.url), 'utf8');
+  const rutes = [...font.matchAll(/api\('(\/api\/[\w-]+)'[^)]*method:\s*'(\w+)'/g)]
+    .map(([, ruta, metode]) => [ruta, metode.toUpperCase()]);
+  assert.ok(rutes.length >= 5, 'el guardia ha de trobar les crides que escriuen');
+  for (const [ruta, metode] of rutes) {
+    const mod = await import(`../functions${ruta}.js`);
+    assert.ok(mod[`onRequest${metode[0]}${metode.slice(1).toLowerCase()}`],
+      `la pantalla fa ${metode} a ${ruta} i eixe endpoint no el rep`);
+  }
+}
+
 console.log(`OK — les ${PANTALLES.length} pantalles es pinten de veres, sense variables soltes ni claus sense resoldre`);

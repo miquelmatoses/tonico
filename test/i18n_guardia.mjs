@@ -93,7 +93,6 @@ const families = {
   'motiu_baixa': ['venda', 'despatx', 'promocio', 'altres'],
   // `tipus.*` (moviments) i `font.*` (d'on eixia el preu estimat) han caigut: ni hi ha
   // comptabilitat de moviments ni cap estimació de preu.
-  'juvenils.estat_': ['seguiment', 'elegit', 'cua_eixida'],
   'configuracio.partits_': ['1', '2'],
   'estrategia': ['competitiva', 'cycle'],
   'sistema_juvenil': ['academia', 'cercapromeses', 'cap'],
@@ -108,7 +107,7 @@ const families = {
   'element': ['assistent', 'metge', 'psicoleg', 'forma', 'tactic', 'financer', 'entrenador'],
   // Columnes construïdes des d'arrays (t('prefix.' + k)):
   'personal': ['tipus', 'nivell', 'sou', 'data_fi_contracte'],
-  'juvenils': ['col_jugador', 'col_nivell', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_potencial', 'col_promocio', 'col_aterratge', 'col_estat'],
+  'juvenils': ['col_jugador', 'col_nivell', 'col_edat', 'col_especialitat', 'col_habilitats', 'col_potencial', 'col_promocio', 'col_aterratge'],
   'jugador': ['col_data', 'col_temporada', 'col_edat', 'col_tsi', 'col_sou', 'col_habilitats', 'col_pops'],
 };
 for (const [prefix, vals] of Object.entries(families)) for (const v of vals) {

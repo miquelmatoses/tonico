@@ -495,7 +495,6 @@ export async function entrenament(main) {
 // ── 6. Juvenils ──
 export async function juvenils(main) {
   capcalera(main, 6, 'juvenils');
-  const ESTATS = ['seguiment', 'elegit', 'cua_eixida'];
   const val = (v) => (v == null ? '-' : v === 'desconegut' ? t('juvenils.desconegut') : v);
   const d = await api('/api/juvenils');
   main.append(el('div', { class: 'tip', text: '\u26a1 ' + t('juvenils.tactica_reminder') }));
@@ -515,9 +514,6 @@ export async function juvenils(main) {
 
   const c = card(t('juvenils.titol'), d.juvenils.length, 'llima');
   for (const j of d.juvenils) c.append(filaSegura(() => {
-    const sel = el('select', { 'aria-label': t('juvenils.col_estat') },
-      ...ESTATS.map((e) => { const o = el('option', { value: e, text: t('juvenils.estat_' + e) }); if (e === j.estat) o.setAttribute('selected', ''); return o; }));
-    sel.addEventListener('change', () => api('/api/juvenils', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.jugador_id, estat: sel.value }) }).catch(() => {}));
     const lloc = j.bloquejat ? t('juvenils.lloc_bloquejat')
       : j.banqueta ? t('juvenils.lloc_banqueta')
         : (BUCKET_SIGLA[j.lloc?.bucket] ?? t('juvenils.lloc_residual'));
@@ -535,7 +531,7 @@ export async function juvenils(main) {
       el('div', { class: 'tsi' }), el('div', { class: 'skills' }),
       el('div', { class: 'vara' },
         el('span', { class: 'vara-hab', text: t('juvenils.a_promocio') }),
-        el('b', { text: j.dies_restants_promocio ?? '\u2014' })), sel);
+        el('b', { text: j.dies_restants_promocio ?? '\u2014' })));
   }, 1));
   main.append(c);
   if (d.pla) main.append(el('p', { class: 'nota-peu', text: t('juvenils.nota_pla', {
