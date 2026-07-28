@@ -98,8 +98,7 @@ const families = {
   'sistema_juvenil': ['academia', 'cercapromeses', 'cap'],
   // «desert» fora: no es tria a mà (es deduïx de la transició del CSV i es desa) i un jugador
   // desert ja no arriba a la fitxa de venda.
-  'vendes.estat_': ['pendent', 'llistat', 'venut', 'despatxat'],
-  'vendes': ['col_jugador', 'col_posicio', 'col_especialitat', 'col_situacio', 'col_data', 'col_tancament', 'col_estat'],
+  'vendes': ['col_jugador', 'col_posicio', 'col_especialitat', 'col_situacio', 'col_data', 'col_tancament'],
   'falten': ['caixa', 'personal', 'estadi', 'config_pais', 'config_divisio', 'config_partits_setmana', 'config_estrategia'],
   'dia': ['0', '1', '2', '3', '4', '5', '6'],   // noms de dia per a l'agenda
   'agenda': ['llistar'],                          // etiquetes curtes d'acció (missatge_clau del servidor)

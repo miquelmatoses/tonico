@@ -682,11 +682,11 @@ export async function mercat(main) {
 
 // ── Fitxes de venda (Àrea E) ──
 // «desert» NO és a la llista: no es tria a mà, es deduïx de la transició del CSV i es desa. I
-// un jugador desert ja no arriba ací —la consulta el deixa fora—, així que tampoc caldria.
-const ESTATS_VENDA = ['pendent', 'llistat', 'venut', 'despatxat'];
-// La subhasta deserta ja NO es pregunta: es dedueix (si estava transferible, ja no ho està i
-// seguix a la plantilla, ningú l'ha comprat). El que queda és la marca de DESPATXABLE, i viu a
-// la fitxa, que és on es decidix qui es queda.
+// L'ESTAT NO ES TRIA. Dels quatre valors que el desplegable oferia, `llistat` i `pendent` els
+// escriu `derivaLlistat` a cada pujada des de la columna Transferible del CSV, i `venut` i
+// `despatxat` no els llegia ningú: la seua pregunta —per què se n'ha anat— la fa Decisions el
+// dia que el jugador deixa d'eixir al fitxer. Un control que no podia escriure res que aportara
+// res. La subhasta deserta tampoc es pregunta: es dedueix.
 async function fitxesVenda(main) {
   const { jugadors, cobertura: cobMin } = await api('/api/vendes');
   const sec = card(t('vendes.titol'), jugadors.length);
@@ -700,16 +700,15 @@ async function fitxesVenda(main) {
   }
   // Sense fitxes, no es pinta la taula (ni la capçalera).
   if (jugadors.length) sec.append(el('div', { class: 'graella-cap c-venda' },
-    ...['col_jugador', 'col_situacio', 'col_data', 'col_tancament', 'col_estat'].map((k) => el('span', { text: t('vendes.' + k) }))));
+    ...['col_jugador', 'col_situacio', 'col_data', 'col_tancament'].map((k) => el('span', { text: t('vendes.' + k) }))));
   for (const j of jugadors) sec.append(filaSegura(() => {
-    // Cap camp de PREU: ni objectiu d'eixida ni import venut. El preu no entra a cap fórmula
-    // (v3.1) i preguntar-lo era l'última porta oberta. La fitxa es queda amb el que mou el
-    // rellotge de la subhasta: la data de llistat i l'estat.
+    // Cap camp de PREU ni d'ESTAT. El preu no entra a cap fórmula (v3.1) i l'estat el deriva el
+    // CSV. Queda l'única cosa que el sistema NO pot saber i que mou el rellotge de la subhasta:
+    // el dia que el vas llistar de veres. `derivaLlistat` el suposa —la data de la instantània
+    // on apareix—, que com a molt és el dia que vas pujar el fitxer.
     const dataL = el('input', { type: 'date', 'aria-label': t('vendes.col_data') }); if (j.data_llistada) dataL.value = j.data_llistada;
-    const estat = el('select', { 'aria-label': t('vendes.col_estat') }, ...ESTATS_VENDA.map((e) => { const o = el('option', { value: e, text: t('vendes.estat_' + e) }); if (e === j.estat) o.setAttribute('selected', ''); return o; }));
-    const desar = () => api('/api/vendes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-      jugador_id: j.jugador_id, data_llistada: dataL.value || null, estat: estat.value }) }).catch(() => {});
-    for (const c of [dataL, estat]) c.addEventListener('change', desar);
+    dataL.addEventListener('change', () => api('/api/vendes', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jugador_id: j.jugador_id, data_llistada: dataL.value || null }) }).catch(() => {}));
     const propCell = el('div', {});
     // Estat de liquidació (mateixa font que l'alerta agregada): llistat / retingut per
     // cobertura (amb el càlcul) / lesionat (llistable en recuperar) / llistable ara.
@@ -724,8 +723,7 @@ async function fitxesVenda(main) {
           el('div', { class: 'fila-meta' }, el('span', { text: j.especialitat || '—' }),
             ...(j.lesionat ? [el('span', { class: 'pill perill', text: t('comu.lesionat_durada', { n: duradaLesio(j.lesio) ?? '?' }) })] : [])))),
       propCell, dataL,
-      el('span', { text: j.tancament_previst || '—' }),
-      el('div', { class: 'cel-controls' }, estat));
+      el('span', { text: j.tancament_previst || '—' }));
   }, 1));
   for (const ll of nota.llegendes()) sec.append(cos(el('p', { class: 'nota-peu', text: ll })));
   main.append(sec);

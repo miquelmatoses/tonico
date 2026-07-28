@@ -7,7 +7,6 @@ import { cobertura, cosDisponible } from '../../lib/cobertura.js';
 import { entrenamentEfectiu, aplicaEntrenament } from '../../lib/entrenament_places.js';
 import { conjuntLiquidacio, estatLiquidacio } from '../../lib/liquidacio.js';
 
-const ESTATS = ['pendent', 'llistat', 'venut', 'desert', 'despatxat'];
 
 export async function onRequestGet({ env, data }) {
   const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id=? AND tipus='senior'").bind(data.usuari.id).first();
@@ -102,32 +101,25 @@ export async function onRequestGet({ env, data }) {
   return json({ jugadors: eixida, cobertura: cob });
 }
 
+// NOMÉS LA DATA. L'estat no entra per ací: `llistat`/`pendent` els deriva `derivaLlistat` del
+// CSV i `venut`/`despatxat` els pregunta Decisions quan el jugador deixa d'eixir al fitxer.
+//
+// I amb el desplegable se'n va la branca de les QUATRE EIXIDES d'una subhasta deserta
+// (rebaixar, rellistar, despatxar, 1 €): no la cridava ningú des que la subhasta deserta es
+// dedueix en compte de preguntar-se.
 export async function onRequestPost({ request, env, data }) {
-  const cosPrev = await request.clone().json().catch(() => ({}));
-  // PAS 7: l'usuari tria una de les quatre eixides d'una subhasta deserta. Cada eixida es
-  // tradueix a un estat de fitxa; el «1 €» és un override explícit del preu.
-  if (cosPrev.eixida_deserta) {
-    const EIXIDES = { rebaixar: 'pendent', rellistar: 'llistat', despatxar: 'despatxat', un_euro: 'llistat' };
-    const nouEstat = EIXIDES[cosPrev.eixida_deserta];
-    if (!nouEstat || !cosPrev.jugador_id) return json({ error: 'dades_invalides' }, 400);
-    // `un_euro` era un override del PREU; ara és només un ESTAT (rellistar-lo a la baixa).
-    // Sense import, perquè cap import entra a cap fórmula.
-    await env.DB.prepare('UPDATE vendes SET estat=? WHERE usuari_id=? AND jugador_id=?')
-      .bind(nouEstat, data.usuari.id, cosPrev.jugador_id).run();
-    return json({ ok: true, estat: nouEstat });
-  }
   const c = await request.json().catch(() => ({}));
   if (!c.jugador_id) return json({ error: 'falta_jugador' }, 400);
   const own = await env.DB.prepare('SELECT j.id FROM jugadors j JOIN equips e ON e.id=j.equip_id WHERE j.id=? AND e.usuari_id=?').bind(c.jugador_id, data.usuari.id).first();
   if (!own) return json({ error: 'no_trobat' }, 404);
-  const estat = ESTATS.includes(c.estat) ? c.estat : 'pendent';
-  // En editar/desar l'usuari resol la fitxa: es neteja la pregunta de resultat pendent.
+  // En corregir la data l'usuari resol la fitxa: es neteja la pregunta de resultat pendent.
+  // L'ESTAT NO ES TOCA en el conflicte: si `derivaLlistat` ja l'ha marcat com a llistat des del
+  // CSV, corregir la data no el pot tornar a «pendent».
   await env.DB.prepare(
     `INSERT INTO vendes (jugador_id, usuari_id, data_llistada, estat, resultat_pendent)
-     VALUES (?, ?, ?, ?, 0)
-     ON CONFLICT(jugador_id) DO UPDATE SET data_llistada=excluded.data_llistada,
-       estat=excluded.estat, resultat_pendent=0`
-  ).bind(c.jugador_id, data.usuari.id, c.data_llistada || null, estat).run();
+     VALUES (?, ?, ?, 'pendent', 0)
+     ON CONFLICT(jugador_id) DO UPDATE SET data_llistada=excluded.data_llistada, resultat_pendent=0`
+  ).bind(c.jugador_id, data.usuari.id, c.data_llistada || null).run();
   return json({ ok: true }, 201);
 }
 

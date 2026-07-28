@@ -417,7 +417,7 @@ main:has(.auth) { max-width: none; padding: 0; }
 /* Columnes DETERMINISTES (minmax(0,fr)): així la capçalera i cada fila —graelles
    separades— resolen les mateixes amplades i queden alineades, encara que les cel·les
    porten inputs. Els controls omplin la seua cel·la (width:100%), sense forçar-la. */
-.c-venda { grid-template-columns: minmax(0,2.2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.6fr); }
+.c-venda { grid-template-columns: minmax(0,2.2fr) minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr); }
 .c-pla { grid-template-columns: minmax(0,.7fr) minmax(0,.7fr) minmax(0,2fr) minmax(0,1fr); }
 /* Estes dos graelles no tenien columnes definides: queien a la columna implícita, o siga que
    capçalera i fila resolien amplades distintes i les xifres no quadraven amb el seu títol.

@@ -29,7 +29,7 @@ Estat: ✅ té UI · ⚠️ buit (endpoint sense pantalla o funció no construï
 | 9 | Preu de referència per TIPUS de fitxatge | Mercat | (a) el preu no el calcula el joc, el paga un altre mànager | La necessitat es veu, però no arriba a «què compensa comprar» | Quan toque |
 | 10 | Personal: rol, tipus, nivell, sou i data de fi de contracte | Personal | (a) plantilla tècnica absent del CSV | No es pot dir si el flux la sosté ni quan venç | Ocasional |
 | 11 | Nivell d'entrenament de l'entrenador | Entrenament | (a) absent del CSV; entra a la velocitat d'entrenament | Sense ell no hi ha setmanes fins al nivell següent | Ocasional |
-| 12 | Fitxa de venda: data de llistada i estat | Mercat | (a) món | El rellotge de la subhasta no corre | Quan toque |
+| 12 | Fitxa de venda: data de llistat | Mercat | (a) món | El rellotge de la subhasta arranca el dia que puges el fitxer, no el dia que el vas llistar | Quan toque |
 | 13 | Motiu de baixa d'un jugador que ja no ix al CSV | Decisions | (b) decisió genuïna | Es queda pendent de declarar | Quan toque |
 | 15 | Resultat de la crida al cercapromeses | Juvenils | (a) fet del món | El rellotge de la crida no avança | Setmanal |
 | 16 | Idioma | Capçalera | (b) preferència | Valencià | Una volta |

@@ -46,12 +46,22 @@ assert.equal(dn.jugadors[0].despatxar, undefined,
   'ni amb un sou desproporcionat: la fitxa de venda no parla d\'acomiadar');
 sqlite.exec('UPDATE instantanies_jugadors SET sou=NULL WHERE jugador_id=1');   // restaura per a la resta del test
 
-// La fitxa només guarda el que mou el rellotge de la subhasta: data de llistat i estat. Un
-// `preu_eixida` enviat s'IGNORA — l'API ja no en té camp.
-await vendes.onRequestPost(ctx({ jugador_id: 1, preu_eixida: 250000, data_llistada: '2026-07-25', estat: 'llistat' }));
+// LA FITXA NOMÉS GUARDA EL QUE EL SISTEMA NO POT SABER: el dia que el vas llistar de veres.
+// Un `preu_eixida` o un `estat` enviats s'IGNOREN — cap dels dos té ja porta. L'estat el deriva
+// `derivaLlistat` de la columna Transferible del CSV, i «venut»/«despatxat» els pregunta
+// Decisions el dia que el jugador deixa d'eixir al fitxer.
+await vendes.onRequestPost(ctx({ jugador_id: 1, preu_eixida: 250000, data_llistada: '2026-07-25', estat: 'venut' }));
 d = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
-assert.equal(d.jugadors[0].estat, 'llistat');
 assert.equal(d.jugadors[0].data_llistada, '2026-07-25');
+assert.notEqual(d.jugadors[0].estat, 'venut', 'l\'estat no entra per la fitxa, per molt que s\'envie');
+// I CORREGIR LA DATA NO POT DESFER LA DERIVACIÓ. Ací és on es trencaria de veres: si el desar
+// tornara a escriure l'estat per defecte, tocar la data d'un jugador que el CSV diu que està
+// llistat el tornaria a «pendent» i el trauria del rellotge de la subhasta.
+sqlite.exec("UPDATE vendes SET estat='llistat' WHERE jugador_id=1");
+await vendes.onRequestPost(ctx({ jugador_id: 1, data_llistada: '2026-07-26' }));
+d = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
+assert.equal(d.jugadors[0].estat, 'llistat', 'corregir la data no torna la fitxa a pendent');
+assert.equal(d.jugadors[0].data_llistada, '2026-07-26', 'i la data sí que es corregix');
 assert.equal(d.jugadors[0].preu_eixida, undefined, 'cap preu a l\'eixida, ni el que s\'ha enviat');
 assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM pragma_table_info('vendes') WHERE name='preu_eixida'").get().n, 0,
   'ni la columna existix ja: la porta està tancada, no només amagada');
