@@ -548,6 +548,26 @@ cost_flux(tipus, nivell) = base(tipus) × 2^(nivell−1)
     sumar, el bucle es veu sense marge just per tindre el personal que està valorant.
     Simètric amb sou_sostenible, que fa el mateix amb la nòmina.]
 
+-- L'ENTRENADOR PRINCIPAL: la mateixa forma, amb UNA plaça
+pressupost_entrenador = `quota_entrenador` × mitjana_setmanal
+nivell_sostingut      = MAX(n ≤ `entrenador_nivell_max` : cost_flux('entrenador', n)
+                                                          ≤ pressupost_entrenador)
+nivell_actual         = n : cost_flux('entrenador', n) = sou DECLARAT   [es DERIVA]
+   [no es pregunta el nivell: l'escala és base × 2^(n−1) i el sou ja està declarat a la
+    seua fitxa. Preguntar-lo seria obrir la porta a que les dues dades es contradiguen]
+   [CINC nivells contractables (fluix..excel·lent). La taula d'eficiència en té SIS
+    perquè inclou «pobre», que no es contracta: és on DECAU un entrenador vell]
+ACCIÓ("millora l'entrenador") SI nivell_sostingut > nivell_actual
+   [ÉS UNA VARA, NO UN REPARTIMENT: no lleva diner a ningú ni mou cap altre pressupost,
+    igual que `nivell_objectiu` fa amb els jugadors. Diu quin nivell sostenen els
+    ingressos, i el dia que passa el que tens, hi ha una decisió]
+   [i comprar-lo es paga d'un COLP i de CAIXA, com un fitxatge: `coach_preu_extern`
+    per lideratge × nivell. El flux diu quin pots MANTINDRE; la caixa, si el pots
+    comprar hui]
+   [era l'únic element del sistema amb cost conegut i efecte conegut que no escalava
+    amb res: es restava sencer com un fet, i per molt que els ingressos crescueren mai
+    hi havia un moment de millorar-lo]
+
 prioritat_personal = `prioritat_personal`   [orde fix, pom]
    1. assistent   — +3,5% de velocitat d'entrenament per nivell: l'única palanca que
                     multiplica el motor de l'estratègia

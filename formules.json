@@ -1327,6 +1327,60 @@
       "taules": []
     },
     {
+      "id": "P11.pressupost_entrenador",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "pressupost_entrenador",
+      "linia": "pressupost_entrenador = `quota_entrenador` × mitjana_setmanal",
+      "entrades": [
+        "mitjana_setmanal"
+      ],
+      "poms": [
+        "quota_entrenador"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P11.nivell_sostingut",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "nivell_sostingut",
+      "linia": "nivell_sostingut      = MAX(n ≤ `entrenador_nivell_max` : cost_flux('entrenador', n)",
+      "entrades": [
+        "cost_flux"
+      ],
+      "poms": [
+        "entrenador_nivell_max"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P11.nivell_actual",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "nivell_actual",
+      "linia": "nivell_actual         = n : cost_flux('entrenador', n) = sou DECLARAT   [es DERIVA]",
+      "entrades": [
+        "cost_flux",
+        "sou"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P11.accio",
+      "pas": "P11",
+      "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
+      "clau": "ACCIÓ",
+      "linia": "ACCIÓ(\"millora l'entrenador\") SI nivell_sostingut > nivell_actual",
+      "entrades": [
+        "nivell_actual",
+        "nivell_sostingut"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
       "id": "P11.prioritat_personal",
       "pas": "P11",
       "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
@@ -1351,7 +1405,7 @@
       "taules": []
     },
     {
-      "id": "P11.accio",
+      "id": "P11.accio_2",
       "pas": "P11",
       "pasTitol": "PERSONAL (bucle de FLUX; el paral·lel del PAS 8)",
       "clau": "ACCIÓ",

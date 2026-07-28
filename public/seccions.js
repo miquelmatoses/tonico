@@ -783,6 +783,19 @@ export async function economia(main) {
       el('div', { class: 'eco-unitat', text: unitat('sou_sostenible_setmanal') }),
       el('div', { class: 'eco-nota', text: t('economia.sou_sostenible_nota') })));
   }
+  // L'ENTRENADOR: quin nivell sostenen els ingressos i quin tens. És una VARA, com el nivell
+  // objectiu d'un lloc — no lleva diner a ningú. Sense sou declarat no hi ha comparació i no
+  // es pinta res: dir «puja'l» sense saber on estàs seria inventar-se la meitat de la frase.
+  if (e.entrenador?.nivell_actual != null) {
+    const en = e.entrenador;
+    kpis.append(el('div', { class: 'eco-card' },
+      el('div', { class: 'eco-et', text: t('economia.entrenador_et') }),
+      el('div', { class: 'eco-xifra', text: `${en.nivell_actual} / ${en.nivell_sostingut}` }),
+      el('div', { class: 'eco-unitat', text: t('economia.entrenador_unitat') }),
+      el('div', { class: 'eco-nota', text: en.millorable
+        ? t('economia.entrenador_millorable', { cost: diners(Math.round(en.cost_sostingut)) })
+        : t('economia.entrenador_al_dia', { pressupost: diners(Math.round(en.pressupost)) }) })));
+  }
   main.append(kpis);
   if (e.flux == null) main.append(el('p', { class: 'nota-peu', text: t('economia.sense_ingressos') }));
   if (e.dades_velles) main.append(el('p', { class: 'nota-peu', text: t('economia.dades_velles', { data: e.caixa_data }) }));

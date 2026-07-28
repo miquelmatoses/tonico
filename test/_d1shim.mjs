@@ -126,5 +126,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/103_alineacio_residual.sql'));
   sqlite.exec(src('../schema/104_ancora_diumenge.sql'));
   sqlite.exec(src('../schema/105_setmanes_reestampades.sql'));
+  sqlite.exec(src('../schema/106_entrenador_quota.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

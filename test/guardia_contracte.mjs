@@ -23,7 +23,8 @@ import { assignaEstructura } from '../lib/onze.js';
 import { valorPlaces } from '../lib/valor_placa.js';
 import { matxosPerNivell, projecta, avaluaHabilitat, plaJuvenil, sobrants as sobrantsJuv } from '../lib/juvenil_pla.js';
 import { onzeEstructura } from '../lib/onze_estructura.js';
-import { costFlux, nivellPagable, planPersonal, decisioRenovacio, placesAdmeses,
+import { entrenadorSostingut, nivellDelSou,
+         costFlux, nivellPagable, planPersonal, decisioRenovacio, placesAdmeses,
   sostrePersonal, baseTipus as baseTipusG1 } from '../lib/personal_v3.js';
 import { guanyJugador, admissibleJugador, deltaManteniment, estadiCaduc, admissibleEstadi,
   eficiencia, decisioEstoc } from '../lib/estoc.js';
@@ -450,6 +451,23 @@ const VERIFICADES = {
     assert.ok(r.pla[0].nivell > 0, 'amb flux, es proposa nivell');
     assert.equal(planPersonal(100, 1020, [{ tipus: 'metge' }]).pla[0].nivell, 0, 'sense flux, res');
   },
+  'P11.accio_2': async () => {
+    // ACCIÓ("millora l'entrenador") SI nivell_sostingut > nivell_actual. Es comprova sobre la
+    // REGLA, no sobre l'avaluador: el que ha d'arribar a Miquel és l'alerta.
+    const { REGLES } = await import('../lib/regles.js');
+    const base = 1250;
+    const ctx = (ingressos) => ({ economia: { entrenador: entrenadorSostingut({
+      ingressosSetmanals: ingressos, quota: 0.10, base, souActual: costFlux(3, base) }) } });
+    assert.equal(REGLES.ALR_ENTRENADOR_MILLORABLE(ctx(51064), { urgencia: 60 }).length, 0,
+      'al nivell que els ingressos sostenen, cap alerta');
+    const puja = REGLES.ALR_ENTRENADOR_MILLORABLE(ctx(51064 * 2), { urgencia: 60 });
+    assert.equal(puja.length, 1, 'doblant els ingressos, l\'alerta ix');
+    assert.equal(puja[0].parametres.sostingut, 4, 'i diu quin nivell sostenen');
+    // Sense sou declarat no hi ha comparació: no s'inventa cap costat.
+    assert.equal(REGLES.ALR_ENTRENADOR_MILLORABLE({ economia: { entrenador: entrenadorSostingut({
+      ingressosSetmanals: 1e6, quota: 0.10, base, souActual: null }) } }, { urgencia: 60 }).length, 0,
+      'sense sou declarat, res: no se sap de quin nivell es puja');
+  },
   'P11.avis': () => {
     // AVÍS: compromet el flux `setmanes_contracte` setmanes (no es pot desfer)
     const set = sqliteFix.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='setmanes_contracte'").get();
@@ -525,6 +543,44 @@ const VERIFICADES = {
     assert.deepEqual([hui.temporada, hui.setmana], [ancora.temporada, 1], 'el dia de l\'àncora és la setmana 1');
     const mesTard = await setmanaDeHui(dbFix, new Date(Date.parse(ancora.data) + 21 * 86400000).toISOString().slice(0, 10));
     assert.equal(mesTard.setmana, 4, 'i tres setmanes després, la 4 — sense pujar cap fitxer');
+  },
+
+  // P11.* — L'ENTRENADOR ESCALA AMB ELS INGRESSOS. Era l'únic element amb cost i efecte
+  // coneguts que es restava com un fet i no participava de res: els ingressos podien
+  // duplicar-se i mai hi havia un moment de millorar-lo.
+  'P11.pressupost_entrenador': async () => {
+    const pom = async (k) => Number((await dbFix.prepare('SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau=?').bind('competitiva', k).first())?.valor);
+    const quota = await pom('quota_entrenador');
+    const base = await pom('entrenador_cost_base');
+    const r = entrenadorSostingut({ ingressosSetmanals: 51064, quota, base, souActual: costFlux(3, base) });
+    assert.equal(r.pressupost, 51064 * quota, 'la quota va sobre els ingressos setmanals');
+    // El nivell és CONSEQÜÈNCIA: el més alt que el pressupost paga, ni un més.
+    assert.ok(costFlux(r.nivell_sostingut, base) <= r.pressupost, 'el nivell sostingut es paga');
+    assert.ok(costFlux(r.nivell_sostingut + 1, base) > r.pressupost, 'i el següent no');
+  },
+  'P11.nivell_sostingut': async () => {
+    const pom = async (k) => Number((await dbFix.prepare('SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau=?').bind('competitiva', k).first())?.valor);
+    const [quota, base] = [await pom('quota_entrenador'), await pom('entrenador_cost_base')];
+    const nivellMax = Number((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='entrenador_nivell_max'").first()).valor);
+    // DOBLANT ELS INGRESSOS ha de pujar un nivell: eixe és tot el propòsit d'este pas.
+    const ara = entrenadorSostingut({ ingressosSetmanals: 51064, quota, base, nivellMax, souActual: costFlux(3, base) });
+    const doble = entrenadorSostingut({ ingressosSetmanals: 51064 * 2, quota, base, nivellMax, souActual: costFlux(3, base) });
+    assert.equal(doble.nivell_sostingut, ara.nivell_sostingut + 1,
+      'doblant els ingressos, el nivell que sostenen puja un: el cost es duplica per nivell');
+    assert.equal(ara.millorable, false, 'i mentre no arribe, no hi ha res a fer');
+    assert.equal(doble.millorable, true, 'quan arriba, sí');
+    // El sostre és el que el joc permet contractar, no l'infinit.
+    const infinit = entrenadorSostingut({ ingressosSetmanals: 1e9, quota, base, nivellMax, souActual: costFlux(3, base) });
+    assert.equal(infinit.nivell_sostingut, nivellMax, 'mai passa del nivell màxim contractable');
+  },
+  'P11.nivell_actual': async () => {
+    const base = Number((await dbFix.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='entrenador_cost_base'").first()).valor);
+    // ES DERIVA DEL SOU, no es pregunta. I l'escala ha de reproduir el cas real conegut:
+    // un entrenador de nivell 3 cobra 5.000 €/setmana.
+    assert.equal(costFlux(3, base), 5000, 'nivell 3 = 5.000 €/setmana, la xifra verificada contra HT');
+    assert.equal(nivellDelSou(5000, base), 3, 'i del sou se n\'ix el nivell');
+    assert.equal(nivellDelSou(null, base), null, 'sense sou declarat no s\'inventa cap nivell');
+    assert.equal(nivellDelSou(4321, base), null, 'i un sou que no és de l\'escala tampoc en dona cap');
   },
 
   // V.config / V.estrategia / P0.* — la config és l'única entrada d'usuari inicial i no
