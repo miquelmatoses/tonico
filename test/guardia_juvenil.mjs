@@ -39,6 +39,20 @@ const cru = files('../data/fixtures/youthplayers.csv');
 const dotze = [cru[0], ...cru.slice(1), ...cru.slice(1, 3).map((c, i) => {
   const d = [...c]; d[3] = String(960000000 + i); d[2] = `Extra${i}`; return d;
 })];
+// I UN AMB LA CREATIVITAT REVELADA, que al fixture no n'hi ha cap. L'oracle és el CSV, no
+// l'avaluador: si al full posa 8 i el pla diu que d'ell «no se sap res», el pla està trencat.
+// És el que passava, i cap guardià ho veia perquè tots dos costats eixien del mateix pla.
+const REVELAT = { id: '960000009', nom: 'Revelat', creativitat: '8', dies: '150' };
+// I un del TERCER ESTAT: revelat sense valor («?»). No és el mateix que absent i sobretot no
+// és un número: si es cola com a número és NaN, i un NaN no talla mai cap comparació — el
+// jugador es quedaria una plaça d'entrenament amb una projecció que no existix.
+const SENSE_VALOR = { id: '960000010', nom: 'SenseValor', dies: '80' };
+for (const [qui, valor] of [[REVELAT, REVELAT.creativitat], [SENSE_VALOR, '?']]) {
+  const d = [...cru[1]];
+  d[3] = qui.id; d[2] = qui.nom; d[9] = qui.dies;
+  d[16] = valor;                                     // Creativitat (actual)
+  dotze.push(d);
+}
 await desar(db, 1, 'juvenil', modelJuvenil(dotze, '2026-07-26'), ancora);
 
 const ctx = { env: { DB: db }, data: { usuari: { id: 1 } } };
@@ -68,5 +82,30 @@ const pomA = sqlite.prepare("SELECT valor FROM plantilles_parametres WHERE plant
 assert.equal(vista.pla.principal, pomA.valor,
   'i és la de l\'ACADÈMIA, no la del primer equip: són dos entrenaments independents');
 
+// ── (c) EL QUE SE SAP D'UN JUVENIL ARRIBA A L'AVALUADOR ──────────────────────────────────
+// Les habilitats es guarden com a TEXT (tres estats), i l'avaluador les vol NÚMERO. Quan la
+// conversió faltava, tot juvenil valia el llistó per conveni: el pla no ordenava per
+// creativitat sinó pels dies fins a la promoció, i ningú ho notava perquè la pantalla i el
+// parte s'equivocaven igual. El número el diu el CSV; el pla ha de coincidir.
+{
+  const j = vista.juvenils.find((x) => x.nom === REVELAT.nom);
+  assert.ok(j, 'el juvenil amb la creativitat revelada ha d\'arribar a la secció');
+  const cr = j.habilitats.find((h) => h.habilitat === 'creativitat');
+  assert.equal(String(cr.actual), REVELAT.creativitat, 'i la pantalla ensenya el que diu el full');
+  assert.equal(j.lloc?.motiu, 'arriba',
+    `amb creativitat ${REVELAT.creativitat} revelada el pla no pot dir «${j.lloc?.motiu}»`);
+  assert.ok(j.lloc.valor >= Number(REVELAT.creativitat),
+    'i la projecció ix del seu nivell, no del llistó');
+  // Els dies s'han posat a posta perquè NO siga dels primers: si el pla ordenara pel rellotge
+  // en compte de per la creativitat, este no entraria a una plaça d'entrenament.
+  const persegons = [...vista.juvenils].sort((a, b) => a.dies_restants_promocio - b.dies_restants_promocio);
+  assert.ok(persegons.indexOf(j) >= 5, 'el fixture l\'ha de deixar fora dels primers per rellotge');
+
+  // I el tercer estat es queda desconegut, amb un número de veres al costat.
+  const sv = vista.juvenils.find((x) => x.nom === SENSE_VALOR.nom);
+  assert.equal(sv.lloc?.motiu, 'desconegut', 'revelat sense valor no és un nivell: no diu res d\'ell');
+  assert.ok(Number.isFinite(sv.lloc.valor), 'i el que es pinta ha de ser un número, no un NaN');
+}
+
 console.log(`OK — G4: el parte i Juvenils assenyalen els mateixos ${sobraSeccio.size} sobrants,`
-  + ' i la prescripció de l\'acadèmia arriba a la secció');
+  + ' la prescripció de l\'acadèmia arriba a la secció i la creativitat revelada arriba al pla');
