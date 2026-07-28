@@ -35,6 +35,39 @@ export async function onRequestGet({ env, data }) {
   return json({ finances: f || {}, economia: await economia(env.DB, data.usuari.id, hui()) });
 }
 
+// LES DOS SETMANES a l'històric. QUINES SÓN NO ES PREGUNTA: esta és la de `hui` i la passada la
+// de fa set dies. Qui declara només diu quantes setmanes arrere va cada bloc.
+//
+// El camp de data del formulari era l'única manera d'apuntar diners a la setmana equivocada, i
+// a més obria la porta a redeclarar una setmana vella amb una numeració que ja no és la seua.
+// Declarar és transcriure l'informe de HT, que sempre parla d'estes dues.
+//
+// `hui` va com a PARÀMETRE i no com a `new Date()` amagat: si no, el solapament de dues
+// declaracions consecutives —«esta» que la setmana que ve és «la passada»— no es pot provar.
+export async function desaSetmanes(db, usuariId, setmanes, hui) {
+  const anc = await ancora(db);
+  const tempSetmanes = Number((await db.prepare("SELECT valor FROM constants_joc WHERE clau='temporada_setmanes'").first())?.valor || 16);
+  const enter = (x) => (x == null || x === '' ? null : Math.round(Number(x)));
+  for (const s of setmanes) {
+    const enrere = Number(s?.endarrere);
+    if (!Number.isInteger(enrere) || enrere < 0) continue;
+    // UNA SETMANA BUIDA NO ES DECLARA. Sense això, desar només per a corregir la caixa sembrava
+    // dues setmanes a zero a l'històric, i eixos zeros entren de ple a la mitjana.
+    if (enter(s.taquilla) == null && enter(s.patrocini) == null) continue;
+    const dia = new Date(Date.parse(hui) - enrere * 7 * 86400000).toISOString().slice(0, 10);
+    const inici = iniciDeSetmana(dia, anc);
+    const { temporada, setmana } = fCalendari(inici, anc, tempSetmanes);
+    if (temporada == null) continue;
+    await db.prepare(
+      `INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(usuari_id, temporada, setmana) DO UPDATE SET
+         taquilla=excluded.taquilla, patrocini=excluded.patrocini, data=excluded.data,
+         declarada=excluded.declarada`
+    ).bind(usuariId, temporada, setmana, enter(s.taquilla), enter(s.patrocini), inici, hui).run();
+  }
+}
+
 export async function onRequestPost({ request, env, data }) {
   const c = await request.json().catch(() => ({}));
   const cur = await env.DB.prepare('SELECT * FROM finances WHERE usuari_id=?').bind(data.usuari.id).first() || {};
@@ -54,29 +87,7 @@ export async function onRequestPost({ request, env, data }) {
     enter(v.estadi_manteniment), enter(v.estadi_cost_obra), v.estadi_data || null,
     v.estadi_obra_inici || null).run();
 
-  // LES DOS SETMANES a l'històric. La identitat de cada una ix del CALENDARI (data → temporada
-  // + setmana des de l'àncora): no es demana, es deriva. Redeclarar una setmana la sobreescriu,
-  // que és exactament el que passa quan «esta setmana» es torna a declarar com «la passada».
-  if (Array.isArray(c.setmanes)) {
-    const anc = await ancora(env.DB);
-    const tempSetmanes = Number((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='temporada_setmanes'").first())?.valor || 16);
-    for (const s of c.setmanes) {
-      if (!s?.data) continue;
-      const { temporada, setmana } = fCalendari(s.data, anc, tempSetmanes);
-      if (temporada == null) continue;
-      // LA DATA ÉS LA VORA DE LA SETMANA, no el dia que la declares. Guardant el dia solt, la
-      // clau i la data es podien separar: el `ON CONFLICT` actualitzava els imports i deixava
-      // la data vella, i quedava una fila amb els diners d'una setmana i el dia d'una altra.
-      const inici = iniciDeSetmana(s.data, anc);
-      await env.DB.prepare(
-        `INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada)
-         VALUES (?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT(usuari_id, temporada, setmana) DO UPDATE SET
-           taquilla=excluded.taquilla, patrocini=excluded.patrocini, data=excluded.data,
-           declarada=excluded.declarada`
-      ).bind(data.usuari.id, temporada, setmana, enter(s.taquilla), enter(s.patrocini), inici, hui()).run();
-    }
-  }
+  if (Array.isArray(c.setmanes)) await desaSetmanes(env.DB, data.usuari.id, c.setmanes, hui());
   return json({ ok: true });
 }
 

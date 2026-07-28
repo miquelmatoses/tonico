@@ -142,6 +142,15 @@ setmanes_declarades = ORDENA(setmanes amb declaració; (temporada, setmana) DESC
     «passada». Guardant setmanes, el solapament és una actualització; guardant
     períodes, seria comptar dues vegades. La identitat de cada setmana ix de
     f_calendari, que ja és font única]
+esta_setmana     = f_calendari(HUI)   ·   passada = f_calendari(HUI − 7 dies)
+data(setmana)    = la seua VORA, no el dia que es declara
+   [QUINES DUES SETMANES SÓN NO ES PREGUNTA. Declarar és transcriure l'informe de
+    HT, que sempre parla d'estes dues; un camp de data només servix per a apuntar
+    diners a la setmana equivocada. I la data ha de ser la vora, perquè si no dues
+    declaracions de la mateixa setmana poden caure en dues files —o pitjor, en una
+    fila amb els diners d'una setmana i el dia d'una altra]
+   [una setmana SENSE RES declarat no obri fila: un zero no és una absència, i
+    entraria de ple a la mitjana]
 mitjana_setmanal = MITJANA(PRIMERS(`setmanes_mitjana`; setmanes_declarades):
                            taquilla + patrocini)
    [NOMÉS taquilla i patrocinadors: club d'aficionats, comissions i vendes són

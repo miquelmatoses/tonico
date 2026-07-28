@@ -76,7 +76,9 @@
       "pasTitol": "VARIABLES BASE (una font cadascuna)",
       "clau": "(temporada, setmana)",
       "linia": "(temporada, setmana) = f_calendari(data, `ancora`)      ← ÚNICA funció del sistema",
-      "entrades": [],
+      "entrades": [
+        "data"
+      ],
       "poms": [
         "ancora"
       ],
@@ -295,6 +297,26 @@
       "entrades": [
         "temporada"
       ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P3.esta_setmana",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "esta_setmana",
+      "linia": "esta_setmana     = f_calendari(HUI)   ·   passada = f_calendari(HUI − 7 dies)",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P3.data",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "data",
+      "linia": "data(setmana)    = la seua VORA, no el dia que es declara",
+      "entrades": [],
       "poms": [],
       "taules": []
     },
@@ -1407,6 +1429,7 @@
       "clau": "alertes",
       "linia": "alertes = AGRUPA(ACCIONS amb data = HUI; tipus) ORDENA per urgencia DESC",
       "entrades": [
+        "data",
         "urgencia"
       ],
       "poms": [],
@@ -1418,7 +1441,9 @@
       "pasTitol": "INFORME I AGENDA",
       "clau": "agenda",
       "linia": "agenda  = ORDENA(ACCIONS amb data > HUI; data)",
-      "entrades": [],
+      "entrades": [
+        "data"
+      ],
       "poms": [],
       "taules": []
     },

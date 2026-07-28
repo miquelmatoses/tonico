@@ -471,7 +471,6 @@
   "juvenils.entrenament_posa": "Posa entrenament A: {principal}. Entrenament B: {secundari}.",
   "estoc.obra_fent": "Ja l'estic fent",
   "estoc.obra_feta": "Ja està feta",
-  "economia.data_setmana": "Un dia d'eixa setmana",
   "flux.passat": "Vas {excedit} per damunt del que el flux sosté per a personal: al venciment dels contractes toca baixar de nivell.",
   "flux.sense_sou_1": "No m'has dit el sou d'1 membre, així que eixa suma està coixa.",
   "flux.sense_sou_n": "No m'has dit el sou de {n} membres, així que eixa suma està coixa.",

@@ -75,28 +75,45 @@ assert.equal(pla.temporadaActual, ara.temporada, 'i la temporada, igual');
 // amb la numeració vella i redeclarar-les n'escriu una de NOVA. Tres files per a dues setmanes,
 // amb els mateixos diners comptats dos voltes — i d'eixa mitjana penja `sou_sostenible`, i d'ell
 // TOTS els nivells objectiu.
+//
+// QUINA SETMANA ÉS JA NO ES DEMANA: esta és la de hui i la passada la de fa set dies. Amb això
+// la porta queda tancada per construcció, i el que es guarda ací és que continue tancada.
 {
-  const declara = (setmanes) => finances.onRequestPost({
-    request: new Request('http://x', { method: 'POST', body: JSON.stringify({ setmanes }) }),
-    env: { DB: db }, data: { usuari: { id: 1 } } });
-  // DATES DE MIG DE SETMANA, que és com es declara de veres: l'informe es mira el dia que es
-  // mira. La vora la posa el calendari, no el dia que t'assegues a declarar.
-  const SETMANES = [{ data: '2026-07-22', taquilla: 90000, patrocini: 40000 },
-    { data: '2026-07-29', taquilla: 0, patrocini: 40000 }];
-  await declara(SETMANES);
-  // I la mateixa setmana declarada un altre dia NO pot obrir una fila nova.
-  await declara([{ data: '2026-07-24', taquilla: 90000, patrocini: 40000 },
-    { data: '2026-07-31', taquilla: 0, patrocini: 40000 }]);
+  const HUI_DECL = '2026-08-05';                 // dimecres: un dia qualsevol de declarar
+  const DECL = [{ endarrere: 1, taquilla: 90000, patrocini: 40000 },
+    { endarrere: 0, taquilla: 0, patrocini: 40000 }];
+  await finances.desaSetmanes(db, 1, DECL, HUI_DECL);
+  // I la mateixa setmana declarada UN ALTRE DIA no pot obrir una fila nova: la vora la posa el
+  // calendari, no el dia que t'assegues a transcriure l'informe.
+  await finances.desaSetmanes(db, 1, DECL, '2026-08-07');
   const files = sqlite.prepare('SELECT temporada, setmana, data, taquilla FROM setmanes_economiques ORDER BY temporada, setmana').all();
-  assert.equal(files.length, SETMANES.length,
-    `${SETMANES.length} setmanes reals declarades i ${files.length} files: s'han desdoblat`);
-  // I cap fila pot portar una data que contradiga la seua clau.
+  assert.equal(files.length, DECL.length,
+    `${DECL.length} setmanes reals declarades i ${files.length} files: s'han desdoblat`);
+  // Set dies EXACTES entre les dues, i les dues han de ser vores de setmana coherents amb la
+  // seua clau: si la data i la clau es poden separar, els diners d'una setmana acaben en l'altra.
+  const [a, b] = files.map((f) => Date.parse(f.data));
+  assert.equal((b - a) / 86400000, 7, 'la passada és exactament set dies abans que esta');
   for (const f of files) {
     const c = calcularSetmana(f.data, ancora);
     assert.equal(f.setmana, c.setmana, `la fila T${f.temporada} s${f.setmana} porta la data ${f.data}, que és la setmana ${c.setmana}`);
     assert.equal(new Date(`${f.data}T00:00:00Z`).getUTCDay(), primerDia,
       `i la data d'una setmana és la seua VORA: ${f.data} no és ${DIES[primerDia]}`);
   }
+  // I EN DISSABTE, que és el dia que ho destapa. Restant sis dies en compte de set, qualsevol
+  // altre dia de la setmana cau igualment dins de la setmana anterior i la normalització ho
+  // amaga; des de dissabte, sis dies enrere és diumenge — la vora d'ESTA setmana— i els dos
+  // blocs s'escriurien damunt de la mateixa fila.
+  await finances.desaSetmanes(db, 1, [{ endarrere: 1, taquilla: 11111, patrocini: 1 },
+    { endarrere: 0, taquilla: 22222, patrocini: 2 }], '2026-08-08');
+  const dissabte = sqlite.prepare('SELECT data, taquilla FROM setmanes_economiques ORDER BY temporada, setmana').all();
+  assert.deepEqual(dissabte.map((f) => f.taquilla), [11111, 22222],
+    'declarant en dissabte, «la passada» i «esta» han de caure en dues setmanes distintes');
+
+  // I UNA SETMANA BUIDA NO ES DECLARA: desar només per a corregir la caixa no pot sembrar zeros
+  // a l'històric, perquè eixos zeros entren de ple a la mitjana d'ingressos.
+  await finances.desaSetmanes(db, 1, [{ endarrere: 3, taquilla: null, patrocini: null }], HUI_DECL);
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM setmanes_economiques').get().n, files.length,
+    'una setmana sense res declarat no obri fila');
 }
 
 console.log(`OK — G5: l'àncora cau en ${DIES[primerDia]}, i el rellotge el mou el calendari`

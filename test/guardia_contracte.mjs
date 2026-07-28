@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { fCalendari, temporadaOperativa, setmanaDeHui } from '../lib/calendari.js';
+import { fCalendari, temporadaOperativa, setmanaDeHui, iniciDeSetmana } from '../lib/calendari.js';
 import { ESTRATEGIES, falten as confFalten, llocsPartit } from '../lib/config.js';
 import { souSostenible, perPeriode, reservaFlux, despesaPlanter, dadesVelles,
   fluxRepartible, pressupostPersonal, mitjanaSetmanal, calibrat } from '../lib/economia.js';
@@ -546,6 +546,30 @@ const VERIFICADES = {
   },
 
   // PAS 3 — el flux decidix el sou sostenible; l'estoc, la compra d'hui.
+  // P3.esta_setmana / P3.data — QUINES DUES SETMANES ES DECLAREN NO ES PREGUNTA: esta és la de
+  // hui i la passada la de fa set dies, i la data que es guarda és la VORA de cada una.
+  'P3.esta_setmana': async () => {
+    const anc = { data: (await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='calendari_ancora_data'").first()).valor,
+      temporada: 83, anyDies: 112 };
+    // Un dimecres qualsevol: les dues setmanes ixen del rellotge, no de cap camp.
+    const esta = iniciDeSetmana('2026-08-05', anc);
+    const passada = iniciDeSetmana(new Date(Date.parse('2026-08-05') - 7 * 86400000).toISOString().slice(0, 10), anc);
+    assert.equal((Date.parse(esta) - Date.parse(passada)) / 86400000, 7, 'set dies exactes entre les dues');
+    // I des de DISSABTE, que és el dia on una resta de sis dies encara cauria dins d'esta setmana.
+    const dsEsta = iniciDeSetmana('2026-08-08', anc);
+    const dsPassada = iniciDeSetmana('2026-08-01', anc);
+    assert.notEqual(dsEsta, dsPassada, 'declarant en dissabte també han de ser dues setmanes distintes');
+  },
+  'P3.data': async () => {
+    const anc = { data: (await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='calendari_ancora_data'").first()).valor,
+      temporada: 83, anyDies: 112 };
+    const primerDia = Number((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='setmana_primer_dia'").first()).valor);
+    // Qualsevol dia de la setmana ha de donar la MATEIXA vora, i eixa vora és el primer dia.
+    const vores = ['2026-08-02', '2026-08-05', '2026-08-08'].map((d) => iniciDeSetmana(d, anc));
+    assert.equal(new Set(vores).size, 1, 'tota la setmana dona la mateixa vora');
+    assert.equal(new Date(`${vores[0]}T00:00:00Z`).getUTCDay(), primerDia, 'i la vora és el primer dia de la setmana');
+  },
+
   'P3.ingressos_recurrents': () => {
     // v3.1: NOMÉS taquilla + per_periode(patrocini). `premis` és estoc, no flux.
     assert.equal(21127 + perPeriode(40500, 2), 102127, 'el fixture real de Sènior FC');

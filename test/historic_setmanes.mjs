@@ -41,17 +41,20 @@ const post = (cos) => fin.onRequestPost({ request: new Request('http://t', { met
 const files = () => sqlite.prepare('SELECT COUNT(*) n FROM setmanes_economiques').get().n;
 
 // ── 1. Declarar dues setmanes crea dues files, amb la identitat derivada del CALENDARI ──
-await post({ caixa: 173004, despesa_estadi: 7100, setmanes: [
-  { data: '2026-07-19', taquilla: 21127, patrocini: 40500 },
-  { data: '2026-07-26', taquilla: 0, patrocini: 40500 }] });
+// La data NO s'envia: cada bloc diu quantes setmanes arrere va i el rellotge fa la resta.
+await post({ caixa: 173004, despesa_estadi: 7100 });
+await fin.desaSetmanes(db, 1, [
+  { endarrere: 1, taquilla: 21127, patrocini: 40500 },
+  { endarrere: 0, taquilla: 0, patrocini: 40500 }], '2026-07-26');
 assert.equal(files(), 2, 'una fila per setmana');
 assert.ok(sqlite.prepare('SELECT COUNT(*) n FROM setmanes_economiques WHERE temporada IS NULL').get().n === 0,
   'cap setmana sense identitat: la data la resol el calendari, no es demana');
 
 // ── 2. EL SOLAPAMENT. La setmana següent, «esta» es torna a declarar com «la passada» ──
-await post({ setmanes: [
-  { data: '2026-07-26', taquilla: 19000, patrocini: 40500 },   // la mateixa, amb el valor bo
-  { data: '2026-08-02', taquilla: 22000, patrocini: 40500 }] });
+// I ara ix del rellotge: set dies després, `endarrere: 1` és la que abans era `endarrere: 0`.
+await fin.desaSetmanes(db, 1, [
+  { endarrere: 1, taquilla: 19000, patrocini: 40500 },         // la mateixa, amb el valor bo
+  { endarrere: 0, taquilla: 22000, patrocini: 40500 }], '2026-08-02');
 assert.equal(files(), 3, 'la repetida s\'ACTUALITZA i només se n\'afig una de nova');
 const repetida = sqlite.prepare("SELECT taquilla FROM setmanes_economiques WHERE data='2026-07-26'").get();
 assert.equal(repetida.taquilla, 19000, 'i es queda amb el valor de l\'última declaració');
@@ -71,7 +74,7 @@ assert.equal(motiuVenda({}, { enVenda: true, calibrat: e.calibrat }), 'sobrant',
 // ── 5. Amb 8 setmanes, calibra i el stopper s'aixeca ──
 for (let i = 3; i < 8; i++) {
   const d = new Date(Date.parse('2026-08-02') + (i - 2) * 7 * 86400000).toISOString().slice(0, 10);
-  await post({ setmanes: [{ data: d, taquilla: 20000, patrocini: 40500 }] });
+  await fin.desaSetmanes(db, 1, [{ endarrere: 0, taquilla: 20000, patrocini: 40500 }], d);
 }
 e = await economia(db, 1, '2026-09-20');
 assert.equal(e.setmanes_declarades, 8);

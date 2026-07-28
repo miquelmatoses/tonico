@@ -813,14 +813,11 @@ function formFinances(main, e) {
     if (val != null) i.value = val;
     return el('label', { class: 'decl-camp' }, el('span', { class: 'decl-et', text: t('economia.' + clau) }), i);
   };
-  // L'històric ve del més recent al més antic: [0] és esta setmana i [1] la passada.
-  const s2 = e.setmanes?.[0] || {}, s1 = e.setmanes?.[1] || {};
-  // LA DATA DE CADA SETMANA. D'ella el servidor deriva temporada i setmana pel calendari, i
-  // per això sense data la declaració es descarta («.filter(x => x.data)»). Estos dos camps
-  // s'usaven i no existien: la secció petava en pintar-se i, amb ella, l'única finestra per a
-  // declarar taquilla i patrocini. Ve precarregada amb la de l'històric.
-  const d1 = camp('data_setmana', s1.data, 'date');
-  const d2 = camp('data_setmana', s2.data, 'date');
+  // QUINES DUES SETMANES SÓN HO DIU EL SERVIDOR, no un camp de data: esta és la de hui i la
+  // passada la de fa set dies. Cada bloc ve precarregat amb el que ja hi haja declarat d'eixa
+  // setmana —no amb «les dues últimes files de l'històric», que si encara no has declarat esta
+  // setmana són les dues anteriors i t'ensenyaven números que no tocaven.
+  const s2 = e.declaracio?.esta || {}, s1 = e.declaracio?.passada || {};
   const tq1 = camp('taquilla', s1.taquilla);
   const pt1 = camp('patrocini', s1.patrocini);
   const tq2 = camp('taquilla', s2.taquilla);
@@ -833,8 +830,8 @@ function formFinances(main, e) {
   const bloc = (clau, ...camps) => el('div', { class: 'decl-bloc' },
     el('h4', { class: 'decl-titol', text: t('economia.' + clau) }), ...camps);
   f.append(el('div', { class: 'decl-setmanes' },
-    bloc('setmana_passada', d1, tq1, pt1),
-    bloc('setmana_esta', d2, tq2, pt2)));
+    bloc('setmana_passada', tq1, pt1),
+    bloc('setmana_esta', tq2, pt2)));
   // El club: estes dues no van per setmana. La caixa és d'ara i el manteniment és constant.
   f.append(el('div', { class: 'decl-setmanes' },
     el('div', { class: 'decl-bloc ample' },
@@ -844,12 +841,12 @@ function formFinances(main, e) {
   f.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const v = (l) => { const x = l.querySelector('input').value; return x === '' ? null : x; };
-    // Cada setmana va amb la SEUA data: d'ahí el servidor deriva temporada i setmana pel
-    // calendari, i redeclarar-ne una la sobreescriu en compte de duplicar-la.
+    // Cap data: cada bloc diu QUANTES SETMANES ARRERE va, i el rellotge del servidor fa la
+    // resta. Una setmana sense res declarat no s'envia com a zero, es queda sense declarar.
     await api('/api/finances', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
       caixa: v(caixa), despesa_estadi: v(estadi),
-      setmanes: [{ data: v(d1), taquilla: v(tq1), patrocini: v(pt1) },
-                 { data: v(d2), taquilla: v(tq2), patrocini: v(pt2) }].filter((x) => x.data) }) });
+      setmanes: [{ endarrere: 1, taquilla: v(tq1), patrocini: v(pt1) },
+                 { endarrere: 0, taquilla: v(tq2), patrocini: v(pt2) }] }) });
     location.reload();
   });
   main.append(f);

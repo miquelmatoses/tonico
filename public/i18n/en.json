@@ -471,7 +471,6 @@
   "juvenils.entrenament_posa": "Set training A: {principal}. Training B: {secundari}.",
   "estoc.obra_fent": "Already building it",
   "estoc.obra_feta": "It's finished",
-  "economia.data_setmana": "Any day of that week",
   "flux.passat": "You are {excedit} over what the flow sustains for staff: drop a level when the contracts expire.",
   "flux.sense_sou_1": "You haven't told me 1 member's wage, so that total is incomplete.",
   "flux.sense_sou_n": "You haven't told me {n} members' wages, so that total is incomplete.",
