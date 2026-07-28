@@ -470,6 +470,14 @@ cua = els que no han entrat en cap passada
    [òmplin fins al mínim legal —1 porter + 8 de camp— i la resta, banqueta.
     La banqueta no gasta missatge de l'entrenador: els missatges només van als
     que juguen]
+alineació(cua) = òmpli `orde_alineacio_residual` fins a `minim_jugadors`,
+                 amb les capacitats de `maxims_posicio` i descomptant les places
+                 que les passades d'entrenament ja han ocupat
+   [porter, defenses, davanters. I SURT AMB POSICIÓ, no amb un «residual» genèric:
+    el dia que tota la plantilla està capada per davall del llistó, cap passada
+    col·loca ningú i açò és l'única cosa que diu com plantar els nou al camp]
+   [mig centres i extrems queden fora d'este orde: són places d'ENTRENAMENT, i
+    gastar-les amb qui no entrena res no salva ningú]
 
 -- LA PLANTILLA
 objectiu_juvenil = mínim convocable + 1

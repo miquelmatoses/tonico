@@ -123,5 +123,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/100_pas10_juvenils.sql'));
   sqlite.exec(src('../schema/101_fora_crida.sql'));
   sqlite.exec(src('../schema/102_dos_entrenaments.sql'));
+  sqlite.exec(src('../schema/103_alineacio_residual.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

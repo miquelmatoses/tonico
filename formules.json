@@ -1166,6 +1166,19 @@
       "taules": []
     },
     {
+      "id": "P10.alineacio",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "alineació",
+      "linia": "alineació(cua) = òmpli `orde_alineacio_residual` fins a `minim_jugadors`,",
+      "entrades": [],
+      "poms": [
+        "minim_jugadors",
+        "orde_alineacio_residual"
+      ],
+      "taules": []
+    },
+    {
       "id": "P10.objectiu_juvenil",
       "pas": "P10",
       "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",

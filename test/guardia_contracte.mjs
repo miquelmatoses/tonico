@@ -256,10 +256,25 @@ const VERIFICADES = {
     const j = (id, max, dies) => ({ jugador_id: id, dies_edat: 15 * 112, dies_restants_promocio: dies,
       defensa_actual: max, defensa_potencial: max });
     const r = plaJuvenil([j(1, 2, 100), j(2, 5, 100), j(3, 5, 50)],
-      { passades: [], places: {}, habs: ['defensa'], minimEnCamp: 2 });
+      { passades: [], places: { porter: 1, defensa: 1 }, residuals: ['porter', 'defensa'],
+        habs: ['defensa'], minimEnCamp: 2 });
     assert.deepEqual(r.onze.map((l) => l.jugador_id), [3, 2],
       'màxima habilitat coneguda DESC, i a igualtat el que menys temps li queda');
+    assert.deepEqual(r.onze.map((l) => l.bucket), ['porter', 'defensa'],
+      'i ix amb POSICIÓ, en l\'orde declarat: porter primer');
     assert.deepEqual(r.banqueta, [1], 'i el que menys sap fer, a la banqueta');
+  },
+  'P10.alineacio': async () => {
+    const cj = async (k) => JSON.parse((await dbFix.prepare('SELECT valor FROM constants_joc WHERE clau=?').bind(k).first()).valor);
+    const [maxims, orde] = [await cj('maxims_posicio'), await cj('orde_alineacio_residual')];
+    // Ningú entrena res: tot el pla és la cua, i encara ha d'eixir una alineació.
+    const j = (id) => ({ jugador_id: id, dies_edat: 15 * 112, dies_restants_promocio: 100 + id });
+    const n = 1 + (maxims[orde[1]] ?? 0);                 // porter + tots els defenses
+    const r = plaJuvenil(Array.from({ length: n }, (_, k) => j(k + 1)),
+      { passades: [], places: maxims, residuals: orde, habs: [], minimEnCamp: n });
+    assert.deepEqual(r.onze.map((l) => l.bucket),
+      [orde[0], ...Array(n - 1).fill(orde[1])],
+      `l'orde declarat mana: ${orde.join(' → ')}, amb les capacitats de maxims_posicio`);
   },
   'P10.objectiu_juvenil': async () => {
     const obj = Number((await dbFix.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='juvenil_objectiu'").first()).valor);

@@ -107,5 +107,42 @@ assert.equal(vista.pla.principal, pomA.valor,
   assert.ok(Number.isFinite(sv.lloc.valor), 'i el que es pinta ha de ser un número, no un NaN');
 }
 
+// ── (d) LA PLANTILLA ROÏNA TAMBÉ TÉ ALINEACIÓ ────────────────────────────────────────────
+// Si tots estan capats per davall del llistó, cap passada col·loca ningú i tot el pla és la
+// cua. Eixe és justament el dia que més falta fa saber què fer, i «–» deu vegades no ho diu.
+// L'orde el declara la BD; els números, `maxims_posicio`. Cap dels dos ix d'ací.
+{
+  const { plaJuvenil } = await import('../lib/juvenil_pla.js');
+  const maxims = JSON.parse(sqlite.prepare("SELECT valor FROM constants_joc WHERE clau='maxims_posicio'").get().valor);
+  const orde = JSON.parse(sqlite.prepare("SELECT valor FROM constants_joc WHERE clau='orde_alineacio_residual'").get().valor);
+  const minim = Number(sqlite.prepare("SELECT valor FROM constants_joc WHERE clau='minim_jugadors'").get().valor);
+  // Dotze capats a 2 en les dues habilitats que s'entrenen: no en salva cap.
+  const capats = Array.from({ length: 12 }, (_, k) => ({
+    jugador_id: k + 1, dies_edat: 15 * 112, dies_restants_promocio: 100 + k,
+    creativitat_actual: 2, creativitat_potencial: 2, passades_actual: 2, passades_potencial: 2 }));
+  const taula = { '15.0': Array(12).fill(3.6) };
+  const pla = plaJuvenil(capats, {
+    passades: [{ habilitat: 'creativitat', llisto: 6, taula, buckets: ['mc', 'extrem'] },
+      { habilitat: 'passades', llisto: 5, taula, buckets: ['mc', 'extrem', 'davanter'] }],
+    places: maxims, habs: ['creativitat', 'passades'], residuals: orde, minimEnCamp: minim });
+
+  assert.equal(pla.onze.length, minim, 'amb dotze capats encara ha d\'eixir una alineació legal');
+  // Els dotze estan empatats en tot menys en els dies, o siga que la cua és id 1, 2, 3… i cada
+  // posició ha de caure sobre QUI toca: comparar només quants n'hi ha de cada no veu un orde
+  // invertit, perque 1+5+3 ompli igual comence per on comence.
+  let queden = minim, id = 1;
+  const esperat = [];
+  for (const b of orde) {
+    const n = Math.min(maxims[b] ?? 0, queden);
+    for (let k = 0; k < n; k++) esperat.push({ jugador_id: id++, bucket: b });
+    queden -= n;
+  }
+  assert.deepEqual(pla.onze.map(({ jugador_id, bucket }) => ({ jugador_id, bucket }))
+    .sort((a, b) => a.jugador_id - b.jugador_id), esperat,
+    `l'alineació de rescat ha de seguir l'orde declarat (${orde.join(' → ')}), no un «residual» genèric`);
+  assert.ok(!orde.some((b) => ['mc', 'extrem'].includes(b)),
+    'i l\'orde declarat no pot gastar places d\'entrenament amb qui no entrena res');
+}
+
 console.log(`OK — G4: el parte i Juvenils assenyalen els mateixos ${sobraSeccio.size} sobrants,`
   + ' la prescripció de l\'acadèmia arriba a la secció i la creativitat revelada arriba al pla');
