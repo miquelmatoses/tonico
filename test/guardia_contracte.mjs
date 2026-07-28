@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { fCalendari, temporadaOperativa } from '../lib/calendari.js';
+import { fCalendari, temporadaOperativa, setmanaDeHui } from '../lib/calendari.js';
 import { ESTRATEGIES, falten as confFalten, llocsPartit } from '../lib/config.js';
 import { souSostenible, perPeriode, reservaFlux, despesaPlanter, dadesVelles,
   fluxRepartible, pressupostPersonal, mitjanaSetmanal, calibrat } from '../lib/economia.js';
@@ -510,6 +510,21 @@ const VERIFICADES = {
     // La regla operativa és la MATEIXA que consumixen pla/alertes/economia.
     assert.deepEqual(temporadaOperativa(83, 16, 16), { temporada: 84, setmana: 0 });
     assert.deepEqual(temporadaOperativa(83, 15, 16), { temporada: 83, setmana: 15 });
+  },
+
+  'V.setmana_actual': async () => {
+    // EL RELLOTGE ÉS HUI, NO EL FITXER. I l'àncora ha de caure en el dia declarat: tota la
+    // graella penja d'ella, i en dissabte totes les vores de setmana es desplacen.
+    const cj = async (k) => (await dbFix.prepare('SELECT valor FROM constants_joc WHERE clau=?').bind(k).first())?.valor;
+    const ancora = { data: await cj('calendari_ancora_data'),
+      temporada: Number(await cj('calendari_ancora_temporada')), anyDies: Number(await cj('any_dies')) };
+    assert.equal(new Date(`${ancora.data}T00:00:00Z`).getUTCDay(), Number(await cj('setmana_primer_dia')),
+      `l'àncora (${ancora.data}) ha de caure en el primer dia de la setmana declarat`);
+    // Dos dates distintes, dos setmanes distintes: el que mou el número és el TEMPS.
+    const hui = await setmanaDeHui(dbFix, ancora.data);
+    assert.deepEqual([hui.temporada, hui.setmana], [ancora.temporada, 1], 'el dia de l\'àncora és la setmana 1');
+    const mesTard = await setmanaDeHui(dbFix, new Date(Date.parse(ancora.data) + 21 * 86400000).toISOString().slice(0, 10));
+    assert.equal(mesTard.setmana, 4, 'i tres setmanes després, la 4 — sense pujar cap fitxer');
   },
 
   // V.config / V.estrategia / P0.* — la config és l'única entrada d'usuari inicial i no

@@ -124,5 +124,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/101_fora_crida.sql'));
   sqlite.exec(src('../schema/102_dos_entrenaments.sql'));
   sqlite.exec(src('../schema/103_alineacio_residual.sql'));
+  sqlite.exec(src('../schema/104_ancora_diumenge.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

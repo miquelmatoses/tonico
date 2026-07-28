@@ -1,7 +1,7 @@
 // Tonico — vista de plantilla sènior: els jugadors de l'última instantània, repartits en
 // les sis seccions que derivа l'assignació d'estructura. Ja no hi ha CATEGORIA: el PAS 6
 // decidia qui es quedava abans de saber qui ocupa cada lloc, i cap secció el gastava.
-import { temporadaOperativa } from '../../lib/calendari.js';
+import { setmanaDeHui } from '../../lib/calendari.js';
 import { desertsDesats } from '../../lib/vendes.js';
 import { onzeEstructura } from '../../lib/onze_estructura.js';
 import { economia } from '../../lib/economia.js';
@@ -15,9 +15,8 @@ export async function onRequestGet({ env, data }) {
     'SELECT id, data, temporada, setmana_temporada FROM instantanies WHERE equip_id = ? ORDER BY data DESC, id DESC LIMIT 1'
   ).bind(equip.id).first();
   if (!inst) return json({ instantania: null, jugadors: [], intercanvis: [] });
-  // Temporada operativa (mateix criteri que el parte i el pla)
-  const tempSetmanes = parseInt((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='temporada_setmanes'").first())?.valor || '16', 10);
-  const op = temporadaOperativa(inst.temporada, inst.setmana_temporada, tempSetmanes);
+  // La capçalera diu EN QUINA SETMANA ESTEM, i això ho diu el calendari, no el fitxer.
+  const op = await setmanaDeHui(env.DB);
   inst.temporada = op.temporada;
   inst.setmana_temporada = op.setmana;
 

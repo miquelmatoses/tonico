@@ -5,7 +5,9 @@
 // desapareguts com 'pendent_de_motiu' i escriu les files d'instantània.
 // Tota la política (calendari) ve de constants_joc; res hardcoded ací.
 import { modelSenior, modelJuvenil } from '../../lib/adaptador.js';
-import { calcularSetmana } from '../../lib/calendari.js';
+import { calcularSetmana, carregaAncora } from '../../lib/calendari.js';
+// L'àncora viu al calendari; ací només es reexporta perquè és d'on l'importa mig sistema.
+export { carregaAncora };
 import { classificar } from '../../lib/diferencia.js';
 import { regeneraPipeline } from '../../lib/pipeline.js';
 import { derivaLlistat } from '../../lib/llistat.js';
@@ -56,19 +58,6 @@ export async function onRequestPost(context) {
   // Pipeline derivat sencer (classificació → alertes), regla d'or inclosa.
   const { alertes } = await regeneraPipeline(env.DB, usuari.id);
   return json({ ok: true, resultats, alertes });
-}
-
-export async function carregaAncora(db) {
-  const { results } = await db.prepare(
-    `SELECT clau, valor FROM constants_joc
-      WHERE clau IN ('calendari_ancora_data','calendari_ancora_temporada','any_dies')`
-  ).all();
-  const c = Object.fromEntries(results.map((r) => [r.clau, r.valor]));
-  return {
-    data: c.calendari_ancora_data,
-    temporada: parseInt(c.calendari_ancora_temporada, 10),
-    anyDies: parseInt(c.any_dies, 10),
-  };
 }
 
 export async function desar(db, usuariId, tipus, model, ancora, reemplaça = false) {

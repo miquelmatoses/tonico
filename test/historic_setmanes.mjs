@@ -100,7 +100,12 @@ assert.equal(motiuVenda({}, { sobrecost: 99999, calibrat: e.calibrat }), 'sou_de
     .split('CREATE TABLE')[0].split('ALTER TABLE')[0] +
     readFileSync(new URL('../schema/075_historic_setmanes.sql', import.meta.url), 'utf8')
       .slice(readFileSync(new URL('../schema/075_historic_setmanes.sql', import.meta.url), 'utf8').indexOf('INSERT OR REPLACE INTO setmanes_economiques')));
-  const anc = { data: '2026-07-25', temporada: 83, anyDies: 112 };
+  // L'ÀNCORA ES LLIG, no s'escriu ací: el backfill de la 075 la trau de `constants_joc`, i si
+  // l'oracle en porta una còpia congelada deixa de provar el backfill el dia que l'àncora es
+  // mou —que és exactament el que va passar en posar-la en diumenge (migració 104).
+  const cj = (k) => s2.prepare('SELECT valor FROM constants_joc WHERE clau=?').get(k).valor;
+  const anc = { data: cj('calendari_ancora_data'), temporada: Number(cj('calendari_ancora_temporada')),
+    anyDies: Number(cj('any_dies')) };
   for (const [data, taq] of [['2026-07-19', 21127], ['2026-07-26', 0]]) {
     const esperat = fCalendari(data, anc, 16);
     const vist = s2.prepare('SELECT temporada, setmana, taquilla FROM setmanes_economiques WHERE usuari_id=9 AND data=?').get(data);

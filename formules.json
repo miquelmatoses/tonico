@@ -83,6 +83,18 @@
       "taules": []
     },
     {
+      "id": "V.setmana_actual",
+      "pas": "V",
+      "pasTitol": "VARIABLES BASE (una font cadascuna)",
+      "clau": "setmana_actual",
+      "linia": "setmana_actual  = f_calendari(HUI, `ancora`)",
+      "entrades": [],
+      "poms": [
+        "ancora"
+      ],
+      "taules": []
+    },
+    {
       "id": "V.llistat",
       "pas": "V",
       "pasTitol": "VARIABLES BASE (una font cadascuna)",

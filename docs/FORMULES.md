@@ -50,6 +50,12 @@ hores(pais)     = BUSCA(`hores_pais`; pais) → {economia_dia, economia_hora}
 plantilla       = instantània sènior vigent · juvenils = instantània juvenil vigent
 llocs_partit    = 11 × partits_setmana
 (temporada, setmana) = f_calendari(data, `ancora`)      ← ÚNICA funció del sistema
+   [`ancora` ha de caure en `setmana_primer_dia` (diumenge): tota la graella de
+    setmanes penja d'ella, i si cau en un altre dia TOTES les vores es desplacen]
+setmana_actual  = f_calendari(HUI, `ancora`)
+   [el rellotge el mou EL TEMPS, no les pujades. La setmana d'una instantània diu
+    de quan és EL FITXER, que és una altra pregunta: dos setmanes sense pujar res
+    i el fitxer diu el mateix mentre el món no]
 llistat(j)      = csv.transferible(j) = 1  O  fitxa.llistada(j)
 lesionat(j)     = csv.lesio(j) ≥ 1                      [font: buit | N setmanes]
 sancionat(j)    = csv.amonestacions(j) ≥ `amonestacions_suspensio`   [3; només lliga]
