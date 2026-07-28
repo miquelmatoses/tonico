@@ -60,7 +60,7 @@ manual desapareix perquè les dades arribaran de l'API en compte del CSV o de l'
 | 4 · Pujada de CSV setmanal | Ingesta directa de la plantilla i els juvenils, sense exportar ni pujar fitxers. |
 | 6 · Informe setmanal | Caixa, taquilla, patrocini i manteniment, sense transcriure'ls. |
 | 9 · Preu de referència | Vendes recents comparables → una base per a declarar el preu amb menys ull. |
-| 12 · Fitxa de venda | Data de llistada i resultat de la subhasta, sense apuntar-los. |
+| 12 · Fitxa de venda | La data REAL de llistat, en compte de la de la pujada. El resultat de la subhasta ja no s'apunta: es dedueix. |
 | ALR_JUNTA_PORTER (minuts) | Minuts jugats reals → l'alerta del porter deixa de ser recordatori i mesura els 60'. |
 
 Segueixen sent manuals (no els dóna la CHPP): la **identitat** del compte (1, 2), la
