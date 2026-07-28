@@ -1,5 +1,5 @@
 import { economia } from '../../lib/economia.js';
-import { fCalendari } from '../../lib/calendari.js';
+import { iniciDeSetmana, fCalendari } from '../../lib/calendari.js';
 
 const hui = () => new Date().toISOString().slice(0, 10);
 
@@ -64,12 +64,17 @@ export async function onRequestPost({ request, env, data }) {
       if (!s?.data) continue;
       const { temporada, setmana } = fCalendari(s.data, anc, tempSetmanes);
       if (temporada == null) continue;
+      // LA DATA ÉS LA VORA DE LA SETMANA, no el dia que la declares. Guardant el dia solt, la
+      // clau i la data es podien separar: el `ON CONFLICT` actualitzava els imports i deixava
+      // la data vella, i quedava una fila amb els diners d'una setmana i el dia d'una altra.
+      const inici = iniciDeSetmana(s.data, anc);
       await env.DB.prepare(
         `INSERT INTO setmanes_economiques (usuari_id, temporada, setmana, taquilla, patrocini, data, declarada)
          VALUES (?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(usuari_id, temporada, setmana) DO UPDATE SET
-           taquilla=excluded.taquilla, patrocini=excluded.patrocini, declarada=excluded.declarada`
-      ).bind(data.usuari.id, temporada, setmana, enter(s.taquilla), enter(s.patrocini), s.data, hui()).run();
+           taquilla=excluded.taquilla, patrocini=excluded.patrocini, data=excluded.data,
+           declarada=excluded.declarada`
+      ).bind(data.usuari.id, temporada, setmana, enter(s.taquilla), enter(s.patrocini), inici, hui()).run();
     }
   }
   return json({ ok: true });

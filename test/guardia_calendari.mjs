@@ -19,6 +19,7 @@ import { setmanaDeHui, carregaAncora, calcularSetmana } from '../lib/calendari.j
 import { modelSenior } from '../lib/adaptador.js';
 import { desar } from '../functions/api/pujar.js';
 import { estatPla } from '../lib/pla.js';
+import * as finances from '../functions/api/finances.js';
 
 const { sqlite, db } = nova(import.meta.url);
 const cj = (k) => sqlite.prepare('SELECT valor FROM constants_joc WHERE clau=?').get(k)?.valor;
@@ -67,6 +68,36 @@ const pla = await estatPla(db, 1, HUI);
 assert.equal(pla.setmanaActual, ara.setmana,
   `el pla diu la setmana ${pla.setmanaActual} i el calendari la ${ara.setmana}: està llegint el fitxer`);
 assert.equal(pla.temporadaActual, ara.temporada, 'i la temporada, igual');
+
+// ── (c) UNA SETMANA ECONÒMICA NO ES POT DESDOBLAR ────────────────────────────────────────
+// La identitat d'una setmana és (temporada, setmana) DERIVADA de la seua data. En moure
+// l'àncora, la mateixa data real cau en una setmana distinta: les files ja escrites es queden
+// amb la numeració vella i redeclarar-les n'escriu una de NOVA. Tres files per a dues setmanes,
+// amb els mateixos diners comptats dos voltes — i d'eixa mitjana penja `sou_sostenible`, i d'ell
+// TOTS els nivells objectiu.
+{
+  const declara = (setmanes) => finances.onRequestPost({
+    request: new Request('http://x', { method: 'POST', body: JSON.stringify({ setmanes }) }),
+    env: { DB: db }, data: { usuari: { id: 1 } } });
+  // DATES DE MIG DE SETMANA, que és com es declara de veres: l'informe es mira el dia que es
+  // mira. La vora la posa el calendari, no el dia que t'assegues a declarar.
+  const SETMANES = [{ data: '2026-07-22', taquilla: 90000, patrocini: 40000 },
+    { data: '2026-07-29', taquilla: 0, patrocini: 40000 }];
+  await declara(SETMANES);
+  // I la mateixa setmana declarada un altre dia NO pot obrir una fila nova.
+  await declara([{ data: '2026-07-24', taquilla: 90000, patrocini: 40000 },
+    { data: '2026-07-31', taquilla: 0, patrocini: 40000 }]);
+  const files = sqlite.prepare('SELECT temporada, setmana, data, taquilla FROM setmanes_economiques ORDER BY temporada, setmana').all();
+  assert.equal(files.length, SETMANES.length,
+    `${SETMANES.length} setmanes reals declarades i ${files.length} files: s'han desdoblat`);
+  // I cap fila pot portar una data que contradiga la seua clau.
+  for (const f of files) {
+    const c = calcularSetmana(f.data, ancora);
+    assert.equal(f.setmana, c.setmana, `la fila T${f.temporada} s${f.setmana} porta la data ${f.data}, que és la setmana ${c.setmana}`);
+    assert.equal(new Date(`${f.data}T00:00:00Z`).getUTCDay(), primerDia,
+      `i la data d'una setmana és la seua VORA: ${f.data} no és ${DIES[primerDia]}`);
+  }
+}
 
 console.log(`OK — G5: l'àncora cau en ${DIES[primerDia]}, i el rellotge el mou el calendari`
   + ` (hui ${HUI} → T${ara.temporada} s${ara.setmana}) i no el fitxer (s${inst.setmana_temporada})`);
