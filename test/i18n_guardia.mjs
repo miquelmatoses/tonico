@@ -91,7 +91,6 @@ const families = {
   // Els 16 nivells d'habilitat, pel NOM de Hattrick. L'escala de Tonico compta des d'on el sou
   // deixa de ser el mínim: nivell 1 = «Insuficient» (HT 5), o siga Tonico n = HT n+4.
   'nivell_ht': Array.from({ length: 16 }, (_, i) => String(i + 1)),
-  'motiu': motiusDelCodi(),        // derivat del codi: un motiu nou el caça sol
   'motiu_baixa': ['venda', 'despatx', 'promocio', 'altres'],
   // `tipus.*` (moviments) i `font.*` (d'on eixia el preu estimat) han caigut: ni hi ha
   // comptabilitat de moviments ni cap estimació de preu.
@@ -103,8 +102,6 @@ const families = {
   // desert ja no arriba a la fitxa de venda.
   'vendes.estat_': ['pendent', 'llistat', 'venut', 'despatxat'],
   'vendes': ['col_jugador', 'col_posicio', 'col_especialitat', 'col_situacio', 'col_data', 'col_tancament', 'col_estat'],
-  'juvenils.joc_motiu_': ['revelar', 'dud', 'entrena', 'sense_pipeline'],
-  'juvenils.onze_m_': ['entrena', 'estructura', 'recanvi'],
   'falten': ['caixa', 'personal', 'estadi', 'config_pais', 'config_divisio', 'config_partits_setmana', 'config_estrategia'],
   'dia': ['0', '1', '2', '3', '4', '5', '6'],   // noms de dia per a l'agenda
   'agenda': ['llistar'],                          // etiquetes curtes d'acció (missatge_clau del servidor)

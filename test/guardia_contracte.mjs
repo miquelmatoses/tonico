@@ -10,8 +10,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { valorPlaces } from '../lib/valor_placa.js';
-import { valorHabilitat, lecturaPromocio } from '../lib/ranquing_juvenil.js';
 import { fCalendari, temporadaOperativa } from '../lib/calendari.js';
 import { ESTRATEGIES, falten as confFalten, llocsPartit } from '../lib/config.js';
 import { souSostenible, perPeriode, reservaFlux, despesaPlanter, dadesVelles,
@@ -22,8 +20,9 @@ import { sobrecost } from '../lib/mancanca.js';
 import { urgent as esUrgent, motiuVenda, ordreVenda, desti, despatxable,
   subhastaDeserta } from '../lib/vendes.js';
 import { assignaEstructura } from '../lib/onze.js';
+import { valorPlaces } from '../lib/valor_placa.js';
+import { matxosPerNivell, projecta, avaluaHabilitat, plaJuvenil, sobrants as sobrantsJuv } from '../lib/juvenil_pla.js';
 import { onzeEstructura } from '../lib/onze_estructura.js';
-import { util as utilJuv, destiPromocio, objectiuJuvenil, sobrants, reiniciCrida } from '../lib/juvenil_v3.js';
 import { costFlux, nivellPagable, planPersonal, decisioRenovacio, placesAdmeses,
   sostrePersonal, baseTipus as baseTipusG1 } from '../lib/personal_v3.js';
 import { guanyJugador, admissibleJugador, deltaManteniment, estadiCaduc, admissibleEstadi,
@@ -32,7 +31,6 @@ import { nivellAccio, agrupaAlertes, ordenaAgenda } from '../lib/informe.js';
 import { necessitats, ambPreus, clauFitxatge } from '../lib/fitxatges.js';
 import { REGLES } from '../lib/regles.js';
 import { entrenamentPrescrit, placesEntrenament } from '../lib/entrenament_places.js';
-import { valorHabilitat as valorHab, valorEsperatDesconegut, ranquingJuvenil } from '../lib/ranquing_juvenil.js';
 import { esLesionat } from '../public/format.js';
 import { nova } from './_d1shim.mjs';
 
@@ -147,6 +145,133 @@ const VERIFICADES = {
     assert.equal(cfg.taula_habilitat_lloc.davanter, 'anotacio', 'DAV → anotació');
   },
   // ── PAS 7 / PAS 8 / PAS 9 ──
+  // ── PAS 10 — JUVENILS. L'acadèmia és un proveïdor alternatiu d'entrenables: una rutina
+  // aplicada dues voltes, primer creativitat i després passades.
+  'P10.factor': async () => {
+    const f = JSON.parse((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='entrenament_juvenil_factors'").first()).valor);
+    assert.equal(f.ple, 1); assert.equal(f.baix, 0.5); assert.equal(f.residual, 0.15);
+  },
+  'P10.revela': async () => {
+    const min = Number((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='revelacio_factor_min'").first()).valor);
+    const f = JSON.parse((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='entrenament_juvenil_factors'").first()).valor);
+    assert.ok(f.ple >= min && f.baix >= min, 'els graons ple i baix revelen');
+    assert.ok(f.residual < min, 'el residual NO revela: per això revelar i entrenar són la mateixa acció');
+  },
+  'P10.matxos': async () => {
+    const taula = JSON.parse((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='velocitat_juvenil_creativitat'").first()).valor);
+    // Interpola per edat i creix amb el nivell: pujar de 7 costa més que pujar de 0.
+    assert.equal(matxosPerNivell(taula, 15 * 112, 0), 3.67, 'la fila de 15,0 tal qual');
+    const mig = matxosPerNivell(taula, 15 * 112 + 28, 0);
+    assert.ok(mig > 3.67 && mig < 3.91, 'entre dues files, interpola');
+    assert.ok(matxosPerNivell(taula, 15 * 112, 7) > matxosPerNivell(taula, 15 * 112, 0), 'pujar de dalt costa més');
+    assert.ok(matxosPerNivell(taula, 18 * 112, 0) > matxosPerNivell(taula, 15 * 112, 0), 'i de major, també');
+  },
+  'P10.sub_nivell': async () => {
+    const sub = Number((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='sub_nivell_desconegut'").first()).valor);
+    assert.ok(sub >= 0.5, 'vora ALTA: no es descarta ningú per pessimisme');
+    const taula = JSON.parse((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='velocitat_juvenil_creativitat'").first()).valor);
+    const opts = { taula, diesEdat: 16 * 112 + 25, diesRestants: 89 };
+    assert.ok(projecta(4, { ...opts, subNivell: sub }) > projecta(4, { ...opts, subNivell: 0 }),
+      'i mou el resultat: amb el terra, un jugador de la vora canvia de veredicte');
+  },
+  'P10.projeccio': async () => {
+    const taula = JSON.parse((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='velocitat_juvenil_creativitat'").first()).valor);
+    const base = { taula, diesEdat: 15 * 112 + 35, diesRestants: 189, subNivell: 0.9 };
+    const ple = projecta(5, base);
+    assert.ok(ple > 5, 'creix amb el temps que li queda');
+    assert.ok(projecta(5, { ...base, factor: 0.5 }) < ple, 'i el factor de la posició el frena');
+    assert.equal(projecta(5, { ...base, sostre: 6 }), 6, 'el sostre conegut l\'acota');
+    assert.equal(projecta(null, base), null, 'sense actual no s\'inventa cap projecció');
+  },
+  'P10.bloquejat': () => {
+    const j = (id, o) => ({ jugador_id: id, dies_restants_promocio: 100, dies_edat: 15 * 112, ...o });
+    const r = plaJuvenil([j(1, { bloquejat: true }), j(2), j(3)], { passades: [], minimEnCamp: 1 });
+    assert.deepEqual(r.bloquejats, [1], 'el bloquejat ix abans de cap tall');
+    assert.ok(!r.onze.some((l) => l.jugador_id === 1) && !r.banqueta.includes(1),
+      'i no apareix ni a l\'onze ni a la banqueta: no pot jugar');
+  },
+  'P10.talla': async () => {
+    const taula = JSON.parse((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='velocitat_juvenil_creativitat'").first()).valor);
+    const o = { llisto: 6, taula, subNivell: 0.9 };
+    const j = (a, p) => ({ dies_edat: 16 * 112, dies_restants_promocio: 89,
+      creativitat_actual: a, creativitat_potencial: p });
+    assert.equal(avaluaHabilitat(j('desconegut', 4), 'creativitat', o).motiu, 'sostre_baix',
+      'sostre conegut per davall: definitiu, encara sense saber l\'actual');
+    assert.equal(avaluaHabilitat(j(3, 3), 'creativitat', o).motiu, 'sostre_baix',
+      'un capat per davall ja el caça el sostre: el seu sostre ÉS el seu actual');
+    assert.equal(avaluaHabilitat(j(7, 7), 'creativitat', o).motiu, 'capat_fet',
+      'i el capat per damunt TAMBÉ es talla: ja és el producte, no gasta plaça');
+    const desc = avaluaHabilitat(j('desconegut', 'desconegut'), 'creativitat', o);
+    assert.equal(desc.talla, false, 'desconegut NO talla: sense proves no hi ha motiu');
+    assert.equal(desc.valor, 6, 'i val el llistó: ni descarta ni desplaça els que arriben');
+  },
+  'P10.ordre': async () => {
+    const taula = JSON.parse((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='velocitat_juvenil_creativitat'").first()).valor);
+    const j = (id, dies, a) => ({ jugador_id: id, dies_edat: 15 * 112, dies_restants_promocio: dies,
+      creativitat_actual: a ?? null, creativitat_potencial: null });
+    const r = plaJuvenil([j(1, 190), j(2, 90), j(3, 190, 5)],
+      { passades: [{ habilitat: 'creativitat', llisto: 6, taula, subNivell: 0.9, buckets: ['mc'] }],
+        places: { mc: 3 }, minimEnCamp: 3 });
+    assert.deepEqual(r.onze.map((l) => l.jugador_id), [3, 2, 1],
+      'projecció DESC, i a igualtat el que MENYS temps li queda');
+  },
+  'P10.places': async () => {
+    const taula = JSON.parse((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='velocitat_juvenil_creativitat'").first()).valor);
+    const j = (id) => ({ jugador_id: id, dies_edat: 15 * 112, dies_restants_promocio: 190 });
+    const p = (hab, buckets) => ({ habilitat: hab, llisto: 5, taula, subNivell: 0.9, buckets });
+    const r = plaJuvenil([j(1), j(2), j(3), j(4)],
+      { passades: [p('creativitat', ['mc']), p('passades', ['mc', 'davanter'])],
+        places: { mc: 2, davanter: 2 }, minimEnCamp: 4 });
+    const mc = r.onze.filter((l) => l.bucket === 'mc');
+    assert.equal(mc.length, 2, 'les dues places de mig centre s\'omplin');
+    assert.ok(mc.every((l) => l.habilitat === 'creativitat'),
+      'i les RESERVA la primera passada: la segona no les toca');
+  },
+  'P10.places_2': async () => {
+    const taula = JSON.parse((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='velocitat_juvenil_creativitat'").first()).valor);
+    const j = (id, cre) => ({ jugador_id: id, dies_edat: 15 * 112, dies_restants_promocio: 190,
+      creativitat_actual: cre ?? null, creativitat_potencial: cre ?? null });
+    // El capat a 2 el talla la creativitat i el recull la segona passada.
+    const r = plaJuvenil([j(1), j(2, 2)],
+      { passades: [{ habilitat: 'creativitat', llisto: 6, taula, subNivell: 0.9, buckets: ['mc'] },
+        { habilitat: 'passades', llisto: 5, taula, subNivell: 0.9, buckets: ['davanter'] }],
+        places: { mc: 1, davanter: 1 }, minimEnCamp: 2 });
+    assert.equal(r.onze.find((l) => l.jugador_id === 2).bucket, 'davanter',
+      'qui no serveix per creativitat encara pot rescatar-se per passades');
+  },
+  'P10.cua': () => {
+    const j = (id, max, dies) => ({ jugador_id: id, dies_edat: 15 * 112, dies_restants_promocio: dies,
+      defensa_actual: max, defensa_potencial: max });
+    const r = plaJuvenil([j(1, 2, 100), j(2, 5, 100), j(3, 5, 50)],
+      { passades: [], places: {}, habs: ['defensa'], minimEnCamp: 2 });
+    assert.deepEqual(r.onze.map((l) => l.jugador_id), [3, 2],
+      'màxima habilitat coneguda DESC, i a igualtat el que menys temps li queda');
+    assert.deepEqual(r.banqueta, [1], 'i el que menys sap fer, a la banqueta');
+  },
+  'P10.objectiu_juvenil': async () => {
+    const obj = Number((await dbFix.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='juvenil_objectiu'").first()).valor);
+    const min = Number((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='minim_jugadors'").first()).valor);
+    assert.equal(obj, min + 1, 'mínim convocable + 1: un de banqueta i cap més');
+  },
+  'P10.sobra': () => {
+    assert.equal(sobrantsJuv([1, 2, 3], 3).length, 0, 'sense excedent no se\'n va ningú');
+    assert.equal(sobrantsJuv([1, 2, 3, 4, 5], 3).length, 2, 'només el que sobra de l\'objectiu');
+  },
+  'P10.despatxa': () => {
+    // L'orde invers del d'alinear, i el producte acabat blindat.
+    assert.deepEqual(sobrantsJuv([1, 2, 3, 4], 3), [4], 'se\'n va l\'últim de la llista');
+    assert.deepEqual(sobrantsJuv([1, 2, 3, 4], 3, new Set([4])), [3],
+      'però mai qui ja arriba al llistó de creativitat, encara que estiga l\'últim');
+    assert.deepEqual(sobrantsJuv([1, 2], 3), [], 'i mai per davall de l\'objectiu');
+  },
+  'P10.promociona': () => {
+    // No és una decisió: es promociona el primer dia possible.
+    const promocionable = (d) => (d ?? 1) <= 0;
+    assert.equal(promocionable(0), true);
+    assert.equal(promocionable(-3), true, 'passat el dia, també');
+    assert.equal(promocionable(1), false);
+  },
+
   'P7.desert': () => {
     assert.equal(subhastaDeserta({ transferible_abans: 1, transferible_ara: null, en_plantilla: true }), true,
       'estava llistat, ja no, i seguix a la plantilla → ningú l\'ha comprat');
@@ -266,48 +391,6 @@ const VERIFICADES = {
     assert.equal(estadiCaduc('2026-07-01', '2026-07-26', 10), false);
     assert.equal(estadiCaduc(null, '2026-07-26', 10), false, 'sense data no són caducs: falten');
   },
-  'P10.esperat_act': () => {
-    // MITJANA(revelacions pròpies); ∅ → `esperat_defecte`
-    assert.equal(valorEsperatDesconegut([{ creativitat_actual: 4 }, { creativitat_actual: 8 }], 'creativitat', 5), 6);
-    assert.equal(valorEsperatDesconegut([], 'creativitat', 5), 5, 'sense revelacions, el defecte');
-  },
-  'P10.nivell': () => {
-    // NIVELL = pes_A×valor(A) + pes_B×valor(B)
-    const o = optsMarge();
-    const y = { creativitat_actual: 6, creativitat_potencial: 9, passades_actual: 4, passades_potencial: 6 };
-    const r = ranquingJuvenil([{ jugador_id: 1, ...y }], { entrenamentA: 'creativitat', entrenamentB: 'passades',
-      pes_a: 1, pes_b: 0.66, ...o });
-    const esperat = 1 * valorHab(y, 'creativitat', o) + 0.66 * valorHab(y, 'passades', o);
-    assert.equal(r[0].nivell, Math.round(esperat * 100) / 100);
-  },
-  'P10.promo': () => {
-    // PRIMER(ORDENA(elegibles; NIVELL DESC)), màx 1 per setmana
-    const rang = [{ jugador_id: 1, nom: 'A', nivell: 7, posicio_rang: 2 }, { jugador_id: 2, nom: 'B', nivell: 9, posicio_rang: 1 }];
-    const juv = [{ jugador_id: 1, edat_anys: 17, dies_academia: 200 }, { jugador_id: 2, edat_anys: 17, dies_academia: 200 }];
-    const l = lecturaPromocio(rang, juv);
-    assert.equal(l.proposta.jugador_id, 2, 'el de més NIVELL entre elegibles');
-    assert.ok(!Array.isArray(l.proposta), 'una sola proposta: màx 1 per setmana');
-  },
-  'P10.onze': () => {
-    // «mateixa fórmula del PAS 9»: el motor és el mateix, amb la taula juvenil.
-    const LL = [{ lloc: 'mc1', bucket: 'mc', entrena: true, pct: 100, habilitat: 'creativitat', pes: 1 }];
-    const { onze } = assignaEstructura([{ id: 1, creativitat: 5 }], LL);
-    assert.equal(onze[0].jugador.id, 1, 'el mateix motor d\'assignació, amb la taula juvenil');
-  },
-  'P10.accio': () => {
-    // ACCIÓ("fes la crida") SI crida_disponible
-    const accio = (disponible) => (disponible ? 'crida' : null);
-    assert.equal(accio(true), 'crida');
-    assert.equal(accio(false), null);
-  },
-  'P10.reexecuta': () => {
-    // «reexecuta a CADA pujada»: l'esperat es recalibra amb les revelacions noves.
-    const abans = valorEsperatDesconegut([{ creativitat_actual: 4 }], 'creativitat', 5);
-    const despres = valorEsperatDesconegut([{ creativitat_actual: 4 }, { creativitat_actual: 10 }], 'creativitat', 5);
-    assert.notEqual(abans, despres, 'una revelació nova mou l\'esperat');
-  },
-
-  // ── PAS 11 / PAS 12 ──
   'P3.flux_repartible': () => {
     // El calaix únic: es lleven els FETS (planter, manteniment, sou de l'entrenador) i el
     // pressupost del personal és una QUOTA d'això, acotada pel que pot absorbir.
@@ -879,67 +962,6 @@ const VERIFICADES = {
     assert.deepEqual(decisioRenovacio(2, 100, 1020), { accio: 'no_renoves', nivell: null });
   },
 
-  'P10.util': () => {
-    assert.equal(utilJuv({ creativitat_potencial: 9 }, 'creativitat', 8), true);
-    assert.equal(utilJuv({ creativitat_potencial: 7 }, 'creativitat', 8), false);
-    assert.equal(utilJuv({ creativitat_potencial: 9 }, 'creativitat', null), null);
-  },
-  'P10.desti': () => {
-    // v3.1: DOS branques, no tres. `PROMOCIONA_I_LLISTA` depenia d'una estimació de preu i
-    // era el juvenil-com-a-negoci que el canvi 9 ja havia retirat.
-    assert.equal(destiPromocio({ esUtil: true }), 'PROMOCIONA');
-    assert.equal(destiPromocio({ esUtil: false }), 'DESPATXA');
-  },
-  'P10.sobra': () => {
-    assert.equal(objectiuJuvenil(9), 10, 'objectiu = onze legal + 1');
-    assert.equal(objectiuJuvenil(null), null);
-  },
-  'P10.despatxa': () => {
-    const j = [{ jugador_id: 1, nivell: 8, n_revelacions: 1 }, { jugador_id: 2, nivell: 4, n_revelacions: 3 },
-      { jugador_id: 3, nivell: 4, n_revelacions: 0 }];
-    assert.deepEqual(sobrants(j, 2).map((x) => x.jugador_id), [3], 'NIVELL ASC, revelacions ASC');
-  },
-  'P10.reinici_crida': () => {
-    const r = reiniciCrida('2026-07-26T12:00:00Z', { economia_dia: 6, economia_hora: 2 });
-    assert.equal(new Date(r).getUTCDay(), 6);
-    assert.equal(new Date(r).getUTCHours(), 3, 'l\'hora SÍ que compta (abans s\'ignorava)');
-    assert.equal(reiniciCrida('2026-07-26T12:00:00Z', null), null);
-  },
-
-  // P10.valor: els QUATRE casos del full coincidixen amb valorHabilitat (el cas (d) es va
-  // corregir a L9: un desconegut també té marge).
-  'P10.valor': () => {
-    const o = optsMarge();
-    const ea = MARGE.esperat_defecte;
-    const casos = [
-      { act: 6, pot: 9, esperat: 6 + (9 - 6) * MARGE.f_marge },                    // (a)
-      { act: 6, pot: null, esperat: 6 + MARGE.marge_ple * MARGE.f_marge },         // (b)
-      { act: null, pot: 9, esperat: Math.min(ea, 9) + (9 - Math.min(ea, 9)) * MARGE.f_marge }, // (c)
-      { act: null, pot: null, esperat: ea + MARGE.marge_ple * MARGE.f_marge },                 // (d)
-    ];
-    for (const { act, pot, esperat } of casos) {
-      const y = { [`${A}_actual`]: act, [`${A}_potencial`]: pot };
-      assert.equal(valorHabilitat(y, A, o), esperat, `valor(act=${act}, pot=${pot})`);
-    }
-  },
-  // P10.elegible: elegible(j) = edat_d ≥ 17×112 I estada ≥ 112
-  'P10.elegible': () => {
-    const rang = [
-      { jugador_id: 1, nom: 'A', nivell: 9, posicio_rang: 1 },
-      { jugador_id: 2, nom: 'B', nivell: 8, posicio_rang: 2 },
-      { jugador_id: 3, nom: 'C', nivell: 7, posicio_rang: 3 },
-    ];
-    const juvenils = [
-      { jugador_id: 1, edat_anys: 17, dies_academia: 120 },   // elegible
-      { jugador_id: 2, edat_anys: 16, dies_academia: 200 },   // edat < 17 → no
-      { jugador_id: 3, edat_anys: 17, dies_academia: 100 },   // estada < 112 → no
-    ];
-    const avaluador = juvenils.filter((j) => j.edat_anys * 112 >= 17 * 112 && j.dies_academia >= 112)
-      .map((j) => j.jugador_id);
-    const lect = lecturaPromocio(rang, juvenils);
-    assert.deepEqual(avaluador, [1], 'fixture: només el 1r és elegible');
-    assert.equal(lect.proposta?.jugador_id, 1, 'elegible → promo = el de més NIVELL entre elegibles');
-  },
 };
 
 // DIVERGÈNCIES CONFIRMADES: el codi actual NO fa el que diu el full. Cada entrada assegura

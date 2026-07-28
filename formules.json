@@ -1013,138 +1013,161 @@
       "taules": []
     },
     {
-      "id": "P10.esperat_act",
+      "id": "P10.factor",
       "pas": "P10",
-      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
-      "clau": "esperat_act",
-      "linia": "esperat_act(h) = MITJANA(revelacions pròpies de h)   [∅ → `esperat_defecte`]",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "factor",
+      "linia": "factor(posició, habilitat) = 1 · 0,5 · 0,15    [`entrenament_juvenil_factors`]",
       "entrades": [],
       "poms": [
-        "esperat_defecte"
+        "entrenament_juvenil_factors"
       ],
       "taules": []
     },
     {
-      "id": "P10.valor",
+      "id": "P10.revela",
       "pas": "P10",
-      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
-      "clau": "valor",
-      "linia": "valor(j,h) = SI(act I pot coneguts; act + (pot−act)×`f_marge`;",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "revela",
+      "linia": "revela(posició) = factor ≥ `revelacio_factor_min`",
       "entrades": [
-        "act",
-        "pot"
+        "factor"
       ],
       "poms": [
-        "f_marge"
+        "revelacio_factor_min"
       ],
       "taules": []
     },
     {
-      "id": "P10.nivell",
+      "id": "P10.matxos",
       "pas": "P10",
-      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
-      "clau": "NIVELL",
-      "linia": "NIVELL(j)  = `pes_A`×valor(j,A) + `pes_B`×valor(j,B)",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "matxos",
+      "linia": "matxos(habilitat, edat, nivell) = `velocitat_juvenil_<habilitat>`   [taula per edat i nivell]",
       "entrades": [
-        "A",
-        "B"
-      ],
-      "poms": [
-        "pes_A",
-        "pes_B"
-      ],
-      "taules": []
-    },
-    {
-      "id": "P10.util",
-      "pas": "P10",
-      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
-      "clau": "util",
-      "linia": "util(j)    = potencial(j, A) ≥ nivell_objectiu(MC)   ← ¿arribarà al nivell del lloc?",
-      "entrades": [
-        "A",
-        "lloc",
-        "nivell",
-        "nivell_objectiu"
+        "nivell"
       ],
       "poms": [],
       "taules": []
     },
     {
-      "id": "P10.elegible",
+      "id": "P10.sub_nivell",
       "pas": "P10",
-      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
-      "clau": "elegible",
-      "linia": "elegible(j)= edat_d ≥ 17×112 I estada ≥ 112",
-      "entrades": [
-        "edat_d"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P10.promo",
-      "pas": "P10",
-      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
-      "clau": "promo",
-      "linia": "promo      = PRIMER(ORDENA(FILTRA(juvenils; elegible); NIVELL DESC))",
-      "entrades": [
-        "NIVELL",
-        "elegible",
-        "juvenils"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P10.desti",
-      "pas": "P10",
-      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
-      "clau": "destí",
-      "linia": "destí(promo) = SI(util(promo); PROMOCIONA (entra com a rotatiu de l'11B); DESPATXA)",
-      "entrades": [
-        "B",
-        "promo",
-        "util"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P10.onze",
-      "pas": "P10",
-      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
-      "clau": "onze",
-      "linia": "onze juvenil = mateixa fórmula del PAS 9 amb `taula_entrenament_juvenil`:",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "sub_nivell",
+      "linia": "sub_nivell = `sub_nivell_desconegut`",
       "entrades": [],
       "poms": [
-        "taula_entrenament_juvenil"
+        "sub_nivell_desconegut"
       ],
+      "taules": []
+    },
+    {
+      "id": "P10.projeccio",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "projecció",
+      "linia": "projecció(j,h) = simula setmana a setmana des de (actual + sub_nivell) fins la promoció,",
+      "entrades": [
+        "sub_nivell"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.bloquejat",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "bloquejat",
+      "linia": "bloquejat(j) = lesionat(j) O té targeta roja",
+      "entrades": [
+        "lesionat"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.talla",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "talla",
+      "linia": "talla(j,h) = potencial(j,h) conegut I < `llistó(h)`         → no hi arribarà mai",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.ordre",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "ordre",
+      "linia": "ordre(h)   = projecció DESC, dies_restants ASC, estreles a la posició DESC, id",
+      "entrades": [
+        "projecció"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.places",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "places",
+      "linia": "places(creativitat) = 3 mig centres + 2 extrems      [RESERVADES: la 2a passada no les toca]",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.places_2",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "places",
+      "linia": "places(passades)    = 3 davanters",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.cua",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "cua",
+      "linia": "cua = els que no han entrat en cap passada",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P10.objectiu_juvenil",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "objectiu_juvenil",
+      "linia": "objectiu_juvenil = mínim convocable + 1",
+      "entrades": [],
+      "poms": [],
       "taules": []
     },
     {
       "id": "P10.sobra",
       "pas": "P10",
-      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
       "clau": "sobra",
-      "linia": "sobra = COMPTA(juvenils) − `objectiu_juvenil`   [`objectiu_juvenil` = onze legal + 1]",
+      "linia": "sobra = COMPTA(juvenils) − objectiu_juvenil",
       "entrades": [
         "juvenils",
-        "onze"
-      ],
-      "poms": [
         "objectiu_juvenil"
       ],
+      "poms": [],
       "taules": []
     },
     {
       "id": "P10.despatxa",
       "pas": "P10",
-      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
       "clau": "despatxa",
-      "linia": "despatxa PRIMERS(sobra; ORDENA(juvenils; NIVELL ASC, n_revelacions ASC))",
+      "linia": "despatxa PRIMERS(sobra; ORDENA(juvenils; l'ORDE INVERS del d'alinear))",
       "entrades": [
-        "NIVELL",
         "juvenils",
         "sobra"
       ],
@@ -1152,37 +1175,12 @@
       "taules": []
     },
     {
-      "id": "P10.reinici_crida",
+      "id": "P10.promociona",
       "pas": "P10",
-      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
-      "clau": "reinici_crida",
-      "linia": "reinici_crida = pròxim (hores(pais).economia_dia, economia_hora + 1h)",
-      "entrades": [
-        "hores",
-        "pais"
-      ],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P10.accio",
-      "pas": "P10",
-      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
-      "clau": "ACCIÓ",
-      "linia": "ACCIÓ(\"fes la crida al cercapromeses\", caduca)  SI crida_disponible",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "promociona",
+      "linia": "promociona(j) SI dies_restants_promocio(j) ≤ 0",
       "entrades": [],
-      "poms": [],
-      "taules": []
-    },
-    {
-      "id": "P10.reexecuta",
-      "pas": "P10",
-      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius",
-      "clau": "reexecuta",
-      "linia": "reexecuta el PAS a CADA pujada (revelacions recalibren esperat_act)",
-      "entrades": [
-        "esperat_act"
-      ],
       "poms": [],
       "taules": []
     },

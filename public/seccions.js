@@ -498,137 +498,52 @@ export async function juvenils(main) {
   const ESTATS = ['seguiment', 'elegit', 'cua_eixida'];
   const val = (v) => (v == null ? '-' : v === 'desconegut' ? t('juvenils.desconegut') : v);
   const d = await api('/api/juvenils');
-  const juvenils = d.juvenils;
-  // Recordatori permanent de tàctica (punt 15) + entrenament juvenil (punt 12)
-  main.append(el('div', { class: 'tip', text: '⚡ ' + t('juvenils.tactica_reminder') }));
-  const rell = card(t('juvenils.rellotges_titol'));
-  const rc = el('div', { class: 'card-cos' });
-  if (d.crida) cridaSetmanal(rc, d.crida);
-  // 4a: proposta de promoció setmanal (millor nivell elegible); cua → despatx/vendre.
-  if (d.promocio) {
-    const p = d.promocio.proposta;
-    rc.append(el('p', { text: !p ? t('juvenils.promocio_cap')
-      : p.cua ? t('juvenils.promocio_cua', { nom: p.nom, nivell: decimal(p.nivell) })
-        : t('juvenils.promocio_proposta', { nom: p.nom, nivell: decimal(p.nivell) }) }));
-  }
-  rell.append(rc);
-  const duoDalt = el('div', { class: 'duo' }, rell);
-  formEntrenamentJuvenil(duoDalt, d);
-  main.append(duoDalt);
-  if (!juvenils.length) { main.append(el('p', { text: t('juvenils.buit') })); return; }
-  const hab = (j) => j.habilitats.filter((h) => h.actual != null || h.potencial != null).map((h) => `${SIGLA[h.habilitat]} ${val(h.actual)}/${val(h.potencial)}`).join('  ');
-  // Pipeline en llenguatge pla (punt 2). Desconegut ≠ dolent: destí «per determinar».
-  const pipeTxt = (j) => {
-    const p = j.pipeline; if (!p) return '';
-    if (p.motiu === 'per_determinar') return t('juvenils.pipe_per_determinar', { habilitat: p.principal });
-    if (p.fora) {
-      const base = p.motiu === 'topat' ? t('juvenils.pipe_topat', { habilitat: p.principal, actual: p.principal_actual, potencial: p.principal_potencial })
-        : t('juvenils.pipe_sostre', { potencial: p.principal_potencial });
-      return `${base} → ${t(p.proposta === 'promocionar_vendre' ? 'juvenils.prop_vendre' : 'juvenils.prop_cua')}`;
-    }
-    return `${t('juvenils.pipe_creix', { habilitat: p.principal, actual: p.principal_actual, potencial: p.principal_potencial })} · ${t(p.desti_promocio === 'promociona' ? 'juvenils.desti_promociona' : 'juvenils.desti_venda')}`;
-  };
-  // Taules netes: NIVELL numèric (una dada per columna); el PERQUÈ (raonament) viu al
-  // títol de la cel·la (detall per fila), no a la graella. Aterratge = només la data (5b).
-  // Rànquing per NIVELL: insígnia de nivell, qui és, i el rellotge de promoció.
-  // El PERQUÈ (pipeline) viu al títol de la fila, no dins la graella.
-  const duo = el('div', { class: 'duo' });
-  const rank = card(t('juvenils.titol'), juvenils.length, 'llima');
-  juvenils.forEach((j, i) => rank.append(filaSegura(() => {
-    const sel = el('select', { 'aria-label': t('juvenils.col_estat') }, ...ESTATS.map((e) => { const o = el('option', { value: e, text: t('juvenils.estat_' + e) }); if (e === j.estat) o.setAttribute('selected', ''); return o; }));
+  main.append(el('div', { class: 'tip', text: '\u26a1 ' + t('juvenils.tactica_reminder') }));
+  formEntrenamentJuvenil(main, d);
+  if (!d.juvenils.length) { main.append(el('p', { text: t('juvenils.buit') })); return; }
+
+  // EL PLA DE LA SETMANA. La llista ja ve en l'orde del pla: qui va davant s'endu les places
+  // que entrenen i qui va darrere es el primer a eixir. Una sola ordenacio per a les dues
+  // coses, perque son la mateixa pregunta feta pels dos extrems.
+  const hab = (j) => j.habilitats
+    .filter((h) => h.actual != null || h.potencial != null)
+    .map((h) => `${SIGLA[h.habilitat]} ${val(h.actual)}/${val(h.potencial)}`).join('  ');
+  // El PER QUE ix del pla, no de la vista: el motiu i el numero els calcula l'avaluador.
+  const perque = (j) => (j.bloquejat ? t('juvenils.motiu_bloquejat')
+    : j.lloc?.motiu ? t('juvenils.motiu_' + j.lloc.motiu, { habilitat: j.lloc.habilitat ? t('hab.' + j.lloc.habilitat) : '' })
+      : t('juvenils.motiu_cua'));
+
+  const c = card(t('juvenils.titol'), d.juvenils.length, 'llima');
+  for (const j of d.juvenils) c.append(filaSegura(() => {
+    const sel = el('select', { 'aria-label': t('juvenils.col_estat') },
+      ...ESTATS.map((e) => { const o = el('option', { value: e, text: t('juvenils.estat_' + e) }); if (e === j.estat) o.setAttribute('selected', ''); return o; }));
     sel.addEventListener('change', () => api('/api/juvenils', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.jugador_id, estat: sel.value }) }).catch(() => {}));
-    const fila = el('div', { class: 'rank-fila' },
-      el('div', { class: 'nivell' + (i === 0 ? ' top' : ''), text: j.nivell != null ? decimal(j.nivell) : '—' }),
-      el('div', {}, el('div', { class: 'fila-nom', text: j.nom }),
-        el('div', { class: 'fila-meta' },
-          el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` }),
-          el('span', { class: 'skills', text: hab(j) }))),
-      el('div', { class: 'rank-dreta' },
-        el('b', { text: j.dies_restants_promocio != null ? tp('juvenils.dies', j.dies_restants_promocio, { dies: j.dies_restants_promocio }) : '—' }),
-        el('span', { text: j.aterratge?.data || (typeof j.aterratge === 'string' ? j.aterratge : '—') }), ' ', sel));
-    const perque = pipeTxt(j); if (perque) fila.setAttribute('title', perque);   // detall per fila
-    return fila;
-  }, 1)));
-  duo.append(rank);
-  if (d.onze_juvenil) onzeJuvenil(duo, d.onze_juvenil);
-  main.append(duo);
-
-  // Avaluador d'ofertes noves (punt 4d)
-  const cOf = card(t('juvenils.oferta_titol'));
-  const form = el('form', { class: 'card-cos' });
-  const edatInp = el('input', { type: 'number', size: '3', 'aria-label': t('juvenils.edat') });   // NO ombrejar el formatador edat()   // crea
-  const pot = el('input', { type: 'number', size: '3', 'aria-label': t('juvenils.col_potencial') });   // crea
-  const comp = el('input', { type: 'number', size: '3', 'aria-label': t('juvenils.compost') });   // crea
-  const res = el('span', {});
-  const b = el('button', { type: 'button', class: 'b-prim', text: t('juvenils.avalua') });
-  b.addEventListener('click', async () => {
-    const r = await opc(api('/api/oferta?' + new URLSearchParams({ edat: edatInp.value, potencial: pot.value, compost: comp.value })));
-    res.textContent = r && r.veredicte ? (r.veredicte.accepta ? t('juvenils.crida_accepta', { motiu: t('motiu.' + r.veredicte.motiu) }) : t('juvenils.crida_rebutja', { motiu: t('motiu.' + r.veredicte.motiu) })) : '—';
-  });
-  form.append(el('div', { class: 'form-graella' },
-    el('label', {}, t('juvenils.edat'), edatInp), el('label', {}, t('juvenils.col_potencial'), pot),
-    el('label', {}, t('juvenils.compost'), comp)), b, ' ', res);
-  cOf.append(form); main.append(cOf);
+    const lloc = j.bloquejat ? t('juvenils.lloc_bloquejat')
+      : j.banqueta ? t('juvenils.lloc_banqueta')
+        : (BUCKET_SIGLA[j.lloc?.bucket] ?? t('juvenils.lloc_residual'));
+    const meta = el('div', { class: 'fila-meta' },
+      el('span', { text: `${edat(j.edat_anys, j.edat_dies)} \u00b7 ${j.especialitat || '\u2014'}` }),
+      el('span', { text: perque(j) }),
+      el('span', { class: 'skills', text: hab(j) }));
+    if (j.despatxa) meta.append(el('span', { class: 'pill perill', text: t('juvenils.despatxa') }));
+    if (j.promociona) meta.append(el('span', { class: 'pill ok', text: t('juvenils.promociona') }));
+    return el('div', { class: 'fila' },
+      el('div', { class: 'fila-qui' },
+        el('div', { class: posCls(lloc), text: lloc }),
+        el('div', {}, el('div', { class: 'fila-nom', text: j.nom }), meta)),
+      el('div', { class: 'punts', text: j.lloc?.valor != null ? decimal(j.lloc.valor) : '\u2014' }),
+      el('div', { class: 'tsi' }), el('div', { class: 'skills' }),
+      el('div', { class: 'vara' },
+        el('span', { class: 'vara-hab', text: t('juvenils.a_promocio') }),
+        el('b', { text: j.dies_restants_promocio ?? '\u2014' })), sel);
+  }, 1));
+  main.append(c);
+  if (d.pla) main.append(el('p', { class: 'nota-peu', text: t('juvenils.nota_pla', {
+    principal: t('hab.' + d.pla.principal), llisto_a: d.pla.llistons[d.pla.principal],
+    secundaria: t('hab.' + d.pla.secundaria), llisto_b: d.pla.llistons[d.pla.secundaria],
+    objectiu: d.pla.objectiu ?? '\u2014' }) }));
 }
 
-// Rellotge de crida (reinici setmanal global): disponible → acció «he fet la crida»
-// (data + resultat); gastada o tancada → línia informativa amb la pròxima.
-function cridaSetmanal(main, c) {
-  if (!c.disponible) { main.append(el('p', { class: 'nota-peu', text: t('juvenils.crida_proxima', { proxima: c.proxima }) })); return; }
-  const fer = (resultat) => api('/api/crides', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ resultat }) }).then(() => location.reload());
-  const acc = el('button', { type: 'button', class: 'b-xic', text: t('juvenils.crida_feta_accepta') });
-  acc.addEventListener('click', () => fer('acceptat'));
-  const reb = el('button', { type: 'button', class: 'b-xic neutre', text: t('juvenils.crida_feta_rebutja') });
-  reb.addEventListener('click', () => fer('rebutjat'));
-  main.append(el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
-    el('span', { class: 'mov-text', text: t('juvenils.crida_disponible', { caduca: c.caducitat }) }), acc, reb));
-}
-
-// Onze juvenil proposat (2b): descobriment probabilístic + fre de suplents.
-function onzeJuvenil(main, o) {
-  const sec = card(t('juvenils.onze_titol'), o.en_camp);
-  const info = el('div', { class: 'card-cos' });
-  if (o.no_viable) info.append(el('p', { text: t('juvenils.onze_no_viable', { en_camp: o.en_camp, minim: o.minim }) }));
-  // 2c: capçalera derivada del repartiment REAL; si no hi ha descobriment, en positiu.
-  info.append(el('p', { text: o.descobriments > 0
-    ? t('juvenils.onze_repartiment', { descobriments: o.descobriments, entrenen: o.entrenen, estructura: o.estructura })
-    : tp('juvenils.onze_tot_entrena', o.entrenen) }));
-  if (o.descobriments > 0) info.append(el('p', { class: 'nota-peu', text: t('juvenils.onze_mecanica', { minuts: o.revelacio_minuts }) }));
-  if (o.sense_marge) info.append(el('p', { class: 'nota-peu', text: t('juvenils.onze_sense_marge') }));
-  sec.append(info);
-  // El descobriment porta el seu propi text (amb plural i dies); el MIXT els encadena:
-  // «entrena X · descobriment de Y» — les dues coses passen a la mateixa plaça.
-  const txtDescobriment = (s, hab) => tp('juvenils.onze_m_descobriment', (hab || '').split(' i ').length, { principal: hab, dies: s.dies_restants_promocio ?? '?' });
-  const motiuSlot = (s) => s.motiu === 'descobriment'
-    ? txtDescobriment(s, s.habilitat)
-    : s.motiu === 'mixt'
-      ? `${t('juvenils.onze_m_entrena', { principal: s.habilitat_entrena })} · ${txtDescobriment(s, s.habilitat_descobrix)}`
-      : s.motiu === 'entrena'
-        ? t('juvenils.onze_m_entrena', { principal: s.habilitat })
-        : t('juvenils.onze_m_' + s.motiu);
-  // El mateix camp que la sènior: xip acolorit per posició, motiu al títol (detall per fila).
-  sec.append(campDeJoc(o.onze, {
-    anell: anellJuvenil,
-    nom: (s) => cognom(s.nom),
-    titol: (s) => `${s.nom} · ${motiuSlot(s)}`,
-  }), campLlegenda('juvenil'));
-  if (o.banqueta.length) {
-    sec.append(el('div', { class: 'graella-fila' },
-      el('b', { text: t('juvenils.onze_banqueta') }),
-      el('span', { text: o.banqueta.map((s) => s.nom).join(', ') })));
-  }
-  main.append(sec);
-}
-
-// L'ENTRENAMENT JUVENIL ÉS PRESCRIT: ix del pipeline sènior (quines habilitats alimenten els
-// llocs que entrenes). No es tria, no es confirma i no es desa res — es diu QUÈ HAS DE POSAR a
-// Hattrick, igual que el recordatori de tàctica diu que jugues amb joc d'especialitats.
-//
-// I es diu amb el nom de l'HABILITAT (`hab.*`). Hi havia un segon catàleg, `habilitat.*`, que
-// aparellava una a una les set habilitats amb un «tipus de jugador» — però Hattrick només té
-// CINC posicions (porter, defensa, mig centre, extrem, davanter) i les dues que sobraven es van
-// omplir amb noms fabricats: «passador» i «llançador», que no existixen. Se n'ha anat sencer:
-// la posició ja la diu el lloc (MC3) i l'habilitat ja té el seu nom.
 function formEntrenamentJuvenil(main, d) {
   const pr = d.pipeline;
   const sec = card(t('juvenils.entrenament_titol'), null, 'llima');

@@ -18,25 +18,9 @@ tests: `test/flux_estoc.mjs` i `test/guardia_golden.mjs` reprodueixen els seus n
 
 # OBERTS
 
-## J-01 · JUVENILS ENCARA VIU AL MODEL D'ABANS
+**Cap.**
 
-**OBERT · gravetat: alta · afecta PAS 10 · l'únic deute que queda**
-
-`lib/juvenil_v3.js` —on viu el PAS 10 del contracte: `util`, el destí de la promoció,
-`objectiu_juvenil`, `sobra` i `reinici_crida`— **no el crida ningú en producció**. La secció
-corre sobre quatre mòduls més vells (`juvenils_vista`, `juvenil`, `ranquing_juvenil`,
-`alineacio_juvenil`), o siga que G1 verifica el PAS 10 contra codi que l'app no executa mai.
-
-El que hi ha en joc no és cosmètic. El full diu:
-
-    util(j) = potencial(j, A) ≥ nivell_objectiu(MC)
-
-Eixe `nivell_objectiu(MC)` és **la vara de l'assignació**: el nivell que el flux paga per al
-lloc. És el ganxo que lligaria els juvenils amb la resta del sistema —«este xic arribarà al
-nivell del lloc que li espera, o no»— i ara mateix no està connectat: Juvenils decidix amb
-criteris propis que no saben res de l'onze.
-
-Hi penja també l'única fórmula que G1 encara declara pendent: **`V.hores`** (`hores_pais`).
-El full diu que el reinici de la crida va per país (dia i hora d'actualització econòmica);
-el codi gasta un dia de la setmana global (`crida_reinici_dia`). Es resol amb el PAS 10.
-
+El PAS 10 està construït (migracions 098-100, `lib/juvenil_pla.js` i `lib/orquestra_juvenil.js`),
+i l'única fórmula que G1 encara declara pendent és **`V.hores`**: el full diu que el reinici de
+la crida al cercapromeses va per país, i eixa maquinària s'ha retirat sencera perquè el
+cercapromeses no el jutja Tonico. Queda al full com a variable descrita i sense consumidor.

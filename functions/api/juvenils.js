@@ -1,25 +1,17 @@
 // Tonico — Juvenils (Fase 7). GET la vista dels juvenils (habilitats 3 estats,
 // projecció d'aterratge, avaluació de crida) + decisions; POST fixa una decisió.
 import { carregaAncora } from './pujar.js';
-import { vistaJuvenil } from '../../lib/juvenils_vista.js';
-import { entrenamentPrescrit } from '../../lib/entrenament_places.js';
-import { recomanaJoc } from '../../lib/juvenil.js';
-import { alineaJuvenil } from '../../lib/alineacio_juvenil.js';
-import { ranquingJuvenil, lecturaPromocio } from '../../lib/ranquing_juvenil.js';
-import { estatCrida } from '../../lib/crida.js';
+import { plaJuvenilComplet } from '../../lib/orquestra_juvenil.js';
+import { projeccioAterratge } from '../../lib/juvenils_vista.js';
+
+const HABILITATS = ['porteria', 'defensa', 'creativitat', 'extrem', 'passades', 'anotacio', 'pilota_aturada'];
 
 export async function onRequestGet({ env, data }) {
-  const pla = await env.DB.prepare('SELECT plantilla, fase_actual, parametres FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
-  const llindars = pla ? JSON.parse((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='crida_llindars'").bind(pla.plantilla).first())?.valor || 'null') : null;
-  // Pipeline de la fase (habilitat principal/secundària que entrena la fàbrica).
-  const pres = pla ? await entrenamentPrescrit(env.DB, pla.plantilla) : null;
-  // El pipeline juvenil llig la PRESCRIPCIÓ del contracte (PAS 1), no una fase.
-  const pipeline = pres && { principal: pres.skill, secundari: pres.skill_b };
-
+  const pla = await env.DB.prepare('SELECT plantilla FROM plans WHERE usuari_id=? LIMIT 1').bind(data.usuari.id).first();
   const equip = await env.DB.prepare("SELECT id FROM equips WHERE usuari_id=? AND tipus='juvenil'").bind(data.usuari.id).first();
-  if (!equip) return json({ juvenils: [], llindars, pipeline });
+  if (!equip || !pla) return json({ juvenils: [], pla: null });
   const inst = await env.DB.prepare('SELECT id, data FROM instantanies WHERE equip_id=? ORDER BY data DESC, id DESC LIMIT 1').bind(equip.id).first();
-  if (!inst) return json({ juvenils: [], llindars, pipeline });
+  if (!inst) return json({ juvenils: [], pla: null });
 
   const ancora = await carregaAncora(env.DB);
   const { results } = await env.DB.prepare(
@@ -29,38 +21,36 @@ export async function onRequestGet({ env, data }) {
       WHERE ij.instantania_id = ?`
   ).bind(inst.id).all();
 
-  const juvenils = results.map((f) => { const v = vistaJuvenil(f, inst.data, ancora, llindars, pipeline); return { ...v, joc: recomanaJoc(v), nota: f.nota || null }; });
-  // RÀNQUING ÚNIC v3 per NIVELL numèric. Entrenaments A/B, pesos i marges = config
-  // (generalitat). Els juvenils porten els camps d'habilitat.
-  const pom = async (clau, def) => parseFloat((pla && (await env.DB.prepare('SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau=?').bind(pla.plantilla, clau).first())?.valor) || def);
-  const entA = (pla && (await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='entrenament_a'").bind(pla.plantilla).first())?.valor) || pipeline?.principal;
-  const entB = (pla && (await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='entrenament_b'").bind(pla.plantilla).first())?.valor) || pipeline?.secundari;
-  const nivellOpts = { entrenamentA: entA, entrenamentB: entB,
-    pes_a: await pom('nivell_pes_a', '1'), pes_b: await pom('nivell_pes_b', '0.66'),
-    f_marge: await pom('nivell_f_marge', '0.5'), marge_esperat: await pom('nivell_marge_esperat', '3'),
-    valor_esperat_desconegut_defecte: await pom('nivell_valor_desconegut_defecte', '5') };
-  const rang = ranquingJuvenil(results, nivellOpts);
-  const rangPerId = new Map(rang.map((x) => [x.jugador_id, x]));
-  for (const jv of juvenils) { const r = rangPerId.get(jv.jugador_id); jv.nivell = r?.nivell ?? null; jv.posicio_rang = r?.posicio_rang ?? 999; }
-  juvenils.sort((a, b) => a.posicio_rang - b.posicio_rang);
-  // Onze juvenil: maximitza el valor entrenable (formació + taula d'entrenament config).
-  const formacio = pla ? JSON.parse((await env.DB.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla=? AND clau='formacio_juvenil'").bind(pla.plantilla).first())?.valor || 'null') : null;
-  const revelacioMinuts = parseInt((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='revelacio_minuts'").first())?.valor || '44', 10);
-  const minim = parseInt((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='minim_jugadors'").first())?.valor || '9', 10);
-  const maxims = JSON.parse((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='maxims_posicio'").first())?.valor || '{}');
-  const taulaEntrenament = JSON.parse((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='taula_entrenament'").first())?.valor || '{}');
-  const potencialEsperat = await pom('nivell_potencial_esperat', '6');
-  const juvNivell = results.map((f) => ({ ...f, nivell: rangPerId.get(f.jugador_id)?.nivell ?? 0 }));
-  const onze_juvenil = formacio ? { ...alineaJuvenil(juvNivell, { formacio, maxims, minim, entrenamentA: entA, entrenamentB: entB, taulaEntrenament,
-    marge_esperat: nivellOpts.marge_esperat, f_marge: nivellOpts.f_marge, pes_a: nivellOpts.pes_a, pes_b: nivellOpts.pes_b,
-    potencial_esperat: potencialEsperat, valor_esperat_desconegut_defecte: nivellOpts.valor_esperat_desconegut_defecte }), revelacio_minuts: revelacioMinuts } : null;
-  const crida = await estatCrida(env.DB, data.usuari.id, inst.data);   // rellotge de crida (derivat)
-  // 4a: proposta de promoció setmanal (millor NIVELL elegible: 17a + 112d). 4b: la cua del
-  // rànquing (nivell més baix) són els candidats a eixida/despatx.
-  const edatMin = parseInt((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='promocio_edat_min_anys'").first())?.valor || '17', 10);
-  const diesMin = parseInt((await env.DB.prepare("SELECT valor FROM constants_joc WHERE clau='promocio_dies_min_academia'").first())?.valor || '112', 10);
-  const promocio = lecturaPromocio(rang, results, { edat_min: edatMin, dies_academia_min: diesMin });
-  return json({ juvenils, llindars, pipeline, onze_juvenil, crida, promocio, ranquing: rang });
+  // EL PLA DEL PAS 10. Una rutina, dues passades: primer creativitat, després passades.
+  const plan = await plaJuvenilComplet(env.DB, data.usuari.id, results, pla.plantilla);
+  const perId = new Map((plan?.onze ?? []).map((l) => [l.jugador_id, l]));
+
+  // La FILA de cada juvenil: qui és, què se sap d'ell i què li toca fer esta setmana. El
+  // «per què» no és una etiqueta de la vista: ix del pla (motiu + valor).
+  const juvenils = results.map((f) => ({
+    jugador_id: f.jugador_id, nom: f.nom, especialitat: f.especialitat,
+    edat_anys: f.edat_anys, edat_dies: f.edat_dies,
+    dies_restants_promocio: f.dies_restants_promocio,
+    aterratge: projeccioAterratge(f.dies_restants_promocio, inst.data, ancora),
+    habilitats: HABILITATS.map((h) => ({ habilitat: h, actual: f[`${h}_actual`], potencial: f[`${h}_potencial`] })),
+    estat: f.estat, nota: f.nota || null,
+    lloc: perId.get(f.jugador_id) ?? null,
+    banqueta: (plan?.banqueta ?? []).includes(f.jugador_id),
+    bloquejat: (plan?.bloquejats ?? []).includes(f.jugador_id),
+    despatxa: (plan?.despatxa ?? []).includes(f.jugador_id),
+    promociona: (plan?.promocionables ?? []).includes(f.jugador_id),
+  }));
+
+  // ORDE DE PANTALLA = l'orde del pla: qui va davant en la llista és qui va davant en la cua
+  // per a les places, i qui va darrere és el primer a eixir. Una sola ordenació, no dues.
+  const posicio = new Map([...(plan?.onze ?? []).map((l) => l.jugador_id),
+    ...(plan?.banqueta ?? []), ...(plan?.bloquejats ?? [])].map((id, i) => [id, i]));
+  juvenils.sort((a, b) => (posicio.get(a.jugador_id) ?? 999) - (posicio.get(b.jugador_id) ?? 999));
+
+  return json({ juvenils, pla: plan ? {
+    principal: plan.principal, secundaria: plan.secundaria, llistons: plan.llistons,
+    objectiu: plan.objectiu, despatxa: plan.despatxa, promocionables: plan.promocionables,
+  } : null });
 }
 
 export async function onRequestPost({ request, env, data }) {

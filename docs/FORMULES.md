@@ -395,33 +395,86 @@ buit(lloc) = ∅ → es juga amb un menys, i es diu
 ```
 
 
-## PAS 10 — JUVENILS (si sistema_juvenil ≠ cap) — proveïdors de rotatius
+## PAS 10 — JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables
+
+L'acadèmia és un PROVEÏDOR ALTERNATIU d'entrenables: en compte de comprar-ne un de 17 anys
+amb la creativitat feta, te'l fabriques. Per tant el que produïx val el que costaria
+comprar-lo, i la seua vara és la mateixa: `entrenable_creativitat_min`.
+
+NOMÉS COMPTA EL QUE S'ENTRENA. La creativitat, perquè és el producte; les passades, com a
+rescat del que ja no arribarà. Un potencial enorme en qualsevol altra habilitat no mou cap
+decisió: no s'entrena, i per tant no arriba a res.
 
 ```
-esperat_act(h) = MITJANA(revelacions pròpies de h)   [∅ → `esperat_defecte`]
-valor(j,h) = SI(act I pot coneguts; act + (pot−act)×`f_marge`;
-             SI(act conegut;        act + `marge_ple`×`f_marge`;
-             SI(pot conegut;        MIN(esperat_act,pot) + (pot−MIN(esperat_act,pot))×`f_marge`;
-                                    esperat_act + `marge_ple`×`f_marge`)))
-NIVELL(j)  = `pes_A`×valor(j,A) + `pes_B`×valor(j,B)
-util(j)    = potencial(j, A) ≥ nivell_objectiu(MC)   ← ¿arribarà al nivell del lloc?
-elegible(j)= edat_d ≥ 17×112 I estada ≥ 112
-promo      = PRIMER(ORDENA(FILTRA(juvenils; elegible); NIVELL DESC))
-             [màx `promocio_max_setmana` = 1, fet del joc]
-destí(promo) = SI(util(promo); PROMOCIONA (entra com a rotatiu de l'11B); DESPATXA)
-   [dos branques, no tres. «Promociona i llista'l per a fer caixa» era el model del
-    juvenil com a NEGOCI, que el canvi 9 va retirar: els juvenils proveïxen rotatius.
-    Si no arriba al nivell del lloc, no serveix, i no hi ha preu que ho canvie]
-onze juvenil = mateixa fórmula del PAS 9 amb `taula_entrenament_juvenil`:
-   cada lloc entrenable pren el juvenil lliure amb MÉS guany marginal per a ELL
-   (només els components del lloc); guany ≈ 0 pertot → estructura; banqueta = el
-   que menys perd; formació legal i COMPTA(en_camp) ≥ `minim_en_camp`
-sobra = COMPTA(juvenils) − `objectiu_juvenil`   [`objectiu_juvenil` = onze legal + 1]
-despatxa PRIMERS(sobra; ORDENA(juvenils; NIVELL ASC, n_revelacions ASC))
-reinici_crida = pròxim (hores(pais).economia_dia, economia_hora + 1h)
-ACCIÓ("fes la crida al cercapromeses", caduca)  SI crida_disponible
-reexecuta el PAS a CADA pujada (revelacions recalibren esperat_act)
+-- LA MECÀNICA DEL JOC (deduïda de taules públiques; vore migracions 098 i 099)
+factor(posició, habilitat) = 1 · 0,5 · 0,15    [`entrenament_juvenil_factors`]
+   creativitat: mig centre 1 · extrem 0,5 · qualsevol altra 0,15 (porter inclòs)
+   passades:    mig centre = extrem = davanter 1 · qualsevol altra 0,15
+   [«els altres jugadors que juguin» és literal: ningú entrena a zero si juga]
+revela(posició) = factor ≥ `revelacio_factor_min`
+   [una posició del graó residual NO revela. Conseqüència: per a l'habilitat que
+    entrenes, REVELAR I ENTRENAR SÓN LA MATEIXA ACCIÓ, i el pla no ha de traure mai
+    ningú de la seua posició per a descobrir-lo]
+   [i l'entrenador dona COM A MOLT UN missatge per categoria i partit: alinear-ne
+    tres de mig centre no revela tres creativitats, en revela una]
+matxos(habilitat, edat, nivell) = `velocitat_juvenil_<habilitat>`   [taula per edat i nivell]
+   secundària: × `entrenament_juvenil_secundari_divisor`   [rendix 2/3 → costa 1,5×]
+
+-- LA PROJECCIÓ
+sub_nivell = `sub_nivell_desconegut`
+   [«creativitat 4» vol dir [4,00 · 5,00). Tonico assumix la vora ALTA: no es descarta
+    ningú per una suposició pessimista. Deixa de fer falta el dia que el jugador puja
+    de nivell, perquè llavors el joc mateix diu on està]
+projecció(j,h) = simula setmana a setmana des de (actual + sub_nivell) fins la promoció,
+                 acumulant 1/matxos per partit, acotat pel potencial si es coneix
+   [la data de promoció NO és una estimació: la promoció és automàtica el primer dia
+    possible, o siga que `dies_restants_promocio` és l'horitzó exacte]
+
+-- QUI QUEDA FORA, ABANS DE TOT
+bloquejat(j) = lesionat(j) O té targeta roja
+   [no pot jugar: ni entrena, ni es revela, ni gasta missatge. No entra a cap tall]
+
+-- LA RUTINA, aplicada a cada habilitat en ORDE: 1r creativitat, 2n passades
+talla(j,h) = potencial(j,h) conegut I < `llistó(h)`         → no hi arribarà mai
+           O projecció(j,h) < `llistó(h)`                   → no li dona temps
+           O actual(j,h) = potencial(j,h)                   → capat: no creix
+   [el capat es talla pels DOS costats. Per davall no servix; per damunt JA ÉS el
+    producte i no ha de gastar una plaça d'entrenament]
+   [DESCONEGUT NO TALLA: sense proves no hi ha motiu. Una habilitat sense revelar
+    val `projeccio_desconeguda`, que és el llistó mateix — ni descarta ni desplaça
+    els que sabem que arriben]
+ordre(h)   = projecció DESC, dies_restants ASC, estreles a la posició DESC, id
+places(creativitat) = 3 mig centres + 2 extrems      [RESERVADES: la 2a passada no les toca]
+places(passades)    = 3 davanters
+   [primer tot el descobriment de creativitat, i després entrenar passades]
+
+-- LA CUA
+cua = els que no han entrat en cap passada
+    ORDENA(cua; màxima habilitat coneguda DESC, dies_restants ASC, id)
+   [òmplin fins al mínim legal —1 porter + 8 de camp— i la resta, banqueta.
+    La banqueta no gasta missatge de l'entrenador: els missatges només van als
+    que juguen]
+
+-- LA PLANTILLA
+objectiu_juvenil = mínim convocable + 1
+   [i la raó NO és el cost: és NO DILUIR ELS MISSATGES DE L'ENTRENADOR. Cada juvenil
+    de més es menja part d'un canal que ja és d'un missatge per categoria i partit]
+sobra = COMPTA(juvenils) − objectiu_juvenil
+despatxa PRIMERS(sobra; ORDENA(juvenils; l'ORDE INVERS del d'alinear))
+   EXCEPTE qui ja arriba a `entrenable_creativitat_min` de creativitat
+   [eixe és el producte acabat, encara que estiga capat i el tall el traga de les
+    places d'entrenament. Mai se'n va]
+   [i mai per davall de l'objectiu, per roïns que siguen: sense jugadors no hi ha
+    partit, i sense partit no hi ha ni entrenament ni missatges]
+
+-- LA PROMOCIÓ
+promociona(j) SI dies_restants_promocio(j) ≤ 0
+   [no és una decisió: es promociona el primer dia possible. Per això la projecció
+    a eixa data és el que t'endús, i no hi ha opció de deixar-lo madurar més]
 ```
+**El cercapromeses no el jutja Tonico.** Quan es crida i si l'oferta val la pena són decisions
+que Miquel pren amb criteri propi, fora del sistema. Amb elles se'n va tota la maquinària
+d'avaluar candidats i el rellotge de la crida.
 
 ## PAS 11 — PERSONAL (bucle de FLUX; el paral·lel del PAS 8)
 
