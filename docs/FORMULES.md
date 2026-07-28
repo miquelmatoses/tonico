@@ -79,10 +79,25 @@ de declaració: sense finestra, la dada no es demana.
 ## PAS 1 — ENTRENAMENT (prescrit, no triable)
 
 ```
-(A, B) = (creativitat, passades)   · intensitat 100% · resistència `resistencia_pct`
+-- SÓN DOS, INDEPENDENTS, I NO TENEN LA MATEIXA FORMA
+entrenament_sènior   = `entrenament_a`   · intensitat 100% · resistència `resistencia_pct`
+   [UNA sola habilitat. El primer equip no té «entrenament B»: el doble entrenament
+    és exclusiu de l'acadèmia, igual que la intensitat i la resistència són
+    exclusives del primer equip. Són dues pantalles distintes de Hattrick]
+entrenament_acadèmia = (`entrenament_juvenil_a`, `entrenament_juvenil_b`)
+   [principal + secundari, i cap intensitat. El secundari rendix 2/3 (PAS 10)]
+
    [prescripció: el motor de partit decidix per possessió del mig del camp, i el
     mercat de MC és el més líquid → l'entrenament que competix i finança alhora]
+   [els tenia fusionats en un sol joc de poms, i això produïa dos errors alhora: la
+    pantalla del sènior demanava un «B» que no es pot posar en cap lloc, i TOT el
+    PAS 10 penjava de l'habilitat del primer equip. Amb els dos coincidint no es
+    notava; el dia que divergiren, el pla juvenil hauria planificat per a
+    l'habilitat equivocada sense dir res]
 ```
+**Els dos són PRESCRITS**, no triats: el primer equip entrena el que alimenta els llocs del
+motor i l'acadèmia el que fabrica entrenables. Per això són poms i no declaracions.
+
 **Cap acció de desquadre.** Hi havia `ACCIÓ("canvia l'entrenament a HT") SI configurat_HT ≠
 prescrit`, i amb ella un panell per a CONFIRMAR què hi ha posat a HT. Però l'entrenament es
 prescriu: oferir un panell per a declarar-lo era oferir una decisió que no existix, i sense eixe
@@ -417,6 +432,7 @@ revela(posició) = factor ≥ `revelacio_factor_min`
     ningú de la seua posició per a descobrir-lo]
    [i l'entrenador dona COM A MOLT UN missatge per categoria i partit: alinear-ne
     tres de mig centre no revela tres creativitats, en revela una]
+habilitats = (`entrenament_juvenil_a`, `entrenament_juvenil_b`)   [PAS 1: les DE L'ACADÈMIA]
 matxos(habilitat, edat, nivell) = `velocitat_juvenil_<habilitat>`   [taula per edat i nivell]
    secundària: × `entrenament_juvenil_secundari_divisor`   [rendix 2/3 → costa 1,5×]
 

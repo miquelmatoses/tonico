@@ -51,7 +51,6 @@ function motiusDelCodi() {
   // fitxers sencers, que arrossegarien `motiu` d'altres espais de noms (bucle d'estoc,
   // destí de venda, pipeline juvenil) que es renderitzen amb altres prefixos.
   const PRODUCTORS = [
-    ['../lib/juvenils_vista.js', 'avaluaCrida'],
   ];
   const vals = new Set();
   for (const [ruta, fn] of PRODUCTORS) {

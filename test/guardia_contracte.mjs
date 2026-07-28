@@ -30,7 +30,7 @@ import { guanyJugador, admissibleJugador, deltaManteniment, estadiCaduc, admissi
 import { nivellAccio, agrupaAlertes, ordenaAgenda } from '../lib/informe.js';
 import { necessitats, ambPreus, clauFitxatge } from '../lib/fitxatges.js';
 import { REGLES } from '../lib/regles.js';
-import { entrenamentPrescrit, placesEntrenament } from '../lib/entrenament_places.js';
+import { entrenamentPrescrit, entrenamentJuvenil, placesEntrenament } from '../lib/entrenament_places.js';
 import { esLesionat } from '../public/format.js';
 import { nova } from './_d1shim.mjs';
 
@@ -129,13 +129,20 @@ const VERIFICADES = {
     assert.deepEqual(confFalten(c), [], 'els quatre del PAS 0 declarats');
     assert.deepEqual(confFalten({ ...c, pais: null }), ['pais'], 'el que falta es demana');
   },
-  'P1.a_b': async () => {
-    // (A, B) = (creativitat, passades) PRESCRITS, no configurats
+  'P1.entrenament_senior': async () => {
+    // DOS ENTRENAMENTS INDEPENDENTS i amb formes distintes: el primer equip entrena UNA
+    // habilitat (amb intensitat i resistència); el doble entrenament és de l'acadèmia.
     const p = await entrenamentPrescrit(dbFix, 'competitiva');
-    assert.equal(p.skill, 'creativitat', 'A prescrit pel contracte');
-    assert.equal(p.skill_b, 'passades', 'B prescrit pel contracte');
-    assert.equal(p.intensitat, 100);
-    assert.ok(p.resistencia != null, 'resistencia_pct declarada');
+    assert.equal(p.skill, 'creativitat', 'el sènior entrena una sola habilitat, prescrita');
+    assert.equal(p.skill_b, undefined, 'i no té «B»: això és un concepte de l\'acadèmia');
+    assert.ok(p.intensitat != null && p.resistencia != null,
+      'i sí que té intensitat i resistència, que l\'acadèmia no té');
+  },
+  'P1.entrenament_academia': async () => {
+    const jv = await entrenamentJuvenil(dbFix, 'competitiva');
+    assert.equal(jv.principal, 'creativitat');
+    assert.equal(jv.secundari, 'passades', 'l\'acadèmia sí que entrena dues habilitats');
+    assert.equal(jv.intensitat, undefined, 'i no té intensitat: això és del primer equip');
   },
   // ── PAS 4 ──
   'P4.habilitat_lloc': async () => {
@@ -147,6 +154,12 @@ const VERIFICADES = {
   // ── PAS 7 / PAS 8 / PAS 9 ──
   // ── PAS 10 — JUVENILS. L'acadèmia és un proveïdor alternatiu d'entrenables: una rutina
   // aplicada dues voltes, primer creativitat i després passades.
+  'P10.habilitats': async () => {
+    // El PAS 10 entrena el que diu la prescripció DE L'ACADÈMIA, no la del primer equip.
+    const jv = await entrenamentJuvenil(dbFix, 'competitiva');
+    const pomA = (await dbFix.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='entrenament_juvenil_a'").first()).valor;
+    assert.equal(jv.principal, pomA, 'la principal ix del seu pom, no de entrenament_a');
+  },
   'P10.factor': async () => {
     const f = JSON.parse((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='entrenament_juvenil_factors'").first()).valor);
     assert.equal(f.ple, 1); assert.equal(f.baix, 0.5); assert.equal(f.residual, 0.15);

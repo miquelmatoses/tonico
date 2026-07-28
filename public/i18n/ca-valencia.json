@@ -232,8 +232,6 @@
   "personal.afig": "Afig",
   "personal.esborra": "Esborra",
   "alineacio.copa_nota": "Partit A de copa: el futur entrenador rep DOBLE experiència esta setmana.",
-  "alerta.jove_fora_agregat_1": "1 juvenil fora de la pipa espera la cua d'eixida; es resol amb la pròxima crida al cercapromeses. El detall, a l'Acadèmia.",
-  "alerta.jove_fora_agregat_n": "{n} juvenils fora de la pipa esperen la cua d'eixida; es resol amb la pròxima crida al cercapromeses. El detall, a l'Acadèmia.",
   "alerta.jove_especialitat": "{nom} té especialitat ({especialitat}). És valor a protegir: tin-la en compte abans de deixar-lo anar.",
   "juvenils.col_especialitat": "Especialitat",
   "juvenils.col_pipeline": "Pipeline",
@@ -458,7 +456,6 @@
   "pujada.no_es_csv": "Eixe fitxer no sembla l'export de Hattrick: no hi trobe les columnes. Comprova que és el CSV de la plantilla i no un altre.",
   "esta_setmana.sub": "El que toca fer hui, i res més.",
   "esta_setmana.estat": "Temporada {temporada} · estratègia {estrategia}",
-  "juvenils.entrenament_sense_pipeline": "encara no ho puc dir: falta l'entrenament sènior.",
   "estoc.obra_en_curs": "En construcció",
   "estoc.obra_des_de": "L'obra va començar el {data}: mentre dura no hi ha res a decidir i no et propose res més d'estadi.",
   "mercat.camp_edat": "Edat",
@@ -508,9 +505,9 @@
   "entrenament.sub": "El que has de tindre posat a Hattrick, i qui l'entrena.",
   "entrenament.prescrit_titol": "El que has de posar",
   "entrenament.entrenador_titol": "Entrenador",
-  "entrenament.posa": "Entrenament A: {a}. Entrenament B: {b}. Intensitat {intensitat}%, resistència {resistencia}%.",
+  "entrenament.posa": "Entrenament: {a}. Intensitat {intensitat}%, resistència {resistencia}%.",
   "entrenament.sense_prescripcio": "Encara no ho puc dir: falta la formació.",
-  "entrenament.prescrit_nota": "No es tria: ix dels llocs que entrenes. Si a Hattrick tens una altra cosa posada, canvia-la ahí.",
+  "entrenament.prescrit_nota": "No es tria: ix dels llocs que entrenes. Si a Hattrick tens una altra cosa posada, canvia-la ahí. L'acadèmia té el seu propi entrenament, a banda.",
   "entrenament.nivell": "Nivell",
   "entrenament.eficiencia": "Velocitat d'entrenament",
   "entrenament.lideratge": "Lideratge",
@@ -573,5 +570,6 @@
   "juvenils.promociona": "promociona ja",
   "juvenils.a_promocio": "dies",
   "juvenils.nota_pla": "Places d'entrenament: {principal} (llistó {llisto_a}) primer, i el que sobra a {secundaria} (llistó {llisto_b}). Plantilla objectiu: {objectiu}.",
-  "juvenils.lloc_residual": "—"
+  "juvenils.lloc_residual": "—",
+  "juvenils.entrenament_sense_prescripcio": "encara no ho puc dir: falta la prescripció d'entrenament de l'acadèmia."
 }

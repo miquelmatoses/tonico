@@ -12,7 +12,6 @@ sqlite.exec(`INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
 // El full prescriu (A,B) = (creativitat, passades), intensitat 100%, resistència 10%.
 const ent = await entrenamentPrescrit(db, 'competitiva');
 assert.equal(ent.skill, 'creativitat');
-assert.equal(ent.skill_b, 'passades');
 assert.equal(ent.intensitat, 100);
 assert.equal(ent.resistencia, 10);
 assert.equal((await entrenamentPrescrit(db, 'inexistent')).skill, null,

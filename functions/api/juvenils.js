@@ -15,9 +15,8 @@ export async function onRequestGet({ env, data }) {
 
   const ancora = await carregaAncora(env.DB);
   const { results } = await env.DB.prepare(
-    `SELECT ij.*, j.nom, j.especialitat, j.id AS jugador_id, je.estat, je.nota
+    `SELECT ij.*, j.nom, j.especialitat, j.id AS jugador_id
        FROM instantanies_juvenils ij JOIN jugadors j ON j.id = ij.jugador_id
-       LEFT JOIN juvenils_estat je ON je.jugador_id = j.id
       WHERE ij.instantania_id = ?`
   ).bind(inst.id).all();
 
@@ -33,7 +32,6 @@ export async function onRequestGet({ env, data }) {
     dies_restants_promocio: f.dies_restants_promocio,
     aterratge: projeccioAterratge(f.dies_restants_promocio, inst.data, ancora),
     habilitats: HABILITATS.map((h) => ({ habilitat: h, actual: f[`${h}_actual`], potencial: f[`${h}_potencial`] })),
-    estat: f.estat, nota: f.nota || null,
     lloc: perId.get(f.jugador_id) ?? null,
     banqueta: (plan?.banqueta ?? []).includes(f.jugador_id),
     bloquejat: (plan?.bloquejats ?? []).includes(f.jugador_id),
@@ -53,17 +51,9 @@ export async function onRequestGet({ env, data }) {
   } : null });
 }
 
-export async function onRequestPost({ request, env, data }) {
-  const c = await request.json().catch(() => ({}));
-  if (!c.jugador_id || !['seguiment', 'elegit', 'cua_eixida'].includes(c.estat)) return json({ error: 'dades_invalides' }, 400);
-  const j = await env.DB.prepare('SELECT j.id FROM jugadors j JOIN equips e ON e.id=j.equip_id WHERE j.id=? AND e.usuari_id=?').bind(c.jugador_id, data.usuari.id).first();
-  if (!j) return json({ error: 'no_trobat' }, 404);
-  await env.DB.prepare(
-    `INSERT INTO juvenils_estat (jugador_id, estat, nota) VALUES (?, ?, ?)
-     ON CONFLICT(jugador_id) DO UPDATE SET estat=excluded.estat, nota=excluded.nota`
-  ).bind(c.jugador_id, c.estat, c.nota || null).run();
-  return json({ ok: true }, 201);
-}
+// SENSE POST. No queda cap decisió manual sobre un juvenil: qui juga, qui sobra i qui es
+// promociona ho decidix el pla del PAS 10. El desplegable Seguiment / Elegit / Cua d'eixida
+// era un control que el sistema ignorava — pareixia una decisió i no ho era.
 
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });

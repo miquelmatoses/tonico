@@ -435,7 +435,7 @@ export async function entrenament(main) {
   const c = card(t('entrenament.prescrit_titol'), null, 'llima');
   c.append(el('div', { class: 'card-cos' },
     el('p', { class: 'instruccio', text: d.prescrit?.skill
-      ? t('entrenament.posa', { a: t('hab.' + d.prescrit.skill), b: t('hab.' + d.prescrit.skill_b),
+      ? t('entrenament.posa', { a: t('hab.' + d.prescrit.skill),
           intensitat: d.intensitat, resistencia: d.resistencia })
       : t('entrenament.sense_prescripcio') }),
     el('p', { class: 'nota-peu', text: t('entrenament.prescrit_nota') })));
@@ -544,13 +544,16 @@ export async function juvenils(main) {
     objectiu: d.pla.objectiu ?? '\u2014' }) }));
 }
 
+// L'ENTRENAMENT DE L'ACADÈMIA, que és el SEU i no el del primer equip: Hattrick té dues
+// pantalles distintes i amb continguts distints (ací hi ha principal i secundari; allà, una
+// habilitat amb intensitat i resistència). Abans esta targeta llegia la prescripció sènior i,
+// quan no la trobava, deia literalment «falta l'entrenament sènior» dins de Juvenils.
 function formEntrenamentJuvenil(main, d) {
-  const pr = d.pipeline;
   const sec = card(t('juvenils.entrenament_titol'), null, 'llima');
   sec.append(el('div', { class: 'card-cos' },
-    el('p', { class: 'instruccio', text: pr
-      ? t('juvenils.entrenament_posa', { principal: t('hab.' + pr.principal), secundari: t('hab.' + pr.secundari) })
-      : t('juvenils.entrenament_sense_pipeline') })));
+    el('p', { class: 'instruccio', text: d.pla?.principal
+      ? t('juvenils.entrenament_posa', { principal: t('hab.' + d.pla.principal), secundari: t('hab.' + d.pla.secundaria) })
+      : t('juvenils.entrenament_sense_prescripcio') })));
   main.append(sec);
 }
 

@@ -73,7 +73,6 @@ console.log('OK — motor d\'entrenament sènior general: places, %, cobertura i
   // v3 (PAS 1): l'entrenament és PRESCRIPCIÓ, no configuració. Ix dels poms del contracte
   // (creativitat + passades), no d'una fase ni d'un override del pla.
   assert.equal(def.skill, 'creativitat', 'A prescrit');
-  assert.equal(def.skill_b, 'passades', 'B prescrit');
   assert.equal(def.intensitat, 100);
   assert.deepEqual(def.places, { mc: 100, extrem: 50 });
   // Canviar la prescripció (el contracte) sí que canvia la derivació; un «override del

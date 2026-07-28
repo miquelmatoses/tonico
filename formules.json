@@ -172,14 +172,28 @@
       "taules": []
     },
     {
-      "id": "P1.a_b",
+      "id": "P1.entrenament_senior",
       "pas": "P1",
       "pasTitol": "ENTRENAMENT (prescrit, no triable)",
-      "clau": "(A, B)",
-      "linia": "(A, B) = (creativitat, passades)   · intensitat 100% · resistència `resistencia_pct`",
+      "clau": "entrenament_sènior",
+      "linia": "entrenament_sènior   = `entrenament_a`   · intensitat 100% · resistència `resistencia_pct`",
       "entrades": [],
       "poms": [
+        "entrenament_a",
         "resistencia_pct"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P1.entrenament_academia",
+      "pas": "P1",
+      "pasTitol": "ENTRENAMENT (prescrit, no triable)",
+      "clau": "entrenament_acadèmia",
+      "linia": "entrenament_acadèmia = (`entrenament_juvenil_a`, `entrenament_juvenil_b`)",
+      "entrades": [],
+      "poms": [
+        "entrenament_juvenil_a",
+        "entrenament_juvenil_b"
       ],
       "taules": []
     },
@@ -1035,6 +1049,19 @@
       ],
       "poms": [
         "revelacio_factor_min"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P10.habilitats",
+      "pas": "P10",
+      "pasTitol": "JUVENILS (si sistema_juvenil ≠ cap) — la fàbrica d'entrenables",
+      "clau": "habilitats",
+      "linia": "habilitats = (`entrenament_juvenil_a`, `entrenament_juvenil_b`)   [PAS 1: les DE L'ACADÈMIA]",
+      "entrades": [],
+      "poms": [
+        "entrenament_juvenil_a",
+        "entrenament_juvenil_b"
       ],
       "taules": []
     },

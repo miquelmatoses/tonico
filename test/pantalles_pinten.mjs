@@ -115,11 +115,15 @@ console.error = (...a) => { renyades.push(a.map(String).join(' ')); };
 const PANTALLES = ['economia', 'personal', 'mercat', 'plantilla', 'entrenament', 'juvenils', 'esta_setmana',
   'alineacio', 'configuracio', 'decisions'];
 const trencades = [];
+const pintat = new Map();                      // nom → tot el text que ha eixit
+const textDe = (n) => (n?.tagName == null ? String(n?.textContent ?? '')
+  : String(n.textContent ?? '') + (n.fills || []).map(textDe).join(' '));
 for (const nom of PANTALLES) {
   renyades = [];
   const main = crea('main');
   try {
     await seccions[nom](main);
+    pintat.set(nom, main.fills.map(textDe).join(' '));
     if (renyades.length) trencades.push(`${nom}: ${renyades[0]}`);
     else if (!main.fills.length) trencades.push(`${nom}: no ha pintat res`);
   } catch (err) {
@@ -128,6 +132,29 @@ for (const nom of PANTALLES) {
 }
 console.error = errOriginal;
 assert.deepEqual(trencades, [], 'pantalles que no es pinten netes:\n  ' + trencades.join('\n  '));
+
+// ── CAP PANTALLA POT DIR «EM FALTA X» QUAN X ESTÀ DECLARAT ────────────────────────────────
+// El forat que tapa açò: en reescriure l'endpoint de Juvenils, la targeta d'entrenament va
+// quedar llegint un camp que ja no existia i va caure al seu text de «falta». No va petar res,
+// la clau i18n resolia perfectament i el test de dalt passava — un fallback que MENTIA.
+//
+// Pintar sense petar no vol dir dir la veritat. Ací es comprova el TEXT: amb la dada al seu
+// pom, el missatge de mancança no pot aparéixer, i el que sí que ha d'aparéixer és la dada.
+{
+  const ca = JSON.parse(readFileSync(new URL('i18n/ca-valencia.json', arrel), 'utf8'));
+  const mancances = [
+    ['juvenils', 'juvenils.entrenament_sense_prescripcio', "SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='entrenament_juvenil_a'"],
+    ['entrenament', 'entrenament.sense_prescripcio', "SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='entrenament_a'"],
+  ];
+  for (const [pantalla, clau, sql] of mancances) {
+    const declarat = sqlite.prepare(sql).get()?.valor;
+    assert.ok(declarat, `el fixture ha de declarar la dada de ${clau}: si no, això no prova res`);
+    assert.ok(!pintat.get(pantalla).includes(ca[clau]),
+      `${pantalla} diu «${ca[clau]}» quan la dada ESTÀ declarada (${declarat}): el fallback menteix`);
+    assert.ok(pintat.get(pantalla).includes(ca['hab.' + declarat]),
+      `${pantalla} hauria de pintar «${ca['hab.' + declarat]}», que és el que hi ha declarat`);
+  }
+}
 
 // ── EL QUE L'AVALUADOR CALCULA HA D'ARRIBAR AL DOM ────────────────────────────────────────
 // Pintar sense petar no vol dir pintar les dades. La fila dels entrenables copiava camp a camp
