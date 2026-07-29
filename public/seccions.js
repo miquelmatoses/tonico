@@ -48,7 +48,9 @@ const BUCKET_SIGLA = { porter: 'POR', defensa: 'DC', mc: 'MC', extrem: 'EX', dav
 // EL PERFIL EN TEXT: mínim per habilitat, que és literalment el que has de teclejar al
 // cercador de Hattrick. Substituïx el «creativitat 9» d'abans, que li demanava una sola
 // habilitat a un lloc que en vol quatre.
-const perfilTxt = (p) => Object.entries(p ?? {}).map(([h, n]) => `${t('hab.' + h)} ≥ ${n}`).join(' · ');
+const SIGLA_HAB = { porteria: 'PO', defensa: 'DF', creativitat: 'CR', extrem: 'EX',
+  passades: 'PA', anotacio: 'AN', pilota_aturada: 'PP' };
+const perfilTxt = (p) => Object.entries(p ?? {}).map(([h, n]) => `${SIGLA_HAB[h] ?? h} ≥ ${n}`).join(' · ');
 // El nom del LLOC. Abans es deia amb el nom d'una habilitat («un jugador de creativitat»), que
 // era el vocabulari del monocultiu: un mig centre no és «creativitat».
 const bucketTxt = (b) => t('bucket.' + b);
@@ -698,7 +700,6 @@ export async function mercat(main) {
       if (c.habilitat?.camp) camp('habilitat', `${t('hab.' + c.habilitat.camp)} ≥ ${c.habilitat.min}`);
       if (c.perfil) camp('perfil', perfilTxt(c.perfil));
       if (c.mes_barat) camp('criteri', t('mercat.mes_barat'));
-      camp('pressupost', c.sense_caixa ? t('mercat.sense_pressupost') : diners(c.pressupost));
       camps.append(el('label', { class: 'decl-camp' },
         el('span', { class: 'decl-et', text: t('mercat.preu_ref') }), preu));
       cnc.append(el('div', { class: 'filtre' },
