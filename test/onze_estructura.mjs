@@ -184,7 +184,18 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   // forat és per habilitat, i per això es pot pintar i llegir.
   const barrejat = assignaEstructura([jugMC(12, 1)], llocs2).onze[0];
   assert.deepEqual(barrejat.mancances, { defensa: 5 }, 'li sobra creativitat i li falta defensa');
-  assert.equal(barrejat.distancia, 5 / 4, 'i el forat de defensa no desapareix per anar sobrat d\'una altra');
+  // I EL FORAT ES VEU, però no genera necessitat: aporta més que el perfil, o siga que
+  // comprar no ho arregla —l'assignació tornaria a triar-lo a ell—. La contribució decidix SI
+  // hi ha necessitat i el vector diu ON.
+  assert.equal(barrejat.distancia, 0, 'qui arriba en conjunt no genera necessitat de fitxatge');
+  // LA VORA: qui aporta EXACTAMENT el mateix que el perfil tampoc no genera necessitat.
+  // CR10/DEF3 dona (30+3)/4 = 8,25, clavat al perfil CR9/DEF6 — comprar no guanya res.
+  const just2 = assignaEstructura([jugMC(10, 3)], llocs2).onze[0];
+  assert.deepEqual(just2.mancances, { defensa: 3 }, 'li falta defensa…');
+  assert.equal(just2.distancia, 0, '…però aporta clavat el que el perfil: no hi ha res a guanyar');
+  // Qui NO arriba en conjunt sí que en genera, i el número el ponderen els pesos del lloc.
+  const curt2 = assignaEstructura([jugMC(9, 1)], llocs2).onze[0];
+  assert.equal(curt2.distancia, 5 / 4, 'el forat ponderat pel pes de cada habilitat al lloc');
 
   const sensPerfil = assignaEstructura([jugMC(8, 6)], [{ ...llocs2[0], perfil_objectiu: null }]).onze[0];
   assert.equal(sensPerfil.mancances, null, 'sense perfil no se n\'inventa cap forat');

@@ -622,11 +622,11 @@
       "pas": "P5",
       "pasTitol": "LA DISTÀNCIA A L'OBJECTIU",
       "clau": "distància",
-      "linia": "distància(lloc) = SUMA(h: pesos_habilitat(lloc, h) × mancances(lloc, h))",
+      "linia": "distància(lloc) = SI(contribucio(ocupant, lloc) ≥ aportacio_objectiu(lloc); 0;",
       "entrades": [
-        "lloc",
-        "mancances",
-        "pesos_habilitat"
+        "aportacio_objectiu",
+        "contribucio",
+        "lloc"
       ],
       "poms": [],
       "taules": []

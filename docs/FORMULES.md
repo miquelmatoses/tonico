@@ -288,8 +288,9 @@ habilitat_lloc(lloc)  = BUSCA(`taula_habilitat_lloc`; lloc)   [POR→porteria,
 ## PAS 5 — LA DISTÀNCIA A L'OBJECTIU
 
 ```
-distància(lloc) = SUMA(h: pesos_habilitat(lloc, h) × mancances(lloc, h))
-                  / SUMA(pesos_habilitat(lloc))       [mancances: vore PAS 6]
+distància(lloc) = SI(contribucio(ocupant, lloc) ≥ aportacio_objectiu(lloc); 0;
+                     SUMA(h: pesos_habilitat(lloc, h) × mancances(lloc, h))
+                     / SUMA(pesos_habilitat(lloc)))    [mancances: vore PAS 6]
    [EL FORAT DEL LLOC EN UN NÚMERO, per a poder ordenar les necessitats. És el vector de
     mancances projectat amb els pesos del lloc: el que li falta d'una habilitat que ahí
     importa poc, pesa poc. El que es PINTA és el vector; este número només ordena]
@@ -297,9 +298,14 @@ distància(lloc) = SUMA(h: pesos_habilitat(lloc, h) × mancances(lloc, h))
     volent dir «dos nivells». Restar l'índex de la taula de salaris d'un `hab(jugador)`
     deixava TOTES les distàncies quatre nivells curtes: un objectiu de «Formidable»
     (HT 9) contra un jugador amb CR 8 donava 0]
-   [i un lloc amb algú per DAMUNT no genera distància: no es pot arreglar comprant.
-    L'assignació torna a donar el lloc al millor, o siga que el fitxatge se n'aniria al
-    residu. L'única acció possible és vendre el sobrat, i eixa la diu el `sobrecost`]
+   [I ARRIBAR ES MIRA EN CONJUNT, no habilitat a habilitat. El vector de mancances diu ON
+    li falta, però no sap si l'ocupant va sobrat justament en la que importa: un porter de
+    casa amb PO6 DF4 contra un perfil PO4 DF8 té un forat de 4 en defensa i tanmateix
+    APORTA MÉS que el perfil (0,831 contra 0,790). Sense esta condició el sistema demanava
+    fitxar algú pitjor que el que ja hi havia, i l'assignació —coherentment— es quedava el
+    de casa i enviava el fitxatge al residu: pagar per empitjorar]
+   [un lloc amb algú per DAMUNT no es pot arreglar comprant. L'única acció possible és
+    vendre el sobrat, i eixa la diu el `sobrecost`]
 compta(lloc)    = distància(lloc) ≥ `distancia_min`
    [menys de dos nivells no és un forat: s'arregla entrenant o esperant]
 lloc_de(j)      = ARGMAX(llocs; equivalent(j, lloc))

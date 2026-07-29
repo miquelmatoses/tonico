@@ -982,6 +982,19 @@ const VERIFICADES = {
       { bucket: 'porter', perfil_objectiu: { porteria: 5 }, distancia: 0 }] }, { distancia_min: 2 });
     assert.deepEqual(n.map((x) => x.bucket), ['mc'], 'el sobrat no és una necessitat de mercat');
     assert.equal(n[0].distancia, 3, 'tres per davall → distància 3');
+    // ARRIBAR ES MIRA EN CONJUNT. El cas real que ho va destapar: perfil de porter PO4 DF8
+    // (el pressupost no arriba ni al primer esglaó de porteria) contra el porter de casa
+    // PO6 DF4. Li falten 4 de defensa, i tanmateix aporta MÉS que el perfil. Sense la
+    // condició, Tonico demanava fitxar algú pitjor — i l'assignació es quedava el de casa.
+    const lloc = { lloc: 'POR', bucket: 'porter', pes: 0.15,
+      pesos_habilitat: { porteria: 0.109, defensa: 0.0442 },
+      perfil_objectiu: { porteria: 4, defensa: 8 } };
+    const casa = assignaEstructura([j6(1, { porteria: 6, defensa: 4 })], [lloc]).onze[0];
+    assert.deepEqual(casa.mancances, { defensa: 4 }, 'per habilitat sí que li falta defensa');
+    assert.equal(casa.distancia, 0, 'però arriba en conjunt, i el que li falta no es compra');
+    // I qui NO arriba en conjunt sí que genera distància.
+    const fluix = assignaEstructura([j6(2, { porteria: 4, defensa: 2 })], [lloc]).onze[0];
+    assert.ok(fluix.distancia > 0, 'qui no arriba, sí');
   },
   'P5.compta': () => {
     const n = necessitats({ entrenables: [], entrenables_max: 0, porter_suplent: {}, onze: [
@@ -1070,7 +1083,10 @@ const VERIFICADES = {
     const r = assignaEstructura([j6(1, { creativitat: 12, defensa: 1 })], dosHab).onze[0];
     assert.deepEqual(r.mancances, { defensa: 5 },
       'li sobra creativitat i li falta defensa, i les dues coses es diuen per separat');
-    assert.equal(r.distancia, 5 / 4, 'el forat ponderat pel pes de cada habilitat al lloc');
+    // PERÒ LA DISTÀNCIA ÉS 0: aporta més que el perfil, o siga que no hi ha res a comprar —
+    // l'assignació tornaria a triar-lo a ell. El forat es veu a la pantalla (`mancances`), no
+    // al mercat. La contribució decidix SI hi ha necessitat; el vector diu ON.
+    assert.equal(r.distancia, 0, 'qui arriba en conjunt no genera necessitat de fitxatge');
     assert.equal(assignaEstructura([], dosHab).onze[0].mancances, null,
       'un lloc sense ningú no té forat: té un buit, que és un altre senyal');
   },
