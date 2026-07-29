@@ -26,9 +26,7 @@ i és de Miquel.
 **J-02 · Els amistosos no es compten.** El joc en dona un cada tres setmanes i la projecció
 juvenil només compta els partits de lliga, o siga que va curta. Conservadora, però curta.
 
-L'única fórmula que G1 encara declara pendent és **`V.hores`**: el full diu que el reinici de
-la crida al cercapromeses va per país, i eixa maquinària s'ha retirat sencera perquè el
-cercapromeses no el jutja Tonico. Queda al full com a variable descrita i sense consumidor.
+**G1: 121 fórmules verificades, CAP pendent.** Cada fórmula del full té avaluador i referència.
 
 **TAPAT el 2026-07-29** — la codificació de la targeta roja. Va una groga i una roja al mateix
 partit i les dues van a la columna `Amonestacions`: la groga escriu 1 i la roja escriu 3, el

@@ -1,0 +1,11 @@
+-- Tonico — migració 108 · fora `hores_pais`.
+--
+-- Marcava el dia i l'hora de l'actualització econòmica per país, i servia per a UNA cosa: el
+-- reinici setmanal de la crida al cercapromeses. Eixa maquinària se'n va anar sencera a la 101
+-- —el cercapromeses no el jutja Tonico—, i la constant es va quedar buida (`{}`) i sense cap
+-- lector des de llavors.
+--
+-- El full la descrivia i era l'única fórmula que G1 declarava PENDENT: una variable descrita
+-- sense consumidor. Un full que descriu coses que ningú calcula és exactament el que el
+-- contracte no pot ser.
+DELETE FROM constants_joc WHERE clau = 'hores_pais';

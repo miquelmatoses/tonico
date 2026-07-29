@@ -33,20 +33,6 @@
       "taules": []
     },
     {
-      "id": "V.hores",
-      "pas": "V",
-      "pasTitol": "VARIABLES BASE (una font cadascuna)",
-      "clau": "hores",
-      "linia": "hores(pais)     = BUSCA(`hores_pais`; pais) → {economia_dia, economia_hora}",
-      "entrades": [
-        "pais"
-      ],
-      "poms": [],
-      "taules": [
-        "hores_pais"
-      ]
-    },
-    {
       "id": "V.plantilla",
       "pas": "V",
       "pasTitol": "VARIABLES BASE (una font cadascuna)",

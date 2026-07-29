@@ -46,7 +46,6 @@ ARREDONIX.AMUNT, ∈, ∪, ∅.
 ```
 config          = { estrategia, pais, divisio, sistema_juvenil, n_cercapromeses, partits_setmana }
 estrategia      ∈ { competitiva, cycle(WIP) }
-hores(pais)     = BUSCA(`hores_pais`; pais) → {economia_dia, economia_hora}
 plantilla       = instantània sènior vigent · juvenils = instantània juvenil vigent
 llocs_partit    = 11 × partits_setmana
 (temporada, setmana) = f_calendari(data, `ancora`)      ← ÚNICA funció del sistema

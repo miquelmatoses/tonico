@@ -128,5 +128,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/105_setmanes_reestampades.sql'));
   sqlite.exec(src('../schema/106_entrenador_quota.sql'));
   sqlite.exec(src('../schema/107_gasta_mes.sql'));
+  sqlite.exec(src('../schema/108_fora_hores_pais.sql'));
   return { sqlite, db: new D1(sqlite) };
 }
