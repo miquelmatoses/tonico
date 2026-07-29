@@ -133,5 +133,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/110_pesos_sector_mesurats.sql'));
   sqlite.exec(src('../schema/111_dues_capes.sql'));
   sqlite.exec(src('../schema/112_matriu_wiki.sql'));
+  sqlite.exec(src('../schema/113_distancia_min.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

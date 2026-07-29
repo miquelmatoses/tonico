@@ -368,7 +368,7 @@ const VERIFICADES = {
     const est = { entrenables: [], entrenables_max: 2, porter_suplent: null,
       onze: [{ bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 1 },
              { bucket: 'davanter', perfil_objectiu: { anotacio: 9, passades: 5 }, distancia: 3 }] };
-    const n = necessitats(est, { entrenable_min: 6 });
+    const n = necessitats(est, { entrenable_min: 6, distancia_min: 2 });
     assert.equal(n[0].distancia, Infinity, 'una plaça buida va primer');
     assert.ok(!n.some((x) => x.bucket === 'mc' && x.tipus === 'lloc'), 'un sol nivell no és forat');
     assert.ok(n.some((x) => x.clau === 'davanter:ano9-pas5'), 'i tres nivells sí');
@@ -979,21 +979,30 @@ const VERIFICADES = {
     // l'assignació torna a donar el lloc al millor i el fitxatge se'n va al residu.
     const n = necessitats({ entrenables: [], entrenables_max: 0, porter_suplent: {}, onze: [
       { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 3 },
-      { bucket: 'porter', perfil_objectiu: { porteria: 5 }, distancia: 0 }] }, {});
+      { bucket: 'porter', perfil_objectiu: { porteria: 5 }, distancia: 0 }] }, { distancia_min: 2 });
     assert.deepEqual(n.map((x) => x.bucket), ['mc'], 'el sobrat no és una necessitat de mercat');
     assert.equal(n[0].distancia, 3, 'tres per davall → distància 3');
   },
   'P5.compta': () => {
     const n = necessitats({ entrenables: [], entrenables_max: 0, porter_suplent: {}, onze: [
       { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 1 },
-      { bucket: 'davanter', perfil_objectiu: { anotacio: 9, passades: 5 }, distancia: 2 }] }, {});
+      { bucket: 'davanter', perfil_objectiu: { anotacio: 9, passades: 5 }, distancia: 2 }] }, { distancia_min: 2 });
     assert.deepEqual(n.map((x) => x.bucket), ['davanter'],
       'un sol nivell no és un forat: s\'arregla entrenant o esperant');
+    // I EL LLINDAR ÉS UN POM, no un número en codi (invariant 8): vivia com a valor per
+    // defecte de `necessitats()` i ningú li'n passava cap, o siga que per a afinar-lo calia
+    // desplegar. Amb la mitjana ponderada del V2 la distància és sistemàticament més xicoteta
+    // que amb el monocultiu, i el 2 de sempre deixava el sistema mut.
+    const pom = sqliteFix.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='distancia_min'").get();
+    assert.ok(pom && Number(pom.valor) > 0, 'el llindar està declarat a la BD, no escrit al codi');
+    assert.deepEqual(necessitats({ entrenables: [], entrenables_max: 0, porter_suplent: {}, onze: [
+      { bucket: 'mc', perfil_objectiu: { creativitat: 9 }, distancia: 9 }] }, {}), [],
+      'i sense declarar-lo no s\'inventa cap tall');
   },
   'P5.ordre': () => {
     const n = necessitats({ entrenables: [], entrenables_max: 2, porter_suplent: null, onze: [
       { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 2 },
-      { bucket: 'extrem', perfil_objectiu: { extrem: 9, creativitat: 5 }, distancia: 3 }] }, { entrenable_min: 6 });
+      { bucket: 'extrem', perfil_objectiu: { extrem: 9, creativitat: 5 }, distancia: 3 }] }, { entrenable_min: 6, distancia_min: 2 });
     assert.deepEqual(n.map((x) => x.tipus === 'lloc' ? x.bucket : x.tipus),
       ['entrenable', 'porter_suplent', 'extrem', 'mc'],
       'places buides primer, i després qui més lluny està');
@@ -1184,7 +1193,7 @@ const VERIFICADES = {
     assert.equal(motiuVenda({}, { esRotatiu: true, temporada: 86, horitzo_eixida: 85 }), 'pic_de_valor');
     assert.equal(motiuVenda({}, { sobrecost: 500, calibrat: true }), 'sou_desproporcionat');
     assert.equal(motiuVenda({}, { enVenda: true }), 'sobrant');
-    assert.equal(motiuVenda({}, {}), null);
+    assert.equal(motiuVenda({}, { distancia_min: 2 }), null);
     // EL STOPPER: sense calibrar, cap venda per sou. `sobrecost` penja del flux, i el flux amb
     // poques setmanes és soroll. Els altres dos motius no en depenen i seguixen vius.
     assert.equal(motiuVenda({}, { sobrecost: 99999, calibrat: false }), null,

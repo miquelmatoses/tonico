@@ -1,0 +1,21 @@
+-- Tonico — migració 113 · `distancia_min` baixa a pom, i canvia d'escala.
+--
+-- El full sempre ha dit `compta(lloc) = distància(lloc) ≥ distancia_min`, però el número no
+-- ha existit mai: vivia com a valor per defecte del paràmetre de `necessitats()` i ningú li'n
+-- passava cap. Un literal de domini en codi és justament el que l'invariant 8 prohibix, i el
+-- preu era que per a afinar-lo calia editar, commitar i desplegar.
+--
+-- ─── I PER QUÈ 0,7 I NO 2 ─────────────────────────────────────────────────────────────
+-- Amb el motor V1 la distància era «quants nivells li falten a l'habilitat del lloc», i 2 volia
+-- dir dos nivells. Amb el V2 és la mitjana dels forats PONDERADA pels pesos del lloc, i per
+-- tant sistemàticament més xicoteta: al mig centre, tres nivells curt de creativitat —el 61%
+-- del que el lloc vol— dona 1,84 i no arribava al llindar. El sistema s'havia tornat mut sense
+-- dir-ho: no demanava cap preu perquè cap necessitat passava el tall.
+--
+-- Amb 0,7, al mig centre el llindar per habilitat queda:
+--   creativitat ≥ 2 nivells · defensa ≥ 5 · passades ≥ 5 · anotació mai (n'hauria de faltar 13)
+-- L'anotació és el 6% del lloc i ignorar-la no mou cap decisió; la defensa a 5 és permissiu,
+-- però existix. És el compromís que la mitjana permet: no hi ha cap número que cace un forat
+-- d'una habilitat secundària sense fer saltar un sol nivell de la principal.
+INSERT OR REPLACE INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
+  ('competitiva', 'distancia_min', '0.7', 'float');

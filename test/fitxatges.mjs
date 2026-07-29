@@ -26,7 +26,7 @@ const est = {
     { bucket: 'lateral', perfil_objectiu: { defensa: 7, extrem: 4 }, distancia: null },   // SENSE NINGÚ
   ],
 };
-const n = necessitats(est, { entrenable_min: 6 });
+const n = necessitats(est, { entrenable_min: 6, distancia_min: 2 });
 
 // ── 1. Les places buides manen ──
 assert.equal(n[0].tipus === 'entrenable' || n[0].tipus === 'porter_suplent', true);
