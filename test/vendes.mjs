@@ -89,11 +89,15 @@ sqlite.exec(`
     (1,82,11,90000,40000,'2026-06-13','2026-07-25'),(1,82,12,90000,40000,'2026-06-20','2026-07-25'),
     (1,82,13,90000,40000,'2026-06-27','2026-07-25'),(1,82,14,90000,40000,'2026-07-04','2026-07-25'),
     (1,82,15,90000,40000,'2026-07-11','2026-07-25'),(1,82,16,90000,40000,'2026-07-18','2026-07-25');
-  -- Dos sobrants amb la MATEIXA habilitat i sous molt distints: l'únic que els separa és el
-  -- que cobren de més respecte del que el seu lloc mereix.
+  -- Dos sobrants amb EL MATEIX PERFIL i sous molt distints: l'únic que els separa és el que
+  -- cobren de més respecte del que el seu lloc mereix.
+  --
+  -- I han de ser clarament els PITJORS: amb el policultiu, algú amb creativitat 5 i la resta a
+  -- 1 encara guanya una plaça a un titular monotemàtic, i llavors no arriba a Vendes i la
+  -- comparació de sobrecost no es pot fer. El que este bloc prova és la VARA, no la tria.
   INSERT INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (20,1,120,'Car'),(21,1,121,'Barat');
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, posicio_ultim_partit, edat_anys, sou, creativitat, defensa, passades, extrem, anotacio, pilota_aturada, porteria) VALUES
-    (1,20,'MC',25,90000,5,1,1,1,1,1,1),(1,21,'MC',25,500,5,1,1,1,1,1,1);
+    (1,20,'MC',25,90000,2,2,2,2,2,2,1),(1,21,'MC',25,500,2,2,2,2,2,2,1);
 `);
 const d2 = await (await vendes.onRequestGet({ env: { DB: db }, data: { usuari: { id: 1 } } })).json();
 const v = (nom) => d2.jugadors.find((j) => j.nom === nom).valor;

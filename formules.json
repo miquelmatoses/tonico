@@ -239,13 +239,70 @@
       "taules": []
     },
     {
+      "id": "P2.pes_sector",
+      "pas": "P2",
+      "pasTitol": "LLOCS I PESOS",
+      "clau": "pes_sector",
+      "linia": "pes_sector(s) = `pesos_sector`[s] × `importancia_sector`[s]",
+      "entrades": [],
+      "poms": [
+        "importancia_sector",
+        "pesos_sector"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P2.pesos_habilitat",
+      "pas": "P2",
+      "pasTitol": "LLOCS I PESOS",
+      "clau": "pesos_habilitat",
+      "linia": "pesos_habilitat(lloc, h) = SUMA(columnes de `taula_aportacio`[lloc] que van per h:",
+      "entrades": [
+        "lloc"
+      ],
+      "poms": [
+        "taula_aportacio"
+      ],
+      "taules": []
+    },
+    {
       "id": "P2.pes",
       "pas": "P2",
       "pasTitol": "LLOCS I PESOS",
       "clau": "pes",
       "linia": "pes(lloc)  = SUMA(sectors: aportacio(lloc, sector) × pes_sector(sector))",
       "entrades": [
-        "lloc"
+        "lloc",
+        "pes_sector"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P2.contribucio",
+      "pas": "P2",
+      "pasTitol": "LLOCS I PESOS",
+      "clau": "contribucio",
+      "linia": "contribucio(j, lloc) = SUMA(habilitats: pesos_habilitat(lloc, h) × hab(j, h))",
+      "entrades": [
+        "hab",
+        "habilitats",
+        "lloc",
+        "pesos_habilitat"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P2.equivalent",
+      "pas": "P2",
+      "pasTitol": "LLOCS I PESOS",
+      "clau": "equivalent",
+      "linia": "equivalent(j, lloc)  = contribucio(j, lloc) / SUMA(pesos_habilitat(lloc))",
+      "entrades": [
+        "contribucio",
+        "lloc",
+        "pesos_habilitat"
       ],
       "poms": [],
       "taules": []
@@ -478,6 +535,75 @@
       "taules": []
     },
     {
+      "id": "P4.cost_habilitat",
+      "pas": "P4",
+      "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
+      "clau": "cost_habilitat",
+      "linia": "cost_habilitat(h, n)  = BUSCA(`taula_salaris`; h, n − `nivell_habilitat_offset`)",
+      "entrades": [],
+      "poms": [
+        "nivell_habilitat_offset"
+      ],
+      "taules": [
+        "taula_salaris"
+      ]
+    },
+    {
+      "id": "P4.sou_perfil",
+      "pas": "P4",
+      "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
+      "clau": "sou_perfil",
+      "linia": "sou_perfil(perfil) = `sou_formula`: base + cost_habilitat(principal)",
+      "entrades": [
+        "cost_habilitat"
+      ],
+      "poms": [
+        "sou_formula"
+      ],
+      "taules": []
+    },
+    {
+      "id": "P4.perfil_objectiu",
+      "pas": "P4",
+      "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
+      "clau": "perfil_objectiu",
+      "linia": "perfil_objectiu(lloc) = MAX(contribucio(perfil, lloc)",
+      "entrades": [
+        "contribucio",
+        "lloc"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P4.sou_objectiu",
+      "pas": "P4",
+      "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
+      "clau": "sou_objectiu",
+      "linia": "sou_objectiu(lloc)       = sou_perfil(perfil_objectiu(lloc))",
+      "entrades": [
+        "lloc",
+        "perfil_objectiu",
+        "sou_perfil"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P4.aportacio_objectiu",
+      "pas": "P4",
+      "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
+      "clau": "aportacio_objectiu",
+      "linia": "aportacio_objectiu(lloc) = contribucio(perfil_objectiu(lloc), lloc)",
+      "entrades": [
+        "contribucio",
+        "lloc",
+        "perfil_objectiu"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
       "id": "P4.habilitat_lloc",
       "pas": "P4",
       "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
@@ -492,44 +618,15 @@
       ]
     },
     {
-      "id": "P4.nivell_objectiu",
-      "pas": "P4",
-      "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
-      "clau": "nivell_objectiu",
-      "linia": "nivell_objectiu(lloc) = MAX(n : BUSCA(`taula_salaris`; habilitat_lloc(lloc), n)",
-      "entrades": [
-        "habilitat_lloc",
-        "lloc"
-      ],
-      "poms": [],
-      "taules": [
-        "taula_salaris"
-      ]
-    },
-    {
-      "id": "P4.nivell_objectiu_ht",
-      "pas": "P4",
-      "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
-      "clau": "nivell_objectiu_ht",
-      "linia": "nivell_objectiu_ht(lloc) = nivell_objectiu(lloc) + `nivell_habilitat_offset`",
-      "entrades": [
-        "lloc",
-        "nivell_objectiu"
-      ],
-      "poms": [
-        "nivell_habilitat_offset"
-      ],
-      "taules": []
-    },
-    {
       "id": "P5.distancia",
       "pas": "P5",
       "pasTitol": "LA DISTÀNCIA A L'OBJECTIU",
       "clau": "distància",
-      "linia": "distància(lloc) = MAX(0; −diferència(lloc))          [diferència: vore PAS 6]",
+      "linia": "distància(lloc) = SUMA(h: pesos_habilitat(lloc, h) × mancances(lloc, h))",
       "entrades": [
-        "diferència",
-        "lloc"
+        "lloc",
+        "mancances",
+        "pesos_habilitat"
       ],
       "poms": [],
       "taules": []
@@ -550,20 +647,31 @@
       "taules": []
     },
     {
+      "id": "P5.lloc_de",
+      "pas": "P5",
+      "pasTitol": "LA DISTÀNCIA A L'OBJECTIU",
+      "clau": "lloc_de",
+      "linia": "lloc_de(j)      = ARGMAX(llocs; equivalent(j, lloc))",
+      "entrades": [
+        "equivalent",
+        "lloc"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
       "id": "P5.sobrecost",
       "pas": "P5",
       "pasTitol": "LA DISTÀNCIA A L'OBJECTIU",
       "clau": "sobrecost",
-      "linia": "sobrecost(j)    = MAX(0; sou(j) − BUSCA(`taula_salaris`; habilitat_lloc(lloc(j));",
+      "linia": "sobrecost(j)    = MAX(0; sou(j) − sou_objectiu(lloc_de(j)))",
       "entrades": [
-        "habilitat_lloc",
-        "lloc",
-        "sou"
+        "lloc_de",
+        "sou",
+        "sou_objectiu"
       ],
       "poms": [],
-      "taules": [
-        "taula_salaris"
-      ]
+      "taules": []
     },
     {
       "id": "P5.ordre",
@@ -583,8 +691,9 @@
       "pas": "P6",
       "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
       "clau": "onze",
-      "linia": "onze      = PER lloc en ORDENA(llocs; pes(lloc) DESC):",
+      "linia": "onze      = REPARTIX ORDENA(lloc × jugador; pes(lloc) × equivalent(j, lloc) DESC,",
       "entrades": [
+        "equivalent",
         "lloc",
         "pes"
       ],
@@ -605,16 +714,15 @@
       "taules": []
     },
     {
-      "id": "P6.diferencia",
+      "id": "P6.mancances",
       "pas": "P6",
       "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
-      "clau": "diferència",
-      "linia": "diferència(lloc) = hab(ocupant, habilitat_lloc) − nivell_objectiu_ht(lloc)",
+      "clau": "mancances",
+      "linia": "mancances(lloc, h) = MAX(0; perfil_objectiu(lloc, h) − hab(ocupant, h))",
       "entrades": [
         "hab",
-        "habilitat_lloc",
         "lloc",
-        "nivell_objectiu_ht"
+        "perfil_objectiu"
       ],
       "poms": [],
       "taules": []
@@ -974,11 +1082,21 @@
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "clau",
-      "linia": "clau(necessitat) = el TIPUS de fitxatge (bucket + nivell), no el lloc",
+      "linia": "clau(necessitat) = el TIPUS de fitxatge (bucket + perfil_objectiu), no el lloc",
       "entrades": [
         "lloc",
-        "nivell"
+        "perfil_objectiu"
       ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P8.cerca",
+      "pas": "P8",
+      "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
+      "clau": "cerca",
+      "linia": "cerca(necessitat) = el perfil, com a MÍNIM PER HABILITAT",
+      "entrades": [],
       "poms": [],
       "taules": []
     },

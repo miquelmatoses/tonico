@@ -99,14 +99,20 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   const ambVara = await onzeEstructura(db, 1, plantilla, 10291);
   for (const l of ambVara.onze) {
     assert.ok(l.habilitat, `${l.bucket}: el lloc diu contra què es mesura`);
-    assert.ok(l.nivell_objectiu > 0, `${l.bucket}: i quin nivell paga el flux`);
+    assert.ok(Object.keys(l.perfil_objectiu ?? {}).length > 0, `${l.bucket}: i quin perfil paga el flux`);
   }
-  // Els davanters pesen més que els defenses (2-5-3), o siga que no poden demanar menys.
-  const niv = (b) => ambVara.onze.find((l) => l.bucket === b).nivell_objectiu;
-  assert.ok(niv('davanter') >= niv('defensa'),
-    'amb 3 davanters i 2 defenses, l\'atac no pot quedar per davall de la defensa');
+  // Els davanters pesen més que els defenses (2-5-3), o siga que no poden rebre menys DINERS.
+  //
+  // Es compara el SOU del perfil i no el nivell (v2 del motor): l'equivalent és una mitjana
+  // ponderada de les habilitats que compten en eixe lloc, i cada lloc en té un nombre distint
+  // —el davanter aporta amb quatre i el central amb dues—. Repartir el mateix diner entre més
+  // habilitats baixa la mitjana encara que la contribució total siga major, o siga que
+  // l'equivalent val per a comparar un JUGADOR amb el SEU lloc i no dos llocs entre ells.
+  const sou = (b) => ambVara.onze.find((l) => l.bucket === b).sou_objectiu;
+  assert.ok(sou('davanter') >= sou('defensa'),
+    'amb 3 davanters i 2 defenses, l\'atac no pot rebre menys pressupost que la defensa');
   const sense = await onzeEstructura(db, 1, plantilla, null);
-  assert.equal(sense.onze[0].nivell_objectiu, null, 'sense sostre de sou, cap objectiu inventat');
+  assert.equal(sense.onze[0].perfil_objectiu, null, 'sense sostre de sou, cap objectiu inventat');
 
   // ── 7. ENTRENABLES: els joves del motor, trets del RESIDU de l'onze. Tres, no cinc: només
   // els llocs que entrenen AL 100% (els mig centres) i un per cada partit extra de la setmana.
@@ -122,8 +128,16 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   const r = await onzeEstructura(db, 1, joves, 10291);
   assert.equal(r.entrenables_max, 3, 'tres places: 3 llocs al 100% × (2 partits − 1)');
   assert.equal(r.habilitat_entrenament, 'creativitat', 'i es mesuren en el que s\'entrena');
-  assert.deepEqual(r.entrenables.map((j) => j.id), [100, 101, 102],
+  // L'ESPERAT ES DERIVA, no s'escriu: amb el policultiu, qui entra a l'onze ja no és qui té la
+  // millor habilitat solta —un mig amb 8 en tot aporta més que un amb creativitat 9 i res més—,
+  // o siga que la llista de qui queda al residu canvia. El que NO canvia és la regla: els
+  // millors en el que s'entrena, d'entre els que no ocupen lloc.
+  const aLOnze = new Set(r.onze.filter((l) => l.jugador).map((l) => l.jugador.id));
+  const esperats = joves.filter((j) => !aLOnze.has(j.id) && Number(j.creativitat ?? 0) >= 6)
+    .sort((a, b) => Number(b.creativitat) - Number(a.creativitat)).slice(0, 3).map((j) => j.id);
+  assert.deepEqual(r.entrenables.map((j) => j.id), esperats,
     'els millors en creativitat dels que NO han entrat a l\'onze, per orde');
+  assert.ok(r.entrenables.every((j) => !aLOnze.has(j.id)), 'i cap d\'ells ocupa lloc a l\'onze');
   const dinsOnze = new Set(r.onze.map((l) => l.jugador?.id));
   assert.ok(r.entrenables.every((j) => !dinsOnze.has(j.id)),
     'cap entrenable està a l\'onze: ixen del residu, no es dupliquen');
@@ -139,23 +153,45 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
     'passada l\'edat de pic de venda, ja no és entrenable');
 }
 
-// ── 8. LA DIFERÈNCIA contra l'objectiu del lloc, signada i en l'escala de Hattrick. És el que
-// substituïx la puntuació a la columna: onze jugadors mesurats amb la fórmula de la seua
-// categoria —nucli, venda, cos— no es podien comparar entre ells a la mateixa columna.
+// ── 8. QUÈ LI FALTA AL LLOC per a ser el de la plantilla ideal. Hi ha una plantilla IDEAL
+// —cada lloc amb el perfil que el seu pressupost paga— i una de REAL: l'única feina és
+// acostar-les, i açò és eixa resta. NOMÉS EL QUE FALTA: un jugador millor que el perfil no
+// deixa cap forat, i el que costa de més es cobra en euros (`sobrecost`), no en nivells.
 {
-  const llocs2 = [{ lloc: 'MC1', bucket: 'mc', habilitat: 'creativitat', pes: 1.46, nivell_objectiu: 9 }];
-  const curt = assignaEstructura([jug(1, 8, 0)], llocs2).onze[0];
-  assert.equal(curt.diferencia, -1, 'CR 8 contra un objectiu de 9: li falta 1');
-  assert.equal(curt.senyal, 'baix', 'i el senyal el tria l\'avaluador, que la vista no compara');
-  const just = assignaEstructura([jug(1, 9, 0)], llocs2).onze[0];
-  assert.equal(just.diferencia, 0, 'qui arriba just, ni li falta ni li sobra');
-  assert.equal(just.senyal, 'alt', 'i arribar compta com a arribar');
-  const sobrat = assignaEstructura([jug(1, 12, 0)], llocs2).onze[0];
-  assert.equal(sobrat.diferencia, 3, 'i qui va sobrat, ho diu en positiu');
-  const sensObj = assignaEstructura([jug(1, 8, 0)], [{ ...llocs2[0], nivell_objectiu: null }]).onze[0];
-  assert.equal(sensObj.diferencia, null, 'sense objectiu no se n\'inventa cap diferència');
+  const llocs2 = [{ lloc: 'MC1', bucket: 'mc', habilitat: 'creativitat', pes: 1.46,
+    pesos_habilitat: { creativitat: 3, defensa: 1 },
+    perfil_objectiu: { creativitat: 9, defensa: 6 } }];
+  const jugMC = (cre, def) => ({ id: 1, nom: 'J', sou: 1000, edat_anys: 26, edat_dies: 0,
+    porteria: 1, defensa: def, creativitat: cre, extrem: 1, passades: 1, anotacio: 1, pilota_aturada: 1 });
+
+  const curt = assignaEstructura([jugMC(8, 6)], llocs2).onze[0];
+  assert.deepEqual(curt.mancances, { creativitat: 1 }, 'CR 8 contra un perfil de 9: li falta 1 de creativitat');
+  assert.equal(curt.distancia, 3 / 4, 'i en un número, el forat ponderat pel pes de cada habilitat');
+  assert.equal(curt.senyal, 'baix', 'el senyal el tria l\'avaluador, que la vista no compara');
+
+  const just = assignaEstructura([jugMC(9, 6)], llocs2).onze[0];
+  assert.deepEqual(just.mancances, {}, 'qui clava el perfil no té cap forat');
+  assert.equal(just.distancia, 0);
+  assert.equal(just.senyal, 'alt', 'arribar compta com a arribar');
+
+  // EL QUE SOBRA NO ÉS UN FORAT. Amb la distància absoluta este eixiria a 3 i Tonico donaria
+  // el lloc al mediocre que s'ajusta: el bug del monocultiu al revés.
+  const sobrat = assignaEstructura([jugMC(12, 6)], llocs2).onze[0];
+  assert.deepEqual(sobrat.mancances, {}, 'un jugador millor que el perfil el tapa del tot');
+  assert.equal(sobrat.distancia, 0);
+
+  // I NO ES COMPENSA. El que li sobra de creativitat no tapa el que li falta de defensa: el
+  // forat és per habilitat, i per això es pot pintar i llegir.
+  const barrejat = assignaEstructura([jugMC(12, 1)], llocs2).onze[0];
+  assert.deepEqual(barrejat.mancances, { defensa: 5 }, 'li sobra creativitat i li falta defensa');
+  assert.equal(barrejat.distancia, 5 / 4, 'i el forat de defensa no desapareix per anar sobrat d\'una altra');
+
+  const sensPerfil = assignaEstructura([jugMC(8, 6)], [{ ...llocs2[0], perfil_objectiu: null }]).onze[0];
+  assert.equal(sensPerfil.mancances, null, 'sense perfil no se n\'inventa cap forat');
+  assert.equal(sensPerfil.distancia, null);
   const buit = assignaEstructura([], llocs2).onze[0];
-  assert.equal(buit.diferencia, null, 'ni per a un lloc sense ningú');
+  assert.equal(buit.mancances, null, 'ni per a un lloc sense ningú');
+  assert.equal(buit.distancia, null);
 }
 
 // ── 9. FUTUR ENTRENADOR i PORTER SUPLENT: els altres dos que la segona alineació necessita.
@@ -217,9 +253,14 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
     porteria: 1, defensa: 1, creativitat: 1, extrem: 1, passades: 1, anotacio: 1,
     pilota_aturada: 1, experiencia: 1, lideratge: 1, ...o });
   // Onze titulars vells perquè no competisquen, i quatre joves de creativitat 6.
+  //
+  // Amb el POLICULTIU els titulars han de ser bons en el conjunt del seu lloc, no només en una
+  // habilitat: un jove amb creativitat 6 i la resta a 1 aporta més a un lloc d'extrem que un
+  // vell amb extrem 6 i creativitat 1, perquè la creativitat val el 36% d'eixe lloc i l'extrem
+  // el 29%. Amb els vells monotemàtics, els joves els furtaven el lloc i el desempat que ací es
+  // prova —quin dels de creativitat 6 va primer— no arribava a passar.
   const vells = Array.from({ length: 11 }, (_, i) => b(i + 1, { edat_anys: 30,
-    porteria: i === 0 ? 9 : 1, defensa: i > 0 && i < 3 ? 7 : 1,
-    creativitat: i >= 3 && i < 6 ? 8 : 1, extrem: i >= 6 && i < 8 ? 6 : 1, anotacio: i >= 8 ? 7 : 1 }));
+    porteria: i === 0 ? 9 : 2, defensa: 7, creativitat: 7, extrem: 7, passades: 7, anotacio: 7 }));
   // El 40 es queda per davall del mínim de creativitat: no és candidat, i això és el que es
   // comprova ara a més del desempat.
   const joves = [b(40, { creativitat: 2 }), b(41, { creativitat: 6 }), b(42, { creativitat: 6 }), b(43, { creativitat: 6 })];
@@ -256,9 +297,10 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   const b = (id, o) => ({ id, nom: 'W' + id, sou: 1000, edat_anys: 30, edat_dies: 0,
     porteria: 1, defensa: 1, creativitat: 1, extrem: 1, passades: 1, anotacio: 1,
     pilota_aturada: 1, experiencia: 1, lideratge: 1, ...o });
+  // Titulars complets, com al bloc anterior: amb el policultiu un jove d'una sola habilitat
+  // desplaça un titular monotemàtic, i llavors no queda al residu per a poder ser entrenable.
   const vells = Array.from({ length: 11 }, (_, i) => b(i + 1, {
-    porteria: i === 0 ? 9 : 1, defensa: i > 0 && i < 3 ? 7 : 1,
-    creativitat: i >= 3 && i < 6 ? 14 : 1, extrem: i >= 6 && i < 8 ? 6 : 1, anotacio: i >= 8 ? 7 : 1 }));
+    porteria: i === 0 ? 9 : 2, defensa: 8, creativitat: 8, extrem: 8, passades: 8, anotacio: 8 }));
 
   // Dos de creativitat 6, un de 20 anys i un de 19: amb el tall pla d'abans, el de 20 quedava
   // fora i el de 19 dins. Amb la finestra, els dos pugen abans dels 21 i els dos entren.
@@ -322,7 +364,6 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
 // llegida de la base. Un davanter s'ha de mesurar contra el que paga un davanter, no contra
 // el mig centre que mai serà — si es mesurara contra un altre lloc, el número seria un altre.
 {
-  const cfg = JSON.parse(sqlite.prepare("SELECT valor FROM constants_joc WHERE clau='taula_salaris'").get().valor);
   const base = (id, o) => ({ id, nom: 'S' + id, sou: 1000, edat_anys: 27, edat_dies: 0,
     porteria: 1, defensa: 1, creativitat: 1, extrem: 1, anotacio: 1, passades: 1, pilota_aturada: 1, experiencia: 1, ...o });
   // Un davanter sobrepagat, i onze més perquè no entre a l'onze titular.
@@ -330,12 +371,13 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   const equip = [...Array.from({ length: 11 }, (_, i) => base(50 + i, { defensa: 9, creativitat: 9, anotacio: 9, extrem: 9, porteria: 9 })), dav];
   const r = await onzeEstructura(db, 1, equip, 10291, true);
   const lloc = r.onze.find((l) => l.bucket === 'davanter');
-  const escala = cfg[lloc.habilitat];
-  // `nivell_objectiu` de la fila ve en l'escala de HT; la taula de salaris va en la seua.
-  const off = Number(sqlite.prepare("SELECT valor FROM constants_joc WHERE clau='nivell_habilitat_offset'").get().valor);
-  const esperat = Math.max(0, dav.sou - (escala[String(lloc.nivell_objectiu - off)] ?? 0));
+  // L'ORACLE ÉS EL SOU DEL PERFIL que el lloc paga (v2 del motor), no el preu d'una sola
+  // habilitat al nivell objectiu. Amb la vara vella, el sistema triava el jugador per tres
+  // habilitats i li retreia el sou de les altres dues: dues vares oposades sobre el mateix.
+  const esperat = Math.max(0, dav.sou - lloc.sou_objectiu);
+  assert.ok(lloc.sou_objectiu > 0, 'el lloc ha de portar el sou del seu perfil');
   assert.equal(r.sobrecosts.get(40), esperat,
-    `el davanter es mesura contra el que paga el seu lloc (${esperat})`);
+    `el davanter es mesura contra el que costa un jugador fet a mida per al seu lloc (${esperat})`);
   const sense = await onzeEstructura(db, 1, equip, 10291, false);
   assert.equal(sense.sobrecosts.get(40), 0,
     'i sense calibrar, ningú queda marcat com a sobrepagat (stopper del PAS 7)');

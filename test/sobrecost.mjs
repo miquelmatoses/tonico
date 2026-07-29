@@ -11,21 +11,19 @@
 import assert from 'node:assert/strict';
 import { sobrecost } from '../lib/mancanca.js';
 
-const ts = { creativitat: { 1: 250, 3: 330, 9: 8610 } };
+// V2 DEL MOTOR: la vara ja no és «el preu d'una habilitat al nivell objectiu», és el SOU DEL
+// PERFIL que el pressupost del lloc paga. Amb la vara vella, el sistema triava un jugador per
+// tres habilitats i després li retreia el sou de les dues secundàries — dues vares oposades
+// sobre el mateix jugador.
 
 // El que pagues de MÉS del que el lloc mereix.
-assert.equal(sobrecost({ sou: 900 }, 'creativitat', 3, ts), 570, '900 − 330');
-assert.equal(sobrecost({ sou: 300 }, 'creativitat', 3, ts), 0,
+assert.equal(sobrecost({ sou: 900 }, 330), 570, '900 − 330');
+assert.equal(sobrecost({ sou: 300 }, 330), 0,
   'qui cobra el que toca no té sobrecost: MAX(0; …), no un número negatiu');
 
 // SENSE OBJECTIU no hi ha vara, i sense vara no s'inventa cap número: null, no zero. Un zero
 // diria «no cobra de més», i el que passa és que no ho sabem (invariant 18).
-assert.equal(sobrecost({ sou: 900 }, 'creativitat', null, ts), null, 'sense objectiu, null');
-assert.equal(sobrecost(null, 'creativitat', 3, ts), null, 'sense jugador, null');
-assert.equal(sobrecost({ sou: 900 }, 'porteria', 3, ts), null,
-  'sense escala per a eixa habilitat, null: la taula de la guia és qui mana');
-
-// Un nivell que la taula no llista val 0: no es paga res per un nivell que no existix.
-assert.equal(sobrecost({ sou: 900 }, 'creativitat', 7, ts), 900, 'nivell fora de taula → 0 de base');
+assert.equal(sobrecost({ sou: 900 }, null), null, 'sense objectiu, null');
+assert.equal(sobrecost(null, 330), null, 'sense jugador, null');
 
 console.log('OK — sobrecost: el que pagues de més, i null quan no hi ha vara');

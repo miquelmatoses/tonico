@@ -129,5 +129,9 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/106_entrenador_quota.sql'));
   sqlite.exec(src('../schema/107_gasta_mes.sql'));
   sqlite.exec(src('../schema/108_fora_hores_pais.sql'));
+  sqlite.exec(src('../schema/109_motor_v2.sql'));
+  sqlite.exec(src('../schema/110_pesos_sector_mesurats.sql'));
+  sqlite.exec(src('../schema/111_dues_capes.sql'));
+  sqlite.exec(src('../schema/112_matriu_wiki.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

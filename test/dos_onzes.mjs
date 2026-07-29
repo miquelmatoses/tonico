@@ -22,11 +22,15 @@ const b = (id, o) => ({ id, nom: 'P' + id, sou: 1000, edat_anys: 26, edat_dies: 
   porteria: 1, defensa: 1, creativitat: 1, extrem: 1, passades: 1, anotacio: 1,
   pilota_aturada: 1, experiencia: 1, lideratge: 1, ...o });
 
+// TITULARS COMPLETS, no monotemàtics: amb el policultiu un jove amb creativitat 9 i la resta a
+// 1 li lleva la plaça a un titular que només té la seua habilitat, i llavors els entrenables
+// —que han d'eixir del RESIDU— es queden sense residu d'on eixir.
+const t = (o) => ({ defensa: 6, creativitat: 6, extrem: 6, passades: 6, anotacio: 6, ...o });
 const equip = [
-  b(1, { porteria: 9 }), b(2, { defensa: 8 }), b(3, { defensa: 7 }),
-  b(4, { creativitat: 14 }), b(5, { creativitat: 13 }), b(6, { creativitat: 12 }),
-  b(7, { extrem: 7 }), b(8, { extrem: 6 }),
-  b(9, { anotacio: 8 }), b(10, { anotacio: 7 }), b(11, { anotacio: 6 }),
+  b(1, t({ porteria: 12, defensa: 8 })), b(2, t({ defensa: 12 })), b(3, t({ defensa: 11 })),
+  b(4, t({ creativitat: 14 })), b(5, t({ creativitat: 13 })), b(6, t({ creativitat: 12 })),
+  b(7, t({ extrem: 11 })), b(8, t({ extrem: 10 })),
+  b(9, t({ anotacio: 12 })), b(10, t({ anotacio: 11 })), b(11, t({ anotacio: 10 })),
   // Tres joves per damunt del mínim de creativitat, i un segon porter barat.
   b(20, { creativitat: 9, edat_anys: 18 }), b(21, { creativitat: 8, edat_anys: 18 }),
   b(22, { creativitat: 7, edat_anys: 18 }),

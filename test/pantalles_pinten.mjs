@@ -44,11 +44,19 @@ sqlite.exec(`
     (2,1,'MC',22,17,3000,5000,NULL,5,1,1,1,1,4,1),(2,2,'DC',24,27,2000,4000,NULL,1,6,1,1,1,1,1),
     (2,3,'DV',28,37,9000,3000,NULL,1,1,1,5,1,1,1),
     -- Tres MC millors que el jove, per a que l'onze se'ls emporte i ell caiga a ENTRENABLE.
-    (2,5,'MC',24,0,3000,4000,NULL,9,1,1,1,1,1,1),(2,6,'MC',25,0,3000,4000,NULL,8,1,1,1,1,1,1),
-    (2,7,'MC',26,0,3000,4000,NULL,7,1,1,1,1,1,1),
-    (2,8,'DC',27,0,2000,3000,NULL,1,6,1,1,1,1,1),(2,9,'EX',24,0,2000,3000,NULL,1,1,1,1,6,1,1),
-    (2,10,'EX',25,0,2000,3000,NULL,1,1,1,1,5,1,1),(2,11,'DV',26,0,2000,3000,NULL,1,1,1,6,1,1,1),
-    (2,12,'DV',27,0,2000,3000,NULL,1,1,1,5,1,1,1),(2,13,'POR',28,0,2000,3000,NULL,1,1,7,1,1,1,1),
+    -- COMPLETS, no monotemàtics: amb el policultiu un lloc es guanya amb el conjunt, i uns
+    -- titulars amb una sola habilitat els desbanca qualsevol jove amb números mitjans — i
+    -- llavors no queda residu d'on puguen eixir els entrenables.
+    (2,5,'MC',24,0,3000,4000,NULL,9,6,2,6,6,6,2),(2,6,'MC',25,0,3000,4000,NULL,8,6,2,6,6,6,2),
+    (2,7,'MC',26,0,3000,4000,NULL,7,6,2,6,6,6,2),
+    -- ONZE CAPACES PER A ONZE LLOCS. Amb deu, l'onze havia d'omplir la plaça que faltava amb
+    -- algú del residu, i el que se n'anava era justament el jove: acabava de central amb una
+    -- diferència de −5,5 i la targeta d'entrenables eixia buida. La prova necessita que el
+    -- residu existisca, i el residu només existix si l'onze està cobert.
+    (2,4,'DC',26,0,2000,3000,NULL,6,8,2,6,6,6,2),
+    (2,8,'DC',27,0,2000,3000,NULL,6,9,2,6,6,6,2),(2,9,'EX',24,0,2000,3000,NULL,6,6,2,6,9,6,2),
+    (2,10,'EX',25,0,2000,3000,NULL,6,6,2,6,8,6,2),(2,11,'DV',26,0,2000,3000,NULL,6,6,2,9,6,6,2),
+    (2,12,'DV',27,0,2000,3000,NULL,6,6,2,8,6,6,2),(2,13,'POR',28,0,2000,3000,NULL,6,6,9,6,6,6,2),
     -- I el JOVE: creativitat 6, que és el mínim per a entrenar, i pitjor que els tres titulars
     -- de MC, o siga que cau al residu i és el que ha de portar el càlcul a la pantalla.
     (1,14,'MC',18,10,900,700,NULL,6,1,1,1,1,1,1),(2,14,'MC',18,17,900,700,NULL,6,1,1,1,1,1,1);

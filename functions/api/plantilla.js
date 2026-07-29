@@ -53,8 +53,13 @@ export async function onRequestGet({ env, data }) {
   }
 
   return json({ instantania: inst, jugadors,
-    onze_titular: est ? est.onze.map((l) => ({ bucket: l.bucket, habilitat: l.habilitat,
-      entrena: !!l.entrena, nivell_objectiu: l.nivell_objectiu, diferencia: l.diferencia, senyal: l.senyal,
+    // EL PERFIL VA A LA FILA. La pantalla ha de poder pintar, al costat de les habilitats que
+    // el jugador té, les que tindria el jugador ideal per a eixe lloc: és l'única manera de
+    // vore d'un colp d'ull què li falta. `mancances` és eixa resta ja feta, i `distancia` la
+    // mateixa cosa en un número per a ordenar.
+    onze_titular: est ? est.onze.map((l) => ({ bucket: l.bucket,
+      entrena: !!l.entrena, perfil_objectiu: l.perfil_objectiu, mancances: l.mancances,
+      distancia: l.distancia, senyal: l.senyal,
       jugador_id: l.jugador?.id ?? null })) : null,
     // ENTRENABLES: els joves que entrenaran als llocs del motor quan els titulars descansen, i
     // que es venen cars quan han crescut. Ixen del residu de l'onze, no d'una categoria.

@@ -15,7 +15,8 @@ import { ESTRATEGIES, falten as confFalten, llocsPartit } from '../lib/config.js
 import { souSostenible, perPeriode, reservaFlux, despesaPlanter, dadesVelles,
   fluxRepartible, pressupostPersonal, mitjanaSetmanal, calibrat } from '../lib/economia.js';
 import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
-import { pesLloc, pressupostSou, nivellObjectiu, carregaConfigPesos } from '../lib/pesos.js';
+import { pesLloc, pressupostSou, carregaConfigPesos, pesosHabilitat, contribucio,
+  equivalent, costHabilitat, souPerfil, perfilObjectiu, nivellsObjectiu } from '../lib/pesos.js';
 import { sobrecost } from '../lib/mancanca.js';
 import { urgent as esUrgent, motiuVenda, ordreVenda, desti, despatxable,
   subhastaDeserta } from '../lib/vendes.js';
@@ -29,7 +30,7 @@ import { entrenadorSostingut, nivellDelSou,
 import { guanyJugador, admissibleJugador, deltaManteniment, estadiCaduc, admissibleEstadi,
   eficiencia, decisioEstoc } from '../lib/estoc.js';
 import { nivellAccio, agrupaAlertes, ordenaAgenda } from '../lib/informe.js';
-import { necessitats, ambPreus, clauFitxatge } from '../lib/fitxatges.js';
+import { necessitats, ambPreus, clauFitxatge, cercaDe } from '../lib/fitxatges.js';
 import { REGLES } from '../lib/regles.js';
 import { entrenamentPrescrit, entrenamentJuvenil, placesEntrenament } from '../lib/entrenament_places.js';
 import { esLesionat } from '../public/format.js';
@@ -57,11 +58,16 @@ const optsMarge = () => ({ f_marge: MARGE.f_marge, marge_esperat: MARGE.marge_pl
 
 // Fixture del PAS 6, compartit per les seues fórmules. Els llocs arriben en l'orde de la
 // formació i amb PESOS distints, per a que es veja que qui tria primer és el pes.
+// Cada lloc porta els seus `pesos_habilitat`: la tria i la mesura van per CONTRIBUCIÓ, i un
+// fixture sense ells provaria una altra cosa. Ací en són d'una sola habilitat a posta —així
+// els números segueixen sent llegibles a ull—, i el policultiu es prova al PAS 2.
+const ph1 = (h) => ({ [h]: 1 });
+const perfil1 = (h, n) => ({ [h]: n });
 const LLOCS6 = [
-  { lloc: 'dav1', bucket: 'davanter', habilitat: 'anotacio', pes: 0.9, entrena: false },
-  { lloc: 'mc1', bucket: 'mc', habilitat: 'creativitat', pes: 1.4, entrena: true, pct: 100 },
-  { lloc: 'mc2', bucket: 'mc', habilitat: 'creativitat', pes: 1.4, entrena: true, pct: 100 },
-  { lloc: 'ext1', bucket: 'extrem', habilitat: 'extrem', pes: 1.1, entrena: true, pct: 50 },
+  { lloc: 'dav1', bucket: 'davanter', habilitat: 'anotacio', pesos_habilitat: ph1('anotacio'), pes: 0.9, entrena: false },
+  { lloc: 'mc1', bucket: 'mc', habilitat: 'creativitat', pesos_habilitat: ph1('creativitat'), pes: 1.4, entrena: true, pct: 100 },
+  { lloc: 'mc2', bucket: 'mc', habilitat: 'creativitat', pesos_habilitat: ph1('creativitat'), pes: 1.4, entrena: true, pct: 100 },
+  { lloc: 'ext1', bucket: 'extrem', habilitat: 'extrem', pesos_habilitat: ph1('extrem'), pes: 1.1, entrena: true, pct: 50 },
 ];
 const j6 = (id, o) => ({ id, nom: 'J' + id, sou: 1000, edat_anys: 26, edat_dies: 0,
   porteria: 1, defensa: 1, creativitat: 1, extrem: 1, anotacio: 1, passades: 1, pilota_aturada: 1, ...o });
@@ -360,17 +366,35 @@ const VERIFICADES = {
     // Les places BUIDES manen per damunt de qualsevol distància, i un sol nivell no és un
     // forat: s'arregla entrenant o esperant.
     const est = { entrenables: [], entrenables_max: 2, porter_suplent: null,
-      onze: [{ bucket: 'mc', nivell_objectiu: 9, diferencia: -1 },
-             { bucket: 'davanter', nivell_objectiu: 9, diferencia: -3 }] };
+      onze: [{ bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 1 },
+             { bucket: 'davanter', perfil_objectiu: { anotacio: 9, passades: 5 }, distancia: 3 }] };
     const n = necessitats(est, { entrenable_min: 6 });
     assert.equal(n[0].distancia, Infinity, 'una plaça buida va primer');
     assert.ok(!n.some((x) => x.bucket === 'mc' && x.tipus === 'lloc'), 'un sol nivell no és forat');
-    assert.ok(n.some((x) => x.clau === 'davanter:9'), 'i tres nivells sí');
+    assert.ok(n.some((x) => x.clau === 'davanter:ano9-pas5'), 'i tres nivells sí');
+  },
+  'P8.cerca': () => {
+    // EL PERFIL QUE MESURA ÉS EL PERFIL QUE ES BUSCA: mínim per habilitat, que és el que el
+    // cercador de Hattrick admet. Abans es demanava una sola habilitat a un lloc que en vol
+    // quatre, o siga que el filtre i la vara no parlaven de la mateixa cosa.
+    const perfil = { creativitat: 9, defensa: 6 };
+    const c = cercaDe({ tipus: 'lloc', bucket: 'mc', perfil }, { posicions: { mc: ['MC'] }, caixa: 1 });
+    assert.deepEqual(c.perfil, perfil);
+    assert.equal(c.habilitat, undefined, 'i ja no es demana una habilitat solta');
+    // L'ENTRENABLE SÍ que va per una: l'entrenament és d'UNA habilitat.
+    const e = cercaDe({ tipus: 'entrenable', bucket: 'mc', nivell: 6 },
+      { posicions: { mc: ['MC'] }, habilitats: { mc: 'creativitat' }, caixa: 1 });
+    assert.deepEqual(e.habilitat, { camp: 'creativitat', min: 6 });
   },
   'P8.clau': () => {
     // La clau és el TIPUS de fitxatge, no el lloc: dos llocs iguals són una sola cerca.
-    assert.equal(clauFitxatge('lloc', 'mc', 9), clauFitxatge('lloc', 'mc', 9));
-    assert.notEqual(clauFitxatge('lloc', 'mc', 9), clauFitxatge('lloc', 'mc', 10));
+    const A = { creativitat: 9, defensa: 6 };
+    assert.equal(clauFitxatge('lloc', 'mc', A), clauFitxatge('lloc', 'mc', { defensa: 6, creativitat: 9 }),
+      'dos llocs amb el mateix perfil són un sol fitxatge, escriga\'s com s\'escriga');
+    // I EL PREU ÉS D'EIXE JUGADOR, no d'«un mig centre»: si el pressupost mou el perfil, la
+    // clau canvia i el preu declarat deixa de valdre. Amb la clau vella («mc:9») el preu d'un
+    // jugador es reutilitzava per a un altre de més car.
+    assert.notEqual(clauFitxatge('lloc', 'mc', A), clauFitxatge('lloc', 'mc', { creativitat: 10, defensa: 6 }));
   },
 
   'P8.eficiencia': () => {
@@ -716,13 +740,63 @@ const VERIFICADES = {
   },
 
   // PAS 2/4 — el pes d'un lloc i el nivell que l'economia hi sosté. Números de la guia.
+  'P2.pes_sector': async () => {
+    // LES DUES CAPES, i les dues multiplicant SEMPRE: conversió (mesurada) × importància (§5).
+    const cj = async (k) => JSON.parse((await dbFix.prepare('SELECT valor FROM constants_joc WHERE clau=?').bind(k).first()).valor);
+    const [conv, imp] = [await cj('pesos_sector'), await cj('importancia_sector')];
+    assert.deepEqual(Object.keys(conv).sort(),
+      ['atac_banda', 'atac_central', 'defensa_banda', 'defensa_central', 'mig'],
+      'CINC sectors: defensa i atac del mateix costat no pesen igual');
+    assert.ok(conv.defensa_banda > conv.atac_banda, 'i la mesura ho diu: 0,304 contra 0,241');
+    const cfg = await carregaConfigPesos(dbFix, 'competitiva');
+    for (const s of Object.keys(conv)) {
+      assert.equal(cfg.pes_sector[s], conv[s] * imp[s], `${s}: el pes efectiu és el PRODUCTE`);
+    }
+    // I els poms vells se n'han anat: col·lapsaven sectors i portaven el mig set vegades inflat.
+    assert.equal(sqliteFix.prepare(
+      "SELECT COUNT(*) n FROM plantilles_parametres WHERE clau IN ('pes_mig','pes_central','pes_banda')").get().n, 0,
+      '`pes_mig` era l\'únic número que ens havíem inventat, i ja no hi és');
+  },
+  'P2.pesos_habilitat': () => {
+    // EL SECTOR I L'HABILITAT ELS DIU LA COLUMNA, i les que van per la mateixa habilitat
+    // se sumen: un lateral defén al centre i a la banda, i les dues són defensa.
+    const ps = { mig: 1, defensa_central: 0.36, defensa_banda: 0.255, atac_central: 0.36, atac_banda: 0.255 };
+    const ap = { Lat: { 'DC#Def': 0.35, 'Lat#Def': 0.92, 'AL#Ext': 0.59, 'Mig#Cre': 0.2 } };
+    const p = pesosHabilitat('Lat', ap, ps);
+    assert.equal(p.defensa, 0.35 * 0.36 + 0.92 * 0.255, 'les dues columnes de defensa, sumades');
+    assert.equal(p.extrem, 0.59 * 0.255);
+    assert.equal(p.creativitat, 0.2 * 1);
+    assert.equal(pesosHabilitat('cap', ap, ps), null, 'posició desconeguda → no se suposa');
+  },
   'P2.pes': () => {
-    // pes(lloc) = SUMA(sectors: aportacio × pes_sector). Guia §5: central .36, banda .255.
-    const ps = { mig: 1, central: 0.36, banda: 0.255 };
+    // pes(lloc) = SUMA(sectors: aportacio × pes_sector) = SUMA(pesos_habilitat): el que hi
+    // aportaria un jugador que ho tinguera tot a 1.
+    const ps = { mig: 1, defensa_central: 0.36, defensa_banda: 0.255, atac_central: 0.36, atac_banda: 0.255 };
     const ap = { Mig: { 'Mig#Cre': 1, 'DC#Def': 0.4, 'Lat#Def': 0.19, 'AC#Anot': 0.22, 'AC#Pas': 0.33, 'AL#Anot': 0.26 } };
     const aMa = 1 * 1 + 0.4 * 0.36 + 0.19 * 0.255 + 0.22 * 0.36 + 0.33 * 0.36 + 0.26 * 0.255;
     assert.equal(pesLloc('Mig', ap, ps), Math.round(aMa * 10000) / 10000);
     assert.equal(pesLloc('cap', ap, ps), null, 'posició desconeguda → no se suposa');
+    const suma = Object.values(pesosHabilitat('Mig', ap, ps)).reduce((a, b) => a + b, 0);
+    assert.equal(Math.round(suma * 10000) / 10000, pesLloc('Mig', ap, ps),
+      'el pes del lloc no és cap altra cosa que la suma dels seus pesos per habilitat');
+  },
+  'P2.contribucio': () => {
+    const ph = { defensa: 2, extrem: 1 };
+    assert.equal(contribucio({ defensa: 6, extrem: 8 }, ph), 20);
+    assert.equal(contribucio({ defensa: 7, extrem: 2 }, ph), 16);
+    assert.equal(contribucio({ defensa: 6, extrem: 8, porteria: 9 }, ph), 20,
+      'una habilitat que el lloc no gasta no aporta res');
+  },
+  'P2.equivalent': () => {
+    // LA VARA, i EN L'ESCALA DE HATTRICK: qui ho té tot a n val n, i per això `distancia_min`
+    // i tot el que es pinta es lligen igual que quan es mirava una sola habilitat.
+    const ph = { defensa: 2, extrem: 1 };
+    assert.equal(equivalent({ defensa: 9, extrem: 9 }, ph), 9);
+    // EL CAS QUE VA OBRIR EL V2: 6/8 val MÉS al lloc que 7/2 — i mirant només la defensa
+    // guanyava el segon, o siga que el sistema proposava canviar el bo pel roín.
+    assert.ok(equivalent({ defensa: 6, extrem: 8 }, ph) > equivalent({ defensa: 7, extrem: 2 }, ph));
+    assert.ok(6 < 7, 'i amb monocultiu la comparació era esta');
+    assert.equal(equivalent({ defensa: 9 }, null), null, 'sense pesos no s\'inventa cap vara');
   },
   'P4.pressupost_sou': () => {
     // pressupost_sou(lloc) = sou_sostenible × pes(lloc) / SUMA(pesos de TOTS ELS LLOCS)
@@ -736,13 +810,86 @@ const VERIFICADES = {
     const total = 2400 * 3 + 800 * 1;
     assert.equal(total, 8000, 'repartint per lloc, la suma torna a ser el sostre sencer');
   },
-  'P4.nivell_objectiu': () => {
-    // MAX(n : taula_salaris(hab, n) ≤ pressupost). Guia §8: creativitat 1→250, 2→270, 3→330.
-    const ts = { creativitat: { 1: 250, 2: 270, 3: 330 } };
-    assert.equal(nivellObjectiu('creativitat', 330, ts), 3);
-    assert.equal(nivellObjectiu('creativitat', 329, ts), 2);
-    assert.equal(nivellObjectiu('creativitat', 100, ts), 0, 'no arriba ni al primer');
-    assert.equal(nivellObjectiu('creativitat', null, ts), null);
+  'P4.cost_habilitat': async () => {
+    // Es busca amb l'ÍNDEX de la taula, que és el nivell de HT menys el desplaçament.
+    const cfg = await carregaConfigPesos(dbFix, 'competitiva');
+    const off = cfg.nivell_offset;
+    assert.equal(costHabilitat('creativitat', 5 + off, cfg.taula_salaris, off), 850,
+      'el «Formidable» de la guia §8, buscat amb el nivell de Hattrick');
+    assert.equal(costHabilitat('creativitat', off, cfg.taula_salaris, off), 0,
+      'per davall del mínim de la taula no es paga res');
+    // DUES ESCALES, i este és l'únic punt on es creuen. La taula de salaris comença en
+    // «Inadequate» (el 5é de HT) i les habilitats del CSV venen en l'escala sencera.
+    assert.equal(off, 4, 'el pont entre les dues escales està declarat, amb la seua font');
+    assert.equal(cfg.taula_salaris.creativitat['5'], 850, 'el nostre 5 és el Formidable de la guia');
+    assert.equal(5 + off, 9, 'i Formidable és el nivell 9 de Hattrick');
+    // I EL PERFIL VA EN L'ESCALA DE HATTRICK, no en índexs de la taula: si no, tot el que es
+    // compara amb un jugador eixiria quatre nivells curt.
+    const n = nivellsObjectiu(['mc', 'davanter', 'porter'], cfg, 20000);
+    for (const [lloc, v] of Object.entries(n)) {
+      for (const [hab, niv] of Object.entries(v.perfil_objectiu)) {
+        assert.ok(niv > off, `${lloc}/${hab}: el perfil va en l'escala de Hattrick`);
+      }
+    }
+  },
+  'P4.sou_perfil': async () => {
+    // base + la MÉS CARA sencera + `secundari` × la resta. D'ací ix que repartir siga barat.
+    const cfg = await carregaConfigPesos(dbFix, 'competitiva');
+    const { sou_formula: f, nivell_offset: off, taula_salaris: ts } = cfg;
+    const n = 5 + off;                                  // «Formidable»: defensa 730, extrem 550
+    const sol = souPerfil({ defensa: n }, ts, f, off);
+    assert.equal(sol, Math.round(f.base + costHabilitat('defensa', n, ts, off)),
+      'una sola habilitat: base + el seu cost');
+    assert.equal(souPerfil({ defensa: n, extrem: n }, ts, f, off),
+      Math.round(f.base + costHabilitat('defensa', n, ts, off)
+        + f.secundari * costHabilitat('extrem', n, ts, off)),
+      'la principal és la MÉS CARA, i la resta paga una fracció');
+    assert.equal(souPerfil({ extrem: n, defensa: n }, ts, f, off),
+      souPerfil({ defensa: n, extrem: n }, ts, f, off),
+      'i «principal» no vol dir «la primera que has escrit»');
+  },
+  'P4.perfil_objectiu': async () => {
+    // EL PRESSUPOST COMPRA UN PERFIL, NO UN NIVELL. La propietat que justifica tot el pas:
+    // amb el MATEIX sou, repartir aporta més que concentrar-ho tot en una habilitat.
+    const cfg = await carregaConfigPesos(dbFix, 'competitiva');
+    const { sou_formula: f, nivell_offset: off, taula_salaris: ts } = cfg;
+    const ph = pesosHabilitat('Lat', cfg.taula_aportacio, cfg.pes_sector);
+    const PRES = 4000;
+    const o = perfilObjectiu(ph, PRES, ts, f, { offset: off });
+    assert.ok(o.sou <= PRES, `el perfil no passa mai del pressupost (costa ${o.sou})`);
+    // El millor MONOCULTIU que cabia en el mateix pressupost: la vara vella. Les altres
+    // habilitats es queden al terra (`offset`), les MATEIXES que el perfil objectiu deixa
+    // sense pujar — si no, es compararia contra un jugador que a més no existix i qualsevol
+    // perfil guanyaria per l'esglaó de base, no per repartir.
+    const terra = Object.fromEntries(Object.keys(ph).map((h) => [h, off]));
+    const millorSol = Object.keys(ph).map((h) => {
+      let n = off;
+      while (n < off + 20 && souPerfil({ ...terra, [h]: n + 1 }, ts, f, off) <= PRES) n++;
+      return contribucio({ ...terra, [h]: n }, ph);
+    }).sort((a, b) => b - a)[0];
+    assert.ok(o.aportacio > millorSol,
+      `repartir aporta més pel mateix sou (${o.aportacio} contra ${millorSol})`);
+    // I més pressupost, mai menys aportació: la fórmula no pot castigar guanyar més.
+    assert.ok(perfilObjectiu(ph, PRES * 2, ts, f, { offset: off }).aportacio >= o.aportacio);
+    assert.equal(perfilObjectiu(ph, null, ts, f, { offset: off }), null, 'sense pressupost, res');
+  },
+  'P4.sou_objectiu': async () => {
+    const cfg = await carregaConfigPesos(dbFix, 'competitiva');
+    const n = nivellsObjectiu(['mc', 'davanter', 'porter'], cfg, 20000);
+    for (const [lloc, v] of Object.entries(n)) {
+      assert.equal(v.sou_objectiu,
+        souPerfil(v.perfil_objectiu, cfg.taula_salaris, cfg.sou_formula, cfg.nivell_offset),
+        `${lloc}: el sou objectiu és el DEL PERFIL, no el d'una habilitat`);
+      assert.ok(v.sou_objectiu <= v.pressupost_sou, `${lloc}: i cap dins del pressupost del lloc`);
+    }
+  },
+  'P4.aportacio_objectiu': async () => {
+    const cfg = await carregaConfigPesos(dbFix, 'competitiva');
+    const n = nivellsObjectiu(['mc', 'davanter', 'porter'], cfg, 20000);
+    for (const [lloc, v] of Object.entries(n)) {
+      assert.equal(v.aportacio_objectiu, contribucio(v.perfil_objectiu, v.pesos_habilitat),
+        `${lloc}: l'aportació objectiu és la contribució del perfil`);
+    }
   },
 
   // PAS 0 / PAS 3 / PAS 4 / PAS 7 / PAS 11 — les que quedaven declarades pendents amb
@@ -831,40 +978,43 @@ const VERIFICADES = {
     // QUANT LI FALTA al lloc. Un lloc SOBRAT no compta: no es pot arreglar comprant, perquè
     // l'assignació torna a donar el lloc al millor i el fitxatge se'n va al residu.
     const n = necessitats({ entrenables: [], entrenables_max: 0, porter_suplent: {}, onze: [
-      { bucket: 'mc', nivell_objectiu: 9, diferencia: -3 },
-      { bucket: 'porter', nivell_objectiu: 5, diferencia: 4 }] }, {});
+      { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 3 },
+      { bucket: 'porter', perfil_objectiu: { porteria: 5 }, distancia: 0 }] }, {});
     assert.deepEqual(n.map((x) => x.bucket), ['mc'], 'el sobrat no és una necessitat de mercat');
     assert.equal(n[0].distancia, 3, 'tres per davall → distància 3');
   },
   'P5.compta': () => {
     const n = necessitats({ entrenables: [], entrenables_max: 0, porter_suplent: {}, onze: [
-      { bucket: 'mc', nivell_objectiu: 9, diferencia: -1 },
-      { bucket: 'davanter', nivell_objectiu: 9, diferencia: -2 }] }, {});
+      { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 1 },
+      { bucket: 'davanter', perfil_objectiu: { anotacio: 9, passades: 5 }, distancia: 2 }] }, {});
     assert.deepEqual(n.map((x) => x.bucket), ['davanter'],
       'un sol nivell no és un forat: s\'arregla entrenant o esperant');
   },
   'P5.ordre': () => {
     const n = necessitats({ entrenables: [], entrenables_max: 2, porter_suplent: null, onze: [
-      { bucket: 'mc', nivell_objectiu: 9, diferencia: -2 },
-      { bucket: 'extrem', nivell_objectiu: 9, diferencia: -3 }] }, { entrenable_min: 6 });
+      { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 2 },
+      { bucket: 'extrem', perfil_objectiu: { extrem: 9, creativitat: 5 }, distancia: 3 }] }, { entrenable_min: 6 });
     assert.deepEqual(n.map((x) => x.tipus === 'lloc' ? x.bucket : x.tipus),
       ['entrenable', 'porter_suplent', 'extrem', 'mc'],
       'places buides primer, i després qui més lluny està');
   },
-  'P4.nivell_objectiu_ht': () => {
-    // DUES ESCALES. La taula de salaris comença en «Inadequate» (el 5é de HT) i les habilitats
-    // del CSV venen en l'escala sencera: la xifra comparable és l'índex més el desplaçament.
-    const off = Number(sqliteFix.prepare("SELECT valor FROM constants_joc WHERE clau='nivell_habilitat_offset'").get()?.valor);
-    assert.equal(off, 4, 'el pont entre les dues escales està declarat, amb la seua font');
-    // I es comprova contra la guia: el nostre 5 és el «Formidable» de la taula, que és el HT 9.
-    const taula = JSON.parse(sqliteFix.prepare("SELECT valor FROM constants_joc WHERE clau='taula_salaris'").get().valor);
-    assert.equal(taula.creativitat['5'], 850, 'el nostre 5 de creativitat és el Formidable de la guia');
-    assert.equal(5 + off, 9, 'i Formidable és el nivell 9 de Hattrick');
+  'P5.lloc_de': async () => {
+    // EL SEU LLOC és aquell on més APORTA, no aquell on té la millor habilitat solta: la
+    // mateixa vara amb què se'l tria.
+    const cfg = await carregaConfigPesos(dbFix, 'competitiva');
+    const n = nivellsObjectiu(['porter', 'defensa', 'mc', 'extrem', 'davanter'], cfg, 100000);
+    const llocDe = (j) => Object.entries(n)
+      .map(([l, v]) => ({ l, ap: equivalent(j, v.pesos_habilitat) ?? 0 }))
+      .sort((a, b) => b.ap - a.ap)[0].l;
+    assert.equal(llocDe({ porteria: 9 }), 'porter');
+    assert.equal(llocDe({ anotacio: 9 }), 'davanter', 'un davanter no es mesura contra el mig centre que mai serà');
+    assert.equal(llocDe({ creativitat: 9 }), 'mc');
   },
   'P5.sobrecost': () => {
-    const ts = { creativitat: { 3: 330 } };
-    assert.equal(sobrecost({ sou: 900 }, 'creativitat', 3, ts), 570);
-    assert.equal(sobrecost({ sou: 300 }, 'creativitat', 3, ts), 0, 'MAX(0; …)');
+    // CONTRA EL SOU DEL PERFIL que el lloc paga, no contra el preu d'una sola habilitat.
+    assert.equal(sobrecost({ sou: 900 }, 330), 570);
+    assert.equal(sobrecost({ sou: 300 }, 330), 0, 'MAX(0; …)');
+    assert.equal(sobrecost({ sou: 900 }, null), null, 'sense sou objectiu no s\'inventa cap sobrecost');
   },
 
   // PAS 6 — L'ASSIGNACIÓ. Es reparteixen TOTS els jugadors, lloc a lloc, i el que sobra és
@@ -874,9 +1024,18 @@ const VERIFICADES = {
     // Els MC pesen més i trien primer: s'enduen els dos millors creatius encara que el 3
     // fora millor davanter. El davanter tria després, amb el que li queda.
     assert.deepEqual(onze.map((l) => l.jugador?.id), [3, 1, 2, 4],
-      'els llocs de més PES trien primer, i l\'eixida va en l\'orde de la formació');
+      'les parelles de més valor afegit es reparteixen primer, i l\'eixida va en l\'orde de la formació');
     const ids = onze.map((l) => l.jugador?.id).filter(Boolean);
     assert.equal(new Set(ids).size, ids.length, 'un jugador, un lloc');
+    // PER PARELLES, NO PER ORDE DE LLOCS — i este és el cas que ho va obrir. La porteria pesa
+    // MENYS que el davanter, així que triava després; el davanter mirava qui li rendia més i
+    // s'enduia el porter (anotació 6 contra 5), i sota pals es quedava el que no en sap.
+    // Amb parelles, porter×9 (9,9) val més que davanter×6 (8,4) i es reparteix abans.
+    const LL = [{ lloc: 'dav', bucket: 'davanter', habilitat: 'anotacio', pesos_habilitat: ph1('anotacio'), pes: 1.4 },
+      { lloc: 'por', bucket: 'porter', habilitat: 'porteria', pesos_habilitat: ph1('porteria'), pes: 1.1 }];
+    const r = assignaEstructura([j6(1, { porteria: 9, anotacio: 6 }), j6(2, { porteria: 0, anotacio: 5 })], LL);
+    assert.equal(r.onze.find((l) => l.lloc === 'por').jugador.id, 1, 'el porter, sota pals');
+    assert.equal(r.onze.find((l) => l.lloc === 'dav').jugador.id, 2, 'i el davanter, de davanter');
   },
   'P6.sobrants': () => {
     const { onze, sobrants } = assignaEstructura(SQUAD6, LLOCS6);
@@ -884,12 +1043,27 @@ const VERIFICADES = {
       'onze ∪ sobrants = plantilla, sense repetits ni perduts');
     assert.deepEqual(sobrants.map((x) => x.id).sort((a, b) => a - b), [5, 6]);
   },
-  'P6.diferencia': () => {
-    const llocs = LLOCS6.map((l) => ({ ...l, nivell_objectiu: 8 }));
+  'P6.mancances': () => {
+    // QUÈ LI FALTA AL LLOC per a ser el de la plantilla ideal, habilitat a habilitat.
+    const llocs = LLOCS6.map((l) => ({ ...l, perfil_objectiu: perfil1(l.habilitat, 8) }));
     const { onze } = assignaEstructura(SQUAD6, llocs);
-    assert.equal(onze.find((l) => l.lloc === 'mc1').diferencia, 1, 'CR 9 contra objectiu 8');
-    assert.equal(onze.find((l) => l.lloc === 'mc2').diferencia, -1, 'i CR 7, un per davall');
+    assert.deepEqual(onze.find((l) => l.lloc === 'mc2').mancances, { creativitat: 1 },
+      'CR 7 contra un perfil de 8: li falta 1');
     assert.equal(onze.find((l) => l.lloc === 'mc2').senyal, 'baix');
+    // EL QUE SOBRA NO ÉS UN FORAT: el tapa del tot. Amb la distància absoluta este eixiria
+    // tan lluny com el que no hi arriba, i el lloc se l'enduria el mediocre que s'ajusta.
+    assert.deepEqual(onze.find((l) => l.lloc === 'mc1').mancances, {}, 'CR 9 contra 8: res');
+    assert.equal(onze.find((l) => l.lloc === 'mc1').senyal, 'alt');
+    // I NO ES COMPENSA ENTRE HABILITATS: el forat d'una no el tapa el sobrant d'una altra.
+    const dosHab = [{ lloc: 'x', bucket: 'mc', habilitat: 'creativitat', pes: 1,
+      pesos_habilitat: { creativitat: 3, defensa: 1 },
+      perfil_objectiu: { creativitat: 9, defensa: 6 } }];
+    const r = assignaEstructura([j6(1, { creativitat: 12, defensa: 1 })], dosHab).onze[0];
+    assert.deepEqual(r.mancances, { defensa: 5 },
+      'li sobra creativitat i li falta defensa, i les dues coses es diuen per separat');
+    assert.equal(r.distancia, 5 / 4, 'el forat ponderat pel pes de cada habilitat al lloc');
+    assert.equal(assignaEstructura([], dosHab).onze[0].mancances, null,
+      'un lloc sense ningú no té forat: té un buit, que és un altre senyal');
   },
   'P6.entrenables_n': async () => {
     const r = await est6();
@@ -897,7 +1071,10 @@ const VERIFICADES = {
   },
   'P6.entrenables': async () => {
     const r = await est6();
-    assert.deepEqual(r.entrenables.map((x) => x.id), [100, 101, 102],
+    // Els millors en l'habilitat entrenada DELS QUE SOBREN. El 100 (creativitat 9) ja no hi
+    // és: amb el policultiu se'n va a l'onze, perquè al lloc d'extrem la creativitat aporta
+    // més que l'habilitat d'extrem mateixa (matriu de la guia §4) i cap dels vells la té.
+    assert.deepEqual(r.entrenables.map((x) => x.id), [101, 102, 103],
       'els millors en l\'habilitat entrenada, i només dels que NO han entrat a l\'onze');
     const dins = new Set(r.onze.map((l) => l.jugador?.id));
     assert.ok(r.entrenables.every((x) => !dins.has(x.id)), 'ixen del residu, no es dupliquen');
@@ -1158,5 +1335,4 @@ for (const [id, prova] of Object.entries(DIVERGENTS)) {
   assert.ok(formules.some((f) => f.id === base), `divergència sobre un id inexistent: ${base}`);
   console.log(`  DIVERGENT vigent: ${id} — ${prova()}`);
 }
-console.log(`  pendents per pas: ${Object.entries(perPas).map(([p, n]) => `${p}:${n}`).join(' ')}`);
-console.log('  → l\'única que queda penja del PAS 10 (Juvenils): vore J-01 a docs/FORATS.md.');
+if (pendents.length) console.log(`  pendents per pas: ${Object.entries(perPas).map(([p, n]) => `${p}:${n}`).join(' ')}`);

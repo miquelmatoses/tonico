@@ -25,6 +25,11 @@ export const decimal = (n, d = 1) => (n == null || n === '' ? '' : Number(n).toF
 export const signat = (n) => (n == null || n === '' ? '—'
   : Number(n) > 0 ? '+' + milers(n) : milers(n));
 
+// UN FORAT es llig sempre en negatiu, i el zero és zero. Ve d'una distància, que mai és
+// negativa: «li falten dos nivells» s'escriu «−2» perquè eixa és la lectura de tota la columna
+// des de sempre, i «0» vol dir que no li falta res — no que estiga just.
+export const forat = (n) => (n == null || n === '' ? '—' : Number(n) > 0 ? '−' + milers(n) : '0');
+
 export const percent = (n) => (n == null || n === '' ? '' : milers(Math.round(Number(n))) + '%');
 
 // Edat Hattrick: «17a 34d» (anys + dies). Degrada amb dades parcials: sense dies →

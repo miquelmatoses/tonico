@@ -198,6 +198,11 @@ button { font-family: var(--font); cursor: pointer; }
   text-align: right; font-variant-numeric: tabular-nums; }
 .skills { font-family: var(--mono); font-size: 11px; color: var(--gris); letter-spacing: -.3px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* DUES LÍNIES a la mateixa cel·la: damunt el jugador ideal d'este lloc, davall el que hi tens.
+   Van en la mateixa font monoespaiada i el mateix orde d'habilitats, que és el que permet
+   comparar-les d'un colp d'ull sense llegir-les. */
+.skills span { display: block; }
+.skills-ideal { color: var(--gris-clar); }
 .cel-cat { font-size: 11px; }
 
 /* ══ PÍNDOLES D'ESTAT ══ */

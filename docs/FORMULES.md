@@ -1,7 +1,7 @@
 # FULL DE FÓRMULES DE TONICO
 
 > ⚖️ **CONTRACTE · FONT DE VERITAT.** Aprovat per Miquel (v3: 2026-07-24 · v3.1:
-> 2026-07-26). Mana sobre
+> 2026-07-26 · v3.2: 2026-07-29). Mana sobre
 > qualsevol codi, doctrina o document anterior. El codi de Tonico és un avaluador
 > d'estes fórmules i res més. Mirall llegible per màquina:
 > [`formules.json`](../formules.json). El rastre de què es va decidir i per què:
@@ -121,12 +121,42 @@ d'Entrenament — allí l'entrenador i la confirmació tindran on viure.
 pos_A(pct) = FILTRA(`taula_entrenament`; habilitat = A)     → MC 100%, extrem 50%
 pos_B      = FILTRA(`taula_entrenament`; habilitat = B)
 entrenable(lloc) = lloc ∈ pos_A
+pes_sector(s) = `pesos_sector`[s] × `importancia_sector`[s]
+   [DUES CAPES, i les dues multipliquen SEMPRE, a TOTS els processos. Aplicar-ne una a
+    un procés i l'altra a un altre seria tornar a tindre dues nocions de «què val un
+    lloc» convivint, que és l'error que hem estat matant tot el projecte.
+    · CONVERSIÓ (`pesos_sector`): quants punts de qualificació del sector dona una
+      habilitat. MESURADA com el quocient entre les dues taules del wiki —coeficients
+      contra percentatges—, 28 cel·les de sis posicions (migració 110).
+    · IMPORTÀNCIA (`importancia_sector`): quant val GUANYAR eixe sector. Guia §5: 36%
+      de les ocasions pel centre, 25,5% per costat, i el mig 1,0 perquè decidix QUI té
+      l'ocasió, no on. NO és mesurable —les dues taules del wiki ja estan en punts de
+      qualificació—: és la primera hipòtesi i el COMANDAMENT per a afinar el sistema.
+      Es comprova mirant si dominar el mig dobla les ocasions als informes de partit]
+   [CINC SECTORS, no tres: `pes_central` i `pes_banda` col·lapsaven defensa i atac, i
+    la mesura diu que no pesen igual (banda defensiva 0,304, atacant 0,241). Amb ells
+    se'n va `pes_mig`, l'únic número que ens havíem inventat mai (migració 111)]
+pesos_habilitat(lloc, h) = SUMA(columnes de `taula_aportacio`[lloc] que van per h:
+                                aportacio × pes_sector(sector de la columna))
+   [EL SECTOR I L'HABILITAT ELS DIU LA COLUMNA: `DC#Def` és defensa central amb la
+    defensa, `AL#Ext` és atac de banda amb l'extrem. Així una columna nova a la matriu
+    no es queda muda per oblit]
+   [`taula_aportacio` ÉS EL WIKI: «Skill contribution», verificada cel·la a cel·la
+    contra «Contribution» (migració 112). Ja no reparteix pressupost i prou —decidix
+    qui juga i quin perfil compra cada lloc—, o siga que una cel·la mal transcrita no
+    és un decimal, és una recomanació al revés]
 pes(lloc)  = SUMA(sectors: aportacio(lloc, sector) × pes_sector(sector))
-   aportacio  ← `taula_aportacio` (matriu posició × sector, guia §4)
-   pes_sector ← distribució d'ocasions de la guia §5:
-      mig                    = `pes_mig`   [pom; decidix QUI té l'ocasió, no on]
-      atac/defensa central   = `pes_central` [0,36 — 36% de les ocasions pel mig]
-      bandes (cada costat)   = `pes_banda`   [0,255 — 25,5% per costat]
+   [= SUMA(pesos_habilitat(lloc)): el pes d'un lloc no és cap altra cosa que el que hi
+    aportaria un jugador que ho tinguera tot a 1]
+contribucio(j, lloc) = SUMA(habilitats: pesos_habilitat(lloc, h) × hab(j, h))
+equivalent(j, lloc)  = contribucio(j, lloc) / SUMA(pesos_habilitat(lloc))
+   [LA VARA ÚNICA, i EN L'ESCALA DE HATTRICK: la mitjana de les habilitats del jugador
+    ponderada per quant importa cada una AHÍ. Per això `distancia_min` i tot el que es
+    pinta segueixen llegint-se igual que quan es mirava una sola habilitat.
+    UN LLOC NO EL DEFINIX UNA HABILITAT. El lateral aporta amb defensa, extrem i
+    creativitat, i amb els pesos d'ara un amb defensa 6 i extrem 8 val 6,04 mentres un
+    amb defensa 7 i extrem 2 val 5,28. Mirant només la defensa guanyava el segon, i el
+    sistema proposava canviar el bo pel roín]
    [FORA `N_core`, `N_rotatius` i `max_partits`: comptaven places de la
     classificació vella (core, rotatiu, cos), que no existix. El que en queda viu
     —quantes places d'entrenament hi ha— és `entrenables_n`, al PAS 6]
@@ -217,37 +247,73 @@ sou_sostenible_setmanal = sou_sostenible / `setmanes_periode`
    [`taula_salaris` va en €/setmana: ací es torna a unitats setmanals, i este és
     l'ÚNIC punt on es fa el canvi d'unitat]
 pressupost_sou(lloc)  = sou_sostenible_setmanal × pes(lloc) / SUMA(pesos de tots els llocs)
+cost_habilitat(h, n)  = BUSCA(`taula_salaris`; h, n − `nivell_habilitat_offset`)
+   [DUES ESCALES. La taula de salaris de la guia §8 comença en «Inadequate», el 5é
+    esglaó de Hattrick: els quatre primers (disastrous · wretched · poor · weak) es van
+    deixar fora perquè per a tot el que no és porteria valen 250 € igual. Les habilitats
+    dels jugadors, en canvi, venen del CSV en l'escala SENCERA. El nostre nivell 5 val
+    2.250 de porteria i 850 de creativitat: eixa fila de la guia és «Formidable», el
+    HT 9. Per davall del mínim de la taula no es paga res]
+sou_perfil(perfil) = `sou_formula`: base + cost_habilitat(principal)
+                                        + factor × SUMA(cost_habilitat(la resta))
+   [«principal» = la que MÉS SOU COSTA, no la de nivell més alt; `factor` és
+    `secundari_alt` quan la principal arriba a `llindar_alt`, i `secundari` si no.
+    Wiki «Wages»: recerca d'usuaris, i el wiki mateix avisa que no és oficial]
+perfil_objectiu(lloc) = MAX(contribucio(perfil, lloc)
+                            : sou_perfil(perfil) ≤ pressupost_sou(lloc))
+   [EL PRESSUPOST D'UN LLOC NO COMPRA UN NIVELL, COMPRA UN PERFIL. El sou és EXPONENCIAL
+    per nivell i les secundàries només en paguen una fracció, mentre la contribució és
+    LINEAL: concentrar-ho tot en una habilitat és sempre la manera CARA de comprar
+    contribució. Amb els mateixos diners el perfil repartit aporta entre un 14% i un 66%
+    més segons el lloc]
+   [S'HI ARRIBA VORAÇ: es puja nivell a nivell, sempre pel que més aportació afig per
+    euro. No és demostradament òptim —«la més cara compta sencera» trenca la
+    separabilitat i l'exacte demanaria explorar combinacions—, i ja bat el monocultiu de
+    llarg, que és el que es volia arreglar]
+sou_objectiu(lloc)       = sou_perfil(perfil_objectiu(lloc))
+aportacio_objectiu(lloc) = contribucio(perfil_objectiu(lloc), lloc)
+   [EL PERFIL ÉS L'OBJECTIU, i no se'n trau cap número resum. Hi havia `nivell_objectiu`
+    —el nivell més alt d'UNA habilitat que el pressupost pagava— i després
+    `nivell_objectiu_ht`, l'equivalent del perfil: el primer era el monocultiu i el segon
+    el monocultiu disfressat, perquè aplanava quatre habilitats en una xifra i deixava
+    passar per «aliniat» un mig centre amb creativitat 12 i defensa 1.
+    Contra el perfil es mesura (`mancances`, PAS 6) i amb el perfil es busca (PAS 8):
+    un sol càlcul, dos usos]
 habilitat_lloc(lloc)  = BUSCA(`taula_habilitat_lloc`; lloc)   [POR→porteria,
                         DC/lateral→defensa, MC→creativitat, extrem→extrem, DAV→anotació]
-nivell_objectiu(lloc) = MAX(n : BUSCA(`taula_salaris`; habilitat_lloc(lloc), n)
-                                ≤ pressupost_sou(lloc))      ← taula de la guia
-nivell_objectiu_ht(lloc) = nivell_objectiu(lloc) + `nivell_habilitat_offset`
-   [DUES ESCALES, i esta és la que es compara. La taula de salaris de la guia §8
-    comença en «Inadequate», el 5é esglaó de Hattrick: els quatre primers
-    (disastrous · wretched · poor · weak) es van deixar fora perquè per a tot el
-    que no és porteria valen 250 € igual. Les habilitats dels jugadors, en canvi,
-    venen del CSV en l'escala SENCERA. El nostre nivell 5 val 2.250 de porteria i
-    850 de creativitat: eixa fila de la guia és «Formidable», el HT 9]
+   [JA NO DECIDIX RES: es queda per a la pantalla i per al filtre de cerca quan només
+    se'n pot demanar una]
 ```
 
 ## PAS 5 — LA DISTÀNCIA A L'OBJECTIU
 
 ```
-distància(lloc) = MAX(0; −diferència(lloc))          [diferència: vore PAS 6]
-   [QUANT LI FALTA al lloc per a arribar al que el flux paga. Un lloc amb algú
-    per DAMUNT està igual de fora de lloc, però no compta ací: no es pot arreglar
-    comprant. L'assignació tria per a cada lloc el millor de l'habilitat, o siga
-    que si fitxes algú al nivell prescrit, el que ja hi era —que és millor— es
-    torna a quedar el lloc i el nou se'n va al residu. L'única acció possible és
-    vendre el sobrat, i eixa la diu el `sobrecost`]
-   [EN L'ESCALA DE HATTRICK als dos costats. Restar l'índex de la taula de
-    salaris d'un `hab(jugador)` deixava TOTES les distàncies quatre nivells
-    curtes: un objectiu de «Formidable» (HT 9) contra un jugador amb CR 8
-    donava 0]
+distància(lloc) = SUMA(h: pesos_habilitat(lloc, h) × mancances(lloc, h))
+                  / SUMA(pesos_habilitat(lloc))       [mancances: vore PAS 6]
+   [EL FORAT DEL LLOC EN UN NÚMERO, per a poder ordenar les necessitats. És el vector de
+    mancances projectat amb els pesos del lloc: el que li falta d'una habilitat que ahí
+    importa poc, pesa poc. El que es PINTA és el vector; este número només ordena]
+   [EN L'ESCALA DE HATTRICK, la mateixa que el perfil, o siga que `distancia_min` seguix
+    volent dir «dos nivells». Restar l'índex de la taula de salaris d'un `hab(jugador)`
+    deixava TOTES les distàncies quatre nivells curtes: un objectiu de «Formidable»
+    (HT 9) contra un jugador amb CR 8 donava 0]
+   [i un lloc amb algú per DAMUNT no genera distància: no es pot arreglar comprant.
+    L'assignació torna a donar el lloc al millor, o siga que el fitxatge se n'aniria al
+    residu. L'única acció possible és vendre el sobrat, i eixa la diu el `sobrecost`]
 compta(lloc)    = distància(lloc) ≥ `distancia_min`
    [menys de dos nivells no és un forat: s'arregla entrenant o esperant]
-sobrecost(j)    = MAX(0; sou(j) − BUSCA(`taula_salaris`; habilitat_lloc(lloc(j));
-                                        nivell_objectiu(lloc(j))))
+lloc_de(j)      = ARGMAX(llocs; equivalent(j, lloc))
+   [EL SEU LLOC és aquell on més APORTA, no aquell on té la millor habilitat solta: la
+    mateixa vara amb què se'l tria. Un davanter es mesura contra el que paga un davanter,
+    no contra el mig centre que mai serà]
+sobrecost(j)    = MAX(0; sou(j) − sou_objectiu(lloc_de(j)))
+   [CONTRA EL SOU DEL PERFIL que el lloc paga, no contra el preu d'UNA habilitat al seu
+    nivell. La vara vella deixava fora el que costen les secundàries —les mateixes que
+    ara SÍ que compten per a triar el jugador—, o siga que premiava un jugador complet
+    per a la tria i el castigava pel sou: dues vares oposades]
+   [NO DESCOMPTA ELS RECÀRRECS. Un estranger cobra un +20% i un especialista un +10% que
+    no compren cap contribució, i `sou_objectiu` no en porta cap: els dos ixen com a
+    sobrecost. Assumit com a DEFECTE DEL SISTEMA, no resolt]
 
 ORDRE DE LES NECESSITATS = places buides PRIMER; després distància DESC
    [una plaça d'entrenament buida o un porter suplent que falta van per damunt de
@@ -267,14 +333,33 @@ taula: estat derivat que es quedava ranci i que cada pantalla tornava a derivar 
 compte. Ara es reparteixen **tots** els jugadors, lloc a lloc, i el que sobra és el residu.
 
 ```
-onze      = PER lloc en ORDENA(llocs; pes(lloc) DESC):
-               PRIMER(ORDENA(FILTRA(lliures); hab(j, habilitat_lloc) DESC,
-                                              sou ASC, id ASC))
-   [PER PES: el lloc que més aporta tria primer. A igualtat d'habilitat mana el
-    SOU, perquè dos que rendixen igual no valen igual]
+onze      = REPARTIX ORDENA(lloc × jugador; pes(lloc) × equivalent(j, lloc) DESC,
+                            sou ASC, id ASC)     [cada lloc u, cada jugador u]
+   [PER PARELLES, NO PER ORDE DE LLOCS. Recórrer els llocs per pes i que cada un
+    s'enduga el millor lliure bastava amb monocultiu —la porteria no servia per a res
+    més que per a la porteria—, però amb CONTRIBUCIÓ un jugador complet val a tot arreu
+    i el porter és el lloc que MENYS pesa: es triava l'últim, el millor porter se
+    l'enduia el davanter i sota pals quedava un central.
+    Ara es mira el VALOR AFEGIT de cada parella —pes del lloc × el que el jugador hi
+    aporta, que és contribucio(j, lloc) mateix— i es reparteix de major a menor. A
+    igualtat mana el SOU, perquè dos que rendixen igual no valen igual]
 sobrants  = plantilla − onze
-diferència(lloc) = hab(ocupant, habilitat_lloc) − nivell_objectiu_ht(lloc)
-   [el senyal de la fila: negatiu = curt, positiu = passat de nivell]
+mancances(lloc, h) = MAX(0; perfil_objectiu(lloc, h) − hab(ocupant, h))
+   [HI HA UNA PLANTILLA IDEAL —onze llocs, cada un amb el perfil que el seu pressupost
+    paga— I UNA DE REAL. L'única feina del sistema és acostar la segona a la primera, i
+    açò és eixa resta, habilitat a habilitat. Comprar, vendre, entrenar i pujar juvenils
+    són quatre maneres de baixar este número]
+   [NOMÉS EL QUE FALTA, mai el que sobra. Un jugador millor que el perfil no deixa cap
+    forat: el tapa del tot. Amb la distància absoluta, un que supera el perfil quedaria
+    tan lluny com un que no hi arriba, i el sistema donaria el lloc al mediocre que
+    s'ajusta i enviaria el bo a venda — el monocultiu al revés]
+   [I NO ES COMPENSA ENTRE HABILITATS. Un sol número que fera la mitjana deixava passar
+    un mig centre amb creativitat 12 i defensa 1 com si estiguera al seu lloc]
+   [l'excés NO queda impune, però no es cobra ací: es cobra en EUROS (`sobrecost`, PAS
+    5). El sou és el que va dibuixar la plantilla ideal, o siga que si en gastes més del
+    que este lloc tenia assignat, eixe diner li falta a un altre lloc i el forat es veu
+    allí. Cobrar-lo als dos costats seria comptar-lo dues vegades, i en nivells — una
+    unitat que no és la seua]
 
 entrenables_n = COMPTA(llocs que entrenen al 100%) × (`partits_setmana` − 1)
    [un per cada partit EXTRA de la setmana: és quan el titular descansa]
@@ -330,7 +415,7 @@ motiu_venda(j) = SI(j ∉ cap grup de l'assignació;                  "sobrant";
                  SI(calibrat I sobrecost(j) > 0;                   "sou desproporcionat";
                  SI(j ∈ venda;                                     "sobrant"; ∅)))
    [SENSE CALIBRAR NO ES DESFÀ DE NINGÚ PEL SOU. `sobrecost` penja de
-    nivell_objectiu, que penja del flux: mentre el flux siga soroll, este motiu ho
+    sou_objectiu, que penja del flux: mentre el flux siga soroll, este motiu ho
     seria també. Els altres dos no en depenen —l'edat i l'estructura de plantilla— i
     seguixen funcionant]
 venda_activa(j)= motiu_venda(j) ≠ ∅  I  ¬desert(j)
@@ -399,9 +484,19 @@ necessitats = places BUIDES d'entrenament i de porter suplent  → distància = 
    [una plaça d'entrenament buida és entrenament perdut cada setmana i no es
     recupera; un lloc de l'onze fluix, almenys, juga. Per això les buides manen.
     I un sol nivell de distància s'arregla entrenant o esperant: no és un forat]
-clau(necessitat) = el TIPUS de fitxatge (bucket + nivell), no el lloc
-   [«un mig centre de nivell 9» val el mateix per als tres llocs de mig centre:
-    és una sola cerca i un sol preu]
+clau(necessitat) = el TIPUS de fitxatge (bucket + perfil_objectiu), no el lloc
+   [els tres llocs de mig centre comparteixen perfil: és una sola cerca i un sol preu]
+   [EL PERFIL SENCER, no un nivell. El preu no és el d'«un mig centre», és el d'un mig
+    centre amb estes habilitats: el dia que el pressupost puge, el perfil canvia, la clau
+    canvia i el preu vell deixa de valdre. Amb «mc:9» el preu d'un jugador es reutilitzava
+    per a un altre de més car]
+   [i no obliga a redeclarar res cada setmana: el preu només es demana quan hi ha
+    necessitat, i una necessitat no apareix fins que el forat passa `distancia_min`. Com a
+    molt hi ha un preu per bucket de la formació]
+cerca(necessitat) = el perfil, com a MÍNIM PER HABILITAT
+   [el cercador de Hattrick ho admet, o siga que el perfil que mesura és el perfil que es
+    busca: un sol càlcul, dos usos. Abans es demanava una sola habilitat a un lloc que en
+    vol quatre, i el filtre no era el que la vara mesurava]
 cost        = `preus_referencia`[clau]                → DECLARAT, mai estimat
    [a Hattrick el preu NO el calcula el joc: el paga un altre mànager en una
     subhasta. La velocitat d'entrenament sí que és fórmula i es va desxifrar;
@@ -664,7 +759,7 @@ Cap moviment derivat encadena efectes irreversibles.
 ## RESTRICCIONS (invariants; cada una un test de contracte)
 
 1. Una variable, una fórmula, una font (preu_esperat, calendari, llistat,
-   nivell_objectiu).
+   perfil_objectiu).
 2. Derivar > preguntar: el que el CSV o una taula dona, mai es demana.
 3. Cap decisió de compra amb diners no cobrats; cap compra que deixe el flux per
    davall de `reserva_flux`.
@@ -684,7 +779,8 @@ Cap moviment derivat encadena efectes irreversibles.
 13. GOLDEN DE PANTALLA: render(fixture) = avaluador(fixture), valor a valor (G3).
 14. Vocabulari únic: lloc de partit · lloc entrenable · onze · entrenable ·
     futur entrenador · porter suplent · venda · despatxar · sobrant · distància ·
-    sobrecost · flux · estoc · flux_lliure. Cap sinònim.
+    sobrecost · flux · estoc · flux_lliure · contribució · equivalent ·
+    perfil objectiu · sou objectiu. Cap sinònim.
     [FORA `core`, `rotatiu`, `titular`, `cos` i `retingut`: eren els grups de la
      classificació del PAS 6, i el PAS 6 ara és l'assignació]
 15. PRECONDICIÓ DEL PAS 0: cap derivació que depenga del PAS 0 s'executa amb el PAS 0
@@ -755,6 +851,44 @@ amb la demostració de cada error, a [`docs/FORATS.md`](FORATS.md).
    moviments** sencera (formulari, llista, API i l'alerta que reclamava l'import d'una
    venda): amb la caixa declarada, apuntar moviment a moviment no alimentava cap decisió.
    I els ingressos es declaren **per setmana, literals**, així que cap factor 2 els toca.
+
+## v3.2 · 2026-07-29 · EL POLICULTIU (V2 del motor de recomanació)
+
+Cada lloc es jutjava per UNA habilitat (`taula_habilitat_lloc`: lateral → defensa). Ara es
+jutja per la CONTRIBUCIÓ sencera, que la matriu `taula_aportacio` ja tenia i que només
+gastàvem per a pesar els llocs. El cas que ho va obrir: un lateral és 68% defensa i 27%
+extrem, o siga que un amb defensa 6 i extrem 8 val més (6,04) que un amb defensa 7 i extrem
+2 (5,28) — i el sistema proposava canviar el bo pel roín.
+
+19. **`contribucio` i `equivalent` (PAS 2)**: la vara única. `equivalent` queda en l'escala
+   de Hattrick, o siga que tot el que es pintava i `distancia_min` es lligen igual.
+20. **DUES CAPES de pes de sector, i les dues sempre** (migracions 110 i 111): la CONVERSIÓ
+   (`pesos_sector`, mesurada del wiki, 28 cel·les, CINC sectors) multiplicada per la
+   IMPORTÀNCIA (`importancia_sector`, guia §5). Amb elles se'n va `pes_mig`, l'únic número
+   que ens havíem inventat mai; el que queda —la importància— és UN paràmetre fent UNA
+   feina i és el comandament per a afinar el sistema.
+21. **El pressupost d'un lloc compra un PERFIL, no un nivell** (PAS 4): `perfil_objectiu`,
+   `sou_objectiu` i `aportacio_objectiu`. Se'n va `nivell_objectiu`
+   —el nivell més alt d'una sola habilitat que el sou pagava—, que era la manera CARA de
+   comprar contribució. Amb ell entra `sou_formula` (wiki «Wages»).
+22. **L'assignació va per PARELLES** (PAS 6), no per orde de llocs. Va reparar un forat de
+   veres: el porter és el lloc que menys pesa i es triava l'últim, així que el millor
+   porter se l'enduia el davanter.
+23. **`sobrecost` contra el SOU DEL PERFIL** que el lloc paga (PAS 5), no contra el preu
+   d'una habilitat. Amb la vara vella es premiava el jugador complet per a la tria i se'l
+   castigava pel sou. NO descompta els recàrrecs d'estranger (+20%) ni d'especialitat
+   (+10%): defecte assumit.
+24. **Les variants d'orde individual de la matriu es queden en NORMAL** i no es trien: la
+   fletxa és una decisió de PARTIT, i Tonico no gestiona el partit.
+25. **La matriu, clavada al wiki** (migració 112): amb el monocultiu `taula_aportacio` només
+   repartia pressupost i un error de transcripció no es notava. Verificada cel·la a cel·la
+   contra les dues taules; divuit files de vint quadraven. Les dues que no: l'atac de banda
+   d'un mig centre va per PASSADES i el teníem com a anotació (guanyava el rematador quan
+   havia de guanyar el passador), i el davanter normal tenia quatre cel·les d'una revisió
+   anterior — una d'elles contradient la mesura que la 110 diu haver fet.
+26. **`preus_referencia` buidat** (migració 109): la clau era el TIPUS de fitxatge
+   («mc:9») i amb perfils eixa clau no correspon a res. La cerca amb perfil és feina
+   pendent del PAS 8.
 
 ## PROCÉS
 

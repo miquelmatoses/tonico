@@ -2,7 +2,7 @@
 // funció fa el seu fetch i pinta dins del seu contenidor. Els errors s'aïllen
 // per secció (una que falla no tomba la pàgina). HTML semàntic, reset mínim.
 import { api, el, t, tp, filaSegura } from '/comu.js';
-import { diners, milers, decimal, percent, signat, edat, notes, esLesionat, duradaLesio, ambXifres } from '/format.js';
+import { diners, milers, decimal, percent, signat, forat, edat, notes, esLesionat, duradaLesio, ambXifres } from '/format.js';
 
 const SIGLA = { porteria: 'PO', defensa: 'DF', creativitat: 'CR', extrem: 'EX', passades: 'PA', anotacio: 'AN', pilota_aturada: 'PP' };
 const opc = async (p) => { try { return await p; } catch { return null; } };
@@ -45,7 +45,13 @@ const CAMP = {
 };
 const BUCKET_SIGLA = { porter: 'POR', defensa: 'DC', mc: 'MC', extrem: 'EX', davanter: 'DV' };
 // L'habilitat que mesura cada lloc: per a dir «un de creativitat 9» i no «un de mc 9».
-const BUCKET_HAB = { porter: 'porteria', defensa: 'defensa', mc: 'creativitat', extrem: 'extrem', davanter: 'anotacio' };
+// EL PERFIL EN TEXT: mínim per habilitat, que és literalment el que has de teclejar al
+// cercador de Hattrick. Substituïx el «creativitat 9» d'abans, que li demanava una sola
+// habilitat a un lloc que en vol quatre.
+const perfilTxt = (p) => Object.entries(p ?? {}).map(([h, n]) => `${t('hab.' + h)} ≥ ${n}`).join(' · ');
+// El nom del LLOC. Abans es deia amb el nom d'una habilitat («un jugador de creativitat»), que
+// era el vocabulari del monocultiu: un mig centre no és «creativitat».
+const bucketTxt = (b) => t('bucket.' + b);
 // slots: [{bucket, jugador?/nom}]; opts.anell(s)→''|'ple'|'mig'|'doble'|'descobriment'|'buit',
 // opts.nom(s), opts.titol(s). El color del xip és la POSICIÓ; l'ANELL és l'entrenament.
 function campDeJoc(slots, opts) {
@@ -284,7 +290,18 @@ export async function plantilla(main) {
     venda: aVenda, despatxar: aDespatxar, aturats } = await api('/api/plantilla');
   if (!instantania) { main.append(el('p', { text: t('plantilla.buit') })); return; }
   main.append(el('p', { text: t('plantilla.instantania', { temporada: instantania.temporada, setmana: instantania.setmana_temporada, data: instantania.data }) }));
-  const hab = (j) => `PO${j.porteria} DF${j.defensa} CR${j.creativitat} EX${j.extrem} PA${j.passades} AN${j.anotacio} PP${j.pilota_aturada}`;
+  // Les habilitats sempre en el MATEIX ORDE, les del jugador i les del perfil: si no, les dues
+  // línies no es poden llegir una damunt de l'altra.
+  const ABR = [['porteria', 'PO'], ['defensa', 'DF'], ['creativitat', 'CR'], ['extrem', 'EX'],
+    ['passades', 'PA'], ['anotacio', 'AN'], ['pilota_aturada', 'PP']];
+  // AMPLE FIX PER CASELLA: la font és monoespaiada i les dues línies han de caure una damunt de
+  // l'altra. Si l'ideal es pintara només amb les habilitats que gasta, «CR9» quedaria damunt de
+  // «PO1» i les dues línies no es podrien comparar sense llegir-les.
+  const casella = (txt) => txt.padEnd(5);
+  const hab = (j) => ABR.map(([h, a]) => casella(a + j[h])).join('');
+  // El perfil deixa EN BLANC les habilitats que el lloc no gasta: ahí no li falta res, i un
+  // zero diria una altra cosa.
+  const perfilHab = (p) => (p ? ABR.map(([h, a]) => casella(p[h] == null ? '' : a + p[h])).join('') : '');
   // L'ONZE TITULAR va primer i porta els seus ONZE LLOCS, buits inclosos: un lloc sense ningú
   // és el senyal més fort que hi ha. Els qui hi entren no es repetixen a les altres targetes.
   if (onze) {
@@ -306,11 +323,11 @@ export async function plantilla(main) {
         meta.append(el('span', { text: `${edat(j.edat_anys, j.edat_dies)} · ${j.especialitat || '—'}` }));
         if (esLesionat(j.lesio)) meta.append(el('span', { class: 'pill perill', text: t('comu.lesionat_durada', { n: duradaLesio(j.lesio) ?? '?' }) }));
       }
-      // L'última cel·la: contra QUÈ es mesura este lloc i quin nivell paga el flux. És la vara,
-      // i va a la mateixa fila que l'ocupant per a poder-los llegir d'un colp d'ull.
-      const vara = el('div', { class: 'vara' },
-        el('span', { class: 'vara-hab', text: t('hab.' + l.habilitat) }),
-        el('b', { text: l.nivell_objectiu ?? '—' }));
+      // L'última cel·la: el SOU. Ací hi havia la vara —«creativitat 9»—, i era vocabulari del
+      // motor vell: deia UNA habilitat quan el lloc en vol quatre. El que el lloc vol ara es
+      // llig damunt de les habilitats del jugador, i este espai el guanya el sou, que és
+      // l'altra meitat de la decisió i ja es pinta igual a les fitxes de venda.
+      const vara = el('div', { class: 'vara' }, el('b', { text: j ? diners(j.sou) : '—' }));
       return el('div', { class: j ? 'fila' : 'fila buit' },
         el('div', { class: 'fila-qui' },
           el('div', { class: posCls(sigla), text: sigla }),
@@ -318,9 +335,13 @@ export async function plantilla(main) {
         // La columna diu QUANT LI FALTA O LI SOBRA per a l'objectiu del lloc, no la puntuació
         // de la seua categoria: onze jugadors mesurats amb fórmules distintes a la mateixa
         // columna no es podien comparar entre ells.
-        el('div', { class: 'punts ' + (l.senyal ?? ''), text: j ? signat(l.diferencia) : '—' }),
+        el('div', { class: 'punts ' + (l.senyal ?? ''), text: j ? forat(l.distancia) : '—' }),
         el('div', { class: 'tsi', text: j ? 'TSI ' + (j.tsi ?? '—') : '' }),
-        el('div', { class: 'skills', text: j ? hab(j) : '' }),
+        // LES DUES LÍNIES: damunt, el jugador ideal per a este lloc; davall, el que hi tens.
+        // Les habilitats que el lloc no gasta no ixen dalt — ahí no li falta res per definició.
+        el('div', { class: 'skills' },
+          el('span', { class: 'skills-ideal', text: perfilHab(l.perfil_objectiu) }),
+          el('span', { text: j ? hab(j) : '' })),
         vara);
     }, 1));
     main.append(tarja);
@@ -613,10 +634,7 @@ function bucleEstoc(main, e) {
         ? t('estoc.opcio_estadi', ambXifres({ cost: e.recomanada.cost,
             manteniment: e.recomanada.delta_manteniment }, ['cost', 'manteniment']))
         : tp('estoc.opcio_jugador', e.recomanada.mancanca,
-            ambXifres({ lloc: e.recomanada.lloc, habilitat: t('hab.' + e.recomanada.habilitat),
-              // El nivell es diu pel seu NOM de Hattrick. Les claus van indexades pel nivell de
-              // Tonico: fer «n + 4» ací seria aritmètica de domini a la vista (invariant 12).
-              nivell: t('nivell_ht.' + e.recomanada.nivell_objectiu),
+            ambXifres({ lloc: bucketTxt(e.recomanada.bucket), perfil: perfilTxt(e.recomanada.perfil),
               mancanca: e.recomanada.mancanca, cost: e.recomanada.cost }, ['cost'])) })));
     if (e.recomanada.tipus === 'estadi') {
       const bFent = el('button', { type: 'button', class: 'b-prim', text: t('estoc.obra_fent') });
@@ -634,10 +652,9 @@ function bucleEstoc(main, e) {
     ['col_que', 'col_per_que', 'col_cost'].map((k) => t('estoc.' + k)),
     e.opcions.filter((o) => o.tipus === 'jugador').map((o) => el('div', { class: 'graella-fila-d c-estoc' },
       el('span', { text: (o.motiu === 'placa_entrenament_buida'
-        ? t('mercat.nec_entrenable_1', { n: 1, nivell: o.nivell_objectiu })
+        ? t('mercat.nec_entrenable_1', { n: 1, nivell: o.nivell })
         : o.motiu === 'sense_porter_suplent' ? t('mercat.nec_porter_suplent')
-          : t('mercat.nec_lloc_1', { n: 1,
-              lloc: t('hab.' + (BUCKET_HAB[o.bucket] || o.bucket)), nivell: o.nivell_objectiu }))
+          : t('mercat.nec_lloc_1', { n: 1, lloc: bucketTxt(o.bucket), perfil: perfilTxt(o.perfil) }))
         + (o.varis ? ' ' + t('estoc.de_quants', { i: o.ordinal, n: o.de }) : '') }),
       el('span', { text: t('mercat.nec_' + o.motiu) }),
       el('span', { class: 'graella-val', text: o.varis
@@ -667,7 +684,7 @@ export async function mercat(main) {
       preu.addEventListener('change', desar);
       const etiqueta = n.tipus === 'porter_suplent' ? t('mercat.nec_porter_suplent')
         : n.tipus === 'entrenable' ? tp('mercat.nec_entrenable', n.quants, { n: n.quants, nivell: n.nivell })
-          : tp('mercat.nec_lloc', n.quants, { n: n.quants, lloc: t('hab.' + (BUCKET_HAB[n.bucket] || n.bucket)), nivell: n.nivell });
+          : tp('mercat.nec_lloc', n.quants, { n: n.quants, lloc: bucketTxt(n.bucket), perfil: perfilTxt(n.perfil) });
       // ELS CRITERIS DE CERCA, al costat del preu: és el que Miquel ha de teclejar a Hattrick
       // per a mirar les últimes transferències i tornar el número.
       const camps = el('div', { class: 'filtre-camps' });
@@ -679,6 +696,7 @@ export async function mercat(main) {
       camp('posicions', (c.posicions || []).join(' / '));
       if (c.edat_min != null && c.edat_max != null) camp('edat', t('mercat.rang', { min: c.edat_min, max: c.edat_max }));
       if (c.habilitat?.camp) camp('habilitat', `${t('hab.' + c.habilitat.camp)} ≥ ${c.habilitat.min}`);
+      if (c.perfil) camp('perfil', perfilTxt(c.perfil));
       if (c.mes_barat) camp('criteri', t('mercat.mes_barat'));
       camp('pressupost', c.sense_caixa ? t('mercat.sense_pressupost') : diners(c.pressupost));
       camps.append(el('label', { class: 'decl-camp' },

@@ -33,21 +33,29 @@ sqlite.exec(`
     (10,1,110,'F1',NULL),(11,1,111,'F2',NULL),(12,1,112,'F3',NULL),(13,1,113,'F4',NULL),
     (14,1,114,'F5',NULL),(15,1,115,'F6',NULL),(16,1,116,'F7',NULL),(17,1,117,'F8',NULL),
     (18,1,118,'F9',NULL),(19,1,119,'F10',NULL),(20,1,120,'F11',NULL);
+  -- EL «SOBRANT» ÉS EL PITJOR DE TOTS, sense discussió. Este fitxer prova la marca de la
+  -- subhasta deserta, no l'assignació: si el deixem a la frontera, qualsevol canvi al motor de
+  -- recomanació el fica a l'onze i la prova deixa de provar el que vol.
   -- LA SETMANA PASSADA: tots dos llistats (transferible=1).
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (1,1,'2026-07-19',83,1);
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, transferible, ${HAB}) VALUES
-    (1,1,1,'MC',25,5,4,4,3,3,3,1), (1,2,1,'MC',24,7,5,6,3,3,3,1);
+    (1,1,1,'MC',25,2,2,2,2,2,2,1), (1,2,1,'MC',24,9,8,8,7,7,7,2);
   -- ESTA SETMANA: ja no ho són, i seguixen a la plantilla → ningú els ha volgut.
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (2,1,'2026-07-26',83,2);
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, transferible, ${HAB}) VALUES
-    (2,1,NULL,'MC',25,5,4,4,3,3,3,1), (2,2,NULL,'MC',24,7,5,6,3,3,3,1);
+    (2,1,NULL,'MC',25,2,2,2,2,2,2,1), (2,2,NULL,'MC',24,9,8,8,7,7,7,2);
   -- El farciment, millor que el «Sobrant» a cada lloc i pitjor que el «Retingut» al mig.
+  --
+  -- Amb el POLICULTIU «millor a cada lloc» vol dir millor EN CONJUNT, no en una sola habilitat:
+  -- un farciment amb un 8 i la resta a 1 el guanya qualsevol amb números mitjans a tot arreu, i
+  -- llavors el «Sobrant» entrava a l'onze i deixava de ser sobrant — que és tot el que este
+  -- fitxer vol comprovar. Ara el farciment és sòlid a tot i excel·lent al seu lloc.
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, transferible, ${HAB}) VALUES
-    (2,10,NULL,'POR',26,1,1,1,1,1,1,9),(2,11,NULL,'DC',26,1,8,1,1,1,1,1),(2,12,NULL,'DC',26,1,7,1,1,1,1,1),
-    (2,13,NULL,'MC',26,6,1,1,1,1,1,1),(2,14,NULL,'MC',26,6,1,1,1,1,1,1),
-    (2,15,NULL,'EX',26,1,1,1,7,1,1,1),(2,16,NULL,'EX',26,1,1,1,6,1,1,1),
-    (2,17,NULL,'DV',26,1,1,1,1,8,1,1),(2,18,NULL,'DV',26,1,1,1,1,7,1,1),(2,19,NULL,'DV',26,1,1,1,1,6,1,1),
-    (2,20,NULL,'DC',26,1,6,1,1,1,1,1);
+    (2,10,NULL,'POR',26,6,6,6,6,6,6,9),(2,11,NULL,'DC',26,6,9,6,6,6,6,2),(2,12,NULL,'DC',26,6,8,6,6,6,6,2),
+    (2,13,NULL,'MC',26,6,6,6,6,6,6,2),(2,14,NULL,'MC',26,6,6,6,6,6,6,2),
+    (2,15,NULL,'EX',26,6,6,6,9,6,6,2),(2,16,NULL,'EX',26,6,6,6,8,6,6,2),
+    (2,17,NULL,'DV',26,6,6,6,6,9,6,2),(2,18,NULL,'DV',26,6,6,6,6,8,6,2),(2,19,NULL,'DV',26,6,6,6,6,7,6,2),
+    (2,20,NULL,'DC',26,6,7,6,6,6,6,2);
 `);
 const req = { env: { DB: db }, data: { usuari: { id: 1 } } };
 
@@ -81,14 +89,14 @@ assert.ok(!aFitxes().has(1) && !aFitxes().has(2),
 sqlite.exec(`
   INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES (3,1,'2026-08-02',83,3);
   INSERT INTO instantanies_jugadors (instantania_id, jugador_id, transferible, ${HAB}) VALUES
-    (3,1,NULL,'MC',25,5,4,4,3,3,3,1), (3,2,NULL,'MC',24,7,5,6,3,3,3,1),
+    (3,1,NULL,'MC',25,2,2,2,2,2,2,1), (3,2,NULL,'MC',24,9,8,8,7,7,7,2),
     -- El farciment també a esta instantània: si no, l'última només tindria dos jugadors, tots
     -- dos serien titulars i cap seria sobrant.
-    (3,10,NULL,'POR',26,1,1,1,1,1,1,9),(3,11,NULL,'DC',26,1,8,1,1,1,1,1),(3,12,NULL,'DC',26,1,7,1,1,1,1,1),
-    (3,13,NULL,'MC',26,6,1,1,1,1,1,1),(3,14,NULL,'MC',26,6,1,1,1,1,1,1),
-    (3,15,NULL,'EX',26,1,1,1,7,1,1,1),(3,16,NULL,'EX',26,1,1,1,6,1,1,1),
-    (3,17,NULL,'DV',26,1,1,1,1,8,1,1),(3,18,NULL,'DV',26,1,1,1,1,7,1,1),(3,19,NULL,'DV',26,1,1,1,1,6,1,1),
-    (3,20,NULL,'DC',26,1,6,1,1,1,1,1);
+    (3,10,NULL,'POR',26,6,6,6,6,6,6,9),(3,11,NULL,'DC',26,6,9,6,6,6,6,2),(3,12,NULL,'DC',26,6,8,6,6,6,6,2),
+    (3,13,NULL,'MC',26,6,6,6,6,6,6,2),(3,14,NULL,'MC',26,6,6,6,6,6,6,2),
+    (3,15,NULL,'EX',26,6,6,6,9,6,6,2),(3,16,NULL,'EX',26,6,6,6,8,6,6,2),
+    (3,17,NULL,'DV',26,6,6,6,6,9,6,2),(3,18,NULL,'DV',26,6,6,6,6,8,6,2),(3,19,NULL,'DV',26,6,6,6,6,7,6,2),
+    (3,20,NULL,'DC',26,6,7,6,6,6,6,2);
 `);
 await marcaDeserts(db, 1);
 v = await (await vendes.onRequestGet(req)).json();
