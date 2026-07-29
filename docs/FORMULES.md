@@ -59,6 +59,12 @@ setmana_actual  = f_calendari(HUI, `ancora`)
 llistat(j)      = csv.transferible(j) = 1  O  fitxa.llistada(j)
 lesionat(j)     = csv.lesio(j) ≥ 1                      [font: buit | N setmanes]
 sancionat(j)    = csv.amonestacions(j) ≥ `amonestacions_suspensio`   [3; només lliga]
+   [LA ROJA I LA GROGA VAN A LA MATEIXA COLUMNA: una groga escriu 1 i una roja escriu
+    3, el mateix que tres grogues. O siga que «té roja» i el llindar de sanció són el
+    mateix número (observat el 2026-07-29)]
+   [ho consumix el PAS 10, que decidix qui juga. L'onze del PAS 6 és ESTRUCTURAL i no
+    mira ni lesions ni sancions a posta: diu qui ha d'ocupar el lloc, no qui pot jugar
+    dissabte]
 edat_d(j)       = anys(j)×112 + dies(j)   ·   dies_aniversari(j) = 112 − dies(j)
 fase_mercat(d)  = BUSCA(`fases_mercat`; setmana(d)) → modificador (FRACCIÓ, mai enter)
 ```
@@ -182,6 +188,15 @@ sou_sostenible   = MAX(0; ingressos_recurrents − reserva_flux
                           − (despeses_fixes − per_periode(nòmina)))
    [= les despeses recurrents no poden passar del (1 − `reserva_flux_pct`) dels
     ingressos recurrents. La reserva és POLÍTICA DE RISC declarada, no mecànica]
+ACCIÓ("gastes més del que entra") SI flux < reserva_flux
+   [EL LLINDAR NO ÉS ZERO, ÉS LA RESERVA: la línia de dalt ja diu que les despeses
+    recurrents no poden passar del (1 − `reserva_flux_pct`) dels ingressos. Menjar-se
+    la reserva és el senyal; el negatiu és el mateix senyal més fort]
+   [i NO espera a `calibrat`: amb poques setmanes la mitjana és provisional i pot
+    pujar, però la despesa és exacta i el desequilibri és real HUI. El sistema
+    calculava el flux i no el deia enlloc —la píndola es va llevar de la pantalla i el
+    `sobrecost` està tancat fins a `setmanes_mitjana`—, o siga que el dèficit existia,
+    estava calculat, i era mut]
 caixa            = saldo real declarat (mai projectat)
    [= «Diners disponibles» de l'informe, no «diners al final de setmana». NO hi ha
     `caixa_disponible`: la reserva d'estoc no s'ha usat mai i una derivada que val

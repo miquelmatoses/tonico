@@ -107,6 +107,35 @@ assert.equal(vista.pla.principal, pomA.valor,
   assert.ok(Number.isFinite(sv.lloc.valor), 'i el que es pinta ha de ser un número, no un NaN');
 }
 
+// ── (e) LA ROJA BLOQUEJA, I VA A LA COLUMNA DE LES AMONESTACIONS ─────────────────────────
+// El pla comprovava `f.expulsat`, i eixe camp NO EXISTIX: ni a l'esquema, ni a l'adaptador, ni
+// enlloc. La condició no s'ha executat mai. La roja i la groga van a la MATEIXA columna del
+// CSV i una roja s'escriu com un 3 —el mateix que tres grogues—, o siga que «té roja» i el
+// llindar de sanció són el mateix número. L'oracle és el pom, no el codi.
+{
+  const llindar = Number(sqlite.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='amonestacions_suspensio'").get().valor);
+  const { plaJuvenilComplet } = await import('../lib/orquestra_juvenil.js');
+  const jid = vista.juvenils[0].jugador_id;
+  const files = async () => (await db.prepare(
+    'SELECT ij.*, j.nom, j.id AS jugador_id FROM instantanies_juvenils ij JOIN jugadors j ON j.id=ij.jugador_id WHERE ij.instantania_id=(SELECT MAX(id) FROM instantanies WHERE equip_id=2)').all()).results;
+
+  const net = await plaJuvenilComplet(db, 1, await files(), 'competitiva');
+  assert.ok(!net.bloquejats.includes(jid), 'sense amonestacions no està bloquejat');
+
+  // Una GROGA no bloqueja.
+  sqlite.prepare('UPDATE instantanies_juvenils SET amonestacions=1 WHERE jugador_id=?').run(jid);
+  const groga = await plaJuvenilComplet(db, 1, await files(), 'competitiva');
+  assert.ok(!groga.bloquejats.includes(jid), 'una groga no bloqueja ningú');
+
+  // La ROJA sí, i el número el diu el pom.
+  sqlite.prepare('UPDATE instantanies_juvenils SET amonestacions=? WHERE jugador_id=?').run(llindar, jid);
+  const roja = await plaJuvenilComplet(db, 1, await files(), 'competitiva');
+  assert.ok(roja.bloquejats.includes(jid),
+    `amb ${llindar} amonestacions ha d'estar bloquejat: no pot jugar, ni entrena, ni gasta missatge`);
+  assert.ok(!roja.onze.some((l) => l.jugador_id === jid), 'i no ocupa cap plaça d\'entrenament');
+  sqlite.prepare('UPDATE instantanies_juvenils SET amonestacions=NULL WHERE jugador_id=?').run(jid);
+}
+
 // ── (d) LA PLANTILLA ROÏNA TAMBÉ TÉ ALINEACIÓ ────────────────────────────────────────────
 // Si tots estan capats per davall del llistó, cap passada col·loca ningú i tot el pla és la
 // cua. Eixe és justament el dia que més falta fa saber què fer, i «–» deu vegades no ho diu.

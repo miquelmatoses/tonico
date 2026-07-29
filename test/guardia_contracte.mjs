@@ -604,6 +604,23 @@ const VERIFICADES = {
   // PAS 3 — el flux decidix el sou sostenible; l'estoc, la compra d'hui.
   // P3.esta_setmana / P3.data — QUINES DUES SETMANES ES DECLAREN NO ES PREGUNTA: esta és la de
   // hui i la passada la de fa set dies, i la data que es guarda és la VORA de cada una.
+  'P3.accio': async () => {
+    // ACCIÓ("gastes més del que entra") SI flux < reserva_flux. El llindar NO és zero.
+    const { REGLES } = await import('../lib/regles.js');
+    const eco = (ingressos, despeses, pct = 0.05) => ({ economia: {
+      ingressos_recurrents: ingressos, despeses_fixes: despeses, flux: ingressos - despeses,
+      reserva_flux: ingressos * pct, setmanes_periode: 1 } });
+    const clau = (e) => REGLES.ALR_GASTA_MES(e, { urgencia: 90 }).map((x) => x.missatge_clau);
+    assert.deepEqual(clau(eco(100000, 110000)), ['alerta.gasta_mes'], 'en negatiu, ho diu');
+    assert.deepEqual(clau(eco(100000, 98000)), ['alerta.gasta_reserva'],
+      'i en positiu però per davall de la reserva, TAMBÉ: el llindar és la reserva');
+    assert.deepEqual(clau(eco(100000, 90000)), [], 'amb la reserva coberta, res');
+    // No espera a calibrar: amb dues setmanes declarades el desequilibri ja és real.
+    assert.equal(REGLES.ALR_GASTA_MES({ economia: { ...eco(100000, 110000).economia, calibrat: false } },
+      { urgencia: 90 }).length, 1, 'no espera a calibrar');
+    assert.equal(REGLES.ALR_GASTA_MES({ economia: { flux: null } }, { urgencia: 90 }).length, 0,
+      'i sense flux no s\'inventa cap dèficit');
+  },
   'P3.esta_setmana': async () => {
     const anc = { data: (await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='calendari_ancora_data'").first()).valor,
       temporada: 83, anyDies: 112 };

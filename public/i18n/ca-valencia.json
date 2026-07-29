@@ -196,6 +196,8 @@
   "comu.temporada_setmana": "T{t} · setmana {s}",
   "comu.temporada": "T{t}",
   "comu.idioma": "Idioma",
+  "alerta.gasta_mes": "Gastes {despeses}/setmana i n'entren {ingressos}: perds {diferencia} cada setmana.",
+  "alerta.gasta_reserva": "Les despeses ({despeses}/setmana) es mengen la reserva: dels {ingressos} que entren només queden {diferencia} de marge.",
   "alerta.entrenador_millorable": "Els ingressos ja sostenen un entrenador de nivell {sostingut} ({cost} €/setmana) i el teu és de nivell {actual}. És l'única palanca que multiplica tot l'entrenament; millorar-lo es paga d'un colp, de caixa.",
   "alerta.contracte_personal_1": "Al contracte de {nom} li queda 1 dia. És l'únic moment en què li pots moure el nivell sense pagar l'acomiadament.",
   "alerta.contracte_personal_n": "Al contracte de {nom} li queden {dies} dies. És l'únic moment en què li pots moure el nivell sense pagar l'acomiadament.",

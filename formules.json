@@ -441,6 +441,19 @@
       "taules": []
     },
     {
+      "id": "P3.accio",
+      "pas": "P3",
+      "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",
+      "clau": "ACCIÓ",
+      "linia": "ACCIÓ(\"gastes més del que entra\") SI flux < reserva_flux",
+      "entrades": [
+        "flux",
+        "reserva_flux"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
       "id": "P3.caixa",
       "pas": "P3",
       "pasTitol": "ECONOMIA (calculada ABANS de qualsevol decisió de plantilla)",

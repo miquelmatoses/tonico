@@ -18,9 +18,20 @@ tests: `test/flux_estoc.mjs` i `test/guardia_golden.mjs` reprodueixen els seus n
 
 # OBERTS
 
-**Cap.**
+**E-01 · L'entrenador té vara però no calaix.** `quota_entrenador` (10%) diu quin nivell
+sostenen els ingressos i avisa quan el sostingut passa el que tens. És una VARA: no lleva
+diner a ningú. Que competisca de veres pel flux amb els especialistes és una segona decisió,
+i és de Miquel.
 
-El PAS 10 està construït (migracions 098-100, `lib/juvenil_pla.js` i `lib/orquestra_juvenil.js`),
-i l'única fórmula que G1 encara declara pendent és **`V.hores`**: el full diu que el reinici de
+**J-02 · Els amistosos no es compten.** El joc en dona un cada tres setmanes i la projecció
+juvenil només compta els partits de lliga, o siga que va curta. Conservadora, però curta.
+
+L'única fórmula que G1 encara declara pendent és **`V.hores`**: el full diu que el reinici de
 la crida al cercapromeses va per país, i eixa maquinària s'ha retirat sencera perquè el
 cercapromeses no el jutja Tonico. Queda al full com a variable descrita i sense consumidor.
+
+**TAPAT el 2026-07-29** — la codificació de la targeta roja. Va una groga i una roja al mateix
+partit i les dues van a la columna `Amonestacions`: la groga escriu 1 i la roja escriu 3, el
+mateix que tres grogues. O siga que «té roja» i `amonestacions_suspensio` són el mateix número.
+El pom s'havia esborrat a la 092 per «sense lector» —i era cert— i el pla juvenil comprovava un
+camp `expulsat` que no existix enlloc: la condició no s'havia executat mai.

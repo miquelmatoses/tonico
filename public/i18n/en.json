@@ -197,6 +197,8 @@
   "comu.temporada_setmana": "S{t} · week {s}",
   "comu.temporada": "S{t}",
   "comu.idioma": "Language",
+  "alerta.gasta_mes": "You spend {despeses}/week and take in {ingressos}: you lose {diferencia} every week.",
+  "alerta.gasta_reserva": "Spending ({despeses}/week) is eating the reserve: of the {ingressos} coming in, only {diferencia} of margin is left.",
   "alerta.entrenador_millorable": "Your income now sustains a level {sostingut} coach ({cost} €/week) and yours is level {actual}. It is the only lever that multiplies all training; upgrading is a one-off payment from cash.",
   "alerta.contracte_personal_1": "{nom}'s contract has 1 day left. It's the only moment you can move the level without paying the sacking cost.",
   "alerta.contracte_personal_n": "{nom}'s contract has {dies} days left. It's the only moment you can move the level without paying the sacking cost.",
