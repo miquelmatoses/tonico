@@ -17,7 +17,7 @@ export async function onRequestGet({ env, data }) {
   const { results: totsJugadors } = await env.DB.prepare(
     `SELECT j.id AS jugador_id, j.nom, j.especialitat, ij.posicio_ultim_partit AS posicio, ij.edat_anys,
             ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada,
-            ij.lleialtat, ij.qualificacio_ultim_partit, ij.sou, ij.lesio, ij.transferible,
+            ij.lleialtat, ij.qualificacio_ultim_partit, ij.sou, ij.lesio, ij.amonestacions, ij.transferible,
             ij.edat_dies, ij.experiencia, ij.lideratge, ij.tsi,
             ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada,
             v.data_llistada, v.estat, v.resultat_pendent

@@ -202,6 +202,34 @@ assert.deepEqual(trencades, [], 'pantalles que no es pinten netes:\n  ' + trenca
     'i cada lloc que entrena al 50%, anell mig');
 }
 
+// ── LA SANCIÓ HA D'ARRIBAR FINS A L'ASSIGNACIÓ ───────────────────────────────────────────
+// L'avaluador comprovava `j.amonestacions` i la columna NO ESTAVA AL SELECT de cap dels quatre
+// endpoints que l'alimenten. La lògica era bona i la dada no arribava mai: una roja no treia
+// ningú de l'onze. Per això açò es prova CONTRA L'API i no cridant l'avaluador amb objectes
+// fets a mà — amb objectes a mà, el forat no existix.
+{
+  const { onRequestGet } = await import('../functions/api/plantilla.js');
+  const ctx = { env: { DB: db }, data: { usuari: { id: 1 } } };
+  const llindar = Number(sqlite.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='amonestacions_suspensio'").get().valor);
+  const abans = await (await onRequestGet(ctx)).json();
+  const titular = abans.onze_titular.filter((l) => l.jugador_id)[0]?.jugador_id;
+  assert.ok(titular, 'el fixture ha de portar un onze amb ocupants');
+  const previs = abans.aturats.length;
+
+  sqlite.prepare('UPDATE instantanies_jugadors SET amonestacions=? WHERE jugador_id=?').run(llindar, titular);
+  const ambRoja = await (await onRequestGet(ctx)).json();
+  assert.ok(!ambRoja.onze_titular.some((l) => l.jugador_id === titular),
+    `amb ${llindar} amonestacions el titular no pot seguir a l'onze: la columna no arriba a l'avaluador`);
+  assert.equal(ambRoja.aturats.length, previs + 1, 'i apareix a lesionats i sancionats');
+  assert.equal(ambRoja.onze_titular.filter((l) => l.jugador_id).length,
+    abans.onze_titular.filter((l) => l.jugador_id).length, 'el seu lloc se\'l queda el següent');
+
+  sqlite.prepare('UPDATE instantanies_jugadors SET amonestacions=? WHERE jugador_id=?').run(llindar - 1, titular);
+  const ambGroga = await (await onRequestGet(ctx)).json();
+  assert.ok(ambGroga.onze_titular.some((l) => l.jugador_id === titular), 'una groga no trau ningú');
+  sqlite.prepare('UPDATE instantanies_jugadors SET amonestacions=NULL WHERE jugador_id=?').run(titular);
+}
+
 // ── CAP CONTROL POT ENVIAR A UN ENDPOINT QUE NO EXISTIX ──────────────────────────────────
 // El desplegable Seguiment / Elegit / Cua d'eixida va sobreviure a la mort de la seua taula i
 // del seu POST: seguia pintant-se, seguia deixant-te triar i el `.catch(() => {})` s'engolia el

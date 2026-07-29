@@ -281,7 +281,7 @@ export async function plantilla(main) {
   // seccions ixen ara de l'assignació, i el que no hi entra se'n va a venda o a despatxar.
   const { instantania, jugadors, onze_titular: onze,
     entrenables, futur_entrenador: futurE, porter_suplent: porterS,
-    venda: aVenda, despatxar: aDespatxar } = await api('/api/plantilla');
+    venda: aVenda, despatxar: aDespatxar, aturats } = await api('/api/plantilla');
   if (!instantania) { main.append(el('p', { text: t('plantilla.buit') })); return; }
   main.append(el('p', { text: t('plantilla.instantania', { temporada: instantania.temporada, setmana: instantania.setmana_temporada, data: instantania.data }) }));
   const hab = (j) => `PO${j.porteria} DF${j.defensa} CR${j.creativitat} EX${j.extrem} PA${j.passades} AN${j.anotacio} PP${j.pilota_aturada}`;
@@ -397,6 +397,24 @@ export async function plantilla(main) {
       diners(porterS.sou)));
     c.append(cos(el('p', { class: 'nota-peu', text: t('plantilla.porter_suplent_nota') })));
     main.append(c);
+  }
+
+  // ── LESIONATS I SANCIONATS ─────────────────────────────────────────────────────────
+  // Darrere dels entrenables perquè no són una categoria de plantilla: són el FORAT d'esta
+  // setmana. Van a l'onze i no hi poden estar, i per això el lloc que ocupaven se l'ha quedat
+  // el següent. Sense esta secció, eixe canvi passava sense explicació.
+  if (aturats?.length) {
+    const c = card(t('plantilla.aturats'), aturats.length, 'roig');
+    for (const a of aturats) {
+      const j = perId2.get(a.id);
+      if (!j) continue;
+      const motiu = esLesionat(a.lesio)
+        ? t('comu.lesionat_durada', { n: duradaLesio(a.lesio) ?? '?' })
+        : t('plantilla.sancionat');
+      c.append(filaSegura(() => filaSolta(j, j.posicio || '—', motiu, diners(j.sou)), 1));
+    }
+    main.append(c);
+    main.append(el('p', { class: 'nota-peu', text: t('plantilla.aturats_nota') }));
   }
 
   // ── VENDA i DESPATXAR: tot el que no ha entrat en cap de les quatre seccions ────────

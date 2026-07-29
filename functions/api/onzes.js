@@ -10,7 +10,7 @@ export async function onRequestGet({ env, data }) {
 
   const { results: jugadors } = await env.DB.prepare(
     `SELECT j.id, j.nom, j.especialitat, ij.posicio_ultim_partit AS posicio, ij.edat_anys, ij.edat_dies,
-            ij.sou, ij.tsi, ij.experiencia, ij.lideratge, ij.lesio, ij.transferible,
+            ij.sou, ij.tsi, ij.experiencia, ij.lideratge, ij.lesio, ij.amonestacions, ij.transferible,
             ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada
        FROM instantanies_jugadors ij JOIN jugadors j ON j.id = ij.jugador_id
       WHERE ij.instantania_id = ?`

@@ -728,11 +728,34 @@
       "taules": []
     },
     {
+      "id": "P6.aturats",
+      "pas": "P6",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "aturats",
+      "linia": "aturats   = FILTRA(onze_ideal; lesionat(j) O sancionat(j))",
+      "entrades": [
+        "lesionat",
+        "sancionat"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P6.onze_2",
+      "pas": "P6",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "onze",
+      "linia": "onze      = assignació SOBRE ELS DISPONIBLES        [onze_ideal = sobre TOTS]",
+      "entrades": [],
+      "poms": [],
+      "taules": []
+    },
+    {
       "id": "P6.grup",
       "pas": "P6",
       "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
       "clau": "grup",
-      "linia": "grup(j)   = onze | entrenable | futur_entrenador | porter_suplent | venda | despatxar",
+      "linia": "grup(j)   = onze | aturat | entrenable | futur_entrenador | porter_suplent | venda | despatxar",
       "entrades": [
         "despatxar",
         "entrenable",

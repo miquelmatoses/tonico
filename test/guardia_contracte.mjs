@@ -957,6 +957,31 @@ const VERIFICADES = {
     // Sense cap subhasta deserta desada, ningú va a despatxar: és un FET, no una previsió.
     assert.deepEqual(r.despatxar, []);
   },
+  // P6.aturats / P6.onze_2 — DUES PASSADES: qui hauria de jugar i qui juga. La diferència és
+  // la secció de lesionats i sancionats. Ací es prova la LÒGICA; que la columna
+  // `amonestacions` arribe de veres fins ací ho prova `pantalles_pinten` contra l'API, que és
+  // on va nàixer el forat: el camp no estava al SELECT i la sanció era invisible.
+  'P6.aturats': async () => {
+    const llindar = Number((await dbFix.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='amonestacions_suspensio'").first()).valor);
+    const e = await est6();
+    const titular = e.onze.find((l) => l.jugador)?.jugador;
+    assert.ok(titular, 'el fixture ha de tindre onze amb ocupants');
+    assert.deepEqual(e.aturats, [], 'sense lesions ni sancions, cap aturat');
+    // La MATEIXA plantilla amb eixe titular sancionat: ix de l'onze i entra als aturats.
+    const sancionat = await onzeEstructura(dbFix, 1,
+      [...VELLS6, ...JOVES6].map((j) => (j.id === titular.id ? { ...j, amonestacions: llindar } : j)), 10291);
+    assert.deepEqual(sancionat.aturats.map((j) => j.id), [titular.id],
+      'el sancionat que anava a l\'onze passa a la llista dels que no hi poden estar');
+    assert.ok(!sancionat.onze.some((l) => l.jugador?.id === titular.id), 'i deixa el lloc');
+    assert.equal(sancionat.onze.filter((l) => l.jugador).length, e.onze.filter((l) => l.jugador).length,
+      'que se\'l queda el següent: l\'onze no es queda coix');
+    // Una GROGA no és una sanció.
+    const groga = await onzeEstructura(dbFix, 1,
+      [...VELLS6, ...JOVES6].map((j) => (j.id === titular.id ? { ...j, amonestacions: llindar - 1 } : j)), 10291);
+    assert.deepEqual(groga.aturats, [], 'per davall del llindar no passa res');
+  },
+  'P6.onze_2': () => assert.ok(true, 'vore P6.aturats: les dues passades es proven juntes'),
+
   'P6.grup': async () => {
     const r = await est6();
     const compta = new Map();

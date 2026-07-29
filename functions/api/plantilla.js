@@ -23,7 +23,7 @@ export async function onRequestGet({ env, data }) {
   const { results: jugadors } = await env.DB.prepare(
     `SELECT j.id, j.nom, j.especialitat, ij.posicio_ultim_partit AS posicio,
             ij.edat_anys, ij.edat_dies, ij.tsi, ij.sou, ij.experiencia, ij.lideratge,
-            ij.lleialtat, ij.qualificacio_ultim_partit, ij.lesio, ij.transferible,
+            ij.lleialtat, ij.qualificacio_ultim_partit, ij.lesio, ij.amonestacions, ij.transferible,
             ij.porteria, ij.defensa, ij.creativitat, ij.extrem, ij.passades, ij.anotacio, ij.pilota_aturada
        FROM instantanies_jugadors ij
        JOIN jugadors j ON j.id = ij.jugador_id
@@ -62,6 +62,11 @@ export async function onRequestGet({ env, data }) {
       nivell_objectiu: est.entrenables_objectiu,
       jugadors: est.entrenables.map((j) => ({ id: j.id, diferencia: j.diferencia, senyal: j.senyal,
         setmanes_seguent: j.setmanes_seguent, setmanes_anterior: j.setmanes_anterior })) } : null,
+    // LESIONATS I SANCIONATS: els que SÍ que anirien a l'onze i esta setmana no hi poden estar.
+    // Ix de la diferència entre les dues passades de l'assignació (qui hauria de jugar contra
+    // qui juga), o siga que no és una llista a banda: és el forat que deixen.
+    aturats: est ? est.aturats.map((j) => ({ id: j.id, lesio: j.lesio ?? null,
+      amonestacions: j.amonestacions ?? null })) : null,
     // FUTUR ENTRENADOR: el del residu amb més experiència, i què val reconvertir-lo. PORTER
     // SUPLENT: el porter més barat que queda — és l'únic lloc de la segona alineació que
     // obliga a mantindre algú expressament, perquè el porter no dobla.

@@ -309,7 +309,15 @@ futur_entrenador = PRIMER(ORDENA(FILTRA(sobrants − entrenables − porter_supl
 
 despatxar = FILTRA(resta; desert(j))        [vore desert(j) al PAS 7]
 venda     = resta − despatxar
-grup(j)   = onze | entrenable | futur_entrenador | porter_suplent | venda | despatxar
+aturats   = FILTRA(onze_ideal; lesionat(j) O sancionat(j))
+onze      = assignació SOBRE ELS DISPONIBLES        [onze_ideal = sobre TOTS]
+   [DUES PASSADES a posta: la primera diu QUI HAURIA DE JUGAR i la segona QUI JUGA. La
+    diferència entre les dues ÉS la llista de lesionats i sancionats — els que sí que
+    anirien a l'onze i esta setmana no hi poden estar. Amb una sola passada eixa llista
+    no es pot derivar: només sabries qui juga, no qui falta]
+   [i qui no pot jugar i TAMPOC anava a l'onze no desapareix: seguix el seu camí
+    normal (venda, despatxar…). Només s'aparta el que ocupava un lloc]
+grup(j)   = onze | aturat | entrenable | futur_entrenador | porter_suplent | venda | despatxar
    [UNA SOLA FONT. La pantalla el pinta i el motor d'alertes el consumix: si cada
     u el derivara pel seu compte tornarien a dir coses distintes]
 entrenen  = ocupants dels llocs que entrenen ∪ entrenables
