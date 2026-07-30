@@ -40,8 +40,8 @@
   "decisions.sense_motius": "No player awaiting a reason.",
   "decisions.motiu_jugador": "{nom} has left. What happened?",
   "decisions.desa": "Save",
-  "motiu_baixa.venda": "Sold",
-  "motiu_baixa.promocio": "Promotion (X from the academy)",
+  "motiu_baixa.venda": "Sale",
+  "motiu_baixa.promocio": "Promotion",
   "motiu_baixa.altres": "Other",
   "esta_setmana.falten": "None, but I'm missing a couple of things to get the numbers right:",
   "falten.caixa": "the starting cash (Economy)",
@@ -578,5 +578,6 @@
   "bucket.lateral": "wing back",
   "bucket.mc": "inner midfielder",
   "bucket.extrem": "winger",
-  "bucket.davanter": "forward"
+  "bucket.davanter": "forward",
+  "decisions.origen_juvenil": "From which youth?"
 }

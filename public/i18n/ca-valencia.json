@@ -40,8 +40,8 @@
   "decisions.sense_motius": "Cap jugador pendent de declarar motiu.",
   "decisions.motiu_jugador": "{nom} ha eixit. Què va passar?",
   "decisions.desa": "Desa",
-  "motiu_baixa.venda": "Venuda",
-  "motiu_baixa.promocio": "Promoció (X de l'acadèmia)",
+  "motiu_baixa.venda": "Venda",
+  "motiu_baixa.promocio": "Promoció",
   "motiu_baixa.altres": "Altres",
   "esta_setmana.falten": "Cap, em falten un parell de coses per a fer bé els números:",
   "falten.caixa": "la caixa inicial (Economia)",
@@ -578,5 +578,6 @@
   "bucket.lateral": "lateral",
   "bucket.mc": "mig centre",
   "bucket.extrem": "extrem",
-  "bucket.davanter": "davanter"
+  "bucket.davanter": "davanter",
+  "decisions.origen_juvenil": "De quin juvenil?"
 }

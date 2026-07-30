@@ -231,7 +231,15 @@ export async function decisions(main) {
   if (!pendents.length) pend.append(el('p', { class: 'pend-buit', text: t('decisions.sense_motius') }));
   for (const j of pendents) {
     const sel = el('select', {}, ...['venda', 'despatx', 'promocio', 'altres'].map((m) => el('option', { value: m, text: t('motiu_baixa.' + m) })));
-    const origenSel = el('select', {}, el('option', { value: '', text: '—' }), ...(j.candidats_juvenils || []).map((c) => el('option', { value: c.id, text: c.nom })));
+    // DE QUIN JUVENIL VE, i NOMÉS si el motiu és promoció: és l'única branca que el desa
+    // (`origen_juvenil_id`). Estava sempre a la vista, buit i sense etiqueta, al costat d'una
+    // venda on no fa res — un control que no fa res és pitjor que no tindre'l, perquè fa
+    // pensar que falta omplir-lo.
+    const origenSel = el('select', {}, el('option', { value: '', text: t('decisions.origen_juvenil') }),
+      ...(j.candidats_juvenils || []).map((c) => el('option', { value: c.id, text: c.nom })));
+    const nomesPromocio = () => { origenSel.style.visibility = sel.value === 'promocio' ? 'visible' : 'hidden'; };
+    sel.addEventListener('change', nomesPromocio);
+    nomesPromocio();
     const b = el('button', { type: 'button', class: 'b-xic', text: t('decisions.desa') });
     b.addEventListener('click', async () => {
       await api('/api/motius', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.id, motiu: sel.value, origen_juvenil_id: origenSel.value ? Number(origenSel.value) : null }) });
