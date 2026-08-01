@@ -3,7 +3,29 @@
 // → enllaça amb la fila juvenil d'origen (jugador_origen_juvenil_id). Resol
 // l'alerta ALR_TRANSACCIO_PENDENT.
 
-const MOTIUS = ['venda', 'despatx', 'promocio', 'altres'];
+// EL VOCABULARI DEL FULL (invariant 14): venda · despatx · promoció. S'exporta perquè el
+// guardià comprove que TOTS es poden desar de veres, i no una llista copiada.
+export const MOTIUS = ['venda', 'despatx', 'promocio', 'altres'];
+
+// ── EL PONT AMB LA COLUMNA ───────────────────────────────────────────────────────────────
+// `jugadors.motiu_baixa` porta un CHECK que admet «alliberament», que és el mot del sistema
+// vell. El codi escrivia «despatx» i per tant declarar un despatx PETAVA sempre: violació de
+// restricció, UPDATE avortat i —com que el botó no capturava l'error— pantalla muda.
+//
+// L'arreglo correcte seria canviar el CHECK, però SQLite no permet alterar-lo i reconstruir
+// `jugadors` a D1 no es pot: quatre taules l'apunten i el rebuild peta per clau forana encara
+// diferint-les (provat contra producció, que va fer marxa arrere sencera).
+//
+// Per tant el mot vell es queda a la columna i la traducció viu ACÍ, en un sol lloc i amb un
+// guardià darrere (test/integracio.mjs) que comprova que cada motiu que l'API accepta es pot
+// desar. «altres» es desa com a NULL: no és un motiu, és no dir-ne cap.
+// ponytail: pont d'una línia, no rebuild. Si algun dia D1 admet reconstruir la taula, el bo és
+// canviar el CHECK i llevar este mapa.
+// `in` i no `??`: «altres» es tradueix a NULL a posta, i amb `??` el null es prenia per «no
+// trobat» i tornava «altres», que el CHECK tampoc admet. Un mapa amb valors nuls no es pot
+// consultar amb l'operador que serveix per a dir «no hi és».
+const A_COLUMNA = { despatx: 'alliberament', altres: null };
+export const aColumna = (motiu) => (motiu in A_COLUMNA ? A_COLUMNA[motiu] : motiu);
 
 export async function onRequestGet({ env, data }) {
   const { results: pendents } = await env.DB.prepare(
@@ -36,7 +58,7 @@ export async function onRequestPost({ request, env, data }) {
 
   const lots = [env.DB.prepare(
     "UPDATE jugadors SET estat='baixa', motiu_baixa=?, jugador_origen_juvenil_id=? WHERE id=?"
-  ).bind(c.motiu === 'altres' ? null : c.motiu, c.motiu === 'promocio' ? (c.origen_juvenil_id || null) : null, c.jugador_id)];
+  ).bind(aColumna(c.motiu), c.motiu === 'promocio' ? (c.origen_juvenil_id || null) : null, c.jugador_id)];
 
   // L'IMPORT d'una venda ja no s'apunta: no entra a cap fórmula. La caixa és la DECLARADA
   // («diners disponibles»), i el diner d'una venda hi apareix al període següent. Apuntar-lo

@@ -71,4 +71,26 @@ assert.equal(tornat.estat, 'actiu');
 assert.equal(tornat.data_baixa_club, null);   // reactivat, no duplicat
 assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM jugadors WHERE id_hattrick=?').get(idFora).n, 1);
 
+// ── ELS MOTIUS DE BAIXA: la BD ha d'acceptar EXACTAMENT els que l'API declara ────────────
+// El forat que tapa açò: el `CHECK` deia «alliberament» i el codi escriu «despatx», o siga que
+// declarar «Despatxat» petava sempre. Ho feia invisible que el botó no capturava l'error. La
+// llista NO es copia ací: es llig del mòdul, que és qui la declara.
+{
+  const { MOTIUS, aColumna } = await import('../functions/api/motius.js');
+  assert.ok(MOTIUS?.length, 'l\'API declara la seua llista de motius');
+  const equip = sqlite.prepare("SELECT id FROM equips WHERE tipus='senior' LIMIT 1").get().id;
+  for (const [i, motiu] of MOTIUS.entries()) {
+    const valor = aColumna(motiu);
+    sqlite.prepare('INSERT INTO jugadors (equip_id, id_hattrick, nom, estat, motiu_baixa) VALUES (?,?,?,?,?)')
+      .run(equip, 9000 + i, 'M' + i, 'baixa', valor);
+    assert.equal(sqlite.prepare('SELECT motiu_baixa FROM jugadors WHERE id_hattrick=?').get(9000 + i).motiu_baixa,
+      valor, `la BD accepta el motiu «${motiu}» que l'API escriu`);
+  }
+  // I EL PONT ÉS NECESSARI, no decoratiu: el mot del full, desat en cru, el CHECK el rebutja.
+  // Este és el bug que va deixar el botó «Desa» mut durant setmanes.
+  assert.throws(() => sqlite.prepare('INSERT INTO jugadors (equip_id, id_hattrick, nom, estat, motiu_baixa) VALUES (?,?,?,?,?)')
+    .run(equip, 9999, 'X', 'baixa', 'despatx'), /CHECK/,
+  'la columna no admet el mot del full: per això la traducció ha d\'existir');
+}
+
 console.log('OK — integració Bloc C: instantànies, desaparició i recompra correctes');

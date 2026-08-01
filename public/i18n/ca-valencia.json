@@ -581,5 +581,6 @@
   "bucket.davanter": "davanter",
   "decisions.origen_juvenil": "De quin juvenil?",
   "mercat.edat_min": "{min} anys o més",
-  "mercat.edat_max": "{max} anys o menys"
+  "mercat.edat_max": "{max} anys o menys",
+  "decisions.error_desar": "No s'ha pogut desar. Torna-ho a provar."
 }

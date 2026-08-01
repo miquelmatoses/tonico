@@ -241,14 +241,22 @@ export async function decisions(main) {
     sel.addEventListener('change', nomesPromocio);
     nomesPromocio();
     const b = el('button', { type: 'button', class: 'b-xic', text: t('decisions.desa') });
+    // SI FALLA, ES DIU. Abans el `reload` anava darrere d'un `await` sense captura: quan el
+    // POST petava —i petava sempre amb «Despatxat», que violava el CHECK— la promesa quedava
+    // rebutjada, la pàgina no es recarregava i la pantalla es quedava igual sense dir res. Un
+    // botó que no fa res i no es queixa és pitjor que un error.
+    const err = el('p', { class: 'desquadre' });
     b.addEventListener('click', async () => {
-      await api('/api/motius', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.id, motiu: sel.value, origen_juvenil_id: origenSel.value ? Number(origenSel.value) : null }) });
+      err.textContent = '';
+      try {
+        await api('/api/motius', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jugador_id: j.id, motiu: sel.value, origen_juvenil_id: origenSel.value ? Number(origenSel.value) : null }) });
+      } catch (e) { err.textContent = t('decisions.error_desar'); return; }
       location.reload();
     });
     // Sense casella d'IMPORT: la venda ja no s'apunta enlloc (no entra a cap fórmula) i
     // demanar-la era una porta oberta a un número que no anava a cap lloc.
     pend.append(el('div', { class: 'mov-fila' }, el('span', { class: 'mov-punt' }),
-      el('span', { class: 'mov-text', text: t('decisions.motiu_jugador', { nom: j.nom }) }), sel, origenSel, b));
+      el('span', { class: 'mov-text', text: t('decisions.motiu_jugador', { nom: j.nom }) }), sel, origenSel, b, err));
   }
   main.append(pend);
 }

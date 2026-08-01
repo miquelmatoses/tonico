@@ -581,5 +581,6 @@
   "bucket.davanter": "forward",
   "decisions.origen_juvenil": "From which youth?",
   "mercat.edat_min": "{min} or older",
-  "mercat.edat_max": "{max} or younger"
+  "mercat.edat_max": "{max} or younger",
+  "decisions.error_desar": "Couldn't save. Try again."
 }
