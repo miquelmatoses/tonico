@@ -134,5 +134,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/111_dues_capes.sql'));
   sqlite.exec(src('../schema/112_matriu_wiki.sql'));
   sqlite.exec(src('../schema/113_distancia_min.sql'));
+  sqlite.exec(src('../schema/114_edat_fitxatge.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

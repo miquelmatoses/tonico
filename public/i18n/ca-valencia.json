@@ -430,8 +430,8 @@
   "estoc.capçal": "Tens {disponible} per a gastar i el flux sosté {sostenible} de sous cada setmana.",
   "estoc.sense_caixa": "No m'has declarat la caixa, així que no et puc dir què compensa comprar.",
   "estoc.recomanada": "El que més rendix:",
-  "estoc.opcio_jugador_1": "un {lloc} amb {perfil}: li falta 1 nivell per a arribar al que el teu flux paga.",
-  "estoc.opcio_jugador_n": "un {lloc} amb {perfil}: li falten {mancanca} nivells per a arribar al que el teu flux paga.",
+  "estoc.opcio_jugador_1": "un {lloc} de {edat} anys amb {perfil}: li falta 1 nivell per a arribar al que el teu flux paga.",
+  "estoc.opcio_jugador_n": "un {lloc} de {edat} anys amb {perfil}: li falten {mancanca} nivells per a arribar al que el teu flux paga.",
   "estoc.opcio_estadi": "l'obra d'estadi: {cost} de colp, i el manteniment puja {manteniment} cada setmana. Va abans que cap fitxatge: és l'única compra que mou el flux.",
   "estoc.cap_opcio": "Ara mateix res no compensa: fes caixa venent i ja ho tornarem a mirar.",
   "estoc.estadi_falta": "Si em passes els números de l'estadi, també entrarà a la comparació.",
@@ -539,8 +539,8 @@
   "mercat.nec_porter_suplent": "Un porter suplent",
   "mercat.nec_entrenable_1": "1 jove de creativitat {nivell} o més",
   "mercat.nec_entrenable_n": "{n} joves de creativitat {nivell} o més",
-  "mercat.nec_lloc_1": "1 {lloc} amb {perfil}",
-  "mercat.nec_lloc_n": "{n} {lloc} amb {perfil}",
+  "mercat.nec_lloc_1": "1 {lloc} de {edat} anys amb {perfil}",
+  "mercat.nec_lloc_n": "{n} {lloc} de {edat} anys amb {perfil}",
   "mercat.nec_placa_entrenament_buida": "PLAÇA D'ENTRENAMENT BUIDA",
   "mercat.nec_sense_porter_suplent": "EL TITULAR HA DE DOBLAR",
   "mercat.nec_distancia": "per distància a l'objectiu",
@@ -579,5 +579,7 @@
   "bucket.mc": "mig centre",
   "bucket.extrem": "extrem",
   "bucket.davanter": "davanter",
-  "decisions.origen_juvenil": "De quin juvenil?"
+  "decisions.origen_juvenil": "De quin juvenil?",
+  "mercat.edat_min": "{min} anys o més",
+  "mercat.edat_max": "{max} anys o menys"
 }

@@ -259,8 +259,24 @@ sou_perfil(perfil) = `sou_formula`: base + cost_habilitat(principal)
    [«principal» = la que MÉS SOU COSTA, no la de nivell més alt; `factor` és
     `secundari_alt` quan la principal arriba a `llindar_alt`, i `secundari` si no.
     Wiki «Wages»: recerca d'usuaris, i el wiki mateix avisa que no és oficial]
+edat_objectiu(lloc) = SI(entrenable(lloc); edat_per_nivell(perfil_objectiu(lloc, habilitat_A));
+                                            `edat_fitxatge_max`)
+   [NO ÉS EL MATEIX COMPRAR PER A JUGAR QUE COMPRAR PER A ENTRENAR.
+    · Els llocs que NO entrenen van a `edat_fitxatge_max`, i és POLÍTICA, no càlcul. El sou
+      baixa un 10% per any des dels 29 (wiki «Wages»), o siga que el mateix diner compra molt
+      més amunt: als 32 el central passa de CR4/DF8 a CR8/DF9. Deixat al motor sempre diria
+      «el més vell possible» —la caiguda d'habilitat és molt més lenta que el descompte—, i
+      els tres costos que ho frenarien (reposar-lo, les lesions, la revenda) són justament
+      els que el sistema no modela.
+    · Els llocs que ENTRENEN el trauen de la CORBA D'ENTRENAMENT: el més jove que ja porta el
+      nivell del perfil. Ahí no es compra un vell, es fabrica — un que entra als 17 amb el
+      llistó arriba a ~19,6 de creativitat cap als 30 i el pressupost no passa de 9]
+descompte(edat) = BUSCA(`descompte_sou_edat`; edat)
+   [−10% per any dels 29 als 37; per davall de 28 val 1, i dels 38 en avant es queda]
 perfil_objectiu(lloc) = MAX(contribucio(perfil, lloc)
-                            : sou_perfil(perfil) ≤ pressupost_sou(lloc))
+                            : sou_perfil(perfil) ≤ pressupost_sou(lloc) / descompte(edat_objectiu))
+   [L'EDAT ENTRA AL PRESSUPOST, no al perfil: el que es reparteix és el que pagaràs cada
+    setmana, i buscant major eixe mateix diner arriba més amunt a la tarifa de catàleg]
    [EL PRESSUPOST D'UN LLOC NO COMPRA UN NIVELL, COMPRA UN PERFIL. El sou és EXPONENCIAL
     per nivell i les secundàries només en paguen una fracció, mentre la contribució és
     LINEAL: concentrar-ho tot en una habilitat és sempre la manera CARA de comprar
@@ -270,7 +286,8 @@ perfil_objectiu(lloc) = MAX(contribucio(perfil, lloc)
     euro. No és demostradament òptim —«la més cara compta sencera» trenca la
     separabilitat i l'exacte demanaria explorar combinacions—, i ja bat el monocultiu de
     llarg, que és el que es volia arreglar]
-sou_objectiu(lloc)       = sou_perfil(perfil_objectiu(lloc))
+sou_objectiu(lloc)       = sou_perfil(perfil_objectiu(lloc)) × descompte(edat_objectiu(lloc))
+   [el que pagaràs de VERES, per a que `sobrecost` compare dos sous reals]
 aportacio_objectiu(lloc) = contribucio(perfil_objectiu(lloc), lloc)
    [EL PERFIL ÉS L'OBJECTIU, i no se'n trau cap número resum. Hi havia `nivell_objectiu`
     —el nivell més alt d'UNA habilitat que el pressupost pagava— i després
@@ -490,7 +507,7 @@ necessitats = places BUIDES d'entrenament i de porter suplent  → distància = 
    [una plaça d'entrenament buida és entrenament perdut cada setmana i no es
     recupera; un lloc de l'onze fluix, almenys, juga. Per això les buides manen.
     I un sol nivell de distància s'arregla entrenant o esperant: no és un forat]
-clau(necessitat) = el TIPUS de fitxatge (bucket + perfil_objectiu), no el lloc
+clau(necessitat) = el TIPUS de fitxatge (bucket + edat_objectiu + perfil_objectiu), no el lloc
    [els tres llocs de mig centre comparteixen perfil: és una sola cerca i un sol preu]
    [EL PERFIL SENCER, no un nivell. El preu no és el d'«un mig centre», és el d'un mig
     centre amb estes habilitats: el dia que el pressupost puge, el perfil canvia, la clau
@@ -499,7 +516,11 @@ clau(necessitat) = el TIPUS de fitxatge (bucket + perfil_objectiu), no el lloc
    [i no obliga a redeclarar res cada setmana: el preu només es demana quan hi ha
     necessitat, i una necessitat no apareix fins que el forat passa `distancia_min`. Com a
     molt hi ha un preu per bucket de la formació]
-cerca(necessitat) = el perfil, com a MÍNIM PER HABILITAT
+cerca(necessitat) = el perfil com a MÍNIM PER HABILITAT, més l'edat
+   [i l'edat va en un sentit o en l'altre segons per a què el compres: al lloc que NO entrena
+    el perfil s'ha calculat amb el descompte d'eixa edat, o siga que més jove costaria més del
+    que tens → edat MÍNIMA. Al que ENTRENA el que es compra és el recorregut, i més vell ja no
+    el pots entrenar tant → edat MÀXIMA]
    [el cercador de Hattrick ho admet, o siga que el perfil que mesura és el perfil que es
     busca: un sol càlcul, dos usos. Abans es demanava una sola habilitat a un lloc que en
     vol quatre, i el filtre no era el que la vara mesurava]

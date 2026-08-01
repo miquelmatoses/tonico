@@ -563,6 +563,32 @@
       "taules": []
     },
     {
+      "id": "P4.edat_objectiu",
+      "pas": "P4",
+      "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
+      "clau": "edat_objectiu",
+      "linia": "edat_objectiu(lloc) = SI(entrenable(lloc); edat_per_nivell(perfil_objectiu(lloc, habilitat_A));",
+      "entrades": [
+        "entrenable",
+        "lloc",
+        "perfil_objectiu"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
+      "id": "P4.descompte",
+      "pas": "P4",
+      "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
+      "clau": "descompte",
+      "linia": "descompte(edat) = BUSCA(`descompte_sou_edat`; edat)",
+      "entrades": [],
+      "poms": [],
+      "taules": [
+        "descompte_sou_edat"
+      ]
+    },
+    {
       "id": "P4.perfil_objectiu",
       "pas": "P4",
       "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
@@ -580,8 +606,10 @@
       "pas": "P4",
       "pasTitol": "NIVELL OBJECTIU PER LLOC (derivat del flux, no dels rivals)",
       "clau": "sou_objectiu",
-      "linia": "sou_objectiu(lloc)       = sou_perfil(perfil_objectiu(lloc))",
+      "linia": "sou_objectiu(lloc)       = sou_perfil(perfil_objectiu(lloc)) × descompte(edat_objectiu(lloc))",
       "entrades": [
+        "descompte",
+        "edat_objectiu",
         "lloc",
         "perfil_objectiu",
         "sou_perfil"
@@ -1082,8 +1110,9 @@
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "clau",
-      "linia": "clau(necessitat) = el TIPUS de fitxatge (bucket + perfil_objectiu), no el lloc",
+      "linia": "clau(necessitat) = el TIPUS de fitxatge (bucket + edat_objectiu + perfil_objectiu), no el lloc",
       "entrades": [
+        "edat_objectiu",
         "lloc",
         "perfil_objectiu"
       ],
@@ -1095,7 +1124,7 @@
       "pas": "P8",
       "pasTitol": "COMPRAR (només amb caixa cobrada; l'ESTADI VA PRIMER)",
       "clau": "cerca",
-      "linia": "cerca(necessitat) = el perfil, com a MÍNIM PER HABILITAT",
+      "linia": "cerca(necessitat) = el perfil com a MÍNIM PER HABILITAT, més l'edat",
       "entrades": [],
       "poms": [],
       "taules": []

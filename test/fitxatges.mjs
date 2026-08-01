@@ -16,14 +16,14 @@ import { necessitats, ambPreus, cercaDe, clauFitxatge } from '../lib/fitxatges.j
 const est = {
   entrenables: [{ id: 1 }], entrenables_max: 3, porter_suplent: null,
   onze: [
-    { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 3 },
-    { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 2 },
-    { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 1 },   // un sol nivell: no és forat
-    { bucket: 'davanter', perfil_objectiu: { anotacio: 9, passades: 5 }, distancia: 4 },
-    { bucket: 'defensa', perfil_objectiu: { defensa: 8 }, distancia: 0 },
-    { bucket: 'porter', perfil_objectiu: { porteria: 5 }, distancia: 0 },   // va sobrat: no li falta res
-    { bucket: 'extrem', perfil_objectiu: { extrem: 9 }, distancia: 0 },   // per damunt del perfil: cap forat
-    { bucket: 'lateral', perfil_objectiu: { defensa: 7, extrem: 4 }, distancia: null },   // SENSE NINGÚ
+    { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, edat_objectiu: 32, distancia: 3 },
+    { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, edat_objectiu: 32, distancia: 2 },
+    { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, edat_objectiu: 32, distancia: 1 },   // un sol nivell: no és forat
+    { bucket: 'davanter', perfil_objectiu: { anotacio: 9, passades: 5 }, edat_objectiu: 32, distancia: 4 },
+    { bucket: 'defensa', perfil_objectiu: { defensa: 8 }, edat_objectiu: 32, distancia: 0 },
+    { bucket: 'porter', perfil_objectiu: { porteria: 5 }, edat_objectiu: 32, distancia: 0 },   // va sobrat: no li falta res
+    { bucket: 'extrem', perfil_objectiu: { extrem: 9 }, edat_objectiu: 32, distancia: 0 },   // per damunt del perfil: cap forat
+    { bucket: 'lateral', perfil_objectiu: { defensa: 7, extrem: 4 }, edat_objectiu: 32, distancia: null },   // SENSE NINGÚ
   ],
 };
 const n = necessitats(est, { entrenable_min: 6, distancia_min: 2 });
@@ -46,7 +46,7 @@ assert.ok(!n.some((x) => x.tipus === 'lloc' && x.bucket === 'defensa'),
   'qui arriba al seu nivell no es toca');
 assert.ok(!n.some((x) => x.tipus === 'lloc' && x.bucket === 'extrem'),
   'ni un sol nivell de distància');
-const mc = n.find((x) => x.clau === 'mc:cre9-def6');
+const mc = n.find((x) => x.clau === 'mc:32:cre9-def6');
 assert.equal(mc.quants, 2, 'els dos llocs de mig centre a dos o més nivells, no el de −1');
 assert.equal(mc.distancia, 3, 'i la distància que mana és la pitjor de les seues');
 
@@ -59,17 +59,20 @@ assert.ok(!n.some((x) => x.bucket === 'porter' && x.tipus === 'lloc'),
   'un lloc sobrat no és una necessitat de mercat');
 
 // ── 3. Un TIPUS de fitxatge, no un lloc: dos llocs iguals són una sola cerca ──
-assert.equal(clauFitxatge('lloc', 'mc', { creativitat: 9, defensa: 6 }), 'mc:cre9-def6',
+assert.equal(clauFitxatge('lloc', 'mc', { creativitat: 9, defensa: 6 }, 32), 'mc:32:cre9-def6',
   'la clau porta el PERFIL: el preu és d\'este jugador, no d\'«un mig centre» qualsevol');
-assert.notEqual(clauFitxatge('lloc', 'mc', { creativitat: 10, defensa: 6 }),
-  clauFitxatge('lloc', 'mc', { creativitat: 9, defensa: 6 }),
+assert.notEqual(clauFitxatge('lloc', 'mc', { creativitat: 10, defensa: 6 }, 32),
+  clauFitxatge('lloc', 'mc', { creativitat: 9, defensa: 6 }, 32),
   'i si el pressupost mou el perfil, la clau canvia i el preu vell deixa de valdre');
+// I L'EDAT TAMBÉ VA A LA CLAU: el preu d'un de 32 no és el d'un de 26 amb el mateix perfil.
+assert.notEqual(clauFitxatge('lloc', 'mc', { creativitat: 9, defensa: 6 }, 32),
+  clauFitxatge('lloc', 'mc', { creativitat: 9, defensa: 6 }, 26));
 assert.equal(n.filter((x) => x.bucket === 'mc' && x.tipus === 'lloc').length, 1,
   'els dos llocs de mig centre es demanen una vegada');
 
 // ── 4. L'ORDE: qui més lluny està del seu objectiu ──
 const nomesLlocs = n.filter((x) => x.tipus === 'lloc');
-assert.deepEqual(nomesLlocs.map((x) => x.clau), ['lateral:def7-ext4:buit', 'davanter:ano9-pas5', 'mc:cre9-def6'],
+assert.deepEqual(nomesLlocs.map((x) => x.clau), ['lateral:32:def7-ext4:buit', 'davanter:32:ano9-pas5', 'mc:32:cre9-def6'],
   'el lloc sense ningú primer; després davanter −4 i mig centre −3: qui més lluny està');
 
 // ── 5. SENSE PREU no es decidix ──
@@ -81,22 +84,22 @@ assert.deepEqual(nomesLlocs.map((x) => x.clau), ['lateral:def7-ext4:buit', 'dava
 
 // ── 6. Amb preu, mana la CAIXA ──
 {
-  const preus = new Map([['mc:cre9-def6', { preu: 120000, data: '2026-07-20' }],
-    ['davanter:ano9-pas5', { preu: 900000, data: '2026-07-20' }]]);
+  const preus = new Map([['mc:32:cre9-def6', { preu: 120000, data: '2026-07-20' }],
+    ['davanter:32:ano9-pas5', { preu: 900000, data: '2026-07-20' }]]);
   const amb = ambPreus(n, preus, 173004);
-  assert.equal(amb.find((x) => x.clau === 'mc:cre9-def6').admissible, true, 'entra a la caixa');
-  assert.equal(amb.find((x) => x.clau === 'davanter:ano9-pas5').admissible, false, 'este no');
-  assert.equal(amb.find((x) => x.clau === 'davanter:ano9-pas5').falta, 'caixa',
+  assert.equal(amb.find((x) => x.clau === 'mc:32:cre9-def6').admissible, true, 'entra a la caixa');
+  assert.equal(amb.find((x) => x.clau === 'davanter:32:ano9-pas5').admissible, false, 'este no');
+  assert.equal(amb.find((x) => x.clau === 'davanter:32:ano9-pas5').falta, 'caixa',
     'i es diu que el que falta són diners, no el preu');
 }
 
 // ── 7. Un preu VELL es marca: el mercat es mou ──
 {
-  const preus = new Map([['mc:cre9-def6', { preu: 120000, data: '2026-05-01' }]]);
+  const preus = new Map([['mc:32:cre9-def6', { preu: 120000, data: '2026-05-01' }]]);
   const amb = ambPreus(n, preus, 173004, 4, '2026-07-26');
-  assert.equal(amb.find((x) => x.clau === 'mc:cre9-def6').preu_vell, true, 'dotze setmanes és massa');
-  const fresc = ambPreus(n, new Map([['mc:cre9-def6', { preu: 120000, data: '2026-07-20' }]]), 173004, 4, '2026-07-26');
-  assert.equal(fresc.find((x) => x.clau === 'mc:cre9-def6').preu_vell, false, 'una setmana no');
+  assert.equal(amb.find((x) => x.clau === 'mc:32:cre9-def6').preu_vell, true, 'dotze setmanes és massa');
+  const fresc = ambPreus(n, new Map([['mc:32:cre9-def6', { preu: 120000, data: '2026-07-20' }]]), 173004, 4, '2026-07-26');
+  assert.equal(fresc.find((x) => x.clau === 'mc:32:cre9-def6').preu_vell, false, 'una setmana no');
 }
 
 // ── 8. La CERCA d'una necessitat: cada tipus busca una cosa distinta, i qui decidix si hi ha

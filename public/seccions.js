@@ -645,7 +645,8 @@ function bucleEstoc(main, e) {
             manteniment: e.recomanada.delta_manteniment }, ['cost', 'manteniment']))
         : tp('estoc.opcio_jugador', e.recomanada.mancanca,
             ambXifres({ lloc: bucketTxt(e.recomanada.bucket), perfil: perfilTxt(e.recomanada.perfil),
-              mancanca: e.recomanada.mancanca, cost: e.recomanada.cost }, ['cost'])) })));
+              edat: e.recomanada.edat, mancanca: e.recomanada.mancanca,
+              cost: e.recomanada.cost }, ['cost'])) })));
     if (e.recomanada.tipus === 'estadi') {
       const bFent = el('button', { type: 'button', class: 'b-prim', text: t('estoc.obra_fent') });
       // La data d'inici és el dia que ho marca: només s'ensenya, no entra a cap fórmula.
@@ -664,7 +665,7 @@ function bucleEstoc(main, e) {
       el('span', { text: (o.motiu === 'placa_entrenament_buida'
         ? t('mercat.nec_entrenable_1', { n: 1, nivell: o.nivell })
         : o.motiu === 'sense_porter_suplent' ? t('mercat.nec_porter_suplent')
-          : t('mercat.nec_lloc_1', { n: 1, lloc: bucketTxt(o.bucket), perfil: perfilTxt(o.perfil) }))
+          : t('mercat.nec_lloc_1', { n: 1, lloc: bucketTxt(o.bucket), edat: o.edat, perfil: perfilTxt(o.perfil) }))
         + (o.varis ? ' ' + t('estoc.de_quants', { i: o.ordinal, n: o.de }) : '') }),
       el('span', { text: t('mercat.nec_' + o.motiu) }),
       el('span', { class: 'graella-val', text: o.varis
@@ -694,7 +695,7 @@ export async function mercat(main) {
       preu.addEventListener('change', desar);
       const etiqueta = n.tipus === 'porter_suplent' ? t('mercat.nec_porter_suplent')
         : n.tipus === 'entrenable' ? tp('mercat.nec_entrenable', n.quants, { n: n.quants, nivell: n.nivell })
-          : tp('mercat.nec_lloc', n.quants, { n: n.quants, lloc: bucketTxt(n.bucket), perfil: perfilTxt(n.perfil) });
+          : tp('mercat.nec_lloc', n.quants, { n: n.quants, lloc: bucketTxt(n.bucket), edat: n.edat, perfil: perfilTxt(n.perfil) });
       // ELS CRITERIS DE CERCA, al costat del preu: és el que Miquel ha de teclejar a Hattrick
       // per a mirar les últimes transferències i tornar el número.
       const camps = el('div', { class: 'filtre-camps' });
@@ -705,6 +706,8 @@ export async function mercat(main) {
       const c = n.cerca || {};
       camp('posicions', (c.posicions || []).join(' / '));
       if (c.edat_min != null && c.edat_max != null) camp('edat', t('mercat.rang', { min: c.edat_min, max: c.edat_max }));
+      else if (c.edat_min != null) camp('edat', t('mercat.edat_min', { min: c.edat_min }));
+      else if (c.edat_max != null) camp('edat', t('mercat.edat_max', { max: c.edat_max }));
       if (c.habilitat?.camp) camp('habilitat', `${t('hab.' + c.habilitat.camp)} ≥ ${c.habilitat.min}`);
       if (c.perfil) camp('perfil', perfilTxt(c.perfil));
       if (c.mes_barat) camp('criteri', t('mercat.mes_barat'));

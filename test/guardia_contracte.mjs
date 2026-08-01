@@ -16,7 +16,8 @@ import { souSostenible, perPeriode, reservaFlux, despesaPlanter, dadesVelles,
   fluxRepartible, pressupostPersonal, mitjanaSetmanal, calibrat } from '../lib/economia.js';
 import { normalitzaDivisio, divisioArab, DIVISIONS } from '../lib/divisio.js';
 import { pesLloc, pressupostSou, carregaConfigPesos, pesosHabilitat, contribucio,
-  equivalent, costHabilitat, souPerfil, perfilObjectiu, nivellsObjectiu } from '../lib/pesos.js';
+  equivalent, costHabilitat, souPerfil, perfilObjectiu, nivellsObjectiu, descompteEdat } from '../lib/pesos.js';
+import { carregaCoeficients, edatPerNivell } from '../lib/entrenament_velocitat.js';
 import { sobrecost } from '../lib/mancanca.js';
 import { urgent as esUrgent, motiuVenda, ordreVenda, desti, despatxable,
   subhastaDeserta } from '../lib/vendes.js';
@@ -366,12 +367,12 @@ const VERIFICADES = {
     // Les places BUIDES manen per damunt de qualsevol distància, i un sol nivell no és un
     // forat: s'arregla entrenant o esperant.
     const est = { entrenables: [], entrenables_max: 2, porter_suplent: null,
-      onze: [{ bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 1 },
-             { bucket: 'davanter', perfil_objectiu: { anotacio: 9, passades: 5 }, distancia: 3 }] };
+      onze: [{ bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, edat_objectiu: 32, distancia: 1 },
+             { bucket: 'davanter', perfil_objectiu: { anotacio: 9, passades: 5 }, edat_objectiu: 32, distancia: 3 }] };
     const n = necessitats(est, { entrenable_min: 6, distancia_min: 2 });
     assert.equal(n[0].distancia, Infinity, 'una plaça buida va primer');
     assert.ok(!n.some((x) => x.bucket === 'mc' && x.tipus === 'lloc'), 'un sol nivell no és forat');
-    assert.ok(n.some((x) => x.clau === 'davanter:ano9-pas5'), 'i tres nivells sí');
+    assert.ok(n.some((x) => x.clau === 'davanter:32:ano9-pas5'), 'i tres nivells sí');
   },
   'P8.cerca': () => {
     // EL PERFIL QUE MESURA ÉS EL PERFIL QUE ES BUSCA: mínim per habilitat, que és el que el
@@ -389,12 +390,14 @@ const VERIFICADES = {
   'P8.clau': () => {
     // La clau és el TIPUS de fitxatge, no el lloc: dos llocs iguals són una sola cerca.
     const A = { creativitat: 9, defensa: 6 };
-    assert.equal(clauFitxatge('lloc', 'mc', A), clauFitxatge('lloc', 'mc', { defensa: 6, creativitat: 9 }),
+    assert.equal(clauFitxatge('lloc', 'mc', A, 32), clauFitxatge('lloc', 'mc', { defensa: 6, creativitat: 9 }, 32),
       'dos llocs amb el mateix perfil són un sol fitxatge, escriga\'s com s\'escriga');
     // I EL PREU ÉS D'EIXE JUGADOR, no d'«un mig centre»: si el pressupost mou el perfil, la
     // clau canvia i el preu declarat deixa de valdre. Amb la clau vella («mc:9») el preu d'un
     // jugador es reutilitzava per a un altre de més car.
-    assert.notEqual(clauFitxatge('lloc', 'mc', A), clauFitxatge('lloc', 'mc', { creativitat: 10, defensa: 6 }));
+    assert.notEqual(clauFitxatge('lloc', 'mc', A, 32), clauFitxatge('lloc', 'mc', { creativitat: 10, defensa: 6 }, 32));
+    // I L'EDAT HI VA TAMBÉ: el mateix perfil a una altra edat és un altre jugador i un altre preu.
+    assert.notEqual(clauFitxatge('lloc', 'mc', A, 32), clauFitxatge('lloc', 'mc', A, 26));
   },
 
   'P8.eficiencia': () => {
@@ -873,6 +876,35 @@ const VERIFICADES = {
     assert.ok(perfilObjectiu(ph, PRES * 2, ts, f, { offset: off }).aportacio >= o.aportacio);
     assert.equal(perfilObjectiu(ph, null, ts, f, { offset: off }), null, 'sense pressupost, res');
   },
+  'P4.descompte': async () => {
+    // −10% per any dels 29 als 37 (wiki «Wages»); per davall de 28, tarifa sencera.
+    const cfg = await carregaConfigPesos(dbFix, 'competitiva');
+    assert.equal(descompteEdat(28, cfg.descompte_sou_edat), 1);
+    assert.equal(descompteEdat(24, cfg.descompte_sou_edat), 1, 'els joves no tenen descompte');
+    assert.equal(descompteEdat(32, cfg.descompte_sou_edat), 0.6);
+    assert.equal(descompteEdat(37, cfg.descompte_sou_edat), 0.1);
+    assert.equal(descompteEdat(41, cfg.descompte_sou_edat), 0.1, 'passats els 37 ja no baixa més');
+  },
+  'P4.edat_objectiu': async () => {
+    const cfg = await carregaConfigPesos(dbFix, 'competitiva');
+    // ELS LLOCS QUE NO ENTRENEN van al pom, i el descompte els compra un perfil més gran amb
+    // EL MATEIX pressupost. És tot el propòsit d'este pas.
+    const sense = nivellsObjectiu(['davanter'], cfg, 10291);
+    const amb = nivellsObjectiu(['davanter'], cfg, 10291, { davanter: cfg.edat_fitxatge_max });
+    assert.equal(amb.davanter.edat_objectiu, 32, 'l\'edat va a la fitxa del lloc');
+    assert.ok(amb.davanter.aportacio_objectiu > sense.davanter.aportacio_objectiu,
+      'amb el descompte d\'edat, el mateix diner compra més amunt');
+    assert.ok(amb.davanter.sou_objectiu <= amb.davanter.pressupost_sou,
+      'i el que pagues de veres segueix cabent al pressupost del lloc');
+    // ELS QUE ENTRENEN la trauen de la CORBA: el més jove que ja porta el nivell del perfil.
+    const coefs = await carregaCoeficients(dbFix);
+    const base = { habilitat: 'creativitat', entrenador: 'passable', assistents: 4,
+      intensitat: 100, resistencia: 10 };
+    const e8 = edatPerNivell(coefs, base, 8, { nivellInicial: 6 });
+    const e12 = edatPerNivell(coefs, base, 12, { nivellInicial: 6 });
+    assert.ok(e8 < e12, 'com més amunt el perfil, més major el jugador que ja hi arriba');
+    assert.equal(e8, 18, 'la corba dels 17 acaba en 8,9: qui porta 8 en té 18');
+  },
   'P4.sou_objectiu': async () => {
     const cfg = await carregaConfigPesos(dbFix, 'competitiva');
     const n = nivellsObjectiu(['mc', 'davanter', 'porter'], cfg, 20000);
@@ -978,8 +1010,8 @@ const VERIFICADES = {
     // QUANT LI FALTA al lloc. Un lloc SOBRAT no compta: no es pot arreglar comprant, perquè
     // l'assignació torna a donar el lloc al millor i el fitxatge se'n va al residu.
     const n = necessitats({ entrenables: [], entrenables_max: 0, porter_suplent: {}, onze: [
-      { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 3 },
-      { bucket: 'porter', perfil_objectiu: { porteria: 5 }, distancia: 0 }] }, { distancia_min: 2 });
+      { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, edat_objectiu: 32, distancia: 3 },
+      { bucket: 'porter', perfil_objectiu: { porteria: 5 }, edat_objectiu: 32, distancia: 0 }] }, { distancia_min: 2 });
     assert.deepEqual(n.map((x) => x.bucket), ['mc'], 'el sobrat no és una necessitat de mercat');
     assert.equal(n[0].distancia, 3, 'tres per davall → distància 3');
     // ARRIBAR ES MIRA EN CONJUNT. El cas real que ho va destapar: perfil de porter PO4 DF8
@@ -998,8 +1030,8 @@ const VERIFICADES = {
   },
   'P5.compta': () => {
     const n = necessitats({ entrenables: [], entrenables_max: 0, porter_suplent: {}, onze: [
-      { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 1 },
-      { bucket: 'davanter', perfil_objectiu: { anotacio: 9, passades: 5 }, distancia: 2 }] }, { distancia_min: 2 });
+      { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, edat_objectiu: 32, distancia: 1 },
+      { bucket: 'davanter', perfil_objectiu: { anotacio: 9, passades: 5 }, edat_objectiu: 32, distancia: 2 }] }, { distancia_min: 2 });
     assert.deepEqual(n.map((x) => x.bucket), ['davanter'],
       'un sol nivell no és un forat: s\'arregla entrenant o esperant');
     // I EL LLINDAR ÉS UN POM, no un número en codi (invariant 8): vivia com a valor per
@@ -1009,13 +1041,13 @@ const VERIFICADES = {
     const pom = sqliteFix.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='distancia_min'").get();
     assert.ok(pom && Number(pom.valor) > 0, 'el llindar està declarat a la BD, no escrit al codi');
     assert.deepEqual(necessitats({ entrenables: [], entrenables_max: 0, porter_suplent: {}, onze: [
-      { bucket: 'mc', perfil_objectiu: { creativitat: 9 }, distancia: 9 }] }, {}), [],
+      { bucket: 'mc', perfil_objectiu: { creativitat: 9 }, edat_objectiu: 32, distancia: 9 }] }, {}), [],
       'i sense declarar-lo no s\'inventa cap tall');
   },
   'P5.ordre': () => {
     const n = necessitats({ entrenables: [], entrenables_max: 2, porter_suplent: null, onze: [
-      { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, distancia: 2 },
-      { bucket: 'extrem', perfil_objectiu: { extrem: 9, creativitat: 5 }, distancia: 3 }] }, { entrenable_min: 6, distancia_min: 2 });
+      { bucket: 'mc', perfil_objectiu: { creativitat: 9, defensa: 6 }, edat_objectiu: 32, distancia: 2 },
+      { bucket: 'extrem', perfil_objectiu: { extrem: 9, creativitat: 5 }, edat_objectiu: 32, distancia: 3 }] }, { entrenable_min: 6, distancia_min: 2 });
     assert.deepEqual(n.map((x) => x.tipus === 'lloc' ? x.bucket : x.tipus),
       ['entrenable', 'porter_suplent', 'extrem', 'mc'],
       'places buides primer, i després qui més lluny està');

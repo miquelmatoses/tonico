@@ -430,8 +430,8 @@
   "estoc.capçal": "You have {disponible} to spend and the flow supports {sostenible} of wages per week.",
   "estoc.sense_caixa": "You haven't logged the cash, so I can't tell you what's worth buying.",
   "estoc.recomanada": "Best return:",
-  "estoc.opcio_jugador_1": "a {lloc} with {perfil}: 1 level short of what your flow pays for.",
-  "estoc.opcio_jugador_n": "a {lloc} with {perfil}: {mancanca} levels short of what your flow pays for.",
+  "estoc.opcio_jugador_1": "a {lloc} aged {edat} with {perfil}: 1 level short of what your flow pays for.",
+  "estoc.opcio_jugador_n": "a {lloc} aged {edat} with {perfil}: {mancanca} levels short of what your flow pays for.",
   "estoc.opcio_estadi": "stadium works: {cost} up front, and maintenance rises by {manteniment} per week. It comes before any signing: it's the only purchase that moves the flow.",
   "estoc.cap_opcio": "Nothing is worth it right now: raise cash by selling and we'll look again.",
   "estoc.estadi_falta": "Give me the stadium figures and it'll join the comparison too.",
@@ -539,8 +539,8 @@
   "mercat.nec_porter_suplent": "A backup keeper",
   "mercat.nec_entrenable_1": "1 youngster with playmaking {nivell} or more",
   "mercat.nec_entrenable_n": "{n} youngsters with playmaking {nivell} or more",
-  "mercat.nec_lloc_1": "1 {lloc} with {perfil}",
-  "mercat.nec_lloc_n": "{n} {lloc} with {perfil}",
+  "mercat.nec_lloc_1": "1 {lloc} aged {edat} with {perfil}",
+  "mercat.nec_lloc_n": "{n} {lloc} aged {edat} with {perfil}",
   "mercat.nec_placa_entrenament_buida": "EMPTY TRAINING SLOT",
   "mercat.nec_sense_porter_suplent": "THE STARTER MUST PLAY TWICE",
   "mercat.nec_distancia": "by distance to target",
@@ -579,5 +579,7 @@
   "bucket.mc": "inner midfielder",
   "bucket.extrem": "winger",
   "bucket.davanter": "forward",
-  "decisions.origen_juvenil": "From which youth?"
+  "decisions.origen_juvenil": "From which youth?",
+  "mercat.edat_min": "{min} or older",
+  "mercat.edat_max": "{max} or younger"
 }
