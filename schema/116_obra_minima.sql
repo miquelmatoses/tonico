@@ -1,0 +1,31 @@
+-- Tonico — migració 116 · una obra menuda no és una decisió, és un peatge.
+--
+-- Tal com estava, `ACCIÓ("remodela l'estadi")` només mirava si l'obra es podia PAGAR. I com
+-- que l'estadi mai està dimensionat al 100% —sempre en falta un grapat de llotja o de
+-- tribuna—, la calculadora sempre trau alguna cosa a fer i Tonico sempre deia que avant. Amb
+-- prioritat absoluta, a més: bloquejava qualsevol fitxatge per una obra de quatre seients.
+--
+-- ─── PER QUÈ HI HA D'HAVER UN MÍNIM (guia «Arena») ────────────────────────────────────
+-- «There is also an additional fee of 10 000 € every time you expand or reduce, no matter how
+--  many seats you add or reduce.»
+--
+-- O siga que cada obra costa 10.000 € de peatge, siga de dos seients o de dos mil. Cinc obres
+-- menudes són 50.000 € tirats només per obrir el rasant cinc vegades — i cinc períodes amb
+-- tota la resta del sistema bloquejada per `obra_en_curs`.
+--
+-- ─── D'ON IX EL NÚMERO ────────────────────────────────────────────────────────────────
+-- La mateixa pàgina: «It is generally better to improve your stadium in small steps (say
+-- 2 000 to 4 000)». I el preu per seient: general 45 € · lateral 75 € · tribuna 90 €
+-- · llotja 300 €.
+--
+-- El pas mínim que recomana la guia, al seient MÉS BARAT, és 2.000 × 45 = 90.000 €, més els
+-- 10.000 de taxa: 100.000 €. Res per davall d'això pot arribar als 2.000 seients, siga quina
+-- siga la barreja de graderies.
+--
+-- I s'hi arriba pel mateix número per un altre camí: amb 100.000 € d'obra, la taxa fixa és el
+-- 10% del que gastes. Per davall, estàs pagant més peatge que obra.
+--
+-- És un POM, no una constant: el llindar és política de Miquel, com `reserva_flux_pct`. Si
+-- vol fer salts més grans i menys sovint, el puja.
+INSERT OR REPLACE INTO plantilles_parametres (plantilla, clau, valor, tipus) VALUES
+  ('competitiva', 'estadi_obra_minima', '100000', 'int');

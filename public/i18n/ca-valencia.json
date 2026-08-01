@@ -582,5 +582,6 @@
   "decisions.origen_juvenil": "De quin juvenil?",
   "mercat.edat_min": "{min} anys o més",
   "mercat.edat_max": "{max} anys o menys",
-  "decisions.error_desar": "No s'ha pogut desar. Torna-ho a provar."
+  "decisions.error_desar": "No s'ha pogut desar. Torna-ho a provar.",
+  "estoc.obra_menuda": "L'obra que has declarat ({cost}) no arriba al pas mínim: cada ampliació cobra 10.000 € fixos, siga de dos seients o de dos mil, i mentre dura no es pot decidir res més. Val més esperar i fer-la més gran."
 }

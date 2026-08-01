@@ -663,6 +663,11 @@ function bucleEstoc(main, e) {
     }
   } else {
     cos.append(el('p', { class: 'nota-peu', text: t('estoc.cap_opcio') }));
+    // I si el que ho frena és que l'obra és massa menuda, es diu: si no, sembla que no la
+    // pots pagar quan el que passa és que no val la pena obrir el rasant per a això.
+    if (obra?.motiu === 'obra_menuda') {
+      cos.append(el('p', { class: 'nota-peu', text: t('estoc.obra_menuda', ambXifres({ cost: obra.cost }, ['cost'])) }));
+    }
   }
   // LA TAULA DE FITXATGES: UNA LÍNIA PER FITXATGE, i només els que et pots permetre. La
   // columna «ara mateix» deia sempre el mateix i se n'ha anat amb els que no es podien pagar.

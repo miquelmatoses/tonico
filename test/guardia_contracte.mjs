@@ -1299,6 +1299,16 @@ const VERIFICADES = {
   'P8.manteniment': () => assert.equal(deltaManteniment(7100, 9000), 1900,
     'Δmanteniment = el que l\'obra AFIG cada setmana'),
   'P8.admissible_2': () => {
+    // UNA OBRA MENUDA NO ES RECOMANA. Guia «Arena»: 10.000 € fixos per ampliació «no matter
+    // how many seats», i passos de 2.000 a 4.000 seients. Sense això, com que l'estadi mai
+    // està dimensionat al 100%, sempre hi havia alguna cosa a fer i sempre es deia que avant.
+    const gran = { cost: 150000, caixa: 999999, flux: 100000, delta_manteniment: 0,
+      setmanes_periode: 2, reserva_flux: 0, obra_minima: 100000 };
+    assert.equal(admissibleEstadi(gran), true, 'una obra del pas mínim, endavant');
+    assert.equal(admissibleEstadi({ ...gran, cost: 60000 }), false,
+      'i una que no hi arriba, no: el peatge fix se la menja');
+    assert.equal(admissibleEstadi({ ...gran, cost: 60000, obra_minima: null }), true,
+      'sense el pom declarat no s\'inventa cap tall');
     assert.equal(admissibleEstadi({ cost: 50000, caixa: 100000, flux: 10000,
       delta_manteniment: 1000, setmanes_periode: 2, reserva_flux: 5000 }), true);
     assert.equal(admissibleEstadi({ cost: 50000, caixa: 100000, flux: 10000,

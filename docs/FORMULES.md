@@ -492,7 +492,16 @@ obra_en_curs   = `estadi_obra_inici` ≠ ∅            [declarada: l'obra ja s'
 Δmanteniment   = `estadi_manteniment` − manteniment_actual
 admissible(estadi) = ¬obra_en_curs
                    I  `estadi_cost_obra` ≤ caixa
+                   I  `estadi_cost_obra` ≥ `estadi_obra_minima`
                    I  flux − per_periode(Δmanteniment) ≥ reserva_flux
+   [UNA OBRA MENUDA NO ÉS UNA DECISIÓ, ÉS UN PEATGE. Guia «Arena»: cada ampliació cobra
+    10.000 € fixos «no matter how many seats you add or reduce», i recomana passos de 2.000
+    a 4.000 seients. Sense este tall l'estadi mai està dimensionat al 100% —sempre falta
+    algun seient de llotja o tribuna—, o siga que la calculadora sempre trau alguna cosa a
+    fer i Tonico sempre deia que avant, bloquejant a més qualsevol fitxatge per prioritat.
+    El número és POM, com `reserva_flux_pct`: el pas mínim de la guia al seient més barat
+    (2.000 × 45 €) més la taxa dona 100.000 €, que és també el punt on el peatge fix deixa
+    de ser el 10% del que gastes]
 ACCIÓ("remodela l'estadi")  SI admissible(estadi) I ¬estadi_caduc
    [PRIORITAT ABSOLUTA: abans que qualsevol fitxatge, sempre. L'estadi és l'única
     compra que MOU EL FLUX — un fitxatge consumix el pressupost, l'estadi aixeca el
