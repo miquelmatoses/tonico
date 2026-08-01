@@ -129,10 +129,15 @@ pes_sector(s) = `pesos_sector`[s] × `importancia_sector`[s]
       habilitat. MESURADA com el quocient entre les dues taules del wiki —coeficients
       contra percentatges—, 28 cel·les de sis posicions (migració 110).
     · IMPORTÀNCIA (`importancia_sector`): quant val GUANYAR eixe sector. Guia §5: 36%
-      de les ocasions pel centre, 25,5% per costat, i el mig 1,0 perquè decidix QUI té
+      de les ocasions pel centre i 25,5% per costat; el mig va a banda perquè decidix QUI té
       l'ocasió, no on. NO és mesurable —les dues taules del wiki ja estan en punts de
       qualificació—: és la primera hipòtesi i el COMANDAMENT per a afinar el sistema.
       Es comprova mirant si dominar el mig dobla les ocasions als informes de partit]
+   [EL MIG ESTÀ EN 0,85, no en 1,0 (migració 115). El pressupost del mig centre eixia molt
+    per damunt de la resta, i eixos són justament els llocs que ENTRENEM: pugen sols, i
+    gastar-hi sou és pagar per una cosa que la corba d'entrenament ja dona. Baixant-lo pugen
+    els altres quatre —el porter és qui més se'n beneficia i l'extrem qui menys, perquè
+    l'extrem també aporta al mig i també nota la baixada]
    [CINC SECTORS, no tres: `pes_central` i `pes_banda` col·lapsaven defensa i atac, i
     la mesura diu que no pesen igual (banda defensiva 0,304, atacant 0,241). Amb ells
     se'n va `pes_mig`, l'únic número que ens havíem inventat mai (migració 111)]
