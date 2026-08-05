@@ -361,16 +361,21 @@ taula: estat derivat que es quedava ranci i que cada pantalla tornava a derivar 
 compte. Ara es reparteixen **tots** els jugadors, lloc a lloc, i el que sobra és el residu.
 
 ```
-onze      = REPARTIX ORDENA(lloc × jugador; pes(lloc) × equivalent(j, lloc) DESC,
-                            sou ASC, id ASC)     [cada lloc u, cada jugador u]
-   [PER PARELLES, NO PER ORDE DE LLOCS. Recórrer els llocs per pes i que cada un
-    s'enduga el millor lliure bastava amb monocultiu —la porteria no servia per a res
-    més que per a la porteria—, però amb CONTRIBUCIÓ un jugador complet val a tot arreu
-    i el porter és el lloc que MENYS pesa: es triava l'últim, el millor porter se
-    l'enduia el davanter i sota pals quedava un central.
-    Ara es mira el VALOR AFEGIT de cada parella —pes del lloc × el que el jugador hi
-    aporta, que és contribucio(j, lloc) mateix— i es reparteix de major a menor. A
-    igualtat mana el SOU, perquè dos que rendixen igual no valen igual]
+onze      = MAX(SUMA(llocs: pes(lloc) × equivalent(ocupant, lloc)))
+             [un lloc un jugador · a igualtat, sou ASC i després id ASC]
+   [EL CONJUNT, NO LA PARELLA. Es tria el repartiment que maximitza la suma dels onze
+    llocs alhora, no el que va agafant la millor parella una darrere l'altra.
+    Els dos intents anteriors miraven massa poc. Recórrer els llocs per pes i que cada
+    un s'enduga el millor lliure bastava amb monocultiu, però amb CONTRIBUCIÓ un jugador
+    complet val a tot arreu i el porter és el lloc que MENYS pesa: es triava l'últim, el
+    millor porter se l'enduia el davanter i sota pals quedava un central. I anar per
+    parelles reparava això i deixava el mateix error un pis més amunt: un davanter que
+    al mig centre val 6,51 i al davanter 7,93 se l'enduia el MIG, perquè el mig pesa més
+    i la parella valia més — i quan li tocava al davanter ja només quedava un molt
+    pitjor. Es guanyaven 0,06 i se'n perdien 1,93]
+   [UN LLOC BUIT ÉS UNA OPCIÓ, i guanya l'empat contra qui allí no aporta res: eixe fa
+    falta al residu. A igualtat mana el SOU, perquè dos que rendixen igual no valen
+    igual, i sense eixe desempat l'onze ballaria a cada pujada sense haver canviat res]
 sobrants  = plantilla − onze
 mancances(lloc, h) = MAX(0; perfil_objectiu(lloc, h) − hab(ocupant, h))
    [HI HA UNA PLANTILLA IDEAL —onze llocs, cada un amb el perfil que el seu pressupost

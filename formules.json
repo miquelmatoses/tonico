@@ -719,7 +719,7 @@
       "pas": "P6",
       "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
       "clau": "onze",
-      "linia": "onze      = REPARTIX ORDENA(lloc × jugador; pes(lloc) × equivalent(j, lloc) DESC,",
+      "linia": "onze      = MAX(SUMA(llocs: pes(lloc) × equivalent(ocupant, lloc)))",
       "entrades": [
         "equivalent",
         "lloc",

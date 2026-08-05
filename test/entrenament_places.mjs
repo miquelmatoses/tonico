@@ -42,7 +42,10 @@ assert.equal(cobDef.entrenables_objectiu, 6, 'defensa: 3×100 × 2 = 6');
 assert.notEqual(cobCrea.entrenables_objectiu, cobDef.entrenables_objectiu, 'canviar l\'entrenament mou l\'objectiu d\'entrenables');
 
 // ── 4. L'ALINEACIÓ es deriva: amb defensa, entrenen els DEFENSES, no els MC ──
-const squad = Array.from({ length: 8 }, (_, i) => ({ jugador_id: i + 1, nom: 'E' + i, posicio: 'DC', categoria: 'core' }));
+// AMB HABILITATS: un jugador que no aporta res enlloc ja no ocupa cap lloc —val més buit, que
+// és el senyal fort—, o siga que un fixture sense números no provaria l'alineació sinó el buit.
+const squad = Array.from({ length: 8 }, (_, i) => ({ jugador_id: i + 1, nom: 'E' + i, posicio: 'DC',
+  categoria: 'core', porteria: 5, defensa: 5, creativitat: 5, extrem: 5, passades: 5, anotacio: 5 }));
 const llocsDe = (slots) => slots.map((sl, i) => ({ lloc: `${sl.bucket}${i + 1}`, bucket: sl.bucket,
   entrena: !!sl.entrena, pct: sl.pct ?? 100, habilitat: { porter: 'porteria', defensa: 'defensa',
   mc: 'creativitat', extrem: 'extrem', davanter: 'anotacio' }[sl.bucket], pes: 1 }));

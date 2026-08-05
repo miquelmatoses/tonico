@@ -64,6 +64,32 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
     'a igualtat d\'habilitat, el més barat');
 }
 
+// ── 4b. ÒPTIM, NO VORAÇ: es mira el CONJUNT, no la millor parella una darrere l'altra.
+// El cas real que ho va destapar: un davanter de 33 anys valia 6,51 al mig centre i 7,93 al
+// davanter, però com que el mig PESA més la parella «mc × ell» valia més i se l'enduia el mig.
+// Quan li tocava al davanter ja només quedava un molt pitjor: es guanyaven 0,06 i se'n perdien
+// 1,93, i de retruc un jove queia de l'onze i acabava a venda.
+//
+// Fan falta DOS llocs del pes gros per a que el voraç ensopegue: el primer se l'endú el millor
+// i el segon se l'endú qui hauria d'anar a l'altre lloc.
+{
+  const mc = (n) => ({ lloc: 'MC' + n, bucket: 'mc', habilitat: 'creativitat',
+    pesos_habilitat: { creativitat: 1 }, pes: 1.5 });
+  const LL = [mc(1), mc(2), { lloc: 'DAV1', bucket: 'davanter', habilitat: 'anotacio',
+    pesos_habilitat: { anotacio: 1 }, pes: 1 }];
+  const j = (id, cre, ano) => ({ id, nom: 'J' + id, sou: 1000, creativitat: cre, anotacio: ano });
+  const B = j(1, 10, 0), A = j(2, 9, 9), D = j(3, 8, 1);
+  const { onze } = assignaEstructura([B, A, D], LL);
+  // El voraç faria MC1←B (15), MC2←A (13,5) i deixaria el davanter per a D (1): total 29,5.
+  // L'òptim posa A al davanter i D al segon mig centre: 15 + 12 + 9 = 36.
+  assert.equal(onze.find((l) => l.lloc === 'DAV1').jugador.id, A.id,
+    'se\'n va on el CONJUNT guanya, encara que la seua millor parella fora el mig centre');
+  assert.deepEqual(onze.filter((l) => l.bucket === 'mc').map((l) => l.jugador.id), [B.id, D.id]);
+  const val = (jj, l) => (l.pes ?? 0) * (jj[l.habilitat] ?? 0);
+  const total = onze.reduce((a, l) => a + (l.jugador ? val(l.jugador, l) : 0), 0);
+  assert.equal(total, 36, 'i el total és el màxim possible, no el que trau la millor parella');
+}
+
 // ── 5. I d'extrem a extrem, amb la formació de veres: 2-5-3 ──
 {
   sqlite.exec(`
