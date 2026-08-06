@@ -583,5 +583,6 @@
   "mercat.edat_min": "{min} or older",
   "mercat.edat_max": "{max} or younger",
   "decisions.error_desar": "Couldn't save. Try again.",
-  "estoc.obra_menuda": "The works you declared ({cost}) is below the minimum step: every expansion charges a flat 10,000 €, whether it adds two seats or two thousand, and nothing else can be decided while it lasts. Better to wait and build bigger."
+  "estoc.obra_menuda": "The works you declared ({cost}) is below the minimum step: every expansion charges a flat 10,000 €, whether it adds two seats or two thousand, and nothing else can be decided while it lasts. Better to wait and build bigger.",
+  "pujada.error_xarxa": "Couldn't connect. Reload the page and check whether the data went through before retrying."
 }

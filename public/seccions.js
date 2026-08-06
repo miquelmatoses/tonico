@@ -1237,8 +1237,18 @@ export function pujada(main, teAcademia = true) {
     estat.textContent = t('comu.carregant');
     const fd = new FormData(form);
     if (reemplaça) fd.set('reemplaça', 'true');
-    const r = await fetch('/api/pujar', { method: 'POST', credentials: 'same-origin', body: fd });
-    const cos = await r.json().catch(() => ({}));
+    // SI LA CRIDA CAU DEL TOT, ES DIU. Sense captura, un `fetch` rebutjat deixava el text en
+    // «carregant» per sempre i no hi havia manera de saber si havia pujat o no — que és
+    // exactament el que es veu com «s'ha penjat». El mateix defecte que tenia el botó de
+    // Decisions: una promesa rebutjada no és un error visible, és una pantalla muda.
+    let r, cos;
+    try {
+      r = await fetch('/api/pujar', { method: 'POST', credentials: 'same-origin', body: fd });
+      cos = await r.json().catch(() => ({}));
+    } catch (e) {
+      estat.textContent = t('pujada.error_xarxa');
+      return;
+    }
     if (r.status === 409 && cos.error === 'instantania_existix') { if (confirm(t('pujada.confirma_reemplaça'))) return envia(true); estat.textContent = ''; return; }
     if (!r.ok) {
       // El servidor diu QUÈ ha passat; ací només es tria el text.

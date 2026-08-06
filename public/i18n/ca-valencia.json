@@ -583,5 +583,6 @@
   "mercat.edat_min": "{min} anys o més",
   "mercat.edat_max": "{max} anys o menys",
   "decisions.error_desar": "No s'ha pogut desar. Torna-ho a provar.",
-  "estoc.obra_menuda": "L'obra que has declarat ({cost}) no arriba al pas mínim: cada ampliació cobra 10.000 € fixos, siga de dos seients o de dos mil, i mentre dura no es pot decidir res més. Val més esperar i fer-la més gran."
+  "estoc.obra_menuda": "L'obra que has declarat ({cost}) no arriba al pas mínim: cada ampliació cobra 10.000 € fixos, siga de dos seients o de dos mil, i mentre dura no es pot decidir res més. Val més esperar i fer-la més gran.",
+  "pujada.error_xarxa": "No s'ha pogut connectar. Recarrega la pàgina i mira si les dades han entrat abans de tornar-ho a provar."
 }
