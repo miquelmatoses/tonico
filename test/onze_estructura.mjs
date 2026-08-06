@@ -90,6 +90,32 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   assert.equal(total, 36, 'i el total és el màxim possible, no el que trau la millor parella');
 }
 
+// ── 4c. EL LLOC QUE ENTRENA VAL MÉS EN MANS DE QUI CREIX ────────────────────────────────
+// Un lloc que entrena no val el mateix segons qui l'ocupe: al que encara creix li torna
+// habilitat cada setmana i al que ja no, res. Sense això l'assignació donava el lloc d'extrem
+// a un de 32 anys —millor HUI— i es menjava una plaça d'entrenament que no li tornaria res.
+{
+  const LL = [{ lloc: 'MC1', bucket: 'mc', habilitat: 'creativitat', entrena: true, pct: 100,
+    pesos_habilitat: { creativitat: 1 }, pes: 1 },
+  { lloc: 'DC1', bucket: 'defensa', habilitat: 'defensa', entrena: false,
+    pesos_habilitat: { defensa: 1 }, pes: 1 }];
+  const j = (id, cre, def) => ({ id, nom: 'J' + id, sou: 1000, creativitat: cre, defensa: def });
+  const vell = j(1, 7, 7), jove = j(2, 6, 6);
+  // El plus el posa el cridador; ací es fixa la REGLA: només compta als llocs que entrenen.
+  const plus = (x, l) => (l.entrena && x.id === jove.id ? 2 : 0);
+  const sense = assignaEstructura([vell, jove], LL);
+  assert.equal(sense.onze.find((l) => l.lloc === 'MC1').jugador.id, vell.id,
+    'sense comptar l\'entrenament, el lloc que entrena se l\'endú el millor d\'ara');
+  const amb = assignaEstructura([vell, jove], LL, plus);
+  assert.equal(amb.onze.find((l) => l.lloc === 'MC1').jugador.id, jove.id,
+    'comptant-lo, se l\'endú qui creixerà, i el millor d\'ara cobrix el lloc que NO entrena');
+  assert.equal(amb.onze.find((l) => l.lloc === 'DC1').jugador.id, vell.id);
+  // I NO ES REGALA: el plus no s'aplica als llocs que no entrenen, o siga que si el jove és
+  // pitjor a tot arreu, no li lleva un lloc que no li torna res.
+  const nomesDC = assignaEstructura([vell, jove], [LL[1]], plus);
+  assert.equal(nomesDC.onze[0].jugador.id, vell.id, 'a un lloc que no entrena, mana el d\'ara');
+}
+
 // ── 5. I d'extrem a extrem, amb la formació de veres: 2-5-3 ──
 {
   sqlite.exec(`
@@ -229,6 +255,53 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   const buit = assignaEstructura([], llocs2).onze[0];
   assert.equal(buit.mancances, null, 'ni per a un lloc sense ningú');
   assert.equal(buit.distancia, null);
+}
+
+// ── 8b. EL LLOC QUE ENTRENA VA A QUI CREIX, i això es cablatja de veres ─────────────────
+// Guardià del CAMÍ COMPLET, no de la mecànica: `onzeEstructura` ha de calcular el creixement
+// amb l'entrenador i els assistents del club i passar-lo a l'assignació. El cas real: un
+// jugador de 32 anys que a l'extrem valia més que ningú se n'enduia una plaça d'entrenament
+// que no li tornaria res, i el que sobreeixia era un de 20 que sí que creixia.
+{
+  const b = (id, o) => ({ id, nom: 'X' + id, sou: 1000, edat_anys: 26, edat_dies: 0,
+    porteria: 1, defensa: 1, creativitat: 1, extrem: 1, passades: 1, anotacio: 1,
+    pilota_aturada: 1, ...o });
+  // Onze llocs coberts amb gent de 26 anys, i després els dos que es disputen el mig centre:
+  // el VELL és millor hui (creativitat 9 contra 7) però ja no creix; el JOVE sí.
+  const farciment = Array.from({ length: 11 }, (_, i) => b(i + 1, {
+    porteria: i === 0 ? 9 : 1, defensa: i > 0 && i < 4 ? 7 : 1,
+    creativitat: i >= 4 && i < 8 ? 6 : 1,
+    extrem: i >= 8 && i < 10 ? 7 : 1, anotacio: i >= 10 ? 8 : 1 }));
+  // EL JOVE EMPATA amb el farciment (creativitat 6) i cobra MÉS, o siga que sense comptar el
+  // creixement el desempat per sou el deixa fora. El plus d'una setmana és menut a posta: només
+  // ha de desfer empats i quasi-empats, que és on estava el problema.
+  const jove = b(91, { edat_anys: 18, creativitat: 6, sou: 2000 });
+  const r = await onzeEstructura(db, 1, [...farciment, jove], 10291);
+  const seu = r.onze.find((l) => l.jugador?.id === jove.id);
+  assert.ok(seu, 'el jove entra a l\'onze tot i perdre el desempat per sou');
+  assert.ok(seu.entrena, 'i hi entra per un lloc que ENTRENA, que és on el seu creixement val');
+  // I el desplaçat no desapareix: se'n va al residu, que és d'on ixen entrenables i vendes.
+  assert.equal(r.onze.filter((l) => l.jugador).length + r.sobrants.length, 12, 'ningú es perd');
+
+  // I NOMÉS ON S'ENTRENA. Este jove només encaixa al davanter, que NO entrena, i hi va per
+  // davall del que hi ha. Si el creixement es cobrara a tot arreu se'n colaria —i molt, perquè
+  // amb creativitat 1 la velocitat d'entrenament és altíssima—, i estaríem regalant un lloc
+  // que no li torna res.
+  // I ÉS D'UNA SETMANA, NO D'UNA TEMPORADA: un jove clarament PITJOR (creativitat 5 contra 6)
+  // no ha d'entrar. Amb el plus d'una temporada sí que entraria —16 setmanes de creixement
+  // valen més que un nivell sencer a esta escala— i estaríem canviant l'onze per una promesa.
+  const pitjor = b(93, { edat_anys: 18, creativitat: 5 });
+  const rp = await onzeEstructura(db, 1, [...farciment, pitjor], 10291);
+  const seuPitjor = rp.onze.find((l) => l.jugador?.id === pitjor.id);
+  assert.ok(!seuPitjor?.entrena,
+    'el plus desfà empats, no compra places: qui és clarament pitjor no lleva un lloc que entrena');
+
+  const fluix = b(92, { edat_anys: 18 });                       // tot a 1, però jove
+  const r2 = await onzeEstructura(db, 1, [...farciment, fluix], 10291);
+  const seuFluix = r2.onze.find((l) => l.jugador?.id === fluix.id);
+  assert.ok(!seuFluix || seuFluix.entrena,
+    'si un jove fluix entra a l\'onze, només pot ser per un lloc que ENTRENA: als altres el seu '
+    + 'creixement no val res, i amb creativitat 1 la velocitat és altíssima');
 }
 
 // ── 9. FUTUR ENTRENADOR i PORTER SUPLENT: els altres dos que la segona alineació necessita.

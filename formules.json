@@ -715,15 +715,29 @@
       "taules": []
     },
     {
+      "id": "P6.valor",
+      "pas": "P6",
+      "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
+      "clau": "valor",
+      "linia": "valor(j, lloc) = equivalent(j, lloc) + SI(entrenable(lloc); creixement(j, lloc); 0)",
+      "entrades": [
+        "entrenable",
+        "equivalent",
+        "lloc"
+      ],
+      "poms": [],
+      "taules": []
+    },
+    {
       "id": "P6.onze",
       "pas": "P6",
       "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
       "clau": "onze",
-      "linia": "onze      = MAX(SUMA(llocs: pes(lloc) × equivalent(ocupant, lloc)))",
+      "linia": "onze      = MAX(SUMA(llocs: pes(lloc) × valor(ocupant, lloc)))",
       "entrades": [
-        "equivalent",
         "lloc",
-        "pes"
+        "pes",
+        "valor"
       ],
       "poms": [],
       "taules": []
