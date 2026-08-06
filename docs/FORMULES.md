@@ -361,23 +361,7 @@ taula: estat derivat que es quedava ranci i que cada pantalla tornava a derivar 
 compte. Ara es reparteixen **tots** els jugadors, lloc a lloc, i el que sobra és el residu.
 
 ```
-valor(j, lloc) = equivalent(j, lloc) + SI(entrenable(lloc); creixement(j, lloc); 0)
-   creixement(j, lloc) = el que pujaria de l'habilitat entrenada en UNA SETMANA,
-                         × pesos_habilitat(lloc, A) / SUMA(pesos_habilitat(lloc))
-   [UN LLOC QUE ENTRENA NO VAL EL MATEIX SEGONS QUI L'OCUPE: al que encara creix li torna
-    habilitat cada setmana i al que ja no, res. Sense comptar-ho, l'assignació donava el
-    lloc d'extrem a un de 32 anys —millor HUI— i es menjava una plaça d'entrenament que no
-    li tornaria mai res; el que sobreeixia era un de 20 que sí que creixia]
-   [LA UNITAT ÉS UNA SETMANA, i és la mínima possible a posta. L'onze es torna a calcular
-    a cada pujada, o siga que ocupar el lloc HUI dona exactament una setmana d'entrenament:
-    apuntar-se'n una temporada seria donar per fet que el conserva fins al final, cosa que
-    el model no garantix. Amb la setmana el plus DESFÀ EMPATS i quasi-empats —que és on
-    estava el problema— i no compra places: qui és clarament pitjor seguix fora. Mesurat
-    sobre plantilla real: costa un 0,03% d'aportació, contra el 0,75% de la temporada]
-   [NO CAL CAP TALL D'EDAT: la velocitat d'entrenament ja baixa amb els anys, o siga que el
-    plus d'un vell és menut tot sol. I NOMÉS on s'entrena: als altres llocs el creixement
-    no val res]
-onze      = MAX(SUMA(llocs: pes(lloc) × valor(ocupant, lloc)))
+onze      = MAX(SUMA(llocs: pes(lloc) × equivalent(ocupant, lloc)))
              [un lloc un jugador · a igualtat, sou ASC i després id ASC]
    [EL CONJUNT, NO LA PARELLA. Es tria el repartiment que maximitza la suma dels onze
     llocs alhora, no el que va agafant la millor parella una darrere l'altra.

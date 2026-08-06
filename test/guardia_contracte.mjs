@@ -1097,27 +1097,6 @@ const VERIFICADES = {
       'onze ∪ sobrants = plantilla, sense repetits ni perduts');
     assert.deepEqual(sobrants.map((x) => x.id).sort((a, b) => a - b), [5, 6]);
   },
-  'P6.valor': () => {
-    // UN LLOC QUE ENTRENA VAL MÉS EN MANS DE QUI CREIX. Sense això l'assignació donava el lloc
-    // d'extrem a un de 32 anys —millor HUI— i es menjava una plaça d'entrenament que no li
-    // tornaria res. El creixement el calcula el cridador (amb l'entrenador i els assistents del
-    // club); ací es fixa la regla: només als llocs que entrenen, i se suma a l'equivalent.
-    const LL = [{ lloc: 'MC1', bucket: 'mc', habilitat: 'creativitat', entrena: true, pct: 100,
-      pesos_habilitat: { creativitat: 1 }, pes: 1 },
-    { lloc: 'DC1', bucket: 'defensa', habilitat: 'defensa', entrena: false,
-      pesos_habilitat: { defensa: 1 }, pes: 1 }];
-    const millorAra = j6(1, { creativitat: 7, defensa: 7 });
-    const creixera = j6(2, { creativitat: 6, defensa: 6 });
-    const plus = (x, l) => (l.entrena && x.id === creixera.id ? 2 : 0);
-    assert.equal(assignaEstructura([millorAra, creixera], LL).onze[0].jugador.id, millorAra.id,
-      'sense comptar el creixement, el lloc que entrena se l\'endú el millor d\'ara');
-    const amb = assignaEstructura([millorAra, creixera], LL, plus);
-    assert.equal(amb.onze[0].jugador.id, creixera.id, 'comptant-lo, se l\'endú qui creixerà');
-    assert.equal(amb.onze[1].jugador.id, millorAra.id, 'i el millor d\'ara cobrix el que no entrena');
-    // I NO ES REGALA: a un lloc que no entrena, el creixement no compta.
-    assert.equal(assignaEstructura([millorAra, creixera], [LL[1]], plus).onze[0].jugador.id,
-      millorAra.id, 'a un lloc que no entrena mana el d\'ara');
-  },
   'P6.mancances': () => {
     // QUÈ LI FALTA AL LLOC per a ser el de la plantilla ideal, habilitat a habilitat.
     const llocs = LLOCS6.map((l) => ({ ...l, perfil_objectiu: perfil1(l.habilitat, 8) }));
