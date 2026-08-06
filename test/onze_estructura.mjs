@@ -127,16 +127,26 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
     assert.ok(l.habilitat, `${l.bucket}: el lloc diu contra què es mesura`);
     assert.ok(Object.keys(l.perfil_objectiu ?? {}).length > 0, `${l.bucket}: i quin perfil paga el flux`);
   }
-  // Els davanters pesen més que els defenses (2-5-3), o siga que no poden rebre menys DINERS.
+  // EL PRESSUPOST SEGUIX EL PES, i això sí que és invariant. Abans això es provava dient «el
+  // davanter ha de rebre més que el central», que era cert mentre l'atac pesava més — i va
+  // deixar de ser-ho el dia que Miquel va pujar la importància de la defensa perquè encaixava
+  // massa gols (117). Un guardià que fixa el RESULTAT d'una calibració peta cada volta que es
+  // calibra; el que ha de fixar és la regla.
   //
   // Es compara el SOU del perfil i no el nivell (v2 del motor): l'equivalent és una mitjana
   // ponderada de les habilitats que compten en eixe lloc, i cada lloc en té un nombre distint
   // —el davanter aporta amb quatre i el central amb dues—. Repartir el mateix diner entre més
   // habilitats baixa la mitjana encara que la contribució total siga major, o siga que
   // l'equivalent val per a comparar un JUGADOR amb el SEU lloc i no dos llocs entre ells.
-  const sou = (b) => ambVara.onze.find((l) => l.bucket === b).sou_objectiu;
-  assert.ok(sou('davanter') >= sou('defensa'),
-    'amb 3 davanters i 2 defenses, l\'atac no pot rebre menys pressupost que la defensa');
+  const fila = (b) => ambVara.onze.find((l) => l.bucket === b);
+  const buckets = [...new Set(ambVara.onze.map((l) => l.bucket))];
+  for (const a of buckets) {
+    for (const b of buckets) {
+      if (fila(a).pes <= fila(b).pes) continue;
+      assert.ok(fila(a).sou_objectiu >= fila(b).sou_objectiu,
+        `${a} pesa més que ${b}, o siga que no pot rebre menys pressupost`);
+    }
+  }
   const sense = await onzeEstructura(db, 1, plantilla, null);
   assert.equal(sense.onze[0].perfil_objectiu, null, 'sense sostre de sou, cap objectiu inventat');
 

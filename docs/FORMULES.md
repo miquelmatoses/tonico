@@ -133,6 +133,9 @@ pes_sector(s) = `pesos_sector`[s] × `importancia_sector`[s]
       l'ocasió, no on. NO és mesurable —les dues taules del wiki ja estan en punts de
       qualificació—: és la primera hipòtesi i el COMANDAMENT per a afinar el sistema.
       Es comprova mirant si dominar el mig dobla les ocasions als informes de partit]
+   [ÉS L'ÚNICA PEÇA QUE ES CALIBRA CONTRA RESULTATS, i el full ho ha dit sempre. La
+    defensa va pujar un graó (×1,15) el 2026-08-06 perquè encaixàvem massa gols, també
+    contra bots — primera vegada que s'afina amb partits i no amb aritmètica. Vore la 117]
    [EL MIG ESTÀ EN 0,85, no en 1,0 (migració 115). El pressupost del mig centre eixia molt
     per damunt de la resta, i eixos són justament els llocs que ENTRENEM: pugen sols, i
     gastar-hi sou és pagar per una cosa que la corba d'entrenament ja dona. Baixant-lo pugen
