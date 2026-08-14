@@ -1128,13 +1128,19 @@ const VERIFICADES = {
   },
   'P6.entrenables': async () => {
     const r = await est6();
-    // Els millors en l'habilitat entrenada DELS QUE SOBREN. El 100 (creativitat 9) ja no hi
-    // és: amb el policultiu se'n va a l'onze, perquè al lloc d'extrem la creativitat aporta
-    // més que l'habilitat d'extrem mateixa (matriu de la guia §4) i cap dels vells la té.
+    // Els millors en l'habilitat entrenada DEL VIVER: qui no entrena en l'onze oficial. El
+    // 100 (creativitat 9) no hi és: amb el policultiu se'n va a l'onze, a un lloc d'EXTREM
+    // —que entrena al 50%— perquè allí la creativitat aporta més que l'habilitat d'extrem
+    // mateixa (matriu de la guia §4) i cap dels vells la té. I qui ja entrena a l'oficial
+    // no és candidat: entrenaria dues vegades el mateix lloc.
     assert.deepEqual(r.entrenables.map((x) => x.id), [101, 102, 103],
-      'els millors en l\'habilitat entrenada, i només dels que NO han entrat a l\'onze');
-    const dins = new Set(r.onze.map((l) => l.jugador?.id));
-    assert.ok(r.entrenables.every((x) => !dins.has(x.id)), 'ixen del residu, no es dupliquen');
+      'els millors en l\'habilitat entrenada, d\'entre els que no entrenen a l\'oficial');
+    const entrenaOficial = new Set(r.onze.filter((l) => l.entrena).map((l) => l.jugador?.id));
+    assert.ok(r.entrenables.every((x) => !entrenaOficial.has(x.id)),
+      'cap entrenable ocupa ja un lloc que entrena a l\'oficial');
+    // I EL VIVER INCLOU L'ONZE QUE NO ENTRENA: una lesió que arrossega el jove a davanter
+    // no li lleva la condició d'entrenable — es prova sencer, amb la base davant, a
+    // test/dos_onzes.mjs (cas 8).
   },
   'P6.cap_a_temps': async () => {
     // Un de 30 anys amb la mateixa creativitat que els joves NO entra: la pròxima pujada li

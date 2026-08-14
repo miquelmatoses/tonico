@@ -534,6 +534,7 @@
   "alineacio.motiu_suplent": "backup keeper: the starter does not play twice",
   "alineacio.motiu_plaça_buida": "training slot with nobody",
   "alineacio.motiu_entrena_mig": "trains here at 50% (and plays twice)",
+  "alineacio.motiu_omple": "covers a slot left open",
   "mercat.necessaris_titol": "What to sign",
   "mercat.preu_ref": "Price you see on the market",
   "mercat.nec_porter_suplent": "A backup keeper",

@@ -127,4 +127,26 @@ assert.deepEqual(r.onze_a.map((l) => l.jugador?.id), r.estructura.onze.map((l) =
     'i no apareix als dos onzes: el porter no dobla');
 }
 
+// ── 8. UNA LESIÓ AL DAVANT NO ES MENJA L'ENTRENAMENT ──
+// El davanter titular cau i el millor recanvi disponible és el jove de creativitat: a l'11A
+// juga de davanter (l'assignació és maximització pura), però SEGUIX SENT ENTRENABLE — a
+// l'11B entra al mig centre, i el lloc de davanter que buida l'ocupa el millor que no jugue
+// ja eixe partit. Abans el jove eixia dels entrenables (ja no era residu), doblava de
+// davanter sense entrenar i el mig centre es quedava buit: es jugava amb un menys.
+{
+  const lesio = equip.map((j) => (j.id === 9 ? { ...j, lesio: '3' }
+    : j.id === 20 ? { ...j, anotacio: 7 } : j));
+  const r4 = await dosOnzes(db, 1, lesio, 10291);
+  const davA = r4.onze_a.filter((l) => l.bucket === 'davanter').map((l) => l.jugador?.id);
+  assert.ok(davA.includes(20), 'el jove tapa el forat de la lesió a l\'onze A');
+  assert.ok(!r4.onze_a.some((l) => l.jugador?.id === 9), 'el lesionat no juga l\'11A');
+  const mc = r4.onze_b.filter((l) => l.entrena && (l.pct ?? 100) === 100);
+  assert.deepEqual(mc.map((l) => l.jugador?.id), [20, 21, 22],
+    'el jove no perd el seu lloc d\'entrenament a l\'11B');
+  const ids = r4.onze_b.map((l) => l.jugador?.id).filter((x) => x != null);
+  assert.equal(new Set(ids).size, ids.length, 'ningú apareix dues vegades a l\'11B');
+  assert.equal(ids.length, 11, 'cap lloc buit: el davanter que buida el jove l\'ompli el millor disponible');
+  assert.ok(!ids.includes(9), 'el lesionat tampoc juga l\'11B');
+}
+
 console.log('OK — els dos onzes: el competitiu és el del pla, i el d\'entrenament es compon');

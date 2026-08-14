@@ -399,9 +399,14 @@ mancances(lloc, h) = MAX(0; perfil_objectiu(lloc, h) − hab(ocupant, h))
 
 entrenables_n = COMPTA(llocs que entrenen al 100%) × (`partits_setmana` − 1)
    [un per cada partit EXTRA de la setmana: és quan el titular descansa]
-entrenables   = PRIMERS(entrenables_n; ORDENA(FILTRA(sobrants;
+entrenables   = PRIMERS(entrenables_n; ORDENA(FILTRA(viver;
                    hab(j, A) ≥ `entrenable_creativitat_min`  I  cap_a_temps(j));
                    hab(j, A) DESC, setmanes_seguent ASC, edat_d ASC))
+   [VIVER: qui NO entrena en l'onze oficial i estaria bé que entrenara — els sobrants,
+    i TAMBÉ els ocupants dels llocs de l'onze que no entrenen, fora el porter (no
+    dobla). Una lesió pot arrossegar un jove a davanter, perquè l'assignació és
+    maximització pura i no posa preu a l'entrenament perdut: seguix sent entrenable,
+    i l'onze_B (PAS 9) el torna a posar a entrenar]
 cap_a_temps(j) = edat_d(j) + setmanes_seguent(j) × 7 < `entrenable_edat_limit` × `any_dies`
    [NO és un tall d'edat pla. Un de 20 i escaig que puja d'ací a cinc setmanes
     encara cobra eixa pujada; un de 19 que no pujarà fins passats els 21 no la
@@ -573,6 +578,8 @@ onze_B = es COMPON damunt de l'onze_A, en este orde:
    llocs que entrenen al 100%  → els ENTRENABLES, per orde de tria
       [eixe és el seu motiu d'existir: si els ocuparen els titulars no
        entrenarien mai. Sense entrenable per a la plaça, es queda BUIDA]
+      [si una lesió ha arrossegat l'entrenable a l'onze_A, ACÍ ENTRENA: el lloc
+       que hi ocupava es buida, i l'ompli l'últim pas]
    llocs que entrenen al 50%   → els mateixos de l'onze_A
       [el seu lloc TAMBÉ és entrenament: no es cedix a ningú, doblen ells]
    porteria                    → el PORTER SUPLENT, i BUIDA si no n'hi ha
@@ -584,6 +591,11 @@ onze_B = es COMPON damunt de l'onze_A, en este orde:
       [hi va per EXPERIÈNCIA, que és el que abarateix reconvertir-lo, no perquè
        siga millor que qui desplaça: per això no toca cap lloc que entrene]
    la resta                    → els mateixos de l'onze_A, que doblen
+      [i si un lloc s'ha quedat sense el seu —l'entrenable se n'ha anat a
+       entrenar, o l'onze_A ja el tenia buit—, l'ompli el MILLOR disponible que
+       no jugue ja eixe partit, amb el mateix repartiment que l'onze. El porter
+       titular no entra al ventall (no dobla), i les places d'entrenament
+       buides no es tapen: entrenament perdut es diu, no es dissimula]
 
 buit(lloc) = ∅ → es juga amb un menys, i es diu
    [una plaça d'entrenament buida NO s'omplí amb un titular: seria entrenament

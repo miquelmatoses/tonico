@@ -775,10 +775,9 @@
       "pas": "P6",
       "pasTitol": "L'ASSIGNACIÓ (qui ocupa cada lloc, i qui sobra)",
       "clau": "entrenables",
-      "linia": "entrenables   = PRIMERS(entrenables_n; ORDENA(FILTRA(sobrants;",
+      "linia": "entrenables   = PRIMERS(entrenables_n; ORDENA(FILTRA(viver;",
       "entrades": [
-        "entrenables_n",
-        "sobrants"
+        "entrenables_n"
       ],
       "poms": [],
       "taules": []
