@@ -138,5 +138,6 @@ export function nova(baseUrl) {
   sqlite.exec(src('../schema/115_mig_085.sql'));
   sqlite.exec(src('../schema/116_obra_minima.sql'));
   sqlite.exec(src('../schema/117_defensa_amunt.sql'));
+  sqlite.exec(src('../schema/118_llisto_set.sql'));
   return { sqlite, db: new D1(sqlite) };
 }

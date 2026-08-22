@@ -169,7 +169,10 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   // o siga que la llista de qui queda al residu canvia. El que NO canvia és la regla: els
   // millors en el que s'entrena, d'entre els que no ocupen lloc.
   const aLOnze = new Set(r.onze.filter((l) => l.jugador).map((l) => l.jugador.id));
-  const esperats = joves.filter((j) => !aLOnze.has(j.id) && Number(j.creativitat ?? 0) >= 6)
+  // El llistó ix del POM, no d'un número escrit ací: és el mateix `entrenable_creativitat_min`
+  // que gasten el planter i el mercat, i quan es mou (118: 6 → 7) este test ha de moure's sol.
+  const llisto = Number((await db.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='entrenable_creativitat_min'").first()).valor);
+  const esperats = joves.filter((j) => !aLOnze.has(j.id) && Number(j.creativitat ?? 0) >= llisto)
     .sort((a, b) => Number(b.creativitat) - Number(a.creativitat)).slice(0, 3).map((j) => j.id);
   assert.deepEqual(r.entrenables.map((j) => j.id), esperats,
     'els millors en creativitat dels que NO han entrat a l\'onze, per orde');
@@ -307,10 +310,14 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   // el 29%. Amb els vells monotemàtics, els joves els furtaven el lloc i el desempat que ací es
   // prova —quin dels de creativitat 6 va primer— no arribava a passar.
   const vells = Array.from({ length: 11 }, (_, i) => b(i + 1, { edat_anys: 30,
-    porteria: i === 0 ? 9 : 2, defensa: 7, creativitat: 7, extrem: 7, passades: 7, anotacio: 7 }));
+    porteria: i === 0 ? 9 : 2, defensa: 8, creativitat: 8, extrem: 8, passades: 8, anotacio: 8 }));
   // El 40 es queda per davall del mínim de creativitat: no és candidat, i això és el que es
-  // comprova ara a més del desempat.
-  const joves = [b(40, { creativitat: 2 }), b(41, { creativitat: 6 }), b(42, { creativitat: 6 }), b(43, { creativitat: 6 })];
+  // comprova ara a més del desempat. Els tres empatats van CLAVATS AL LLISTÓ, que ix del pom:
+  // el desempat es prova on de veres passa, i quan el llistó es mou (118: 6 → 7) el fixture
+  // el seguix sol en compte de quedar-se provant un número que ja no talla res.
+  const llisto = Number(sqlite.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='entrenable_creativitat_min'").get().valor);
+  const joves = [b(40, { creativitat: llisto - 4 }), b(41, { creativitat: llisto }),
+    b(42, { creativitat: llisto }), b(43, { creativitat: llisto })];
   // Sense ENTRENADOR declarat no hi ha velocitat, i per tant tampoc desempat: la fórmula no
   // se l'inventa. El desempat només pot actuar quan el càlcul es pot fer.
   // I el 42 porta setmanes al seu nivell: se li ha vist arribar-hi fa temps.
@@ -319,12 +326,12 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
     INSERT OR IGNORE INTO jugadors (id, equip_id, id_hattrick, nom) VALUES (42,1,942,'Z42');
     INSERT INTO instantanies (id, equip_id, data, temporada, setmana_temporada) VALUES
       (90,1,'2026-04-01',83,1),(91,1,'2026-06-01',83,9);
-    INSERT INTO instantanies_jugadors (instantania_id, jugador_id, creativitat) VALUES (90,42,6),(91,42,6);
+    INSERT INTO instantanies_jugadors (instantania_id, jugador_id, creativitat) VALUES (90,42,${llisto}),(91,42,${llisto});
   `);
   const r = await onzeEstructura(db, 1, [...vells, ...joves], 10291);
   const tria = r.entrenables.map((j) => j.id);
-  assert.ok(!tria.includes(40), 'el de creativitat 2 NO entra: per davall del mínim per a entrenar');
-  assert.equal(tria[0], 42, 'i entre els de creativitat 6, primer el que està més a prop de pujar');
+  assert.ok(!tria.includes(40), `el de creativitat ${llisto - 4} NO entra: per davall del mínim per a entrenar`);
+  assert.equal(tria[0], 42, `i entre els de creativitat ${llisto}, primer el que està més a prop de pujar`);
   // Sense entrenador no hi ha velocitat, i sense velocitat no es pot dir si la pròxima pujada
   // cau abans del límit d'edat: per tant no hi ha entrenables. No s'inventa cap número.
   sqlite.exec("DELETE FROM personal_membres WHERE rol='entrenador';");
@@ -349,17 +356,20 @@ const jug = (id, creativitat, anotacio, sou = 1000) => ({ id, nom: 'J' + id, cre
   const vells = Array.from({ length: 11 }, (_, i) => b(i + 1, {
     porteria: i === 0 ? 9 : 2, defensa: 8, creativitat: 8, extrem: 8, passades: 8, anotacio: 8 }));
 
-  // Dos de creativitat 6, un de 20 anys i un de 19: amb el tall pla d'abans, el de 20 quedava
-  // fora i el de 19 dins. Amb la finestra, els dos pugen abans dels 21 i els dos entren.
-  const a20 = b(60, { creativitat: 6, edat_anys: 20, edat_dies: 0 });
-  const a19 = b(61, { creativitat: 6, edat_anys: 19, edat_dies: 0 });
+  // Dos CLAVATS AL LLISTÓ (del pom, no d'un número escrit ací), un de 20 anys i un de 19: amb
+  // el tall pla d'abans, el de 20 quedava fora i el de 19 dins. Amb la finestra, els dos pugen
+  // abans dels 21 i els dos entren. El que es prova és l'EDAT, i el llistó no ha d'apagar-ho
+  // quan es moga (118: 6 → 7).
+  const llisto = Number(sqlite.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='entrenable_creativitat_min'").get().valor);
+  const a20 = b(60, { creativitat: llisto, edat_anys: 20, edat_dies: 0 });
+  const a19 = b(61, { creativitat: llisto, edat_anys: 19, edat_dies: 0 });
   let r = await onzeEstructura(db, 1, [...vells, a20, a19], 10291);
   const ids = r.entrenables.map((j) => j.id);
   assert.ok(ids.includes(60), 'un de 20 anys que encara puja abans dels 21 SEGUIX entrenant');
   assert.ok(ids.includes(61), 'i el de 19 també');
 
   // I un de 20 anys i 100 dies: la pujada li cau ja passats els 21 → fora, i cap a venda.
-  const tard = b(62, { creativitat: 6, edat_anys: 20, edat_dies: 100 });
+  const tard = b(62, { creativitat: llisto, edat_anys: 20, edat_dies: 100 });
   r = await onzeEstructura(db, 1, [...vells, tard], 10291);
   assert.deepEqual(r.entrenables.map((j) => j.id), [],
     'si la pròxima pujada cau passat el límit, ja no val la pena entrenar-lo');

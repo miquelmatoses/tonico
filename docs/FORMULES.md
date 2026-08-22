@@ -659,7 +659,13 @@ places(passades)    = 3 davanters
 
 -- LA CUA
 cua = els que no han entrat en cap passada
-    ORDENA(cua; màxima habilitat coneguda DESC, dies_restants ASC, id)
+    ORDENA(cua; valor(j, habilitat_principal) DESC, màxima habilitat coneguda DESC,
+                dies_restants ASC, id)
+   [LA MATEIXA VARA QUE EL TALL, també ací: el que mana és el producte. Qui SABEM
+    que no arriba al llistó baixa; el desconegut val el llistó i no baixa. Ordenar
+    per «la millor habilitat coneguda» a seques feia el contrari de la doctrina —un
+    capat a 4 amb anotació 5 passava davant d'un misteri amb tot el recorregut per
+    davant—, i com que despatxar és l'orde invers, el que se n'anava era el misteri]
    [òmplin fins al mínim legal —1 porter + 8 de camp— i la resta, banqueta.
     La banqueta no gasta missatge de l'entrenador: els missatges només van als
     que juguen]

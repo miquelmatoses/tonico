@@ -260,7 +260,7 @@ const VERIFICADES = {
     assert.equal(r.onze.find((l) => l.jugador_id === 2).bucket, 'davanter',
       'qui no serveix per creativitat encara pot rescatar-se per passades');
   },
-  'P10.cua': () => {
+  'P10.cua': async () => {
     const j = (id, max, dies) => ({ jugador_id: id, dies_edat: 15 * 112, dies_restants_promocio: dies,
       defensa_actual: max, defensa_potencial: max });
     const r = plaJuvenil([j(1, 2, 100), j(2, 5, 100), j(3, 5, 50)],
@@ -271,6 +271,24 @@ const VERIFICADES = {
     assert.deepEqual(r.onze.map((l) => l.bucket), ['porter', 'defensa'],
       'i ix amb POSICIÓ, en l\'orde declarat: porter primer');
     assert.deepEqual(r.banqueta, [1], 'i el que menys sap fer, a la banqueta');
+
+    // I LA VARA DE LA CUA ÉS LA DEL TALL: mana el producte, amb el conveni del desconegut.
+    // El cas que ho va obrir: un juvenil sense revelar la creativitat s'ordenava per «la millor
+    // habilitat coneguda» —que no en tenia cap— i quedava l'ÚLTIM, per davall d'un capat a 2
+    // amb anotació 9. Com que despatxar és l'orde invers, el que se n'anava era el misteri i es
+    // quedava el dud confirmat. Un potencial en una habilitat que no s'entrena no mou res.
+    const taula = JSON.parse((await dbFix.prepare("SELECT valor FROM constants_joc WHERE clau='velocitat_juvenil_creativitat'").first()).valor);
+    const k = (id, cre) => ({ jugador_id: id, dies_edat: 15 * 112, dies_restants_promocio: 100,
+      creativitat_actual: cre, creativitat_potencial: cre, anotacio_actual: 9, anotacio_potencial: 9 });
+    const misteri = { jugador_id: 2, dies_edat: 15 * 112, dies_restants_promocio: 100,
+      creativitat_actual: null, creativitat_potencial: null };
+    const c = plaJuvenil([k(1, 2), misteri], {
+      passades: [{ habilitat: 'creativitat', llisto: 6, taula, subNivell: 0.9, buckets: [] }],
+      places: { porter: 1 }, residuals: ['porter'], habs: ['creativitat', 'anotacio'], minimEnCamp: 1 });
+    assert.deepEqual([...c.onze.map((l) => l.jugador_id), ...c.banqueta], [2, 1],
+      'el desconegut val el llistó també a la cua, i el capat per davall del llistó baixa');
+    assert.deepEqual(sobrantsJuv([...c.onze.map((l) => l.jugador_id), ...c.banqueta], 1), [1],
+      'i per tant qui se\'n va és el dud confirmat, no el misteri');
   },
   'P10.alineacio': async () => {
     const cj = async (k) => JSON.parse((await dbFix.prepare('SELECT valor FROM constants_joc WHERE clau=?').bind(k).first()).valor);
@@ -1133,8 +1151,15 @@ const VERIFICADES = {
     // —que entrena al 50%— perquè allí la creativitat aporta més que l'habilitat d'extrem
     // mateixa (matriu de la guia §4) i cap dels vells la té. I qui ja entrena a l'oficial
     // no és candidat: entrenaria dues vegades el mateix lloc.
-    assert.deepEqual(r.entrenables.map((x) => x.id), [101, 102, 103],
+    // I EL LLISTÓ TALLA: els JOVES6 van de creativitat 9 a 6, i amb
+    // `entrenable_creativitat_min` a 7 (migració 118) el de 6 ja no és entrenable —
+    // invertir setmanes en algú que no arriba és tirar-les. La vara és una per a les dues
+    // bandes: el mateix número que decidix qui es fabrica al planter i què es compra.
+    assert.deepEqual(r.entrenables.map((x) => x.id), [101, 102],
       'els millors en l\'habilitat entrenada, d\'entre els que no entrenen a l\'oficial');
+    const llisto = Number((await dbFix.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='entrenable_creativitat_min'").first()).valor);
+    assert.ok(r.entrenables.every((x) => Number(x.creativitat) >= llisto),
+      `cap entrenable per davall del llistó (${llisto})`);
     const entrenaOficial = new Set(r.onze.filter((l) => l.entrena).map((l) => l.jugador?.id));
     assert.ok(r.entrenables.every((x) => !entrenaOficial.has(x.id)),
       'cap entrenable ocupa ja un lloc que entrena a l\'oficial');

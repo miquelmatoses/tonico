@@ -1,0 +1,27 @@
+-- Tonico — migració 118 · el llistó d'entrenable puja de 6 a 7.
+--
+-- DECISIÓ DE MIQUEL (2026-08-22). Amb 6, el juvenil que no revela la creativitat val
+-- exactament el llistó per conveni, i el llistó és el SÒL: qualsevol que projecta per damunt
+-- li passa davant sempre, o siga que el desconegut era 7é de 7 per a 5 places i acabava a la
+-- banqueta, sense revelar mai i baixant cada setmana fins que el pla el despatxava.
+--
+-- Amb 7, el conveni el torna a posar en joc: els que projecten entre 6 i 7 —els que SABEM
+-- que es queden curts— cauen per davall del misteri, que és exactament l'orde que volem.
+--
+-- ─── LA VARA ÉS UNA, I ES MOU SENCERA ─────────────────────────────────────────────────
+-- `entrenable_creativitat_min` no és el llistó del planter: és el llistó i punt. El full ho
+-- diu al PAS 10 («la seua vara és la mateixa») perquè l'acadèmia és un PROVEÏDOR ALTERNATIU
+-- d'entrenables — si fabricar exigira 7 i comprar es conformara amb 6, el planter estaria
+-- competint contra una vara més fluixa que la seua. Els tres consumidors es mouen junts:
+--
+--   PAS 10  · llistó de creativitat del planter          (`orquestra_juvenil`)
+--   PAS 6/9 · qui entra al VIVER d'entrenables del sènior (`onze_estructura`)
+--   PAS 8   · quin nivell es busca per a omplir una plaça d'entrenament buida (`fitxatges`)
+--
+-- El que canvia de veres fora del planter: la fitxa que es busca per a una plaça buida passa
+-- de CR6 a CR7 (més cara), i un sènior de creativitat 6 deixa de comptar com a entrenable.
+--
+-- El llistó de PASSADES (`juvenil_passades_min`, 5) NO es mou: és el rescat del que ja no
+-- arriba a creativitat, no el producte, i la seua vara no és la del mercat.
+UPDATE plantilles_parametres SET valor = '7'
+ WHERE clau = 'entrenable_creativitat_min';

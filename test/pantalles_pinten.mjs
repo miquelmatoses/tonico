@@ -22,6 +22,10 @@ import { readFileSync } from 'node:fs';
 import { nova } from './_d1shim.mjs';
 
 const { sqlite, db } = nova(import.meta.url);
+// El llistó d'entrenable ix del POM, no d'un número escrit al fixture: quan es mou (118: 6 → 7)
+// el jove d'este fixture ha de seguir estant JUST al mínim, que és el que fa que caiga a
+// entrenable i porte el càlcul a la pantalla.
+const LLISTO = Number(sqlite.prepare("SELECT valor FROM plantilles_parametres WHERE plantilla='competitiva' AND clau='entrenable_creativitat_min'").get().valor);
 sqlite.exec(`
   INSERT INTO usuaris (id, correu, contrasenya) VALUES (1,'z','x');
   INSERT INTO config_usuari (usuari_id, estrategia, pais, divisio, sistema_juvenil, n_cercapromeses, partits_setmana)
@@ -57,9 +61,9 @@ sqlite.exec(`
     (2,8,'DC',27,0,2000,3000,NULL,6,9,2,6,6,6,2),(2,9,'EX',24,0,2000,3000,NULL,6,6,2,6,9,6,2),
     (2,10,'EX',25,0,2000,3000,NULL,6,6,2,6,8,6,2),(2,11,'DV',26,0,2000,3000,NULL,6,6,2,9,6,6,2),
     (2,12,'DV',27,0,2000,3000,NULL,6,6,2,8,6,6,2),(2,13,'POR',28,0,2000,3000,NULL,6,6,9,6,6,6,2),
-    -- I el JOVE: creativitat 6, que és el mínim per a entrenar, i pitjor que els tres titulars
+    -- I el JOVE: creativitat JUST al mínim per a entrenar, i pitjor que els tres titulars
     -- de MC, o siga que cau al residu i és el que ha de portar el càlcul a la pantalla.
-    (1,14,'MC',18,10,900,700,NULL,6,1,1,1,1,1,1),(2,14,'MC',18,17,900,700,NULL,6,1,1,1,1,1,1);
+    (1,14,'MC',18,10,900,700,NULL,${LLISTO},1,1,1,1,1,1),(2,14,'MC',18,17,900,700,NULL,${LLISTO},1,1,1,1,1,1);
   INSERT INTO personal_membres (usuari_id, rol, tipus, nivell, sou, data_fi_contracte, coach_entrenament) VALUES
     (1,'especialista','assistent',2,2040,'2026-11-04',NULL),(1,'entrenador','entrenador',NULL,5000,NULL,'passable');
   INSERT INTO finances (usuari_id, caixa, caixa_data, despesa_estadi, estadi_manteniment, estadi_cost_obra, estadi_data)
